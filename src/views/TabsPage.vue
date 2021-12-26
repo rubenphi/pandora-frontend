@@ -24,7 +24,7 @@
 
 <script>
 import { IonTabBar, IonTabButton, IonTabs, IonLabel, IonIcon, IonPage, IonRouterOutlet } from '@ionic/vue';
-import { helpCircleOutline ,homeOutline, peopleOutline , square, triangle } from 'ionicons/icons';
+import { helpCircleOutline ,homeOutline, peopleOutline } from 'ionicons/icons';
 
 export default {
   components: { IonLabel, IonTabs, IonTabBar, IonTabButton, IonIcon, IonPage, IonRouterOutlet },
@@ -32,10 +32,7 @@ export default {
     return {
       helpCircleOutline,
       homeOutline,
-      ellipse,
-      peopleOutline, 
-      square, 
-      triangle,
+      peopleOutline
     }
   }
 }
