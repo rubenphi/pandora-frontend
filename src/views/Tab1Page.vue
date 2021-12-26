@@ -11,17 +11,61 @@
           <ion-title size="large">Grupo</ion-title>
         </ion-toolbar>
       </ion-header>
-    
-      <ExploreContainer name="Tab 1 page" />
+
+      <ion-list>
+        <ion-item>
+          <ion-icon slot="start" :icon="personOutline"></ion-icon>
+          <ion-label>Felipito</ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-icon slot="start" :icon="personOutline"></ion-icon>
+          <ion-label>Susanita</ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-icon slot="start" :icon="personOutline"></ion-icon>
+          <ion-label>Mafalda</ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-icon slot="start" :icon="personOutline"></ion-icon>
+          <ion-label>Guille</ion-label>
+        </ion-item>
+      </ion-list>
     </ion-content>
   </ion-page>
 </template>
 
 <script>
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent } from '@ionic/vue';
-import ExploreContainer from '@/components/ExploreContainer.vue';
+import { personOutline } from "ionicons/icons";
 
-export default  {
-  components: { ExploreContainer, IonHeader, IonToolbar, IonTitle, IonContent, IonPage }
-}
+import {
+  IonLabel,
+  IonItem,
+  IonList,
+  IonPage,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+} from "@ionic/vue";
+import ExploreContainer from "@/components/ExploreContainer.vue";
+
+export default {
+  components: {
+    ExploreContainer,
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonContent,
+    IonPage,
+    IonList,
+    IonItem,
+    IonLabel,
+    IonIcon,
+  },
+  setup() {
+    return {
+      personOutline,
+    };
+  },
+};
 </script>
