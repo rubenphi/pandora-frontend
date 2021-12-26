@@ -47,11 +47,9 @@ import {
   IonTitle,
   IonContent,
 } from "@ionic/vue";
-import ExploreContainer from "@/components/ExploreContainer.vue";
 
 export default {
   components: {
-    ExploreContainer,
     IonHeader,
     IonToolbar,
     IonTitle,
