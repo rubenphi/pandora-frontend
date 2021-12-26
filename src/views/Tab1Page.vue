@@ -40,6 +40,7 @@ import { personOutline } from "ionicons/icons";
 import {
   IonLabel,
   IonItem,
+  IonIcon,
   IonList,
   IonPage,
   IonHeader,
