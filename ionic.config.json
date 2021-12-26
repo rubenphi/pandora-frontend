@@ -1,0 +1,8 @@
+{
+  "name": "Pandora",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue",
+  "id": "c59edfbd"
+}
