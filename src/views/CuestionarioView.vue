@@ -28,23 +28,23 @@
       </ion-card>
       <ion-card>
         <ion-list>
-          <ion-item>
-            <ion-icon slot="start" href="/pregunta" :icon="handLeftOutline"></ion-icon>
+          <ion-item href="/pregunta">
+            <ion-icon slot="start"  :icon="handLeftOutline"></ion-icon>
             <ion-label
               >¿Cuál de los siguientes documentos corresponde al a la
               información entregada en el siguiente enunciado?</ion-label
             >
           </ion-item>
-          <ion-item>
-            <ion-icon slot="start" href="/pregunta" :icon="handLeftOutline"></ion-icon>
+          <ion-item href="/pregunta">
+            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
             <ion-label
               >Los presentes textos corresponden a un tipo de texto, analice las
               diferentes características del texto e identifique a qué tipo de
               text corresponde</ion-label
             >
           </ion-item>
-          <ion-item>
-            <ion-icon slot="start" href="/pregunta" :icon="handLeftOutline"></ion-icon>
+          <ion-item href="/pregunta">
+            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
             <ion-label
               >¿Cuál de los siguientes documentos corresponde al a la
               información entregada en el siguiente enunciado?</ion-label
