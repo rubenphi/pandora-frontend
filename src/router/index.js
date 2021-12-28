@@ -29,6 +29,10 @@ const routes = [
       {
         path: 'cuestionario',
         component: () => import('@/views/CuestionarioView.vue')
+      },
+      {
+        path: 'pregunta',
+        component: () => import('@/views/PreguntaView.vue')
       }
     ]
   }

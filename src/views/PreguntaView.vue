@@ -7,7 +7,6 @@
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
-        <ion-title size="large" class="ion-text-center">20-03-2011</ion-title>
         <ion-buttons slot="end" class="ion-margin-end">
           <ion-button href="/cuestionario">
             <ion-icon :icon="refreshOutline"></ion-icon>
@@ -19,29 +18,15 @@
       <ion-card>
         <ion-card-header>
           <ion-card-title class="ion-text-center"
-            >Romanticismo y Realismo</ion-card-title
+            >1. Primera Pregunta</ion-card-title
           >
         </ion-card-header>
       </ion-card>
       <ion-card>
-        <ion-list>
-          <ion-item>
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >¿Cuál de los siguientes documentos corresponde al a la
-              información entregada en el siguiente enunciado?</ion-label
-            >
-          </ion-item>
-          <ion-item>
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >Los presentes textos corresponden a un tipo de texto, analice las
-              diferentes características del texto e identifique a qué tipo de
-              text corresponde</ion-label
-            >
-          </ion-item>
-        </ion-list>
+        <ion-img src="https://s1.significados.com/foto/897px-eugene-delacroix-le-28-juillet.-la-liberte-guidant-le-peuple_bg.jpg"></ion-img>
       </ion-card>
+
+      El Romanticismo es un movimiento cultural que se originó en Alemania y en Reino Unido a finales del siglo XVIII como una reacción revolucionaria contra la Ilustración y el Neoclasicismo, confiriendo prioridad a los sentimientos.[1]​ Es considerado como el primer movimiento de cultura que cubrió el mapa completo de Europa. En la mayoría de las áreas estuvo en su apogeo en el período aproximado de 1800 a 1850.[2]​ Luego, cedió su lugar al positivismo, que fomenta el pensamiento crítico y el empirismo como bases del conocimiento y la sociedad.
     </ion-content>
   </ion-page>
 </template>
@@ -66,7 +51,8 @@ import {
   IonButtons,
   IonButton,
   IonCard,
-  IonCardTitle
+  IonCardTitle,
+  IonImg
 } from "@ionic/vue";
 
 export default {
@@ -83,7 +69,8 @@ export default {
     IonButtons,
     IonButton,
     IonCard,
-    IonCardTitle
+    IonCardTitle,
+    IonImg
   },
   setup() {
     return {

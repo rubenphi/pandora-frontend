@@ -29,7 +29,7 @@
       <ion-card>
         <ion-list>
           <ion-item>
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
+            <ion-icon slot="start" href="/" :icon="handLeftOutline"></ion-icon>
             <ion-label
               >¿Cuál de los siguientes documentos corresponde al a la
               información entregada en el siguiente enunciado?</ion-label
@@ -208,7 +208,7 @@
               text corresponde</ion-label
             >
           </ion-item>
-          
+
         </ion-list>
       </ion-card>
     </ion-content>
