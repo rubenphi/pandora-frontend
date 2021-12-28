@@ -8,8 +8,8 @@
             </ion-button>
           </ion-buttons>
           <ion-title size="large">Cuestionario 20-03-2011</ion-title>
-          <ion-buttons slot="end">
-            <ion-button href="/cuestionarios">
+          <ion-buttons slot="end" class="ion-margin-end">
+            <ion-button href="/cuestionario">
               <ion-icon :icon="refreshOutline"></ion-icon>
             </ion-button>
           </ion-buttons>
