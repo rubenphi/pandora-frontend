@@ -60,6 +60,8 @@ import {
   IonToolbar,
   IonTitle,
   IonContent,
+  IonButtons,
+  IonButton
 } from "@ionic/vue";
 
 export default {
@@ -73,6 +75,8 @@ export default {
     IonItem,
     IonLabel,
     IonIcon,
+    IonButtons,
+    IonButton
   },
   setup() {
     return {
