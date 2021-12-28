@@ -16,7 +16,7 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <h3>Romanticismo y Realismo</h3>
+      <h5 class="ion-text-center">Romanticismo y Realismo</h5>
       <ion-list>
         <ion-item>
           <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
