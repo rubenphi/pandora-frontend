@@ -28,7 +28,7 @@ const routes = [
       },
       {
         path: 'cuestionario',
-        component: () => import('@/views/cuestionario.vue')
+        component: () => import('@/views/CuestionarioView.vue')
       }
     ]
   }
