@@ -21,7 +21,9 @@
           <ion-card-title class="ion-text-center"
             >Romanticismo y Realismo</ion-card-title
           >
-                <ion-card-subtitle>Ver Resultados</ion-card-subtitle>
+          <ion-card-subtitle class="ion-text-center"
+            >Ver Resultados</ion-card-subtitle
+          >
         </ion-card-header>
       </ion-card>
       <ion-card>
@@ -68,7 +70,7 @@ import {
   IonButton,
   IonCard,
   IonCardTitle,
-  IonCardSubtitle
+  IonCardSubtitle,
 } from "@ionic/vue";
 
 export default {
@@ -86,7 +88,7 @@ export default {
     IonButton,
     IonCard,
     IonCardTitle,
-    IonCardSubtitle
+    IonCardSubtitle,
   },
   setup() {
     return {
