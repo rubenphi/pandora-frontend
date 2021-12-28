@@ -49,12 +49,9 @@ import {
   IonHeader,
   IonToolbar,
   IonTitle,
-  IonContent,
-  IonIcon,
-  IonItem,
-  IonLabel,
+  IonContent
 } from "@ionic/vue";
-import { pin, walk, warning, wifi, wine } from "ionicons/icons";
+
 export default {
   components: {
     IonCard,
@@ -62,9 +59,6 @@ export default {
     IonCardHeader,
     IonCardSubtitle,
     IonCardTitle,
-    IonIcon,
-    IonItem,
-    IonLabel,
     IonHeader,
     IonToolbar,
     IonTitle,
@@ -72,7 +66,7 @@ export default {
     IonPage,
   },
   setup() {
-    return { warning, pin, walk, wifi, wine };
+    return { };
   },
 };
 </script>
