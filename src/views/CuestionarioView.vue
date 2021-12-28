@@ -2,12 +2,6 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-title>Cuestionario 20-04-2011</ion-title>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content :fullscreen="true">
-      <ion-header collapse="condense">
-        <ion-toolbar>
           <ion-buttons slot="start">
             <ion-button href="/cuestionarios">
               <ion-icon :icon="arrowBackOutline"></ion-icon>
@@ -20,7 +14,8 @@
             </ion-button>
           </ion-buttons>
         </ion-toolbar>
-      </ion-header>
+    </ion-header>
+    <ion-content :fullscreen="true">
 
       <ion-list>
         <ion-item>
