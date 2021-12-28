@@ -17,27 +17,33 @@
     </ion-header>
     <ion-content :fullscreen="true">
       <ion-card>
-    <ion-card-header>
-      <ion-card-title class="ion-text-center">Romanticismo y Realismo</ion-card-title>
-    </ion-card-header>
-  </ion-card>
-      <ion-list>
-        <ion-item>
-          <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-          <ion-label
-            >¿Cuál de los siguientes documentos corresponde al a la información
-            entregada en el siguiente enunciado?</ion-label
+        <ion-card-header>
+          <ion-card-title class="ion-text-center"
+            >Romanticismo y Realismo</ion-card-title
           >
-        </ion-item>
-        <ion-item>
-          <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-          <ion-label
-            >Los presentes textos corresponden a un tipo de texto, analice las
-            diferentes características del texto e identifique a qué tipo de
-            text corresponde</ion-label
-          >
-        </ion-item>
-      </ion-list>
+        </ion-card-header>
+      </ion-card>
+      <ion-card>
+        <ion-card-content>
+          <ion-list>
+            <ion-item>
+              <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
+              <ion-label
+                >¿Cuál de los siguientes documentos corresponde al a la
+                información entregada en el siguiente enunciado?</ion-label
+              >
+            </ion-item>
+            <ion-item>
+              <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
+              <ion-label
+                >Los presentes textos corresponden a un tipo de texto, analice
+                las diferentes características del texto e identifique a qué
+                tipo de text corresponde</ion-label
+              >
+            </ion-item>
+          </ion-list>
+        </ion-card-content>
+      </ion-card>
     </ion-content>
   </ion-page>
 </template>
@@ -62,8 +68,8 @@ import {
   IonButtons,
   IonButton,
   IonCard,
-  IonCardTitle
-
+  IonCardTitle,
+  IonCardContent,
 } from "@ionic/vue";
 
 export default {
@@ -80,7 +86,8 @@ export default {
     IonButtons,
     IonButton,
     IonCard,
-    IonCardTitle
+    IonCardTitle,
+    IonCardContent,
   },
   setup() {
     return {
