@@ -2,13 +2,13 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-title>Cuestionario</ion-title>
+        <ion-title>Cuestionario 20-04-2011</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
       <ion-header collapse="condense">
         <ion-toolbar>
-          <ion-title size="large">Cuestionario [20-03-2011]</ion-title>
+          <ion-title size="large">Cuestionario 20-03-2011</ion-title>
         </ion-toolbar>
       </ion-header>
 
