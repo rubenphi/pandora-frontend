@@ -12,7 +12,7 @@
         </ion-toolbar>
       </ion-header>
 
-      <ion-card href="/tabs/cuestionario">
+      <ion-card href="/cuestionario">
         <ion-card-header>
           <ion-card-subtitle>Cuestionario</ion-card-subtitle>
           <ion-card-title>20-03-2021</ion-card-title>
@@ -23,7 +23,7 @@
         </ion-card-content>
       </ion-card>
 
-      <ion-card href="/tabs/cuestionario">
+      <ion-card href="/cuestionario">
         <ion-card-header>
           <ion-card-subtitle>Cuestionario</ion-card-subtitle>
           <ion-card-title>23-03-2021</ion-card-title>
