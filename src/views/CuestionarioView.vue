@@ -2,21 +2,21 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-          <ion-buttons slot="start">
-            <ion-button href="/cuestionarios">
-              <ion-icon :icon="arrowBackOutline"></ion-icon>
-            </ion-button>
-          </ion-buttons>
-          <ion-title size="large">Cuestionario 20-03-2011</ion-title>
-          <ion-buttons slot="end" class="ion-margin-end">
-            <ion-button href="/cuestionario">
-              <ion-icon :icon="refreshOutline"></ion-icon>
-            </ion-button>
-          </ion-buttons>
-        </ion-toolbar>
+        <ion-buttons slot="start" class="ion-margin-start">
+          <ion-button href="/cuestionarios">
+            <ion-icon :icon="arrowBackOutline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+        <ion-title size="large" class="ion-text-center">20-03-2011</ion-title>
+        <ion-buttons slot="end" class="ion-margin-end">
+          <ion-button href="/cuestionario">
+            <ion-icon :icon="refreshOutline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-
+      <h3>Romanticismo y Realismo</h3>
       <ion-list>
         <ion-item>
           <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
@@ -56,7 +56,7 @@ import {
   IonTitle,
   IonContent,
   IonButtons,
-  IonButton
+  IonButton,
 } from "@ionic/vue";
 
 export default {
@@ -71,7 +71,7 @@ export default {
     IonLabel,
     IonIcon,
     IonButtons,
-    IonButton
+    IonButton,
   },
   setup() {
     return {
