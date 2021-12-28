@@ -66,8 +66,7 @@ import {
   IonButtons,
   IonButton,
   IonCard,
-  IonCardTitle,
-  IonCardContent,
+  IonCardTitle
 } from "@ionic/vue";
 
 export default {
@@ -84,8 +83,7 @@ export default {
     IonButtons,
     IonButton,
     IonCard,
-    IonCardTitle,
-    IonCardContent,
+    IonCardTitle
   },
   setup() {
     return {
