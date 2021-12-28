@@ -16,7 +16,11 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <h5 class="ion-text-center">Romanticismo y Realismo</h5>
+      <ion-card>
+    <ion-card-header>
+      <ion-card-title class="ion-text-center">Romanticismo y Realismo</ion-card-title>
+    </ion-card-header>
+  </ion-card>
       <ion-list>
         <ion-item>
           <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
@@ -57,6 +61,9 @@ import {
   IonContent,
   IonButtons,
   IonButton,
+  IonCard,
+  IonCardTitle
+
 } from "@ionic/vue";
 
 export default {
@@ -72,6 +79,8 @@ export default {
     IonIcon,
     IonButtons,
     IonButton,
+    IonCard,
+    IonCardTitle
   },
   setup() {
     return {
