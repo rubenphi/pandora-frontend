@@ -43,11 +43,10 @@
 
       <ion-card>
         <ion-list>
+          <ion-card-subtitle class="ion-text-center">
+            Selecciona tu respuesta
+          </ion-card-subtitle>
           <ion-radio-group value="biff">
-            <ion-list-header>
-              <ion-label>Selecciona una respuesta</ion-label>
-            </ion-list-header>
-
             <ion-item>
               <ion-label class="ion-text-wrap"
                 >Demasiada información completa para poder rellenar más de una
@@ -76,21 +75,17 @@
                 >Demasiada información completa para poder rellenar más de una
                 línea, la idea es probar que esto funciona</ion-label
               >
-              <ion-radio slot="start" value="buford"></ion-radio>
+              <ion-radio slot="start" value="Nanai"></ion-radio>
             </ion-item>
           </ion-radio-group>
         </ion-list>
-
-        <ion-item> </ion-item>
       </ion-card>
 
-      <ion-buttons slot="secondary">
-      <ion-button>
-        <ion-icon slot="end" :icon="paperPlaneOutline"></ion-icon>
-        <ion-label class="ion-text-center">
-          Enviar Respuesta
-        </ion-label>
-      </ion-button>
+      <ion-buttons>
+        <ion-button>
+          <ion-icon slot="end" :icon="paperPlaneOutline"></ion-icon>
+          <ion-label class="ion-text-center"> Enviar Respuesta </ion-label>
+        </ion-button>
       </ion-buttons>
     </ion-content>
   </ion-page>
@@ -102,7 +97,7 @@ import {
   refreshOutline,
   handLeftOutline,
   eyeOutline,
-  paperPlaneOutline
+  paperPlaneOutline,
 } from "ionicons/icons";
 
 import {
@@ -119,7 +114,8 @@ import {
   IonImg,
   IonNote,
   IonRadio,
-  IonRadioGroup
+  IonRadioGroup,
+  IonCardSubtitle,
 } from "@ionic/vue";
 
 export default {
@@ -137,7 +133,8 @@ export default {
     IonImg,
     IonNote,
     IonRadioGroup,
-    IonRadio
+    IonRadio,
+    IonCardSubtitle,
   },
   setup() {
     return {
@@ -145,7 +142,7 @@ export default {
       handLeftOutline,
       refreshOutline,
       eyeOutline,
-      paperPlaneOutline
+      paperPlaneOutline,
     };
   },
 };
