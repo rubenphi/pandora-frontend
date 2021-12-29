@@ -36,7 +36,7 @@
 import {
   arrowBackOutline,
   refreshOutline,
-  checkmarkOutline,
+  checkmarkOutline
 } from "ionicons/icons";
 
 import {
@@ -52,7 +52,7 @@ import {
   IonHeader,
   IonToolbar,
   IonTitle,
-  IonContent,
+  IonContent
 } from "@ionic/vue";
 
 export default {
@@ -72,7 +72,7 @@ export default {
     IonPage,
     arrowBackOutline,
     refreshOutline,
-    checkmarkOutline,
+    checkmarkOutline
   },
   setup() {
     return {
