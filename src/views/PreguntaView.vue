@@ -10,6 +10,7 @@
         <ion-buttons slot="end" class="ion-margin-end">
           <ion-button href="/">
             <ion-icon :icon="eyeOutline"></ion-icon>
+            <ion-note>Ver Resultados</ion-note>
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -39,6 +40,39 @@
           crítico y el empirismo como bases del conocimiento y la sociedad.
         </ion-card-content>
       </ion-card>
+
+      <ion-card>
+
+        <ion-list>
+    <ion-radio-group value="biff">
+      <ion-list-header>
+        <ion-label>Selecciona una respuesta</ion-label>
+      </ion-list-header>
+
+      <ion-item>
+        <ion-label class="ion-text-wrap">Demasiada información completa para poder rellenar más de una línea, la idea es probar que esto funciona</ion-label>
+        <ion-radio slot="start" value="biff"></ion-radio>
+      </ion-item>
+
+      <ion-item>
+        <ion-label class="ion-text-wrap">Demasiada información completa para poder rellenar más de una línea, la idea es probar que esto funciona</ion-label>
+        <ion-radio slot="start" value="griff"></ion-radio>
+      </ion-item>
+
+      <ion-item>
+        <ion-label class="ion-text-wrap">Demasiada información completa para poder rellenar más de una línea, la idea es probar que esto funciona</ion-label>
+        <ion-radio slot="start" value="buford"></ion-radio>
+      </ion-item>
+      <ion-item>
+        <ion-label class="ion-text-wrap">Demasiada información completa para poder rellenar más de una línea, la idea es probar que esto funciona</ion-label>
+        <ion-radio slot="start" value="buford"></ion-radio>
+      </ion-item>
+    </ion-radio-group>
+  </ion-list>
+
+        <ion-item>
+  </ion-item>
+      </ion-card>
     </ion-content>
   </ion-page>
 </template>
@@ -63,6 +97,7 @@ import {
   IonCardTitle,
   IonCardContent,
   IonImg,
+  IonNote
 } from "@ionic/vue";
 
 export default {
@@ -78,6 +113,7 @@ export default {
     IonCardTitle,
     IonCardContent,
     IonImg,
+    IonNote
   },
   setup() {
     return {
