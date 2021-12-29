@@ -9,8 +9,7 @@
         </ion-buttons>
         <ion-buttons slot="end" class="ion-margin-end">
           <ion-button href="/">
-            <ion-icon :icon="eyeOutline"></ion-icon>
-            <ion-note>Ver Resultados</ion-note>
+            <ion-icon :icon="podiumOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -97,8 +96,8 @@ import {
   arrowBackOutline,
   refreshOutline,
   handLeftOutline,
-  eyeOutline,
   paperPlaneOutline,
+  podiumOutline
 } from "ionicons/icons";
 
 import {
@@ -142,8 +141,8 @@ export default {
       arrowBackOutline,
       handLeftOutline,
       refreshOutline,
-      eyeOutline,
       paperPlaneOutline,
+      podiumOutline
     };
   },
 };
