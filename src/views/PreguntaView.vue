@@ -41,6 +41,7 @@
       </ion-card>
 
       <ion-card>
+        <br>
         <ion-list>
           <ion-card-subtitle class="ion-text-center">
             Selecciona tu respuesta
@@ -79,6 +80,7 @@
             </ion-item>
           </ion-radio-group>
         </ion-list>
+        <br><br>
       </ion-card>
 
       <ion-buttons class="ion-justify-content-center">
@@ -87,6 +89,7 @@
           <ion-label class="ion-text-center"> Enviar Respuesta </ion-label>
         </ion-button>
       </ion-buttons>
+      <br><br>
     </ion-content>
   </ion-page>
 </template>
