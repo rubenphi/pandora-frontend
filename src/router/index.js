@@ -33,6 +33,10 @@ const routes = [
       {
         path: 'pregunta',
         component: () => import('@/views/PreguntaView.vue')
+      },
+      {
+        path: 'resultado',
+        component: () => import('@/views/PreguntaResult.vue')
       }
     ]
   }
