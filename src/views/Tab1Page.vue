@@ -13,7 +13,7 @@
       </ion-header>
 
       <ion-list>
-        <ion-item v-for="miembro in miembros" :key="miembro.id" @click="changeMayus">
+        <ion-item v-for="miembro in miembros" :key="miembro.id" @click="changeMayus(miembro)">
           <ion-icon slot="start" :icon="personOutline"></ion-icon>
           <ion-label>{{miembro.nombre}}</ion-label>
         </ion-item>
@@ -68,7 +68,9 @@ export default {
             console.log('no existe');
           }
           mayus.value[miembro.id] =  miembro
-          console.log(mayus.value);
+          miembro.nombre = miembro.nombre.toUpperCase();
+          console.log(mayus.value.nombre);
+          console.log(miembro.nombre)
       },
       personOutline,
       miembros
