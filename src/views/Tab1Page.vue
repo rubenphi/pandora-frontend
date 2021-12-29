@@ -13,22 +13,11 @@
       </ion-header>
 
       <ion-list>
-        <ion-item>
+        <ion-item v-for="miembro in miembros" :key="miembro">
           <ion-icon slot="start" :icon="personOutline"></ion-icon>
-          <ion-label>Felipito</ion-label>
+          <ion-label>{{miembro}}</ion-label>
         </ion-item>
-        <ion-item>
-          <ion-icon slot="start" :icon="personOutline"></ion-icon>
-          <ion-label>Susanita</ion-label>
-        </ion-item>
-        <ion-item>
-          <ion-icon slot="start" :icon="personOutline"></ion-icon>
-          <ion-label>Mafalda</ion-label>
-        </ion-item>
-        <ion-item>
-          <ion-icon slot="start" :icon="personOutline"></ion-icon>
-          <ion-label>Guille</ion-label>
-        </ion-item>
+        
       </ion-list>
     </ion-content>
   </ion-page>
@@ -36,7 +25,7 @@
 
 <script>
 import { personOutline } from "ionicons/icons";
-
+import { ref } from "vue";
 import {
   IonLabel,
   IonItem,
@@ -62,6 +51,13 @@ export default {
     IonIcon,
   },
   setup() {
+    const miembros  = [
+      'Felipito',
+      'Susanita',
+      'Mafalda',
+      'Guille',
+
+    ]
     return {
       personOutline,
     };
