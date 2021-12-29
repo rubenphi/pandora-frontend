@@ -46,8 +46,9 @@
           <ion-card-subtitle class="ion-text-center">
             Selecciona tu respuesta
           </ion-card-subtitle>
+          <hr>
           <ion-radio-group value="biff">
-            <ion-item>
+            <ion-item lines="none">
               <ion-label class="ion-text-wrap"
                 >Demasiada información completa para poder rellenar más de una
                 línea, la idea es probar que esto funciona</ion-label
@@ -55,7 +56,7 @@
               <ion-radio slot="start" value="biff"></ion-radio>
             </ion-item>
 
-            <ion-item>
+            <ion-item lines="none">
               <ion-label class="ion-text-wrap"
                 >Demasiada información completa para poder rellenar más de una
                 línea, la idea es probar que esto funciona</ion-label
@@ -63,14 +64,14 @@
               <ion-radio slot="start" value="griff"></ion-radio>
             </ion-item>
 
-            <ion-item>
+            <ion-item lines="none">
               <ion-label class="ion-text-wrap"
                 >Demasiada información completa para poder rellenar más de una
                 línea, la idea es probar que esto funciona</ion-label
               >
               <ion-radio slot="start" value="buford"></ion-radio>
             </ion-item>
-            <ion-item>
+            <ion-item lines="none">
               <ion-label class="ion-text-wrap"
                 >Demasiada información completa para poder rellenar más de una
                 línea, la idea es probar que esto funciona</ion-label
