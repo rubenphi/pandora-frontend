@@ -25,7 +25,7 @@
 
 <script>
 import { personOutline } from "ionicons/icons";
-import { ref } from "vue";
+//import { ref } from "vue";
 import {
   IonLabel,
   IonItem,
@@ -60,6 +60,7 @@ export default {
     ]
     return {
       personOutline,
+      miembros
     };
   },
 };
