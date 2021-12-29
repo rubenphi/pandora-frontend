@@ -40,8 +40,7 @@
         </ion-card-content>
       </ion-card>
 
-      <ion-card>
-        <br>
+      <ion-card class="ion-padding-top ion-padding-bottom">
         <ion-list>
           <ion-card-subtitle class="ion-text-center">
             Selecciona tu respuesta
@@ -80,16 +79,15 @@
             </ion-item>
           </ion-radio-group>
         </ion-list>
-        <br><br>
       </ion-card>
 
-      <ion-buttons class="ion-justify-content-center">
+      <ion-buttons class="ion-justify-content-center ion-padding-top ion-padding-bottom">
         <ion-button expand="full" fill="outline" shape="round" color="primary" class="ion-align-self-center">
           <ion-icon slot="end" :icon="paperPlaneOutline"></ion-icon>
           <ion-label class="ion-text-center"> Enviar Respuesta </ion-label>
         </ion-button>
       </ion-buttons>
-      <br><br>
+      
     </ion-content>
   </ion-page>
 </template>
