@@ -9,24 +9,85 @@
         </ion-buttons>
         <ion-buttons slot="end" class="ion-margin-end">
           <ion-button href="/">
-            <ion-icon :icon="refreshOutline"></ion-icon>
+            <ion-icon :icon="podiumOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <ion-card href="/cuestionario">
+      <ion-card>
         <ion-card-header>
-          <ion-card-subtitle>Grupo 1</ion-card-subtitle>
-          <ion-card-title>
-            Respuesta:
-            <strong>A</strong>
-          </ion-card-title>
+          <ion-card-title class="ion-text-center"
+            >1. Primera Pregunta</ion-card-title
+          >
         </ion-card-header>
+      </ion-card>
+      <ion-card>
+        <ion-img
+          src="https://s1.significados.com/foto/897px-eugene-delacroix-le-28-juillet.-la-liberte-guidant-le-peuple_bg.jpg"
+        ></ion-img>
+      </ion-card>
+      <ion-card>
         <ion-card-content>
-          <ion-icon :icon="checkmarkOutline"></ion-icon>Obtuvo un total de 8 Puntos
+          El Romanticismo es un movimiento cultural que se originó en Alemania y
+          en Reino Unido a finales del siglo XVIII como una reacción
+          revolucionaria contra la Ilustración y el Neoclasicismo, confiriendo
+          prioridad a los sentimientos. Es considerado como el primer movimiento
+          de cultura que cubrió el mapa completo de Europa. En la mayoría de las
+          áreas estuvo en su apogeo en el período aproximado de 1800 a 1850.
+          Luego, cedió su lugar al positivismo, que fomenta el pensamiento
+          crítico y el empirismo como bases del conocimiento y la sociedad.
         </ion-card-content>
       </ion-card>
+
+      <ion-card class="ion-padding-top ion-padding-bottom">
+        <ion-list>
+          <ion-card-subtitle class="ion-text-center">
+            Selecciona tu respuesta
+          </ion-card-subtitle>
+          <hr>
+          <ion-radio-group value="biff">
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap"
+                >Demasiada información completa para poder rellenar más de una
+                línea, la idea es probar que esto funciona</ion-label
+              >
+              <ion-radio slot="start" value="biff"></ion-radio>
+            </ion-item>
+
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap"
+                >Demasiada información completa para poder rellenar más de una
+                línea, la idea es probar que esto funciona</ion-label
+              >
+              <ion-radio slot="start" value="griff"></ion-radio>
+            </ion-item>
+
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap"
+                >Demasiada información completa para poder rellenar más de una
+                línea, la idea es probar que esto funciona</ion-label
+              >
+              <ion-radio slot="start" value="buford"></ion-radio>
+            </ion-item>
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap"
+                >Demasiada información completa para poder rellenar más de una
+                línea, la idea es probar que esto funciona</ion-label
+              >
+              <ion-radio slot="start" value="Nanai"></ion-radio>
+            </ion-item>
+          </ion-radio-group>
+        </ion-list>
+      </ion-card>
+
+      <ion-buttons class="ion-justify-content-center ion-padding-top ion-padding-bottom">
+        <ion-button expand="full" fill="outline" shape="round" color="primary" class="ion-align-self-center">
+          <ion-icon slot="end" :icon="paperPlaneOutline"></ion-icon>
+          <ion-label class="ion-text-center"> Enviar Respuesta </ion-label>
+        </ion-button>
+      </ion-buttons>
+      
     </ion-content>
   </ion-page>
 </template>
@@ -35,49 +96,52 @@
 import {
   arrowBackOutline,
   refreshOutline,
-  checkmarkOutline
+  handLeftOutline,
+  paperPlaneOutline,
+  podiumOutline
 } from "ionicons/icons";
 
 import {
   IonIcon,
-  IonButtons,
-  IonButton,
-  IonCard,
-  IonCardContent,
-  IonCardHeader,
-  IonCardSubtitle,
-  IonCardTitle,
   IonPage,
   IonHeader,
   IonToolbar,
-  IonTitle,
-  IonContent
+  IonContent,
+  IonButtons,
+  IonButton,
+  IonCard,
+  IonCardTitle,
+  IonCardContent,
+  IonImg,
+  IonRadio,
+  IonRadioGroup,
+  IonCardSubtitle,
 } from "@ionic/vue";
 
 export default {
   components: {
+    IonHeader,
+    IonToolbar,
+    IonContent,
+    IonPage,
     IonIcon,
     IonButtons,
     IonButton,
     IonCard,
-    IonCardContent,
-    IonCardHeader,
-    IonCardSubtitle,
     IonCardTitle,
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonContent,
-    IonPage,
-    arrowBackOutline,
-    refreshOutline,
-    checkmarkOutline
+    IonCardContent,
+    IonImg,
+    IonRadioGroup,
+    IonRadio,
+    IonCardSubtitle,
   },
   setup() {
     return {
       arrowBackOutline,
+      handLeftOutline,
       refreshOutline,
-      checkmarkOutline
+      paperPlaneOutline,
+      podiumOutline
     };
   },
 };
