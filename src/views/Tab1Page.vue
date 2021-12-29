@@ -13,9 +13,9 @@
       </ion-header>
 
       <ion-list>
-        <ion-item v-for="miembro in miembros" :key="miembro">
+        <ion-item v-for="miembro in miembros" :key="miembro.id" @click="changeMayus">
           <ion-icon slot="start" :icon="personOutline"></ion-icon>
-          <ion-label>{{miembro}}</ion-label>
+          <ion-label>{{miembro.nombre}}</ion-label>
         </ion-item>
         
       </ion-list>
@@ -25,7 +25,7 @@
 
 <script>
 import { personOutline } from "ionicons/icons";
-//import { ref } from "vue";
+import { ref } from "vue";
 import {
   IonLabel,
   IonItem,
@@ -51,14 +51,25 @@ export default {
     IonIcon,
   },
   setup() {
-    const miembros  = [
-      'Felipito',
-      'Susanita',
-      'Mafalda',
-      'Guille',
+    const miembros  = ref([
+      {id: 1, nombre:'Felipito'},
+      {id: 2, nombre:'Susanita'},
+      {id: 3, nombre:'Mafalda'},
+      {id: 4, nombre:'Guille'}
+    ])
 
-    ]
+    const mayus = ref({})
+
     return {
+      changeMayus (miembro){
+          if ( miembro.id in miembros.value ) {
+            console.log('Existe');
+          } else {
+            console.log('no existe');
+          }
+          mayus.value[miembro.id] =  miembro
+          console.log(mayus.value);
+      },
       personOutline,
       miembros
     };
