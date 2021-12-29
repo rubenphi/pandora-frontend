@@ -41,6 +41,9 @@ import {
 } from "ionicons/icons";
 
 import {
+  IonIcon,
+  IonButtons,
+  IonButton,
   IonCard,
   IonCardContent,
   IonCardHeader,
@@ -55,6 +58,9 @@ import {
 
 export default {
   components: {
+    IonIcon,
+    IonButtons,
+    IonButton,
     IonCard,
     IonCardContent,
     IonCardHeader,
