@@ -70,7 +70,11 @@ export default {
     checkmarkOutline,
   },
   setup() {
-    return {};
+    return {
+      arrowBackOutline,
+      refreshOutline,
+      checkmarkOutline
+    };
   },
 };
 </script>
