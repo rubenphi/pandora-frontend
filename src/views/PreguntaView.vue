@@ -42,37 +42,56 @@
       </ion-card>
 
       <ion-card>
-
         <ion-list>
-    <ion-radio-group value="biff">
-      <ion-list-header>
-        <ion-label>Selecciona una respuesta</ion-label>
-      </ion-list-header>
+          <ion-radio-group value="biff">
+            <ion-list-header>
+              <ion-label>Selecciona una respuesta</ion-label>
+            </ion-list-header>
 
-      <ion-item>
-        <ion-label class="ion-text-wrap">Demasiada información completa para poder rellenar más de una línea, la idea es probar que esto funciona</ion-label>
-        <ion-radio slot="start" value="biff"></ion-radio>
-      </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap"
+                >Demasiada información completa para poder rellenar más de una
+                línea, la idea es probar que esto funciona</ion-label
+              >
+              <ion-radio slot="start" value="biff"></ion-radio>
+            </ion-item>
 
-      <ion-item>
-        <ion-label class="ion-text-wrap">Demasiada información completa para poder rellenar más de una línea, la idea es probar que esto funciona</ion-label>
-        <ion-radio slot="start" value="griff"></ion-radio>
-      </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap"
+                >Demasiada información completa para poder rellenar más de una
+                línea, la idea es probar que esto funciona</ion-label
+              >
+              <ion-radio slot="start" value="griff"></ion-radio>
+            </ion-item>
 
-      <ion-item>
-        <ion-label class="ion-text-wrap">Demasiada información completa para poder rellenar más de una línea, la idea es probar que esto funciona</ion-label>
-        <ion-radio slot="start" value="buford"></ion-radio>
-      </ion-item>
-      <ion-item>
-        <ion-label class="ion-text-wrap">Demasiada información completa para poder rellenar más de una línea, la idea es probar que esto funciona</ion-label>
-        <ion-radio slot="start" value="buford"></ion-radio>
-      </ion-item>
-    </ion-radio-group>
-  </ion-list>
+            <ion-item>
+              <ion-label class="ion-text-wrap"
+                >Demasiada información completa para poder rellenar más de una
+                línea, la idea es probar que esto funciona</ion-label
+              >
+              <ion-radio slot="start" value="buford"></ion-radio>
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap"
+                >Demasiada información completa para poder rellenar más de una
+                línea, la idea es probar que esto funciona</ion-label
+              >
+              <ion-radio slot="start" value="buford"></ion-radio>
+            </ion-item>
+          </ion-radio-group>
+        </ion-list>
 
-        <ion-item>
-  </ion-item>
+        <ion-item> </ion-item>
       </ion-card>
+
+      <ion-buttons slot="secondary">
+      <ion-button>
+        <ion-icon slot="end" :icon="paperPlaneOutline"></ion-icon>
+        <ion-label class="ion-text-center">
+          Enviar Respuesta
+        </ion-label>
+      </ion-button>
+      </ion-buttons>
     </ion-content>
   </ion-page>
 </template>
@@ -83,6 +102,7 @@ import {
   refreshOutline,
   handLeftOutline,
   eyeOutline,
+  paperPlaneOutline
 } from "ionicons/icons";
 
 import {
@@ -97,7 +117,9 @@ import {
   IonCardTitle,
   IonCardContent,
   IonImg,
-  IonNote
+  IonNote,
+  IonRadio,
+  IonRadioGroup
 } from "@ionic/vue";
 
 export default {
@@ -113,7 +135,9 @@ export default {
     IonCardTitle,
     IonCardContent,
     IonImg,
-    IonNote
+    IonNote,
+    IonRadioGroup,
+    IonRadio
   },
   setup() {
     return {
@@ -121,6 +145,7 @@ export default {
       handLeftOutline,
       refreshOutline,
       eyeOutline,
+      paperPlaneOutline
     };
   },
 };
