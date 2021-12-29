@@ -13,7 +13,7 @@
       </ion-header>
 
       <ion-list>
-        <ion-item v-for="miembro in miembros" :key="miembro.id" @click="changeMayus(miembro)">
+        <ion-item v-for="miembro in miembros" :key="miembro.id" >
           <ion-icon slot="start" :icon="personOutline"></ion-icon>
           <ion-label>{{miembro.nombre}}</ion-label>
         </ion-item>
