@@ -82,7 +82,7 @@
       </ion-card>
 
       <ion-buttons>
-        <ion-button shape="round" color="primary" class="ion-align-self-center">
+        <ion-button expand="full" fill="outline" shape="round" color="primary" class="ion-align-self-center">
           <ion-icon slot="end" :icon="paperPlaneOutline"></ion-icon>
           <ion-label class="ion-text-center"> Enviar Respuesta </ion-label>
         </ion-button>
