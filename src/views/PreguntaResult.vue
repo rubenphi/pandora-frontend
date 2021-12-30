@@ -21,10 +21,10 @@
     <ion-list>
     <ion-item lines="full" class="ion-padding-end">
           <ion-icon :icon="happyOutline" size="large" slot="start"></ion-icon>
-          <ion-label>Respuesta Grupo 1</ion-label>
+          <ion-label color="medium">Resultado Grupo 1</ion-label>
        <ion-note slot="end" >
       <ion-text color="success"><h6>Obtienen:+9</h6></ion-text>
-      <ion-text color="warning"><h6>Opción:B</h6></ion-text>
+      <ion-text color="warning"><h6>Respuesta:B</h6></ion-text>
           </ion-note>
       </ion-item>
   </ion-list>
