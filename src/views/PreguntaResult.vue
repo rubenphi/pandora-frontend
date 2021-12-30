@@ -19,7 +19,7 @@
     </ion-header>
     <ion-content :fullscreen="true"> 
     <ion-list>
-    <ion-item>
+    <ion-item lines="full">
       <ion-label slot="start" color="primary">Grupo</ion-label>
        <ion-note slot="end" >
       <p>Puntos Obtenidos: <span color="sucess">+9</span></p>
