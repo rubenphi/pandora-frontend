@@ -50,7 +50,6 @@ import {
   IonButton,
   IonCard,
   IonCardTitle,
-  IonCardContent,
   IonCardSubtitle,
 } from "@ionic/vue";
 
@@ -65,7 +64,6 @@ export default {
     IonButton,
     IonCard,
     IonCardTitle,
-    IonCardContent,
     IonCardSubtitle
   },
   setup() {
