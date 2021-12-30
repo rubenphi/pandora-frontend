@@ -20,10 +20,10 @@
     <ion-content :fullscreen="true"> 
     <ion-list>
     <ion-item>
-      <ion-label slot="start" :color="dark" >Grupo</ion-label>
+      <ion-label slot="start" color="primary">Grupo</ion-label>
        <ion-note slot="end" >
-      <p>Puntos Obtenidos: +9</p>
-      <p>Respuesta: B</p>
+      <p>Puntos Obtenidos: <span color="sucess">+9</span></p>
+      <p>Respuesta: <span color="danger">B</span></p>
     </ion-note>
       </ion-item>
   </ion-list>
