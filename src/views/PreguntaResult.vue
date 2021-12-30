@@ -21,11 +21,11 @@
     <ion-list>
     <ion-item lines="full">
       <ion-text slot="start" color="primary">
-          <h3>H3 Primary Title</h3>
+          <h3>Grupo 1</h3>
         </ion-text>
        <ion-note slot="end" >
-      <p>Puntos Obtenidos: <ion-text color="sucess">+9</ion-text></p>
-      <p>Respuesta: <ion-text color="danger">B</ion-text></p>
+      <p>Puntos Obtenidos: <ion-text color="success">+9</ion-text></p>
+      <p>Respuesta: <ion-text color="warning">B</ion-text></p>
     </ion-note>
       </ion-item>
   </ion-list>
