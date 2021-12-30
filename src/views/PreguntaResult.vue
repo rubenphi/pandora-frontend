@@ -28,7 +28,7 @@
           </ion-note>
         </ion-item>
         <ion-item lines="full" class="ion-padding-end">
-          <ion-icon :icon="happyOutline" size="large" slot="start"></ion-icon>
+          <ion-icon :icon="sadOutline" size="large" slot="start"></ion-icon>
           <ion-label color="medium">Resultado Grupo 2</ion-label>
           <ion-note slot="end">
             <ion-text color="danger"><h6>Obtienen: 0</h6></ion-text>
@@ -47,6 +47,7 @@ import {
   handLeftOutline,
   paperPlaneOutline,
   happyOutline,
+  sadOutline
 } from "ionicons/icons";
 
 import {
@@ -86,6 +87,7 @@ export default {
       paperPlaneOutline,
       refreshOutline,
       happyOutline,
+      sadOutline
     };
   },
 };
