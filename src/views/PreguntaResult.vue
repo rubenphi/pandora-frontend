@@ -6,12 +6,12 @@
           >1. Primera pregunta</ion-title
         >
         <ion-buttons slot="start" class="ion-margin-start">
-          <ion-button href="/cuestionario">
+          <ion-button href="/pregunta">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
         <ion-buttons slot="end" class="ion-margin-end">
-          <ion-button href="/">
+          <ion-button href="/resultado">
             <ion-icon :icon="refreshOutline"></ion-icon>
           </ion-button>
         </ion-buttons>

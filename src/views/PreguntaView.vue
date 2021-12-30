@@ -8,7 +8,7 @@
           </ion-button>
         </ion-buttons>
         <ion-buttons slot="end" class="ion-margin-end">
-          <ion-button href="/">
+          <ion-button href="/resultado">
             <ion-icon :icon="podiumOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
