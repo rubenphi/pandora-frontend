@@ -24,7 +24,7 @@
           <h3>Grupo 1</h3>
         </ion-text>
        <ion-note slot="end" >
-      <p>Puntos Obtenidos: <ion-text color="success"><h6></h6>+9</h6></ion-text></p>
+      <p>Puntos Obtenidos: <ion-text color="success"><h6>+9</h6></ion-text></p>
       <p>Respuesta: <ion-text color="warning">B</ion-text></p>
     </ion-note>
       </ion-item>
