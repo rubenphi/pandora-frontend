@@ -20,13 +20,13 @@
     <ion-content :fullscreen="true"> 
     <ion-list>
     <ion-item lines="full">
-      <ion-text slot="start" color="primary">
+      <ion-text slot="start" color="dark">
           <h3>Grupo 1</h3>
         </ion-text>
        <ion-note slot="end" >
-      <p>Puntos Obtenidos: <ion-text color="success"><h6>+9</h6></ion-text></p>
-      <p>Respuesta: <ion-text color="warning">B</ion-text></p>
-    </ion-note>
+      <ion-text color="success"><h5>+9</h5></ion-text>
+      <ion-text color="warning"><h5>B</h5></ion-text>
+          </ion-note>
       </ion-item>
   </ion-list>
     </ion-content>
