@@ -78,7 +78,6 @@ export default {
     return {
       arrowBackOutline,
       handLeftOutline,
-      refreshOutline,
       paperPlaneOutline,
       refreshOutline
     };
