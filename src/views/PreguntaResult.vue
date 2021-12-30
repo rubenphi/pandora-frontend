@@ -19,13 +19,13 @@
     </ion-header>
     <ion-content :fullscreen="true"> 
     <ion-list>
-    <ion-item lines="full">
+    <ion-item lines="full" class="ion-padding-end">
       <ion-text slot="start" color="dark">
           <h3>Grupo 1</h3>
         </ion-text>
        <ion-note slot="end" >
       <ion-text color="success"><h5>+9</h5></ion-text>
-      <ion-text color="warning"><h5>B</h5></ion-text>
+      <ion-text color="warning"><h5>&nbsp;B</h5></ion-text>
           </ion-note>
       </ion-item>
   </ion-list>
