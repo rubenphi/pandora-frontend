@@ -18,13 +18,13 @@
     <ion-content :fullscreen="true">
       <ion-card>
         <ion-card-header>
-<ion-card-subtitle color="dark"
-            >Grupo 1</ion-card-subtitle
+<ion-card-title color="dark"
+            >Grupo 1</ion-card-title
           >
-          <ion-card-title color="tertiary"
-            >Respuesta: A</ion-card-title
+          <ion-card-subtitle color="tertiary"
+            >Respuesta: A</ion-card-subtitle
           >
-<ion-card-subtitle color="success">Puntos obtenidos +8</ion-card-subtitle>
+<ion-card-title slot="end" color="success">+8</ion-card-title>
         </ion-card-header>
       </ion-card>
       
