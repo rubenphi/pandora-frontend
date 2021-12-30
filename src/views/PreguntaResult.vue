@@ -2,7 +2,9 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-<ion-title size="large" class="ion-text-center">1. Primera pregunta</ion-title>
+        <ion-title size="large" class="ion-text-center"
+          >1. Primera pregunta</ion-title
+        >
         <ion-buttons slot="start" class="ion-margin-start">
           <ion-button href="/cuestionario">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
@@ -15,19 +17,13 @@
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
-    <ion-content :fullscreen="true">
-      <ion-card>
-        <ion-card-header>
-<ion-card-title color="dark"
-            >Grupo 1</ion-card-title
-          >
-          <ion-card-subtitle color="tertiary"
-            >Respuesta: A</ion-card-subtitle
-          >
-<ion-card-title slot="end" color="success">+8</ion-card-title>
-        </ion-card-header>
-      </ion-card>
-      
+    <ion-content :fullscreen="true"> 
+    <ion-list>
+    <ion-item>
+      <ion-label :slot="start" :color="dark" >Grupo</ion-label>
+      <ion-label :slot="end" :color="sucess" >+8</ion-label>
+    </ion-item>
+  </ion-list>
     </ion-content>
   </ion-page>
 </template>
@@ -37,7 +33,7 @@ import {
   arrowBackOutline,
   refreshOutline,
   handLeftOutline,
-  paperPlaneOutline
+  paperPlaneOutline,
 } from "ionicons/icons";
 
 import {
@@ -48,9 +44,9 @@ import {
   IonContent,
   IonButtons,
   IonButton,
-  IonCard,
-  IonCardTitle,
-  IonCardSubtitle,
+  IonList,
+  IonItem,
+  IonLabel,
 } from "@ionic/vue";
 
 export default {
@@ -62,16 +58,16 @@ export default {
     IonIcon,
     IonButtons,
     IonButton,
-    IonCard,
-    IonCardTitle,
-    IonCardSubtitle
+    IonList,
+    IonItem,
+    IonLabel,
   },
   setup() {
     return {
       arrowBackOutline,
       handLeftOutline,
       paperPlaneOutline,
-      refreshOutline
+      refreshOutline,
     };
   },
 };
