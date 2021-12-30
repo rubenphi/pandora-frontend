@@ -9,7 +9,7 @@
         </ion-buttons>
         <ion-buttons slot="end" class="ion-margin-end">
           <ion-button href="/">
-            <ion-icon :icon="podiumOutline"></ion-icon>
+            <ion-icon :icon="refreshOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -98,7 +98,7 @@ import {
   refreshOutline,
   handLeftOutline,
   paperPlaneOutline,
-  podiumOutline
+  refreshOutline
 } from "ionicons/icons";
 
 import {
@@ -141,7 +141,7 @@ export default {
       handLeftOutline,
       refreshOutline,
       paperPlaneOutline,
-      podiumOutline
+      refreshOutline
     };
   },
 };
