@@ -2,6 +2,7 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
+<ion-title size="large" class="ion-text-center">1. Primera pregunta</ion-title>
         <ion-buttons slot="start" class="ion-margin-start">
           <ion-button href="/cuestionario">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
@@ -17,10 +18,10 @@
     <ion-content :fullscreen="true">
       <ion-card>
         <ion-card-header>
-<ion-card-subtitle class="ion-text-center"
+<ion-card-subtitle
             >Grupo 1.</ion-card-subtitle
           >
-          <ion-card-title class="ion-text-center"
+          <ion-card-title
             >Respuesta: A</ion-card-title
           >
 <ion-card-content>Puntos obtenidos +8</ion-card-content>
