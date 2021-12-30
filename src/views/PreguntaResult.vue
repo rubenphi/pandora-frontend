@@ -50,9 +50,6 @@ import {
   IonCard,
   IonCardTitle,
   IonCardContent,
-  IonImg,
-  IonRadio,
-  IonRadioGroup,
   IonCardSubtitle,
 } from "@ionic/vue";
 
@@ -68,10 +65,7 @@ export default {
     IonCard,
     IonCardTitle,
     IonCardContent,
-    IonImg,
-    IonRadioGroup,
-    IonRadio,
-    IonCardSubtitle,
+    IonCardSubtitle
   },
   setup() {
     return {
