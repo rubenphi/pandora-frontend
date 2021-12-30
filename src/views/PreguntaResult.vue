@@ -36,8 +36,7 @@ import {
   arrowBackOutline,
   refreshOutline,
   handLeftOutline,
-  paperPlaneOutline,
-  refreshOutline
+  paperPlaneOutline
 } from "ionicons/icons";
 
 import {
