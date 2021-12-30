@@ -20,9 +20,12 @@
     <ion-content :fullscreen="true"> 
     <ion-list>
     <ion-item>
-      <ion-label :slot="start" :color="dark" >Grupo</ion-label>
-      <ion-label :slot="end" :color="sucess" >+8</ion-label>
-    </ion-item>
+      <ion-label slot="start" :color="dark" >Grupo</ion-label>
+       <ion-note slot="end" >
+      <p>Puntos Obtenidos: +9</p>
+      <p>Respuesta: B</p>
+    </ion-note>
+      </ion-item>
   </ion-list>
     </ion-content>
   </ion-page>
@@ -47,6 +50,7 @@ import {
   IonList,
   IonItem,
   IonLabel,
+  IonNote
 } from "@ionic/vue";
 
 export default {
@@ -61,6 +65,7 @@ export default {
     IonList,
     IonItem,
     IonLabel,
+    IonNote
   },
   setup() {
     return {
