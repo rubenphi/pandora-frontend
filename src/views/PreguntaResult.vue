@@ -20,9 +20,8 @@
     <ion-content :fullscreen="true"> 
     <ion-list>
     <ion-item lines="full" class="ion-padding-end">
-      <ion-text slot="start" color="dark">
+          <ion-icon :icon="happyOutline" size="large" slot="start"></ion-icon>
           <ion-label>Respuesta Grupo 1</ion-label>
-        </ion-text>
        <ion-note slot="end" >
       <ion-text color="success"><h6>Obtienen:+9</h6></ion-text>
       <ion-text color="warning"><h6>Opción:B</h6></ion-text>
@@ -39,6 +38,7 @@ import {
   refreshOutline,
   handLeftOutline,
   paperPlaneOutline,
+  happyOutline
 } from "ionicons/icons";
 
 import {
@@ -77,6 +77,7 @@ export default {
       handLeftOutline,
       paperPlaneOutline,
       refreshOutline,
+      happyOutline
     };
   },
 };
