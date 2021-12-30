@@ -19,12 +19,12 @@
       <ion-card>
         <ion-card-header>
 <ion-card-subtitle
-            >Grupo 1.</ion-card-subtitle
+            >Grupo 1</ion-card-subtitle
           >
           <ion-card-title
             >Respuesta: A</ion-card-title
           >
-<ion-card-content>Puntos obtenidos +8</ion-card-content>
+<ion-card-subtitle>Puntos obtenidos +8</ion-card-subtitle>
         </ion-card-header>
       </ion-card>
       
