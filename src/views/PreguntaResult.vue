@@ -17,76 +17,15 @@
     <ion-content :fullscreen="true">
       <ion-card>
         <ion-card-header>
-          <ion-card-title class="ion-text-center"
-            >1. Primera Pregunta</ion-card-title
+<ion-card-subtitle class="ion-text-center"
+            >Grupo 1.</ion-card-subtitle
           >
+          <ion-card-title class="ion-text-center"
+            >Respuesta: A</ion-card-title
+          >
+<ion-card-content>Puntos obtenidos +8</ion-card-content>
         </ion-card-header>
       </ion-card>
-      <ion-card>
-        <ion-img
-          src="https://s1.significados.com/foto/897px-eugene-delacroix-le-28-juillet.-la-liberte-guidant-le-peuple_bg.jpg"
-        ></ion-img>
-      </ion-card>
-      <ion-card>
-        <ion-card-content>
-          El Romanticismo es un movimiento cultural que se originó en Alemania y
-          en Reino Unido a finales del siglo XVIII como una reacción
-          revolucionaria contra la Ilustración y el Neoclasicismo, confiriendo
-          prioridad a los sentimientos. Es considerado como el primer movimiento
-          de cultura que cubrió el mapa completo de Europa. En la mayoría de las
-          áreas estuvo en su apogeo en el período aproximado de 1800 a 1850.
-          Luego, cedió su lugar al positivismo, que fomenta el pensamiento
-          crítico y el empirismo como bases del conocimiento y la sociedad.
-        </ion-card-content>
-      </ion-card>
-
-      <ion-card class="ion-padding-top ion-padding-bottom">
-        <ion-list>
-          <ion-card-subtitle class="ion-text-center">
-            Selecciona tu respuesta
-          </ion-card-subtitle>
-          <hr>
-          <ion-radio-group value="biff">
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap"
-                >Demasiada información completa para poder rellenar más de una
-                línea, la idea es probar que esto funciona</ion-label
-              >
-              <ion-radio slot="start" value="biff"></ion-radio>
-            </ion-item>
-
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap"
-                >Demasiada información completa para poder rellenar más de una
-                línea, la idea es probar que esto funciona</ion-label
-              >
-              <ion-radio slot="start" value="griff"></ion-radio>
-            </ion-item>
-
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap"
-                >Demasiada información completa para poder rellenar más de una
-                línea, la idea es probar que esto funciona</ion-label
-              >
-              <ion-radio slot="start" value="buford"></ion-radio>
-            </ion-item>
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap"
-                >Demasiada información completa para poder rellenar más de una
-                línea, la idea es probar que esto funciona</ion-label
-              >
-              <ion-radio slot="start" value="Nanai"></ion-radio>
-            </ion-item>
-          </ion-radio-group>
-        </ion-list>
-      </ion-card>
-
-      <ion-buttons class="ion-justify-content-center ion-padding-top ion-padding-bottom">
-        <ion-button expand="full" fill="outline" shape="round" color="primary" class="ion-align-self-center">
-          <ion-icon slot="end" :icon="paperPlaneOutline"></ion-icon>
-          <ion-label class="ion-text-center"> Enviar Respuesta </ion-label>
-        </ion-button>
-      </ion-buttons>
       
     </ion-content>
   </ion-page>
