@@ -17,17 +17,25 @@
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
-    <ion-content :fullscreen="true"> 
-    <ion-list>
-    <ion-item lines="full" class="ion-padding-end">
+    <ion-content :fullscreen="true">
+      <ion-list>
+        <ion-item lines="full" class="ion-padding-end">
           <ion-icon :icon="happyOutline" size="large" slot="start"></ion-icon>
           <ion-label color="medium">Resultado Grupo 1</ion-label>
-       <ion-note slot="end" >
-      <ion-text color="success"><h6>Obtienen:+9</h6></ion-text>
-      <ion-text color="warning"><h6>Respuesta:B</h6></ion-text>
+          <ion-note slot="end">
+            <ion-text color="success"><h6>Obtienen: +9</h6></ion-text>
+            <ion-text color="warning"><h6>Respuesta: B</h6></ion-text>
           </ion-note>
-      </ion-item>
-  </ion-list>
+        </ion-item>
+        <ion-item lines="full" class="ion-padding-end">
+          <ion-icon :icon="happyOutline" size="large" slot="start"></ion-icon>
+          <ion-label color="medium">Resultado Grupo 2</ion-label>
+          <ion-note slot="end">
+            <ion-text color="danger"><h6>Obtienen: 0</h6></ion-text>
+            <ion-text color="warning"><h6>Respuesta: B</h6></ion-text>
+          </ion-note>
+        </ion-item>
+      </ion-list>
     </ion-content>
   </ion-page>
 </template>
@@ -38,7 +46,7 @@ import {
   refreshOutline,
   handLeftOutline,
   paperPlaneOutline,
-  happyOutline
+  happyOutline,
 } from "ionicons/icons";
 
 import {
@@ -53,7 +61,7 @@ import {
   IonItem,
   IonNote,
   IonText,
-  IonLabel
+  IonLabel,
 } from "@ionic/vue";
 
 export default {
@@ -69,7 +77,7 @@ export default {
     IonItem,
     IonNote,
     IonText,
-    IonLabel
+    IonLabel,
   },
   setup() {
     return {
@@ -77,7 +85,7 @@ export default {
       handLeftOutline,
       paperPlaneOutline,
       refreshOutline,
-      happyOutline
+      happyOutline,
     };
   },
 };
