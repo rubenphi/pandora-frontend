@@ -21,11 +21,11 @@
     <ion-list>
     <ion-item lines="full" class="ion-padding-end">
       <ion-text slot="start" color="dark">
-          <h5>Respuesta de Grupo 1</h5>
+          <ion-label>Respuesta Grupo 1</ion-label>
         </ion-text>
        <ion-note slot="end" >
-      <ion-text color="success"><h6>Obtienen: +9</h6></ion-text>
-      <ion-text color="warning"><h6>Opción: B</h6></ion-text>
+      <ion-text color="success"><h6>Obtienen:+9</h6></ion-text>
+      <ion-text color="warning"><h6>Opción:B</h6></ion-text>
           </ion-note>
       </ion-item>
   </ion-list>
@@ -52,7 +52,8 @@ import {
   IonList,
   IonItem,
   IonNote,
-  IonText
+  IonText,
+  IonLabel
 } from "@ionic/vue";
 
 export default {
@@ -67,7 +68,8 @@ export default {
     IonList,
     IonItem,
     IonNote,
-    IonText
+    IonText,
+    IonLabel
   },
   setup() {
     return {
