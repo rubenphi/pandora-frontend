@@ -57,7 +57,7 @@ import {
   IonItem,
   //IonNote,
   IonText,
-  //IonLabel,
+  IonLabel,
 } from "@ionic/vue";
 
 export default {
@@ -73,7 +73,7 @@ export default {
     IonItem,
     //IonNote,
     IonText,
-    //IonLabel,
+    IonLabel,
   },
   setup() {
 
