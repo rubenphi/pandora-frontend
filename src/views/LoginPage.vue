@@ -10,7 +10,7 @@
         <ion-row>
           <ion-col size="2"> </ion-col>
           <ion-col size="8"
-            >s
+            >
             <ion-card class="ion-padding">
               <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
               <svg
@@ -20,8 +20,7 @@
                 xmlns:xlink="http://www.w3.org/1999/xlink"
                 x="0px"
                 y="0px"
-                width="612px"
-                height="612px"
+      
                 viewBox="0 0 612 612"
                 style="enable-background: new 0 0 612 612"
                 xml:space="preserve"
