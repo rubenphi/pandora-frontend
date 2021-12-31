@@ -12,8 +12,8 @@
           <ion-col size="8"
             >
             <ion-card class="ion-padding">
+              <ion-img width="10%"></ion-img>
               <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-              <ion-img width="10%">
               <svg
                 version="1.1"
                 id="Capa_1"
