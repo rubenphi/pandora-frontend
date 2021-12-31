@@ -19,8 +19,8 @@
     </ion-header>
     <ion-content :fullscreen="true">
       <ion-list>
-        <ion-item  lines="full" class="ion-padding-end ion-text-center">
-        <ion-icon :icon="starOutline"></ion-icon> <h4> Ganador </h4> <ion-icon :icon="starOutline"></ion-icon>
+        <ion-item  lines="full" class="ion-padding-end">
+        <ion-text class="ion-text-center"><ion-icon :icon="starOutline"></ion-icon> <h4> Ganador </h4> <ion-icon :icon="starOutline"></ion-icon></ion-text>
         </ion-item>
       </ion-list>
     </ion-content>
@@ -51,7 +51,7 @@ import {
   IonItem,
   //IonNote,
   //IonText,
-  //IonLabel,
+  IonLabel,
 } from "@ionic/vue";
 
 export default {
@@ -66,7 +66,7 @@ export default {
     IonList,
     IonItem,
     //IonNote,
-    //IonText,
+    IonText,
     //IonLabel,
   },
   setup() {
