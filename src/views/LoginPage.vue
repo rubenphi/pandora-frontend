@@ -7,16 +7,17 @@
     </ion-header>
     <ion-content :fullscreen="true">
       <ion-grid>
-        <ion-row>
-          <ion-col size="2"> </ion-col>
-          <ion-col size="8">
+        <ion-row class="ion-align-items-center">
+          <ion-col size="1"> </ion-col>
+          <ion-col size="10">
             <ion-card class="ion-padding">
               <ion-grid>
                 <ion-row>
-                  <ion-col size="4"> </ion-col>
-                  <ion-col size="4">
+                  <ion-col size="3"> </ion-col>
+                  <ion-col size="6">
                     <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
                     <svg
+                      color="primary"
                       version="1.1"
                       id="Capa_1"
                       xmlns="http://www.w3.org/2000/svg"
@@ -46,7 +47,7 @@
                       </g>
                     </svg>
                   </ion-col>
-                  <ion-col size="4"> </ion-col>
+                  <ion-col size="3"> </ion-col>
                 </ion-row>
                 </ion-grid>
             
