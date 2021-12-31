@@ -13,8 +13,8 @@
             <ion-card class="ion-padding">
               <ion-grid>
                 <ion-row>
-                  <ion-col size="2"> </ion-col>
-                  <ion-col size="8">
+                  <ion-col size="4"> </ion-col>
+                  <ion-col size="4">
                     <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
                     <svg
                       version="1.1"
@@ -46,7 +46,7 @@
                       </g>
                     </svg>
                   </ion-col>
-                  <ion-col size="2"> </ion-col>
+                  <ion-col size="4"> </ion-col>
                 </ion-row>
                 </ion-grid>
             
