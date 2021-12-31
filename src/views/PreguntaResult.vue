@@ -27,7 +27,7 @@
           <ion-label color="medium">{{respuesta.grupo}}</ion-label>
           <ion-note slot="end">
             <ion-text v-if="respuesta.puntaje > 0" color="success"><h6>Obtienen: +{{respuesta.puntaje}}</h6></ion-text>
-            <ion-text v-else color="danger"><h6>Obtienen: +{{respuesta.puntaje}}</h6></ion-text>
+            <ion-text v-else color="danger"><h6>Obtienen: {{respuesta.puntaje}}</h6></ion-text>
             <ion-text color="warning"><h6>Respuesta: {{respuesta.opcion}}</h6></ion-text>
           </ion-note>
         </ion-item>
