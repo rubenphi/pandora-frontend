@@ -21,7 +21,7 @@
           <ion-card-title class="ion-text-center"
             >Romanticismo y Realismo</ion-card-title
           >
-          <ion-card-subtitle class="ion-text-center"
+          <ion-card-subtitle class="ion-text-center" href="/ganadores"
             >Ver Resultados</ion-card-subtitle
           >
         </ion-card-header>

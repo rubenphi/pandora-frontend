@@ -37,6 +37,10 @@ const routes = [
       {
         path: 'resultado',
         component: () => import('@/views/PreguntaResult.vue')
+      },
+      {
+        path: 'ganadores',
+        component: () => import('@/views/CuestionarioResult.vue')
       }
     ]
   }
