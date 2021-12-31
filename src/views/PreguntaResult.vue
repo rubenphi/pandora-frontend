@@ -20,7 +20,8 @@
     <ion-content :fullscreen="true">
       <ion-list>
         <ion-item v-for="(respuesta, index) in respuestas" :key="respuesta.id" lines="full" class="ion-padding-end">
-          <ion-icon v-if="respuesta.puntaje > 0" :icon="happyOutline" size="large" slot="start"></ion-icon>
+          <ion-icon v-if="index === 0" :icon="ribbonOutline" size="large" slot="start"></ion-icon>
+          <ion-icon v-else-if="respuesta.puntaje > 0" :icon="happyOutline" size="large" slot="start"></ion-icon>
           <ion-icon v-else :icon="sadOutline" size="large" slot="start"></ion-icon>
           
           <ion-label color="medium">Resultado {{respuesta.grupo}}</ion-label>
@@ -42,7 +43,8 @@ import {
   handLeftOutline,
   paperPlaneOutline,
   happyOutline,
-  sadOutline
+  sadOutline,
+  ribbonOutline
 } from "ionicons/icons";
 import { ref } from "vue";
 import {
@@ -79,7 +81,7 @@ export default {
 
     const respuestas = ref([
       {id: 1, grupo:'Grupo 2', puntaje:9, opcion:"B"},
-      {id: 2, grupo:'Grupon 3', puntaje:6, opcion:"B"},
+      {id: 2, grupo:'Grupo 3', puntaje:6, opcion:"B"},
       {id: 3, grupo:'Grupo 1', puntaje:0, opcion:"C"}
      
 ])
@@ -91,7 +93,8 @@ export default {
       paperPlaneOutline,
       refreshOutline,
       happyOutline,
-      sadOutline
+      sadOutline,
+      ribbonOutline
     };
   },
 };
