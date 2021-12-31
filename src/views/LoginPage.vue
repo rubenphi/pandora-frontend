@@ -8,24 +8,28 @@
     <ion-content :fullscreen="true">
       <ion-grid>
         <ion-row>
-          <ion-col size="2">
-          </ion-col>
+          <ion-col size="2"> </ion-col>
           <ion-col size="8">
-            <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-              <svg
-                version="1.1"
-                id="Capa_1"
-                xmlns="http://www.w3.org/2000/svg"
-                xmlns:xlink="http://www.w3.org/1999/xlink"
-                x="0px"
-                y="0px"
-                viewBox="0 0 612 612"
-                style="enable-background: new 0 0 612 612"
-                xml:space="preserve"
-              >
-                <g>
-                  <path
-                    d="M612,167.008c0-0.252-1.479-0.49-1.509-0.735c-0.044-0.394-0.765-0.788-0.869-1.167c-0.082-0.297-0.579-0.565-0.698-0.847
+            <ion-card class="ion-padding">
+              <ion-row>
+                <ion-row>
+                  <ion-col size="2"> </ion-col>
+                  <ion-col size="8">
+                    <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+                    <svg
+                      version="1.1"
+                      id="Capa_1"
+                      xmlns="http://www.w3.org/2000/svg"
+                      xmlns:xlink="http://www.w3.org/1999/xlink"
+                      x="0px"
+                      y="0px"
+                      viewBox="0 0 612 612"
+                      style="enable-background: new 0 0 612 612"
+                      xml:space="preserve"
+                    >
+                      <g>
+                        <path
+                          d="M612,167.008c0-0.252-1.479-0.49-1.509-0.735c-0.044-0.394-0.765-0.788-0.869-1.167c-0.082-0.297-0.579-0.565-0.698-0.847
 		c-0.134-0.312-0.409-0.632-0.58-0.921c-0.163-0.29-0.49-0.535-0.698-0.795c-0.186-0.245-0.408-0.498-0.624-0.721
 		c-0.253-0.245-0.572-0.438-0.854-0.646c-0.201-0.156-0.394-0.334-0.617-0.468c-0.044-0.022-0.097-0.029-0.134-0.059
 		c-0.066-0.03-0.118-0.089-0.178-0.119L431.233,68.96l-20.412-11.035c-0.595-0.319-1.233-0.542-1.873-0.691L304.986,2.529
@@ -38,21 +42,14 @@
 		l89.168,52.684v97.089l25.22-6.97l20.65,34.367l33.55-8.36l31.833,44.124l1.152-96.458l73.363,42.08v252.369L17.544,432.262
 		V179.863z M307.341,338.434l289.798-158.697v252.487L307.341,590.922V338.434z M301.575,325.542l-73.363-41.634l281.69-156.758
 		l76.269,40.125L301.575,325.542z M301.56,17.517l89.726,47.215L111.275,217.544l-88.589-50.269L301.56,17.517z"
-                  />
-                </g>
-              </svg>
-          </ion-col>
-          <ion-col size="2">
-          </ion-col>
-        </ion-row>
-        <ion-row>
-          <ion-col size="2"> </ion-col>
-          <ion-col size="8"
-            >
-            <ion-card class="ion-padding">
-            
-              
-            
+                        />
+                      </g>
+                    </svg>
+                  </ion-col>
+                  <ion-col size="2"> </ion-col>
+                </ion-row>
+              </ion-row>
+
               <ion-item>
                 <ion-label position="floating">Usuario</ion-label>
                 <ion-input placeholder="Código de estudiante"></ion-input>
@@ -99,7 +96,7 @@ import {
   IonItem,
   IonLabel,
   IonInput,
-  IonButton
+  IonButton,
 } from "@ionic/vue";
 export default {
   components: {
@@ -115,7 +112,7 @@ export default {
     IonItem,
     IonLabel,
     IonInput,
-    IonButton
+    IonButton,
   },
 };
 </script>
