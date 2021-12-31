@@ -23,7 +23,7 @@
         <ion-icon size="small" slot="start" :icon="starOutline"></ion-icon>
         <ion-icon slot="start" :icon="starOutline"></ion-icon>
        
-        <ion-text class="ion-text-center"> <h4> Ganador </h4> </ion-text>
+        <ion-text > <h4 class="ion-text-center"> Ganador </h4> </ion-text>
         
         <ion-icon slot="end" :icon="starOutline"></ion-icon>
         <ion-icon size="small" slot="end" :icon="starOutline"></ion-icon>
