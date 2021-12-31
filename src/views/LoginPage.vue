@@ -18,7 +18,7 @@
                   <ion-col size="6">
                     <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
                     <svg
-                      class="--ion-color-primary"
+                      class="color"
                       version="1.1"
                       id="Capa_1"
                       xmlns="http://www.w3.org/2000/svg"
@@ -51,13 +51,13 @@
                   <ion-col size="3"> </ion-col>
                 </ion-row>
               </ion-grid>
-
+<ion-text color="medium"><h3> PANDORA </h3></ion-text>
               <ion-item>
-                <ion-label position="floating">Usuario</ion-label>
+                <ion-label color="medium" position="floating">Usuario</ion-label>
                 <ion-input placeholder="Código de estudiante"></ion-input>
               </ion-item>
               <ion-item>
-                <ion-label position="floating">Clave</ion-label>
+                <ion-label color="medium" position="floating">Clave</ion-label>
                 <ion-input placeholder="Documento de identidad"></ion-input>
               </ion-item>
               <ion-buttons
@@ -102,6 +102,7 @@ import {
   IonLabel,
   IonInput,
   IonButton,
+  IonText
 } from "@ionic/vue";
 export default {
   components: {
@@ -118,6 +119,7 @@ export default {
     IonLabel,
     IonInput,
     IonButton,
+    IonText
   },
 };
 </script>
@@ -141,5 +143,9 @@ export default {
   line-height: 22px;
   color: #8c8c8c;
   margin: 0;
+}
+
+#color{
+  fill:#6a64ff;
 }
 </style>
