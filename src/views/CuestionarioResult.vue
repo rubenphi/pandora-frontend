@@ -18,20 +18,23 @@
     <ion-content :fullscreen="true">
       <ion-list>
         <ion-item lines="full" class="ion-text-center ion-text-wrap">
-          <ion-icon size="small" slot="start" :icon="starOutline"></ion-icon>
-          <ion-icon slot="start" :icon="starOutline"></ion-icon>
+          <ion-icon size="small" slot="start" :icon="ribbonOutline"></ion-icon>
+          <ion-icon slot="start" :icon="ribbonOutline"></ion-icon>
 
           <ion-label
             ><ion-text color="medium">
               GANADOR
             </ion-text><br>
             <ion-note>
-              <ion-text color="success">45 puntos</ion-text>
+              <ion-text color="warning"><p>
+                Grupo 1
+              </p></ion-text>
+              <ion-text color="success"><p>45 puntos</p></ion-text>
             </ion-note></ion-label
           >
 
-          <ion-icon slot="end" :icon="starOutline"></ion-icon>
-          <ion-icon size="small" slot="end" :icon="starOutline"></ion-icon>
+          <ion-icon slot="end" :icon="ribbonOutline"></ion-icon>
+          <ion-icon size="small" slot="end" :icon="ribbonOutline"></ion-icon>
         </ion-item>
       </ion-list>
     </ion-content>
