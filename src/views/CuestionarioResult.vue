@@ -3,15 +3,15 @@
     <ion-header>
       <ion-toolbar>
         <ion-title size="large" class="ion-text-center"
-          >1. Primera pregunta</ion-title
+          >20-03-2011</ion-title
         >
         <ion-buttons slot="start" class="ion-margin-start">
-          <ion-button href="/pregunta">
+          <ion-button href="/cuestionario">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
         <ion-buttons slot="end" class="ion-margin-end">
-          <ion-button href="/resultado">
+          <ion-button href="/ganadores">
             <ion-icon :icon="refreshOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -19,17 +19,8 @@
     </ion-header>
     <ion-content :fullscreen="true">
       <ion-list>
-        <ion-item v-for="(respuesta, index) in respuestas" :key="respuesta.id" lines="full" class="ion-padding-end">
-          <ion-icon v-if="index === 0" :icon="ribbonOutline" size="large" slot="start"></ion-icon>
-          <ion-icon v-else-if="respuesta.puntaje > 0" :icon="happyOutline" size="large" slot="start"></ion-icon>
-          <ion-icon v-else :icon="sadOutline" size="large" slot="start"></ion-icon>
-          
-          <ion-label color="medium">{{respuesta.grupo}}</ion-label>
-          <ion-note slot="end">
-            <ion-text v-if="respuesta.puntaje > 0" color="success"><h6>Obtienen: +{{respuesta.puntaje}}</h6></ion-text>
-            <ion-text v-else color="danger"><h6>Obtienen: +{{respuesta.puntaje}}</h6></ion-text>
-            <ion-text color="warning"><h6>Respuesta: {{respuesta.opcion}}</h6></ion-text>
-          </ion-note>
+        <ion-item  lines="full" class="ion-padding-end ion-text-center">
+        <ion-icon :icon="starOutline"></ion-icon> <h4> Ganador </h4> <ion-icon :icon="starOutline"></ion-icon>
         </ion-item>
       </ion-list>
     </ion-content>
@@ -44,7 +35,8 @@ import {
   paperPlaneOutline,
   happyOutline,
   sadOutline,
-  ribbonOutline
+  ribbonOutline,
+  starOutline
 } from "ionicons/icons";
 import { ref } from "vue";
 import {
@@ -94,7 +86,8 @@ export default {
       refreshOutline,
       happyOutline,
       sadOutline,
-      ribbonOutline
+      ribbonOutline,
+      starOutline
     };
   },
 };
