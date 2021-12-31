@@ -53,7 +53,7 @@
                 </ion-row>
                 <ion-row>
                   <ion-col >
-                    <div class="ion-text-start"> <ion-text color="medium"><h3> PANDORA </h3></ion-text> </div>
+                    <div class="ion-text-center"> <ion-text color="medium"><h3> PANDORA </h3></ion-text> </div>
                     
                   </ion-col>
                 </ion-row>
