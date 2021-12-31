@@ -12,7 +12,7 @@
           <ion-col size="8"
             >
             <ion-card class="ion-padding">
-              <ion-img width="10%"></ion-img>
+              <ion-img width="10%">
               <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
               <svg
                 version="1.1"
