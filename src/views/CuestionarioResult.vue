@@ -25,9 +25,9 @@
           <ion-label color="medium">
             {{respuesta.grupo}}</ion-label>
           <ion-note slot="end">
+            <ion-text v-if="index === 0" color="warning"><h6><ion-icon :icon="starOutline"></ion-icon>GANADOR<ion-icon :icon="starOutline"></ion-icon></h6></ion-text>
             <ion-text v-if="respuesta.puntaje > 0" color="success"><h6>Total Puntos: {{respuesta.puntaje}}</h6></ion-text>
             <ion-text v-else color="danger"><h6>Total Puntos: {{respuesta.puntaje}}</h6></ion-text>
-            <ion-text v-if="index === 0" color="warning"><h6>Ganador</h6></ion-text>
           </ion-note>
         </ion-item>
       </ion-list>
