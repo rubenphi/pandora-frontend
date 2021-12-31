@@ -5,9 +5,9 @@
         <ion-title>Inicio</ion-title>
       </ion-toolbar>
     </ion-header>
-    <ion-content :fullscreen="true">
+    <ion-content class="ion-padding">
       <ion-grid>
-        <ion-row class="ion-align-items-start"> <ion-col></ion-col></ion-row>
+        <ion-row class="ion-align-items-start"> <ion-col>&nbsp;</ion-col></ion-row>
         <ion-row class="ion-align-items-center">
           <ion-col size="1"> </ion-col>
           <ion-col size="10">
@@ -80,7 +80,7 @@
           <ion-col size="2"> </ion-col>
         </ion-row>
         <ion-row class="ion-align-items-end">
-          <ion-col></ion-col>
+          <ion-col>&nbsp;</ion-col>
         </ion-row>
       </ion-grid>
     </ion-content>
