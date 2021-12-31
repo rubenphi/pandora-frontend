@@ -19,11 +19,11 @@
     </ion-header>
     <ion-content :fullscreen="true">
       <ion-list>
-        <ion-item  lines="full" class="ion-padding-end">
+        <ion-item  lines="full" class="ion-padding-end ion-text-center">
         <ion-icon size="small" slot="start" :icon="starOutline"></ion-icon>
         <ion-icon slot="start" :icon="starOutline"></ion-icon>
        
-        <ion-text > <h4 class="ion-text-center"> Ganador </h4> </ion-text>
+        <ion-text > Ganador </ion-text>
         
         <ion-icon slot="end" :icon="starOutline"></ion-icon>
         <ion-icon size="small" slot="end" :icon="starOutline"></ion-icon>
