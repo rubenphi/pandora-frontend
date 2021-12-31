@@ -50,8 +50,8 @@ import {
   IonList,
   IonItem,
   //IonNote,
-  //IonText,
-  IonLabel,
+  IonText,
+  //IonLabel,
 } from "@ionic/vue";
 
 export default {
