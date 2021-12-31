@@ -24,11 +24,11 @@
           <ion-icon v-else-if="respuesta.puntaje > 0" :icon="happyOutline" size="large" slot="start"></ion-icon>
           <ion-icon v-else :icon="sadOutline" size="large" slot="start"></ion-icon>
           
-          <ion-label color="medium">Resultado {{respuesta.grupo}}</ion-label>
+          <ion-label color="medium">{{respuesta.grupo}}</ion-label>
           <ion-note slot="end">
             <ion-text v-if="respuesta.puntaje > 0" color="success"><h6>Obtienen: +{{respuesta.puntaje}}</h6></ion-text>
             <ion-text v-else color="danger"><h6>Obtienen: +{{respuesta.puntaje}}</h6></ion-text>
-            <ion-text color="warning"><h6>Respuesta: {{index}}</h6></ion-text>
+            <ion-text color="warning"><h6>Respuesta: {{respuesta.opcion}}</h6></ion-text>
           </ion-note>
         </ion-item>
       </ion-list>
