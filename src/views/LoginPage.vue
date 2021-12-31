@@ -11,7 +11,7 @@
           <ion-col size="2"> </ion-col>
           <ion-col size="8">
             <ion-card class="ion-padding">
-              <ion-row>
+              <ion-grid>
                 <ion-row>
                   <ion-col size="2"> </ion-col>
                   <ion-col size="8">
@@ -48,7 +48,8 @@
                   </ion-col>
                   <ion-col size="2"> </ion-col>
                 </ion-row>
-              </ion-row>
+                </ion-grid>
+            
 
               <ion-item>
                 <ion-label position="floating">Usuario</ion-label>
