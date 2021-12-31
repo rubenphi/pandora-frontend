@@ -10,7 +10,7 @@
         <ion-row>
           <ion-col size="2"> </ion-col>
           <ion-col size="8">
-            <ion-card>
+            <ion-card class="ion-padding">
               <ion-item>
                 <ion-label position="floating">Usuario</ion-label>
                 <ion-input placeholder="Código de estudiante"></ion-input>
@@ -19,6 +19,11 @@
                 <ion-label position="floating">Clave</ion-label>
                 <ion-input placeholder="Documento de identidad"></ion-input>
               </ion-item>
+              <ion-buttons class="ion-justify-content-center ion-padding-top ion-padding-bottom">
+        <ion-button expand="full" fill="outline" shape="round" color="primary" class="ion-align-self-center">
+          <ion-label class="ion-text-center"> Enviar Respuesta </ion-label>
+        </ion-button>
+      </ion-buttons>
             </ion-card>
           </ion-col>
           <ion-col size="2"> </ion-col>
@@ -42,6 +47,7 @@ import {
   IonItem,
   IonLabel,
   IonInput,
+  IonButton
 } from "@ionic/vue";
 export default {
   components: {
@@ -57,6 +63,7 @@ export default {
     IonItem,
     IonLabel,
     IonInput,
+    IonButton
   },
 };
 </script>
