@@ -41,6 +41,10 @@ const routes = [
       {
         path: 'ganadores',
         component: () => import('@/views/CuestionarioResult.vue')
+      },
+      {
+        path: 'login',
+        component: () => import('@/views/LoginPage.vue')
       }
     ]
   }
