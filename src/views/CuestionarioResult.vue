@@ -17,14 +17,17 @@
     </ion-header>
     <ion-content :fullscreen="true">
       <ion-list>
-        <ion-item lines="full" class="ion-text-center">
+        <ion-item lines="full" class="ion-text-center ion-text-wrap">
           <ion-icon size="small" slot="start" :icon="starOutline"></ion-icon>
           <ion-icon slot="start" :icon="starOutline"></ion-icon>
 
           <ion-label
-            ><ion-text color="primary">
-              <h2>GANADOR</h2>
-            </ion-text></ion-label
+            ><ion-text color="medium">
+              GANADOR
+            </ion-text><br>
+            <ion-note>
+              <ion-text color="success">45 puntos</ion-text>
+            </ion-note></ion-label
           >
 
           <ion-icon slot="end" :icon="starOutline"></ion-icon>
