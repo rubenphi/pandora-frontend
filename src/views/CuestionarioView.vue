@@ -18,10 +18,10 @@
     <ion-content :fullscreen="true">
       <ion-card>
         <ion-card-header>
-          <ion-card-title class="ion-text-center"
+          <ion-card-title class="ion-text-center" href="/ganadores"
             >Romanticismo y Realismo</ion-card-title
           >
-          <ion-card-subtitle class="ion-text-center" href="/ganadores"
+          <ion-card-subtitle class="ion-text-center" 
             >Ver Resultados</ion-card-subtitle
           >
         </ion-card-header>
