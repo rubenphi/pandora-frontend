@@ -10,7 +10,7 @@
         <ion-row class="ion-align-items-start"> <ion-col>&nbsp;</ion-col></ion-row>
         <ion-row class="ion-align-items-center">
           <ion-col size="1"> </ion-col>
-          <ion-col size="10">
+          <ion-col size="10" class="ion-align-items-center">
             <ion-card class="ion-padding">
               <ion-grid>
                 <ion-row>
@@ -18,6 +18,7 @@
                   <ion-col size="6">
                     <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
                     <svg
+                      fill="#6a64ff"
                       class="color"
                       version="1.1"
                       id="Capa_1"
@@ -145,7 +146,5 @@ export default {
   margin: 0;
 }
 
-#color{
-  fill:#6a64ff;
-}
+
 </style>
