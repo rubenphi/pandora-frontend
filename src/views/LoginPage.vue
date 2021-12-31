@@ -13,6 +13,7 @@
             >
             <ion-card class="ion-padding">
               <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+              <ion-img width="10%">
               <svg
                 version="1.1"
                 id="Capa_1"
@@ -20,8 +21,6 @@
                 xmlns:xlink="http://www.w3.org/1999/xlink"
                 x="0px"
                 y="0px"
-                width="10%"
-                height="10%"
                 viewBox="0 0 612 612"
                 style="enable-background: new 0 0 612 612"
                 xml:space="preserve"
@@ -44,6 +43,7 @@
                   />
                 </g>
               </svg>
+              </ion-img>
               <ion-item>
                 <ion-label position="floating">Usuario</ion-label>
                 <ion-input placeholder="Código de estudiante"></ion-input>
@@ -91,6 +91,7 @@ import {
   IonLabel,
   IonInput,
   IonButton,
+  IonImg
 } from "@ionic/vue";
 export default {
   components: {
@@ -107,6 +108,7 @@ export default {
     IonLabel,
     IonInput,
     IonButton,
+    IonImg
   },
 };
 </script>
