@@ -23,7 +23,7 @@
         <ion-icon size="small" slot="start" :icon="starOutline"></ion-icon>
         <ion-icon slot="start" :icon="starOutline"></ion-icon>
        
-        <h4>Ganador</h4>
+        <ion-label><h4>Ganador</h4></ion-label>
         
         <ion-icon slot="end" :icon="starOutline"></ion-icon>
         <ion-icon size="small" slot="end" :icon="starOutline"></ion-icon>
@@ -57,7 +57,7 @@ import {
   IonItem,
   //IonNote,
   //IonText,
-  //IonLabel,
+  IonLabel,
 } from "@ionic/vue";
 
 export default {
@@ -73,7 +73,7 @@ export default {
     IonItem,
     //IonNote,
     //IonText,
-    //IonLabel,
+    IonLabel,
   },
   setup() {
 
