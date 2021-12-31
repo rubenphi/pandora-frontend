@@ -8,12 +8,10 @@
     <ion-content :fullscreen="true">
       <ion-grid>
         <ion-row>
-          <ion-col size="2"> </ion-col>
-          <ion-col size="8"
-            >
-            <ion-card class="ion-padding">
-              <ion-img width="10%">
-              <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+          <ion-col size="2">
+          </ion-col>
+          <ion-col size="8">
+            <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
               <svg
                 version="1.1"
                 id="Capa_1"
@@ -43,7 +41,18 @@
                   />
                 </g>
               </svg>
-              </ion-img>
+          </ion-col>
+          <ion-col size="2">
+          </ion-col>
+        </ion-row>
+        <ion-row>
+          <ion-col size="2"> </ion-col>
+          <ion-col size="8"
+            >
+            <ion-card class="ion-padding">
+            
+              
+            
               <ion-item>
                 <ion-label position="floating">Usuario</ion-label>
                 <ion-input placeholder="Código de estudiante"></ion-input>
