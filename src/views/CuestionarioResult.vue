@@ -49,9 +49,9 @@ import {
   IonButton,
   IonList,
   IonItem,
-  IonNote,
-  IonText,
-  IonLabel,
+  //IonNote,
+  //IonText,
+  //IonLabel,
 } from "@ionic/vue";
 
 export default {
@@ -65,9 +65,9 @@ export default {
     IonButton,
     IonList,
     IonItem,
-    IonNote,
-    IonText,
-    IonLabel,
+    //IonNote,
+    //IonText,
+    //IonLabel,
   },
   setup() {
 
