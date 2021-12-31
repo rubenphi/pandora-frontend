@@ -19,7 +19,7 @@
     </ion-header>
     <ion-content :fullscreen="true">
       <ion-list>
-        <ion-item v-for="(respuesta, index) in respuestas"  lines="full" class="ion-padding-end">
+        <ion-item v-for="(respuesta, index) in respuestas" :key="miembro.id" lines="full" class="ion-padding-end">
           <ion-icon v-if="respuesta.puntaje > 0" :icon="happyOutline" size="large" slot="start"></ion-icon>
           <ion-icon v-else :icon="sadOutline" size="large" slot="start"></ion-icon>
           
