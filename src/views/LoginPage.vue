@@ -7,6 +7,7 @@
     </ion-header>
     <ion-content :fullscreen="true">
       <ion-grid>
+        <ion-row class="ion-align-items-start"></ion-row>
         <ion-row class="ion-align-items-center">
           <ion-col size="1"> </ion-col>
           <ion-col size="10">
@@ -17,7 +18,7 @@
                   <ion-col size="6">
                     <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
                     <svg
-                      color="primary"
+                      class="ion-color-primary"
                       version="1.1"
                       id="Capa_1"
                       xmlns="http://www.w3.org/2000/svg"
@@ -79,6 +80,7 @@
           </ion-col>
           <ion-col size="2"> </ion-col>
         </ion-row>
+        <ion-row class="ion-align-items-end"></ion-row>
       </ion-grid>
     </ion-content>
   </ion-page>
@@ -139,4 +141,6 @@ export default {
   color: #8c8c8c;
   margin: 0;
 }
+
+
 </style>
