@@ -16,9 +16,9 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <ion-card>
+      <ion-card href="/ganadores">
         <ion-card-header>
-          <ion-card-title class="ion-text-center" href="/ganadores"
+          <ion-card-title class="ion-text-center" 
             >Romanticismo y Realismo</ion-card-title
           >
           <ion-card-subtitle class="ion-text-center" 
