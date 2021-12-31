@@ -52,8 +52,9 @@
                   <ion-col size="3"> </ion-col>
                 </ion-row>
                 <ion-row>
-                  <ion-col class="ion-align-items-center">
-                    <ion-text color="medium"><h3> PANDORA </h3></ion-text>
+                  <ion-col >
+                    <div class="ion-text-start"> <ion-text color="medium"><h3> PANDORA </h3></ion-text> </div>
+                    
                   </ion-col>
                 </ion-row>
               </ion-grid>
