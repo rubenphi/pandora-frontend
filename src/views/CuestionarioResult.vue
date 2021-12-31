@@ -20,7 +20,13 @@
     <ion-content :fullscreen="true">
       <ion-list>
         <ion-item  lines="full" class="ion-padding-end">
-        <ion-text class="ion-text-center"><ion-icon :icon="starOutline"></ion-icon> <h4> Ganador </h4> <ion-icon :icon="starOutline"></ion-icon></ion-text>
+        <ion-icon slot="start" :icon="starOutline"></ion-icon>
+        <ion-icon slot="start" :icon="starOutline"></ion-icon>
+        <ion-label>
+        <ion-text class="ion-text-center"> <h4> Ganador </h4> </ion-text>
+        </ion-label>
+        <ion-icon slot="end" :icon="starOutline"></ion-icon>
+        <ion-icon slot="end" :icon="starOutline"></ion-icon>
         </ion-item>
       </ion-list>
     </ion-content>
