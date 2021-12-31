@@ -17,24 +17,19 @@
     </ion-header>
     <ion-content :fullscreen="true">
       <ion-list>
-        <ion-item lines="full" class="ion-text-center ion-text-wrap">
-          <ion-icon size="small" slot="start" :icon="ribbonOutline"></ion-icon>
-          <ion-icon slot="start" :icon="ribbonOutline"></ion-icon>
-
-          <ion-label
-            ><ion-text color="medium">
-              GANADOR
-            </ion-text><br>
-            <ion-note>
-              <ion-text color="warning"><p>
-                Grupo 1
-              </p></ion-text>
-              <ion-text color="success"><p>45 puntos</p></ion-text>
-            </ion-note></ion-label
-          >
-
-          <ion-icon slot="end" :icon="ribbonOutline"></ion-icon>
-          <ion-icon size="small" slot="end" :icon="ribbonOutline"></ion-icon>
+        <ion-item v-for="(respuesta, index) in respuestas" :key="respuesta.id" lines="full" class="ion-padding-end">
+          <ion-icon v-if="index === 0" :icon="trophyOutline" size="large" slot="start"></ion-icon>
+          <ion-icon v-else-if="respuesta.puntaje > 0" :icon="happyOutline" size="large" slot="start"></ion-icon>
+          <ion-icon v-else :icon="sadOutline" size="large" slot="start"></ion-icon>
+          
+          <ion-label color="medium">
+            Ganador<br>
+            {{respuesta.grupo}}</ion-label>
+          <ion-note slot="end">
+            <ion-text v-if="respuesta.puntaje > 0" color="success"><h6>Obtienen: +{{respuesta.puntaje}}</h6></ion-text>
+            <ion-text v-else color="danger"><h6>Obtienen: +{{respuesta.puntaje}}</h6></ion-text>
+            <ion-text color="warning"><h6>Respuesta: {{respuesta.opcion}}</h6></ion-text>
+          </ion-note>
         </ion-item>
       </ion-list>
     </ion-content>
@@ -51,6 +46,7 @@ import {
   sadOutline,
   ribbonOutline,
   starOutline,
+  trophyOutline
 } from "ionicons/icons";
 import { ref } from "vue";
 import {
@@ -100,6 +96,7 @@ export default {
       sadOutline,
       ribbonOutline,
       starOutline,
+      trophyOutline
     };
   },
 };
