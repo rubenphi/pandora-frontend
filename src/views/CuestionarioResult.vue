@@ -2,9 +2,7 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-title size="large" class="ion-text-center"
-          >20-03-2011</ion-title
-        >
+        <ion-title size="large" class="ion-text-center">20-03-2011</ion-title>
         <ion-buttons slot="start" class="ion-margin-start">
           <ion-button href="/cuestionario">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
@@ -19,14 +17,18 @@
     </ion-header>
     <ion-content :fullscreen="true">
       <ion-list>
-        <ion-item  lines="full" class="ion-text-center">
-        <ion-icon size="small" slot="start" :icon="starOutline"></ion-icon>
-        <ion-icon slot="start" :icon="starOutline"></ion-icon>
-       
-        <ion-label><h4>Ganador</h4></ion-label>
-        
-        <ion-icon slot="end" :icon="starOutline"></ion-icon>
-        <ion-icon size="small" slot="end" :icon="starOutline"></ion-icon>
+        <ion-item lines="full" class="ion-text-center">
+          <ion-icon size="small" slot="start" :icon="starOutline"></ion-icon>
+          <ion-icon slot="start" :icon="starOutline"></ion-icon>
+
+          <ion-label
+            ><ion-text color="primary">
+              <h2>GANADOR</h2>
+            </ion-text></ion-label
+          >
+
+          <ion-icon slot="end" :icon="starOutline"></ion-icon>
+          <ion-icon size="small" slot="end" :icon="starOutline"></ion-icon>
         </ion-item>
       </ion-list>
     </ion-content>
@@ -42,7 +44,7 @@ import {
   happyOutline,
   sadOutline,
   ribbonOutline,
-  starOutline
+  starOutline,
 } from "ionicons/icons";
 import { ref } from "vue";
 import {
@@ -56,7 +58,7 @@ import {
   IonList,
   IonItem,
   //IonNote,
-  //IonText,
+  IonText,
   IonLabel,
 } from "@ionic/vue";
 
@@ -72,17 +74,15 @@ export default {
     IonList,
     IonItem,
     //IonNote,
-    //IonText,
+    IonText,
     IonLabel,
   },
   setup() {
-
     const respuestas = ref([
-      {id: 1, grupo:'Grupo 2', puntaje:9, opcion:"B"},
-      {id: 2, grupo:'Grupo 3', puntaje:6, opcion:"B"},
-      {id: 3, grupo:'Grupo 1', puntaje:0, opcion:"C"}
-     
-])
+      { id: 1, grupo: "Grupo 2", puntaje: 9, opcion: "B" },
+      { id: 2, grupo: "Grupo 3", puntaje: 6, opcion: "B" },
+      { id: 3, grupo: "Grupo 1", puntaje: 0, opcion: "C" },
+    ]);
 
     return {
       respuestas,
@@ -93,7 +93,7 @@ export default {
       happyOutline,
       sadOutline,
       ribbonOutline,
-      starOutline
+      starOutline,
     };
   },
 };
