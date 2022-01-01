@@ -156,6 +156,7 @@ import {
   IonButton,
   //IonText
 } from "@ionic/vue";
+import router from "../router";
 export default {
   components: {
     IonHeader,
@@ -203,6 +204,7 @@ export default {
             } else {
               axios.defaults.headers.common['Authorization'] = 'Bearer ' + response.data.token;
               error.value.estatus = 0 
+              router.push('/inicio')
             }
           });
         }
