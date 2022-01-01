@@ -93,7 +93,8 @@
 </template>
 
 <script>
-import { axios,ref } from "vue";
+import { ref } from "vue";
+import axios from "axios";
 import {
   IonPage,
   IonHeader,
