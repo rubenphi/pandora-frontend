@@ -79,7 +79,7 @@
                   color="primary"
                   class="ion-align-self-center"
                 >
-                  <ion-label class="ion-text-center">
+                  <ion-label class="ion-text-center ion-padding">
                     Entrar
                   </ion-label>
                 </ion-button>
