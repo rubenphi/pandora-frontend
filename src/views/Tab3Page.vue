@@ -37,6 +37,7 @@
 </template>
 
 <script>
+import axios from "axios";
 import {
   onIonViewDidEnter,
   IonCard,
@@ -53,6 +54,7 @@ import {
 
 export default {
   components: {
+    axios,
     IonCard,
     IonCardContent,
     IonCardHeader,
@@ -72,6 +74,7 @@ export default {
     });
 
     return {
+      axios,
       cuestionarios: [],
     };
   },
