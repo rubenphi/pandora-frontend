@@ -136,11 +136,12 @@ setup() {
   })
 
   return {
+    axios,
     login,
     async mostrar(){
       console.log(login.value.name);
       console.log(login.value.password);
-      await this.axios.post('https://pandora-quiz.herokuapp.com/public/api/users/login', login.value)
+      await axios.post('https://pandora-quiz.herokuapp.com/public/api/users/login', login.value)
       .then(response => {
         console.log( response.data.token);
       });
