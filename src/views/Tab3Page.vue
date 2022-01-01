@@ -38,6 +38,7 @@
 
 <script>
 import axios from "axios";
+import { ref } from "vue";
 import {
   onIonViewDidEnter,
   IonCard,
@@ -66,10 +67,11 @@ export default {
     IonPage,
   },
   setup() {
+  const cuestionarios = ref ([]);
   onIonViewDidEnter(() => {
          axios.get("/cuestionarios").then((response) => {
-        this.cuestionarios = response.data;
-        console.log(cuestionarios);
+        cuestionarios.value = response.data;
+        console.log(cuestionarios.value);
       });
     });
 
