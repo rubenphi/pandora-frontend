@@ -18,9 +18,7 @@
           <ion-card-title>20-03-2021</ion-card-title>
         </ion-card-header>
 
-        <ion-card-content>
-          Romanticismo y Realismo
-        </ion-card-content>
+        <ion-card-content> Romanticismo y Realismo </ion-card-content>
       </ion-card>
 
       <ion-card href="/cuestionario">
@@ -33,7 +31,7 @@
           Constructivismo y Novela Picaresca
         </ion-card-content>
       </ion-card>
-{{cuestionarios}}
+      {{ cuestionarios }}
     </ion-content>
   </ion-page>
 </template>
@@ -50,7 +48,7 @@ import {
   IonHeader,
   IonToolbar,
   IonTitle,
-  IonContent
+  IonContent,
 } from "@ionic/vue";
 
 export default {
@@ -68,13 +66,12 @@ export default {
   },
   setup() {
     onIonViewDidEnter(() => {
-      await this.axios.get('/cuestionarios')
-      .then(response => {
+      this.axios.get("/cuestionarios").then((response) => {
         this.cuestionarios = response.data;
-      })
+      });
     });
 
-    return { 
+    return {
       cuestionarios: [],
     };
   },
