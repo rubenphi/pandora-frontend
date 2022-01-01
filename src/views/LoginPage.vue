@@ -202,7 +202,6 @@ export default {
               console.log(response.data.message);
             } else {
               axios.defaults.headers.common['Authorization'] = 'Bearer ' + response.data.token;
-              this.$router.push('/inicio');
               error.value.estatus = 0 
             }
           });

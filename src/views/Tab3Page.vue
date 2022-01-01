@@ -66,18 +66,18 @@ export default {
     IonPage,
   },
   setup() {
-  
+  onIonViewDidEnter(() => {
+         axios.get("/cuestionarios").then((response) => {
+        this.cuestionarios = response.data;
+      });
+    });
 
     return {
       axios,
       cuestionarios: []
       
-    },
-       onIonViewDidEnter(() => {
-         axios.get("/cuestionarios").then((response) => {
-        this.cuestionarios = response.data;
-      });
-    });
+    }
+       
   },
 };
 </script>
