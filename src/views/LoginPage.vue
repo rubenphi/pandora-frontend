@@ -67,9 +67,7 @@
                 <ion-label color="medium" position="floating">Clave</ion-label>
                 <ion-input placeholder="Documento de identidad"></ion-input>
               </ion-item>
-              
-            </ion-card>
-            <ion-buttons
+                      <ion-buttons
                 class="ion-justify-content-center ion-padding-top ion-padding-bottom"
               >
                 <ion-button
@@ -84,6 +82,8 @@
                   </ion-label>
                 </ion-button>
               </ion-buttons>
+            </ion-card>
+    
           </ion-col>
           <ion-col size-s="1" size-xs="1" size-md="4" size-lg="8" size-xl="8"> </ion-col>
         </ion-row>
