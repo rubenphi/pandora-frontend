@@ -113,7 +113,6 @@ import {
 } from "@ionic/vue";
 export default {
   components: {
-    axios,
     IonHeader,
     IonToolbar,
     IonTitle,
