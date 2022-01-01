@@ -18,7 +18,7 @@
                   <ion-col size="6">
                     <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
                     <svg
-                      fill="#6a64ff"
+                      fill="#989aa2"
                       class="color"
                       version="1.1"
                       id="Capa_1"
