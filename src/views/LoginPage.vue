@@ -8,13 +8,34 @@
     <ion-content class="ion-padding-start ion-padding-end">
       <ion-grid>
         <ion-row class="ion-align-items-center">
-          <ion-col size-s="1" size-xs="1" size-md="4" size-lg="8" size-xl="8"> </ion-col>
-          <ion-col size-s="10" size-xs="10" size-md="4" size-lg="2" size-xl="2" class="ion-align-items-center">
+          <ion-col size-s="1" size-xs="1" size-md="4" size-lg="8" size-xl="8">
+          </ion-col>
+          <ion-col
+            size-s="10"
+            size-xs="10"
+            size-md="4"
+            size-lg="2"
+            size-xl="2"
+            class="ion-align-items-center"
+          >
             <ion-card class="ion-padding">
-             <ion-grid>
+              <ion-grid>
                 <ion-row>
-                  <ion-col size-xs="5" size-s="5" size-md="5" size-lg="5" size-xl="5"> </ion-col>
-                  <ion-col size-xs="2" size-s="2" size-md="2" size-lg="2" size-xl="2">
+                  <ion-col
+                    size-xs="5"
+                    size-s="5"
+                    size-md="5"
+                    size-lg="5"
+                    size-xl="5"
+                  >
+                  </ion-col>
+                  <ion-col
+                    size-xs="2"
+                    size-s="2"
+                    size-md="2"
+                    size-lg="2"
+                    size-xl="2"
+                  >
                     <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
                     <svg
                       fill="#989aa2"
@@ -48,25 +69,48 @@
                       </g>
                     </svg>
                   </ion-col>
-                  <ion-col size-xs="5" size-s="5" size-md="5" size-lg="5" size-xl="5"> </ion-col>
-                </ion-row>
-                <ion-row>
-                  <ion-col >
-                    <div class="ion-text-center"> <ion-text color="medium"><h3> PANDORA </h3></ion-text>  <ion-text v-if="error.estatus === 1" color="danger"> <br> {{error.data}} </ion-text> </div>
-                    
+                  <ion-col
+                    size-xs="5"
+                    size-s="5"
+                    size-md="5"
+                    size-lg="5"
+                    size-xl="5"
+                  >
                   </ion-col>
                 </ion-row>
-              </ion-grid> 
+                <ion-row>
+                  <ion-col>
+                    <div class="ion-text-center">
+                      <ion-text color="medium"><h3>PANDORA</h3></ion-text>
+                      <ion-text v-if="error.estatus === 1" color="danger">
+                        <br />
+                        {{ error.data }}
+                      </ion-text>
+                    </div>
+                  </ion-col>
+                </ion-row>
+              </ion-grid>
 
               <ion-item>
-                <ion-label color="medium" position="floating">Usuario</ion-label>
-                <ion-input v-model="login.name" placeholder="Código de estudiante"></ion-input>
+                <ion-label color="medium" position="floating"
+                  >Usuario</ion-label
+                >
+                <ion-input
+                  v-model="login.name"
+                  placeholder="Código de estudiante"
+                ></ion-input>
               </ion-item>
               <ion-item>
-                <ion-label color="medium" position="floating">Contraseña  </ion-label>
-                <ion-input v-model="login.password" type="password" placeholder="Documento de identidad"></ion-input>
+                <ion-label color="medium" position="floating"
+                  >Contraseña
+                </ion-label>
+                <ion-input
+                  v-model="login.password"
+                  type="password"
+                  placeholder="Documento de identidad"
+                ></ion-input>
               </ion-item>
-                      <ion-buttons
+              <ion-buttons
                 class="ion-justify-content-center ion-padding-top ion-padding-bottom"
               >
                 <ion-button
@@ -83,9 +127,9 @@
                 </ion-button>
               </ion-buttons>
             </ion-card>
-    
           </ion-col>
-          <ion-col size-s="1" size-xs="1" size-md="4" size-lg="8" size-xl="8"> </ion-col>
+          <ion-col size-s="1" size-xs="1" size-md="4" size-lg="8" size-xl="8">
+          </ion-col>
         </ion-row>
       </ion-grid>
     </ion-content>
@@ -128,38 +172,37 @@ export default {
     IonButton,
     //IonText
   },
-setup() {
-  const login = ref({
-    name : '',
-    password : ''
-  })
-   const error = ref({
-     estatus: 0,
-     data: ''
-   });
-  return {
-    error,
-    axios,
-    login,
-    async mostrar(){
-      if ( login.value.name == '' || login.value.password == '' ) {
-        error.value.estatus = 1;
-          error.value.data = "Debe ingresar usuario y contraseña"
-      }
-      console.log(login.value.name);
-      console.log(login.value.password);
-      await axios.post('/users/login', login.value)
-      .then(response => {
-        console.log( response.data.token);
-        if (response.data.token == undefined ) {
+  setup() {
+    const login = ref({
+      name: "",
+      password: "",
+    });
+    const error = ref({
+      estatus: 0,
+      data: "",
+    });
+    return {
+      error,
+      axios,
+      login,
+      async mostrar() {
+        if (login.value.name == "" || login.value.password == "") {
           error.value.estatus = 1;
-          error.value.data = "Error al iniciar sesión"
+          error.value.data = "Debe ingresar usuario y contraseña";
+        } else {
+          console.log(login.value.name);
+          console.log(login.value.password);
+          await axios.post("/users/login", login.value).then((response) => {
+            console.log(response.data.token);
+            if (response.data.token == undefined) {
+              error.value.estatus = 1;
+              error.value.data = "Error al iniciar sesión";
+            }
+          });
         }
-      });
-      
-    }
-  }
-}
+      },
+    };
+  },
 };
 </script>
 <style scoped>
@@ -183,6 +226,4 @@ setup() {
   color: #8c8c8c;
   margin: 0;
 }
-
-
 </style>
