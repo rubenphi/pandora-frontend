@@ -142,7 +142,7 @@ setup() {
     axios,
     login,
     async mostrar(){
-      if ( 1 == 1 || login.value.name == '' || login.value.password == '' ) {
+      if ( login.value.name == '' || login.value.password == '' ) {
         error.value.estatus = 1;
           error.value.data = "Debe ingresar usuario y contraseña"
       }
