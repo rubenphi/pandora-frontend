@@ -129,8 +129,8 @@ export default {
   },
 setup() {
   const login = ref({
-    usuario = '',
-    contraseña = ''
+    usuario : '',
+    contraseña : ''
   })
 
   return {
