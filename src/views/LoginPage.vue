@@ -142,6 +142,10 @@ setup() {
     axios,
     login,
     async mostrar(){
+      if ( 1 == 1 || login.value.name == '' || login.value.password == '' ) {
+        error.value.estatus = 1;
+          error.value.data = "Debe ingresar usuario y contraseña"
+      }
       console.log(login.value.name);
       console.log(login.value.password);
       await axios.post('/users/login', login.value)
@@ -152,10 +156,7 @@ setup() {
           error.value.data = "Error al iniciar sesión"
         }
       });
-      if ( 1 == 1 || login.value.name == '' || login.value.password == '' ) {
-        error.value.estatus = 1;
-          error.value.data = "Debe ingresar usuario y contraseña"
-      }
+      
     }
   }
 }
