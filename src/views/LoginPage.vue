@@ -147,7 +147,7 @@ setup() {
       await axios.post('/users/login', login.value)
       .then(response => {
         console.log( response.data.token);
-        if (response.data.token == undefined || response.data.token == 'Error: Request failed with status code 422' ) {
+        if (response.data.token == undefined || response.data.token == null ) {
           error.value.estatus = 1;
           error.value.data = "Error al iniciar sesión"
         }
