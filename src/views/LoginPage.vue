@@ -136,7 +136,6 @@ setup() {
   })
 
   return {
-    axios,
     login,
     async mostrar(){
       console.log(login.value.name);
