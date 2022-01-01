@@ -197,6 +197,8 @@ export default {
             if (response.data.token == undefined) {
               error.value.estatus = 1;
               error.value.data = "Error al iniciar sesión";
+            } else {
+              error.value.estatus = 0 
             }
           });
         }
