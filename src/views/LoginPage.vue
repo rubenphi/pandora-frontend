@@ -5,7 +5,7 @@
         <ion-title>Inicio de sesión</ion-title>
       </ion-toolbar>
     </ion-header>
-    <ion-content class="ion-padding">
+    <ion-content class="ion-padding-start ion-padding-end">
       <ion-grid>
         <ion-row class="ion-align-items-start"> <ion-col>&nbsp;</ion-col></ion-row>
         <ion-row class="ion-align-items-center">
