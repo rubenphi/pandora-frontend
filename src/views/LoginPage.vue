@@ -137,6 +137,7 @@
 </template>
 
 <script>
+
 import { ref } from "vue";
 import axios from "axios";
 import {
@@ -193,12 +194,15 @@ export default {
           console.log(login.value.name);
           console.log(login.value.password);
           await axios.post("/users/login", login.value).then((response) => {
+
             console.log(response.data.token);
             if (response.data.token == undefined) {
               error.value.estatus = 1;
               error.value.data = "Error al iniciar sesión";
               console.log(response.data.message);
             } else {
+              this.axios.defaults.headers.common['Authorization'] = 'Bearer ' + response.data.token;
+              this.$router.push('/inicio');
               error.value.estatus = 0 
             }
           });

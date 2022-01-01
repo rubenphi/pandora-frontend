@@ -33,13 +33,14 @@
           Constructivismo y Novela Picaresca
         </ion-card-content>
       </ion-card>
-
+{{cuestionarios}}
     </ion-content>
   </ion-page>
 </template>
 
 <script>
 import {
+  onIonViewDidEnter,
   IonCard,
   IonCardContent,
   IonCardHeader,
@@ -66,7 +67,16 @@ export default {
     IonPage,
   },
   setup() {
-    return { };
+    onIonViewDidEnter(() => {
+      await this.axios.get('/cuestionarios')
+      .then(response => {
+        this.cuestionarios = response.data;
+      })
+    });
+
+    return { 
+      cuestionarios: [],
+    };
   },
 };
 </script>
