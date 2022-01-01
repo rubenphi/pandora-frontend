@@ -152,7 +152,7 @@ setup() {
           error.value.data = "Error al iniciar sesión"
         }
       });
-      if (login.value.name == '' || login.value.password == '' ) {
+      if ( 1 == 1 || login.value.name == '' || login.value.password == '' ) {
         error.value.estatus = 1;
           error.value.data = "Debe ingresar usuario y contraseña"
       }
