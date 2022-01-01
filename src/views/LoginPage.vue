@@ -12,7 +12,7 @@
           <ion-col size-s="1" size-xs="1" size-md="2" size-lg="8" size-xl="8"> </ion-col>
           <ion-col size-s="10" size-xs="10" size-md="8" size-lg="2" size-xl="2" class="ion-align-items-center">
             <ion-card class="ion-padding">
-              <ion-grid>
+             <!-- <ion-grid>
                 <ion-row>
                   <ion-col  size="3"> </ion-col>
                   <ion-col size="6">
@@ -57,7 +57,7 @@
                     
                   </ion-col>
                 </ion-row>
-              </ion-grid>
+              </ion-grid> -->
 
               <ion-item>
                 <ion-label color="medium" position="floating">Usuario</ion-label>
