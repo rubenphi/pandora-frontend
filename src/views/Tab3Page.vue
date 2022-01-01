@@ -54,7 +54,6 @@ import {
 
 export default {
   components: {
-    axios,
     IonCard,
     IonCardContent,
     IonCardHeader,
@@ -68,19 +67,15 @@ export default {
   },
   setup() {
     
-    onIonViewDidEnter(() => {
-      consultaCuestionarios();
+   onIonViewDidEnter(() => {
+      await this.axios.get("/cuestionarios").then((response) => {
+        this.cuestionarios = response.data;
+      });
     });
 
     return {
       axios,
-      cuestionarios: [],
-      async consultaCuestionarios() {
-        await this.axios.get("/cuestionarios").then((response) => {
-        this.cuestionarios = response.data;
-      });
-      }
-
+      cuestionarios: []
       
     };
   },
