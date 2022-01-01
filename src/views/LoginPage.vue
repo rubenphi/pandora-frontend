@@ -52,7 +52,7 @@
                 </ion-row>
                 <ion-row>
                   <ion-col >
-                    <div class="ion-text-center"> <ion-text color="medium"><h3> PANDORA </h3></ion-text> </div>
+                    <div class="ion-text-center"> <ion-text color="medium"><h3> PANDORA </h3></ion-text>  <ion-text v-if="error.estatus === 1" color="danger"> <br> {{error.data}} </ion-text> </div>
                     
                   </ion-col>
                 </ion-row>
@@ -133,8 +133,12 @@ setup() {
     name : '',
     password : ''
   })
-
+   const error = ref({
+     estatus: 0,
+     data: ''
+   });
   return {
+    error,
     axios,
     login,
     async mostrar(){
@@ -143,6 +147,10 @@ setup() {
       await axios.post('/users/login', login.value)
       .then(response => {
         console.log( response.data.token);
+        if (response.data.token == undefined) {
+          error.value.estatus = 1;
+          error.value.data = "Error al iniciar sesión"
+        }
       });
     }
   }
