@@ -60,11 +60,11 @@
 
               <ion-item>
                 <ion-label color="medium" position="floating">Usuario</ion-label>
-                <ion-input placeholder="Código de estudiante"></ion-input>
+                <ion-input v-model="login.usuario" placeholder="Código de estudiante"></ion-input>
               </ion-item>
               <ion-item>
-                <ion-label color="medium" position="floating">Clave</ion-label>
-                <ion-input placeholder="Documento de identidad"></ion-input>
+                <ion-label color="medium" position="floating">Contraseña  </ion-label>
+                <ion-input v-model="login.contraseña" type="password" placeholder="Documento de identidad"></ion-input>
               </ion-item>
                       <ion-buttons
                 class="ion-justify-content-center ion-padding-top ion-padding-bottom"
@@ -75,6 +75,7 @@
                   shape="round"
                   color="primary"
                   class="ion-align-self-center"
+                  @click="mostrar"
                 >
                   <ion-label class="ion-text-center ion-padding">
                     Entrar
@@ -92,6 +93,7 @@
 </template>
 
 <script>
+import { ref } from "vue";
 import {
   IonPage,
   IonHeader,
@@ -125,6 +127,20 @@ export default {
     IonButton,
     //IonText
   },
+setup() {
+  const login = ref({
+    usuario = '',
+    contraseña = ''
+  })
+
+  return {
+    mostrar(){
+      console.log(login.value.usuario);
+      console.log(login.value.contraseña);
+    },
+    login
+  }
+}
 };
 </script>
 <style scoped>
