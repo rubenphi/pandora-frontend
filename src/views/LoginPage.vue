@@ -2,7 +2,7 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-title>Inicio</ion-title>
+        <ion-title>Inicio de sesión</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content class="ion-padding">
@@ -67,7 +67,9 @@
                 <ion-label color="medium" position="floating">Clave</ion-label>
                 <ion-input placeholder="Documento de identidad"></ion-input>
               </ion-item>
-              <ion-buttons
+              
+            </ion-card>
+            <ion-buttons
                 class="ion-justify-content-center ion-padding-top ion-padding-bottom"
               >
                 <ion-button
@@ -78,11 +80,10 @@
                   class="ion-align-self-center"
                 >
                   <ion-label class="ion-text-center">
-                    Enviar Respuesta
+                    Entrar
                   </ion-label>
                 </ion-button>
               </ion-buttons>
-            </ion-card>
           </ion-col>
           <ion-col size="2"> </ion-col>
         </ion-row>
