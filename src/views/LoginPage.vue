@@ -9,8 +9,8 @@
       <ion-grid>
         <ion-row class="ion-align-items-start"> <ion-col>&nbsp;</ion-col></ion-row>
         <ion-row class="ion-align-items-center">
-          <ion-col size-s="1" size-xs="1" size-md="2" size-lg="4" size-xl="4"> </ion-col>
-          <ion-col size-s="10" size-xs="10" size-md="8" size-lg="4" size-xl="4" class="ion-align-items-center">
+          <ion-col size-s="1" size-xs="1" size-md="2" size-lg="6" size-xl="6"> </ion-col>
+          <ion-col size-s="10" size-xs="10" size-md="8" size-lg="3" size-xl="3" class="ion-align-items-center">
             <ion-card class="ion-padding">
               <ion-grid>
                 <ion-row>
@@ -85,7 +85,7 @@
                 </ion-button>
               </ion-buttons>
           </ion-col>
-          <ion-col size-s="1" size-xs="1" size-md="2" size-lg="4" size-xl="4"> </ion-col>
+          <ion-col size-s="1" size-xs="1" size-md="2" size-lg="6" size-xl="6"> </ion-col>
         </ion-row>
         <ion-row class="ion-align-items-end">
           <ion-col>&nbsp;</ion-col>
