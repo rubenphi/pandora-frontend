@@ -68,7 +68,7 @@ export default {
   setup() {
     
    onIonViewDidEnter(() => {
-      await this.axios.get("/cuestionarios").then((response) => {
+     this.axios.get("/cuestionarios").then((response) => {
         this.cuestionarios = response.data;
       });
     });
