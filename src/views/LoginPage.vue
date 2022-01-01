@@ -110,7 +110,7 @@ import {
   IonLabel,
   IonInput,
   IonButton,
-  IonText
+  //IonText
 } from "@ionic/vue";
 export default {
   components: {
@@ -127,7 +127,7 @@ export default {
     IonLabel,
     IonInput,
     IonButton,
-    IonText
+    //IonText
   },
 };
 </script>
