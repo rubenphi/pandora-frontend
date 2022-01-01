@@ -147,11 +147,15 @@ setup() {
       await axios.post('/users/login', login.value)
       .then(response => {
         console.log( response.data.token);
-        if (response.data.token == undefined || login.value.name == '' || login.value.password == '' ) {
+        if (response.data.token == undefined ) {
           error.value.estatus = 1;
           error.value.data = "Error al iniciar sesión"
         }
       });
+      if (login.value.name == '' || login.value.password == '' ) {
+        error.value.estatus = 1;
+          error.value.data = "Debe ingresar usuario y contraseña"
+      }
     }
   }
 }
