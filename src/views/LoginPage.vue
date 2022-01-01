@@ -201,7 +201,7 @@ export default {
               error.value.data = "Error al iniciar sesión";
               console.log(response.data.message);
             } else {
-              this.axios.defaults.headers.common['Authorization'] = 'Bearer ' + response.data.token;
+              axios.defaults.headers.common['Authorization'] = 'Bearer ' + response.data.token;
               this.$router.push('/inicio');
               error.value.estatus = 0 
             }
