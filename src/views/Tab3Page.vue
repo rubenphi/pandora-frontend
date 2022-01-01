@@ -74,7 +74,7 @@ export default {
       
     },
        onIonViewDidEnter(() => {
-     this.axios.get("/cuestionarios").then((response) => {
+         axios.get("/cuestionarios").then((response) => {
         this.cuestionarios = response.data;
       });
     });
