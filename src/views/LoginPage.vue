@@ -112,6 +112,7 @@ import {
 } from "@ionic/vue";
 export default {
   components: {
+    axios,
     IonHeader,
     IonToolbar,
     IonTitle,
@@ -135,7 +136,6 @@ setup() {
 
   return {
     login,
-    axios,
     async mostrar(){
       console.log(login.value.name);
       console.log(login.value.password);
