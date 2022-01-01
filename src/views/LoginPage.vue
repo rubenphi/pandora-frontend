@@ -60,11 +60,11 @@
 
               <ion-item>
                 <ion-label color="medium" position="floating">Usuario</ion-label>
-                <ion-input v-model="login.usuario" placeholder="Código de estudiante"></ion-input>
+                <ion-input v-model="login.name" placeholder="Código de estudiante"></ion-input>
               </ion-item>
               <ion-item>
                 <ion-label color="medium" position="floating">Contraseña  </ion-label>
-                <ion-input v-model="login.contraseña" type="password" placeholder="Documento de identidad"></ion-input>
+                <ion-input v-model="login.password" type="password" placeholder="Documento de identidad"></ion-input>
               </ion-item>
                       <ion-buttons
                 class="ion-justify-content-center ion-padding-top ion-padding-bottom"
@@ -93,7 +93,7 @@
 </template>
 
 <script>
-import { ref } from "vue";
+import { axios,ref } from "vue";
 import {
   IonPage,
   IonHeader,
@@ -129,16 +129,20 @@ export default {
   },
 setup() {
   const login = ref({
-    usuario : '',
-    contraseña : ''
+    name : '',
+    password : ''
   })
 
   return {
-    mostrar(){
-      console.log(login.value.usuario);
-      console.log(login.value.contraseña);
+    async mostrar(){
+      console.log(login.value.name);
+      console.log(login.value.password);
+      await this.axios.post('https://pandora-quiz.herokuapp.com/public/api/users/login', login.value)
+      .then(response => {
+        console.log( response.data.token);
+      });
     },
-    login
+      login
   }
 }
 };
