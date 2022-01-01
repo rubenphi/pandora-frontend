@@ -69,12 +69,13 @@ export default {
   onIonViewDidEnter(() => {
          axios.get("/cuestionarios").then((response) => {
         this.cuestionarios = response.data;
+        console.log(cuestionarios);
       });
     });
 
     return {
       axios,
-      cuestionarios: []
+      cuestionarios,
       
     }
        
