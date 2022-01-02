@@ -3,20 +3,21 @@
     <ion-tabs>
       <ion-router-outlet></ion-router-outlet>
       <ion-tab-bar slot="bottom">
-        <ion-tab-button tab="tab1" href="/login">
+        <a href="/login"><ion-tab-button tab="tab1" >
           <ion-icon :icon="peopleOutline" />
           <ion-label>Grupo</ion-label>
-        </ion-tab-button>
-          
-        <ion-tab-button tab="tab2" href="/inicio">
+        </ion-tab-button></a>
+        
+          <a href="/inicio"><ion-tab-button tab="tab2" >
           <ion-icon :icon="homeOutline" />
           <ion-label>Inicio</ion-label>
-        </ion-tab-button>
+        </ion-tab-button></a>
         
-        <ion-tab-button tab="tab3" href="/cuestionarios">
+        <a href="/cuestionarios"><ion-tab-button tab="tab3">
           <ion-icon :icon="helpCircleOutline" />
           <ion-label>Cuestionarios</ion-label>
-        </ion-tab-button>
+        </ion-tab-button></a>
+        
       </ion-tab-bar>
     </ion-tabs>
   </ion-page>
