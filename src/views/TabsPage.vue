@@ -48,7 +48,8 @@ export default {
     return {
       helpCircleOutline,
       homeOutline,
-      peopleOutline
+      peopleOutline,
+      router
     };
   },
 };
