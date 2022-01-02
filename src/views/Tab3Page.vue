@@ -21,7 +21,7 @@
         <ion-card-content> {{cuestionario.tema}} </ion-card-content>
       </ion-card>
 
-      {{usuario.name}}
+      {{usuario}}
     </ion-content>
   </ion-page>
 </template>
