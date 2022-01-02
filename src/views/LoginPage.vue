@@ -140,7 +140,7 @@
 
 import { ref } from "vue";
 import axios from "axios";
-import { tokenHeader, usuarioGet } from "../globalService";
+import { tokenHeader } from "../globalService";
 import {
   IonPage,
   IonHeader,
