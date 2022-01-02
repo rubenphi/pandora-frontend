@@ -6,9 +6,10 @@ export function tokenHeader() {
 }
 
 
+
 export async  function usuarioGet() { 
     await axios.get("/user/loged").then((response) => {
-    usuario = response.data;
+    return response.data;
   }) 
 }
 
