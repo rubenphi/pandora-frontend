@@ -202,7 +202,7 @@ export default {
               localStorage.setItem('token', 'Bearer ' + response.data.token);
               tokenHeader();
                axios.get("/user/loged").then((response) => {
-    localStorage.setItem('username', response.data.name);
+    localStorage.setItem('usuario', JSON.stringify(response.data));
   }) ;
               error.value.estatus = 0 
               router.push('/inicio')

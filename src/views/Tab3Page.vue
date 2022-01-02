@@ -21,7 +21,7 @@
         <ion-card-content> {{cuestionario.tema}} </ion-card-content>
       </ion-card>
 
-      {{usuario}}
+      {{usuario.name}}
     </ion-content>
   </ion-page>
 </template>
@@ -60,7 +60,7 @@ export default {
     IonPage,
   },
   setup() {
-  let usuario = localStorage.getItem('username');
+  let usuario = localStorage.getItem('usuario');
   const cuestionarios = ref ([]);
   onIonViewWillEnter(() => {
         tokenHeader();
