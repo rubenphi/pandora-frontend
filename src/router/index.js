@@ -1,59 +1,47 @@
-import { createRouter, createWebHistory } from '@ionic/vue-router';
-import TabsPage from '../views/TabsPage.vue'
+import {createRouter, createWebHistory} from '@ionic/vue-router';
+
 
 const routes = [
-  {
-    path: '/',
-    redirect: '/inicio'
-  },
-  {
-    path: '/',
-    component: TabsPage,
-    children: [
-      {
-        path: '',
+    {
+        path: '/',
         redirect: '/inicio'
-      },
-      {
+    },
+    {
         path: 'grupo',
-        component: () => import('@/views/Tab1Page.vue')
-      },
-      {
+        component: () => import ('@/views/Tab1Page.vue')
+    },
+    {
         path: 'inicio',
-        component: () => import('@/views/Tab2Page.vue')
-      },
-      {
+        component: () => import ('@/views/Tab2Page.vue')
+    },
+    {
         path: 'cuestionarios',
-        component: () => import('@/views/Tab3Page.vue'),
-        meta: { refresh: true }
-      },
-      {
+        component: () => import ('@/views/Tab3Page.vue'),
+        meta: {
+            refresh: true
+        }
+    }, {
         path: 'cuestionario',
-        component: () => import('@/views/CuestionarioView.vue')
-      },
-      {
+        component: () => import ('@/views/CuestionarioView.vue')
+    }, {
         path: 'pregunta',
-        component: () => import('@/views/PreguntaView.vue')
-      },
-      {
+        component: () => import ('@/views/PreguntaView.vue')
+    }, {
         path: 'resultado',
-        component: () => import('@/views/PreguntaResult.vue')
-      },
-      {
+        component: () => import ('@/views/PreguntaResult.vue')
+    }, {
         path: 'ganadores',
-        component: () => import('@/views/CuestionarioResult.vue')
-      },
-      {
+        component: () => import ('@/views/CuestionarioResult.vue')
+    }, {
         path: 'login',
-        component: () => import('@/views/LoginPage.vue')
-      }
-    ]
-  }
+        component: () => import ('@/views/LoginPage.vue')
+    }
+
 ]
 
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
-  routes
+    history: createWebHistory(process.env.BASE_URL),
+    routes
 })
 
 export default router
