@@ -2,6 +2,8 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router';
 import axios from 'axios';
+localStorage.setItem('token', 'Bearer ');
+axios.defaults.headers.common['Authorization'] = localStorage.getItem('token');
 axios.defaults.baseURL = "https://pandora-quiz.herokuapp.com/public/api/";
 
 import { IonicVue } from '@ionic/vue';
