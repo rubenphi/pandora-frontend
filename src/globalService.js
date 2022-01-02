@@ -8,7 +8,6 @@ export function tokenHeader() {
 
 
 export function usuarioGet() { 
-    tokenHeader();
     axios.get("/user/loged").then((response) => {
     return response.data;
   }) 
