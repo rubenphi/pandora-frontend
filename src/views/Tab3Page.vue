@@ -60,16 +60,14 @@ export default {
     IonPage,
   },
   setup() {
-  const usuario = ref({});
+  let usuario = '';
   const cuestionarios = ref ([]);
   onIonViewWillEnter(() => {
         tokenHeader();
          axios.get("/cuestionarios").then((response) => {
         cuestionarios.value = response.data;
       });
-      usuario.value = usuarioGet();
-      console.log(usuario.value);
-      console.log(usuario.value.name);
+      usuario = usuarioGet();
     });
 
     return {
