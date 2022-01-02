@@ -68,7 +68,7 @@ export default {
         
       })
       axios.get("/user/loged").then((response) => {
-        usuario.value = usuarioGet();
+        usuario.value = response.data;
       })
     });
 
