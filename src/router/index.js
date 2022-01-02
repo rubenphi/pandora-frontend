@@ -1,10 +1,11 @@
 import {createRouter, createWebHistory} from '@ionic/vue-router';
-
+import TabsPage from '../views/TabsPage.vue'
 
 const routes = [
     {
         path: '/',
-        redirect: '/inicio'
+        redirect: '/inicio',
+        component: TabsPage
     },
     {
         path: '/grupo',
