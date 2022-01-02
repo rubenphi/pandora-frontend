@@ -24,7 +24,8 @@ const routes = [
       },
       {
         path: 'cuestionarios',
-        component: () => import('@/views/Tab3Page.vue')
+        component: () => import('@/views/Tab3Page.vue'),
+        meta: { refresh: true }
       },
       {
         path: 'cuestionario',
