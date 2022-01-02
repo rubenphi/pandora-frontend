@@ -65,9 +65,11 @@ export default {
         tokenHeader();
          axios.get("/cuestionarios").then((response) => {
         cuestionarios.value = response.data;
+        
+      })
+      axios.get("/user/loged").then((response) => {
         usuario.value = usuarioGet();
-        console.log(usuario.value);
-      });
+      })
     });
 
     return {
