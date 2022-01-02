@@ -27,6 +27,7 @@
 <script>
 import axios from "axios";
 import { ref } from "vue";
+import { tokenHeader } from "../globalService";
 import {
   onIonViewDidEnter,
   IonCard,
@@ -57,7 +58,7 @@ export default {
   setup() {
   const cuestionarios = ref ([]);
   onIonViewDidEnter(() => {
-    console.log(localStorage.getItem('token'));
+        tokenHeader();
          axios.get("/cuestionarios").then((response) => {
         cuestionarios.value = response.data;
       });
