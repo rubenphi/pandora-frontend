@@ -33,7 +33,7 @@ import {
   IonRouterOutlet,
 } from "@ionic/vue";
 import { helpCircleOutline, homeOutline, peopleOutline } from "ionicons/icons";
-
+import router from "../router";
 export default {
   components: {
     IonLabel,
