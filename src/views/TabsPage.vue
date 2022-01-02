@@ -13,7 +13,7 @@
           <ion-label>Inicio</ion-label>
         </ion-tab-button>
 
-        <ion-tab-button tab="tab3" href="/cuestionarios">
+        <ion-tab-button tab="tab3" @click="() => router.push('/cuestionarios')">
           <ion-icon :icon="helpCircleOutline" />
           <ion-label>Cuestionarios</ion-label>
         </ion-tab-button>
@@ -48,7 +48,7 @@ export default {
     return {
       helpCircleOutline,
       homeOutline,
-      peopleOutline,
+      peopleOutline
     };
   },
 };
