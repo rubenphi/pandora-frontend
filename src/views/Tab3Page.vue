@@ -20,6 +20,8 @@
 
         <ion-card-content> {{cuestionario.tema}} </ion-card-content>
       </ion-card>
+
+      {{usuario}}
     </ion-content>
   </ion-page>
 </template>

@@ -13,7 +13,7 @@
           <ion-label>Inicio</ion-label>
         </ion-tab-button>
 
-        <ion-tab-button tab="tab3" href="/inicio">
+        <ion-tab-button tab="tab3" href="/cuestionarios">
           <ion-icon :icon="helpCircleOutline" />
           <ion-label>Cuestionarios</ion-label>
         </ion-tab-button>
