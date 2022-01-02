@@ -7,9 +7,9 @@ export function tokenHeader() {
 
 
 
-export async  function usuarioGet() { 
+function usuarioGet() { 
     tokenHeader();
-    await axios.get("/user/loged").then((response) => {
+    axios.get("/user/loged").then((response) => {
     return response.data;
   }) 
 }

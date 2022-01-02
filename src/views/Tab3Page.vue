@@ -30,6 +30,7 @@
 import axios from "axios";
 import { ref } from "vue";
 import { tokenHeader } from "../globalService";
+import { usuarioGet } from "../globalService";
 import {
   onIonViewWillEnter,
   IonCard,
@@ -63,11 +64,8 @@ export default {
   onIonViewWillEnter(() => {
         tokenHeader();
          axios.get("/cuestionarios").then((response) => {
-        cuestionarios.value = response.data;
-        
-      })
-      axios.get("/user/loged").then((response) => {
-        usuario.value = response.data;
+        cuestionarios.value = response.data
+        usuario.value = usuarioGet();
       })
     });
 
