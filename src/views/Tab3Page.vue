@@ -20,6 +20,8 @@
 
         <ion-card-content> {{cuestionario.tema}} </ion-card-content>
       </ion-card>
+
+      {{usuario.name}}
     </ion-content>
   </ion-page>
 </template>
@@ -28,6 +30,8 @@
 import axios from "axios";
 import { ref } from "vue";
 import { tokenHeader } from "../globalService";
+import { usuarioGet } from "../globalService";
+
 import {
   onIonViewWillEnter,
   IonCard,
@@ -56,7 +60,7 @@ export default {
     IonPage,
   },
   setup() {
-  const usuario = ref();
+  const usuario = usuarioGet();
   const cuestionarios = ref ([]);
   onIonViewWillEnter(() => {
         tokenHeader();
