@@ -29,7 +29,7 @@
 <script>
 import axios from "axios";
 import { ref } from "vue";
-import { usuario } from "../globalService";
+import { usuarioGet } from "../globalService";
 import { tokenHeader } from "../globalService";
 import {
   onIonViewWillEnter,
@@ -69,7 +69,7 @@ export default {
     });
 
     return {
-      usuario,
+      usuario: usuarioGet(),
       axios,
       cuestionarios,
       
