@@ -57,6 +57,7 @@ export default {
   setup() {
   const cuestionarios = ref ([]);
   onIonViewDidEnter(() => {
+    console.log(localStorage.getItem('token'));
          axios.get("/cuestionarios").then((response) => {
         cuestionarios.value = response.data;
       });

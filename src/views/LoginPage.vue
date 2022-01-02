@@ -192,11 +192,7 @@ export default {
           error.value.estatus = 1;
           error.value.data = "Debe ingresar usuario y contraseña";
         } else {
-          console.log(login.value.name);
-          console.log(login.value.password);
           await axios.post("/users/login", login.value).then((response) => {
-
-            console.log(response.data.token);
             if (response.data.token == undefined) {
               error.value.estatus = 1;
               error.value.data = "Error al iniciar sesión";
