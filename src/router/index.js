@@ -7,33 +7,33 @@ const routes = [
         redirect: '/inicio'
     },
     {
-        path: 'grupo',
+        path: '/grupo',
         component: () => import ('@/views/Tab1Page.vue')
     },
     {
-        path: 'inicio',
+        path: '/inicio',
         component: () => import ('@/views/Tab2Page.vue')
     },
     {
-        path: 'cuestionarios',
+        path: '/cuestionarios',
         component: () => import ('@/views/Tab3Page.vue'),
         meta: {
             refresh: true
         }
     }, {
-        path: 'cuestionario',
+        path: '/cuestionario',
         component: () => import ('@/views/CuestionarioView.vue')
     }, {
-        path: 'pregunta',
+        path: '/pregunta',
         component: () => import ('@/views/PreguntaView.vue')
     }, {
-        path: 'resultado',
+        path: '/resultado',
         component: () => import ('@/views/PreguntaResult.vue')
     }, {
-        path: 'ganadores',
+        path: '/ganadores',
         component: () => import ('@/views/CuestionarioResult.vue')
     }, {
-        path: 'login',
+        path: '/login',
         component: () => import ('@/views/LoginPage.vue')
     }
 
