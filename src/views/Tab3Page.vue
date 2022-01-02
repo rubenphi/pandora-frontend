@@ -29,7 +29,6 @@
 <script>
 import axios from "axios";
 import { ref } from "vue";
-import { usuarioGet } from "../globalService";
 import { tokenHeader } from "../globalService";
 import {
   onIonViewWillEnter,
