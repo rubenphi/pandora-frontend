@@ -20,8 +20,6 @@
 
         <ion-card-content> {{cuestionario.tema}} </ion-card-content>
       </ion-card>
-
-      {{ cuestionarios }}
     </ion-content>
   </ion-page>
 </template>
@@ -61,7 +59,6 @@ export default {
   onIonViewDidEnter(() => {
          axios.get("/cuestionarios").then((response) => {
         cuestionarios.value = response.data;
-        console.log(cuestionarios.value);
       });
     });
 
