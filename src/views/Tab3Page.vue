@@ -30,7 +30,7 @@
 import axios from "axios";
 import { ref } from "vue";
 import { tokenHeader } from "../globalService";
-import { usuarioGet } from "../globalService";
+
 
 import {
   onIonViewWillEnter,
@@ -60,14 +60,13 @@ export default {
     IonPage,
   },
   setup() {
-  let usuario = '';
+  let usuario = localStorage.getItem('username');
   const cuestionarios = ref ([]);
   onIonViewWillEnter(() => {
         tokenHeader();
          axios.get("/cuestionarios").then((response) => {
         cuestionarios.value = response.data;
-      });
-      usuario = usuarioGet();
+      })
     });
 
     return {

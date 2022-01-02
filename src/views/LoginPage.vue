@@ -140,6 +140,7 @@
 
 import { ref } from "vue";
 import axios from "axios";
+import { tokenHeader } from "../globalService";
 import {
   IonPage,
   IonHeader,
@@ -199,6 +200,10 @@ export default {
               console.log(response.data.message);
             } else {
               localStorage.setItem('token', 'Bearer ' + response.data.token);
+              tokenHeader();
+               axios.get("/user/loged").then((response) => {
+    localStorage.setItem('username', response.data.name);
+  }) ;
               error.value.estatus = 0 
               router.push('/inicio')
             }
