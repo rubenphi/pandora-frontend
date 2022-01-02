@@ -68,6 +68,8 @@ export default {
         cuestionarios.value = response.data;
       });
       usuario.value = usuarioGet();
+      console.log(usuario.value);
+      console.log(usuario.value.name);
     });
 
     return {
