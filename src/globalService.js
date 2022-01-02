@@ -7,4 +7,4 @@ export function tokenHeader() {
 
 export let usuario = axios.get("/user/loged").then((response) => {
     return response.data;
-  }); ;
+  }); 
