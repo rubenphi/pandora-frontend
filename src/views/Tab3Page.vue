@@ -27,6 +27,7 @@
 <script>
 import axios from "axios";
 import { ref } from "vue";
+import { usuario } from "../globalService";
 import { tokenHeader } from "../globalService";
 import {
   onIonViewWillEnter,
@@ -61,10 +62,12 @@ export default {
         tokenHeader();
          axios.get("/cuestionarios").then((response) => {
         cuestionarios.value = response.data;
+        console.log(usuario);
       });
     });
 
     return {
+      usuario,
       axios,
       cuestionarios,
       

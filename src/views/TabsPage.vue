@@ -13,7 +13,7 @@
           <ion-label>Inicio</ion-label>
         </ion-tab-button>
 
-        <ion-tab-button tab="tab3" @click="() => router.push('/cuestionarios')">
+        <ion-tab-button tab="tab3" href="/inicio">
           <ion-icon :icon="helpCircleOutline" />
           <ion-label>Cuestionarios</ion-label>
         </ion-tab-button>
@@ -33,7 +33,7 @@ import {
   IonRouterOutlet,
 } from "@ionic/vue";
 import { helpCircleOutline, homeOutline, peopleOutline } from "ionicons/icons";
-import router from "../router";
+
 export default {
   components: {
     IonLabel,
@@ -48,8 +48,7 @@ export default {
     return {
       helpCircleOutline,
       homeOutline,
-      peopleOutline,
-      router
+      peopleOutline
     };
   },
 };
