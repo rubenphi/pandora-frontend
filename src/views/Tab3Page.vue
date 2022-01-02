@@ -60,7 +60,7 @@ export default {
     IonPage,
   },
   setup() {
-  let usuario = JSON.parse(localStorage.getItem('usuario'));
+  let usuario = usuarioGet();
   const cuestionarios = ref ([]);
   onIonViewWillEnter(() => {
         tokenHeader();
