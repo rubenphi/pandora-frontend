@@ -22,9 +22,9 @@
           >
         </ion-card-header>
       </ion-card>
-      <ion-card>
+      <ion-card v-if="pregunta.imagen">
         <ion-img
-          src="https://s1.significados.com/foto/897px-eugene-delacroix-le-28-juillet.-la-liberte-guidant-le-peuple_bg.jpg"
+          :src="pregunta.imagen"
         ></ion-img>
       </ion-card>
       <ion-card>
