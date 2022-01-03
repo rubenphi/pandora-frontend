@@ -19,7 +19,7 @@
       <ion-card href="/ganadores">
         <ion-card-header>
           <ion-card-title class="ion-text-center"
-            >{{cuestionario.tema}}</ion-card-title
+            > titulo </ion-card-title
           >
           <ion-card-subtitle class="ion-text-center"
             >Ver Resultados</ion-card-subtitle
@@ -264,9 +264,10 @@ export default {
     const cuestionario = ref();
     onIonViewWillEnter(() => {
       tokenHeader();
-      axios.get("/cuestionarios/" + router.params.id).then((response) => {
+      console.log(router.params.id);
+      /* axios.get("/cuestionarios/" + router.params.id).then((response) => {
         cuestionario.value = response.data;
-      });
+      }); */
     });
 
     return {
