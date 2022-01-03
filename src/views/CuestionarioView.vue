@@ -19,7 +19,7 @@
       <ion-card href="/ganadores">
         <ion-card-header>
           <ion-card-title class="ion-text-center"
-            >Romanticismo y Realismo {{ idRuta }} {{laRuta}}</ion-card-title
+            >Romanticismo y Realismo {{ idRuta }} {{laRuta}} {{ id }}</ion-card-title
           >
           <ion-card-subtitle class="ion-text-center"
             >Ver Resultados</ion-card-subtitle
@@ -86,14 +86,16 @@ export default {
   },
   setup() {
     let idRuta = this.$route.params.id;
-    let laRuta = useRoute();
+    const route = useRoute();
+    const { id } = route.params
      onIonViewDidEnter(() => {
-       console.log(idRuta);
-       console.log(laRuta)
+       console.log(id);
+       console.log({id})
       
     });
 
     return {
+      id,
       laRuta,
       idRuta,
       arrowBackOutline,
