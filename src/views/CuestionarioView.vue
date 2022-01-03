@@ -216,8 +216,8 @@
 
 <script>
 // import axios from "axios";
-import { ref } from "vue";
-import { tokenHeader} from "../globalService";
+//import { ref } from "vue";
+//import { tokenHeader} from "../globalService";
 //import router from "../router";
 import {
   arrowBackOutline,
@@ -261,9 +261,7 @@ export default {
     IonCardSubtitle,
   },
   setup() {
-    const cuestionario = ref();
     onIonViewWillEnter(() => {
-      tokenHeader();
       console.log( this.$route.params.id);
       /* axios.get("/cuestionarios/" + router.params.id).then((response) => {
         cuestionario.value = response.data;
@@ -271,7 +269,6 @@ export default {
     });
 
     return {
-      cuestionario,
       arrowBackOutline,
       handLeftOutline,
       refreshOutline,
