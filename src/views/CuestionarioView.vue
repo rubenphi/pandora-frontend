@@ -62,7 +62,7 @@ import {
   IonCard,
   IonCardTitle,
   IonCardSubtitle,
-  onIonViewWillEnter
+  ionViewDidEnter
 } from "@ionic/vue";
 export default {
   components: {
@@ -82,9 +82,8 @@ export default {
     IonCardSubtitle,
   },
   setup() {
-     onIonViewWillEnter(() => {
-       console.log($route.params.id);
-       console.log($route.params.id);
+     ionViewDidEnter(() => {
+       console.log(this.$route.params.id);
             
     });
 
