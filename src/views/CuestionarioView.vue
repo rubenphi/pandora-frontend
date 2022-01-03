@@ -217,7 +217,7 @@
 <script>
 import axios from "axios";
 import { ref } from "vue";
-import { tokenHeader, usuarioGet } from "../globalService";
+import { tokenHeader} from "../globalService";
 
 import {
   arrowBackOutline,
