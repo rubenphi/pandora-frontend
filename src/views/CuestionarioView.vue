@@ -85,11 +85,9 @@ export default {
     IonCardSubtitle,
   },
   setup() {
-    let idRuta = this.$route.params.id;
-    const route = useRoute();
-    const { id } = route.params
+    const mroute = useRoute();
+    const { id } = mroute.params;
      onIonViewDidEnter(() => {
-       console.log(id);
        console.log({id})
       
     });
