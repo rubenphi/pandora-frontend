@@ -18,204 +18,21 @@
     <ion-content :fullscreen="true">
       <ion-card href="/ganadores">
         <ion-card-header>
-          <ion-card-title class="ion-text-center" 
+          <ion-card-title class="ion-text-center"
             >Romanticismo y Realismo {{ $route.params.id }}</ion-card-title
           >
-          <ion-card-subtitle class="ion-text-center" 
+          <ion-card-subtitle class="ion-text-center"
             >Ver Resultados</ion-card-subtitle
-
-    
-          
-            
-    
-
-          
-    
-    
-  
           >
         </ion-card-header>
       </ion-card>
       <ion-card>
         <ion-list>
           <ion-item href="/pregunta">
-            <ion-icon slot="start"  :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >¿Cuál de los siguientes documentos corresponde al a la
-              información entregada en el siguiente enunciado?</ion-label
-            >
-          </ion-item>
-          <ion-item href="/pregunta">
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >Los presentes textos corresponden a un tipo de texto, analice las
-              diferentes características del texto e identifique a qué tipo de
-              text corresponde</ion-label
-            >
-          </ion-item>
-          <ion-item href="/pregunta">
             <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
             <ion-label
               >¿Cuál de los siguientes documentos corresponde al a la
               información entregada en el siguiente enunciado?</ion-label
-            >
-          </ion-item>
-          <ion-item>
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >Los presentes textos corresponden a un tipo de texto, analice las
-              diferentes características del texto e identifique a qué tipo de
-              text corresponde</ion-label
-            >
-          </ion-item>
-          <ion-item>
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >¿Cuál de los siguientes documentos corresponde al a la
-              información entregada en el siguiente enunciado?</ion-label
-            >
-          </ion-item>
-          <ion-item>
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >Los presentes textos corresponden a un tipo de texto, analice las
-              diferentes características del texto e identifique a qué tipo de
-              text corresponde</ion-label
-            >
-          </ion-item>
-          <ion-item>
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >¿Cuál de los siguientes documentos corresponde al a la
-              información entregada en el siguiente enunciado?</ion-label
-            >
-          </ion-item>
-          <ion-item>
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >Los presentes textos corresponden a un tipo de texto, analice las
-              diferentes características del texto e identifique a qué tipo de
-              text corresponde</ion-label
-            >
-          </ion-item>
-          <ion-item>
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >¿Cuál de los siguientes documentos corresponde al a la
-              información entregada en el siguiente enunciado?</ion-label
-            >
-          </ion-item>
-          <ion-item>
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >Los presentes textos corresponden a un tipo de texto, analice las
-              diferentes características del texto e identifique a qué tipo de
-              text corresponde</ion-label
-            >
-          </ion-item>
-          <ion-item>
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >¿Cuál de los siguientes documentos corresponde al a la
-              información entregada en el siguiente enunciado?</ion-label
-            >
-          </ion-item>
-          <ion-item>
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >Los presentes textos corresponden a un tipo de texto, analice las
-              diferentes características del texto e identifique a qué tipo de
-              text corresponde</ion-label
-            >
-          </ion-item>
-          <ion-item>
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >¿Cuál de los siguientes documentos corresponde al a la
-              información entregada en el siguiente enunciado?</ion-label
-            >
-          </ion-item>
-          <ion-item>
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >Los presentes textos corresponden a un tipo de texto, analice las
-              diferentes características del texto e identifique a qué tipo de
-              text corresponde</ion-label
-            >
-          </ion-item>
-          <ion-item>
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >¿Cuál de los siguientes documentos corresponde al a la
-              información entregada en el siguiente enunciado?</ion-label
-            >
-          </ion-item>
-          <ion-item>
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >Los presentes textos corresponden a un tipo de texto, analice las
-              diferentes características del texto e identifique a qué tipo de
-              text corresponde</ion-label
-            >
-          </ion-item>
-          <ion-item>
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >¿Cuál de los siguientes documentos corresponde al a la
-              información entregada en el siguiente enunciado?</ion-label
-            >
-          </ion-item>
-          <ion-item>
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >Los presentes textos corresponden a un tipo de texto, analice las
-              diferentes características del texto e identifique a qué tipo de
-              text corresponde</ion-label
-            >
-          </ion-item>
-          <ion-item>
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >¿Cuál de los siguientes documentos corresponde al a la
-              información entregada en el siguiente enunciado?</ion-label
-            >
-          </ion-item>
-          <ion-item>
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >Los presentes textos corresponden a un tipo de texto, analice las
-              diferentes características del texto e identifique a qué tipo de
-              text corresponde</ion-label
-            >
-          </ion-item>
-          <ion-item>
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >¿Cuál de los siguientes documentos corresponde al a la
-              información entregada en el siguiente enunciado?</ion-label
-            >
-          </ion-item>
-          <ion-item>
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >Los presentes textos corresponden a un tipo de texto, analice las
-              diferentes características del texto e identifique a qué tipo de
-              text corresponde</ion-label
-            >
-          </ion-item>
-          <ion-item>
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >¿Cuál de los siguientes documentos corresponde al a la
-              información entregada en el siguiente enunciado?</ion-label
-            >
-          </ion-item>
-          <ion-item>
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
-            <ion-label
-              >Los presentes textos corresponden a un tipo de texto, analice las
-              diferentes características del texto e identifique a qué tipo de
-              text corresponde</ion-label
             >
           </ion-item>
         </ion-list>
@@ -224,6 +41,7 @@
   </ion-page>
 </template>
 <script>
+
 import {
   arrowBackOutline,
   refreshOutline,
@@ -244,6 +62,7 @@ import {
   IonCard,
   IonCardTitle,
   IonCardSubtitle,
+  onIonViewWillEnter
 } from "@ionic/vue";
 export default {
   components: {
@@ -263,6 +82,11 @@ export default {
     IonCardSubtitle,
   },
   setup() {
+     onIonViewWillEnter(() => {
+       console.log(this.$route.params.id)
+      
+    });
+
     return {
       arrowBackOutline,
       handLeftOutline,
