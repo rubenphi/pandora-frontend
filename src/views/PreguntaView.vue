@@ -66,6 +66,7 @@
 import axios from "axios";
 import { ref } from "vue";
 import { tokenHeader } from "../globalService";
+import { useRoute } from 'vue-router';
 
 
 import {
@@ -77,6 +78,7 @@ import {
 } from "ionicons/icons";
 
 import {
+  onIonViewDidEnter,
   IonIcon,
   IonPage,
   IonHeader,
