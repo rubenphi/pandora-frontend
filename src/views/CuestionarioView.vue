@@ -96,7 +96,6 @@ export default {
 
     return {
       id,
-      laRuta,
       idRuta,
       arrowBackOutline,
       handLeftOutline,
