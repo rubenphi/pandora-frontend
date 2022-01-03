@@ -264,7 +264,7 @@ export default {
     const cuestionario = ref();
     onIonViewWillEnter(() => {
       tokenHeader();
-      axios.get("/cuestionario/" + router.params.id).then((response) => {
+      axios.get("/cuestionarios/" + router.params.id).then((response) => {
         cuestionario.value = response.data;
       });
     });
