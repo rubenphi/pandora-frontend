@@ -16,7 +16,7 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <ion-card href="/ganadores">
+      <ion-card :href="'/ganadores/' + cuestionario.id">
         <ion-card-header>
           <ion-card-title class="ion-text-center"
             >{{cuestionario.tema}}</ion-card-title
@@ -28,10 +28,10 @@
       </ion-card>
       <ion-card>
         <ion-list>
-          <ion-item href="/pregunta" v-for="pregunta in cuestionario.preguntas" :key="pregunta.id">
+          <ion-item  v-for="pregunta in cuestionario.preguntas" :key="pregunta.id" :href="'/pregunta/' + cuestionario.id">
             <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
             <ion-label
-              ><strong>{{pregunta.letra}}</strong> {{pregunta.enunciado}}</ion-label
+              >{{pregunta.enunciado}}</ion-label
             >
           </ion-item>
         </ion-list>
@@ -90,7 +90,15 @@ export default {
   setup() {
     const mroute = useRoute();
     const { id } = mroute.params;
-    const cuestionario = ref ();
+    const cuestionario = ref ({
+      id: 0,
+      fecha: '',
+      tema: '',
+      preguntas: {
+        enunciado: ''
+      }
+
+    });
      onIonViewDidEnter(() => {
        tokenHeader();
         axios.get("/cuestionarios/" + id).then((response) => {

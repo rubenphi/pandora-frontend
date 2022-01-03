@@ -14,7 +14,7 @@ const routes = [
         redirect: '/inicio'
       },
       {
-        path: 'grupo',
+        path: 'grupo/:id',
         component: () => import('@/views/Tab1Page.vue')
       },
       {
@@ -30,15 +30,15 @@ const routes = [
         component: () => import('@/views/CuestionarioView.vue')
       },
       {
-        path: 'pregunta',
+        path: 'pregunta/:id',
         component: () => import('@/views/PreguntaView.vue')
       },
       {
-        path: 'resultado',
+        path: 'resultado/:id',
         component: () => import('@/views/PreguntaResult.vue')
       },
       {
-        path: 'ganadores',
+        path: 'ganadores/:id',
         component: () => import('@/views/CuestionarioResult.vue')
       },
       {
