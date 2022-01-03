@@ -218,7 +218,7 @@
 // import axios from "axios";
 import { ref } from "vue";
 import { tokenHeader} from "../globalService";
-import router from "../router";
+//import router from "../router";
 import {
   arrowBackOutline,
   refreshOutline,
@@ -264,7 +264,7 @@ export default {
     const cuestionario = ref();
     onIonViewWillEnter(() => {
       tokenHeader();
-      console.log(router.params.id);
+      console.log( this.$route.params.id);
       /* axios.get("/cuestionarios/" + router.params.id).then((response) => {
         cuestionario.value = response.data;
       }); */
