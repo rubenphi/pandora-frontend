@@ -12,7 +12,7 @@
         </ion-toolbar>
       </ion-header>
 
-      <ion-card v-for="cuestionario in cuestionarios" :key="cuestionario.id" :href="'/cuestionario/' + ${cuestionario.id}" >
+      <ion-card v-for="cuestionario in cuestionarios" :key="cuestionario.id" :href="'/cuestionario/' + cuestionario.id" >
         <ion-card-header>
           <ion-card-subtitle>{{cuestionario.curso.nombre}}</ion-card-subtitle>
           <ion-card-title>{{cuestionario.fecha}}</ion-card-title>
