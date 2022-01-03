@@ -18,10 +18,10 @@
     <ion-content :fullscreen="true">
       <ion-card href="/ganadores">
         <ion-card-header>
-          <ion-card-title class="ion-text-center" 
-            >Romanticismo y Realismo {{ $route.params.id }}</ion-card-title
+          <ion-card-title class="ion-text-center"
+            >{{cuestionario.tema}}</ion-card-title
           >
-          <ion-card-subtitle class="ion-text-center" 
+          <ion-card-subtitle class="ion-text-center"
             >Ver Resultados</ion-card-subtitle
           >
         </ion-card-header>
@@ -29,7 +29,7 @@
       <ion-card>
         <ion-list>
           <ion-item href="/pregunta">
-            <ion-icon slot="start"  :icon="handLeftOutline"></ion-icon>
+            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
             <ion-label
               >¿Cuál de los siguientes documentos corresponde al a la
               información entregada en el siguiente enunciado?</ion-label
@@ -208,7 +208,6 @@
               text corresponde</ion-label
             >
           </ion-item>
-
         </ion-list>
       </ion-card>
     </ion-content>
@@ -216,6 +215,10 @@
 </template>
 
 <script>
+import axios from "axios";
+import { ref } from "vue";
+import { tokenHeader, usuarioGet } from "../globalService";
+
 import {
   arrowBackOutline,
   refreshOutline,
@@ -257,6 +260,14 @@ export default {
     IonCardSubtitle,
   },
   setup() {
+    const cuestionario = ref();
+    onIonViewWillEnter(() => {
+      tokenHeader();
+      axios.get("/cuestionario/" + $route.params.id).then((response) => {
+        cuestionario.value = response.data;
+      });
+    });
+
     return {
       arrowBackOutline,
       handLeftOutline,
