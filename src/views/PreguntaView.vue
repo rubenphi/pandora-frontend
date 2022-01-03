@@ -126,7 +126,7 @@ export default {
     });
      onIonViewDidEnter(() => {
        tokenHeader();
-        axios.get("/preguntass/" + id).then((response) => {
+        axios.get("/preguntas/" + id).then((response) => {
         pregunta.value = response.data;
       })
       
