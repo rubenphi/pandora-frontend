@@ -101,6 +101,7 @@ export default {
     });
 
     return {
+      cuestionario,
       id,
       arrowBackOutline,
       handLeftOutline,
