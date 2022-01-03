@@ -88,7 +88,7 @@ export default {
     const mroute = useRoute();
     const { id } = mroute.params;
      onIonViewDidEnter(() => {
-       console.log({id})
+       console.log(id)
       
     });
 
