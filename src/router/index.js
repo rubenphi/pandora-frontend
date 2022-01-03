@@ -1,5 +1,8 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import TabsPage from '../views/TabsPage.vue'
+
+
+
 const routes = [
   {
     path: '/',
@@ -52,4 +55,11 @@ const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes
 })
+
+router.beforeEach(async (to, from) => {
+  const canAccess = localStorage.getItem('token');
+  if (!canAccess) return '/login'
+})
+
+
 export default  router
