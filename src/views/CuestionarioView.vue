@@ -83,7 +83,7 @@ export default {
   },
   setup() {
      onIonViewWillEnter(() => {
-       console.log(this.$route.params.id)
+       console.log(2)
       
     });
 
