@@ -64,6 +64,9 @@ import {
   IonCardSubtitle,
   onIonViewDidEnter
 } from "@ionic/vue";
+
+import { useRoute } from 'vue-router';
+
 export default {
   components: {
     IonHeader,
@@ -83,7 +86,7 @@ export default {
   },
   setup() {
     let idRuta = this.$route.params.id;
-    let laRuta = $route.params.id;
+    let laRuta = useRoute();
      onIonViewDidEnter(() => {
        console.log(idRuta);
        console.log(laRuta)
