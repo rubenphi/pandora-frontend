@@ -26,7 +26,7 @@ const routes = [
         component: () => import('@/views/Tab3Page.vue')
       },
       {
-        path: 'cuestionario',
+        path: 'cuestionario/:id',
         component: () => import('@/views/CuestionarioView.vue')
       },
       {

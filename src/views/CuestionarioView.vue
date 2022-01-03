@@ -19,7 +19,7 @@
       <ion-card href="/ganadores">
         <ion-card-header>
           <ion-card-title class="ion-text-center" 
-            >Romanticismo y Realismo</ion-card-title
+            >Romanticismo y Realismo {{ $route.params.id }}</ion-card-title
           >
           <ion-card-subtitle class="ion-text-center" 
             >Ver Resultados</ion-card-subtitle
