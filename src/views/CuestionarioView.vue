@@ -18,18 +18,28 @@
     <ion-content :fullscreen="true">
       <ion-card href="/ganadores">
         <ion-card-header>
-          <ion-card-title class="ion-text-center"
-            > titulo </ion-card-title
+          <ion-card-title class="ion-text-center" 
+            >Romanticismo y Realismo {{ $route.params.id }}</ion-card-title
           >
-          <ion-card-subtitle class="ion-text-center"
+          <ion-card-subtitle class="ion-text-center" 
             >Ver Resultados</ion-card-subtitle
+
+    
+          
+            
+    
+
+          
+    
+    
+  
           >
         </ion-card-header>
       </ion-card>
       <ion-card>
         <ion-list>
           <ion-item href="/pregunta">
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
+            <ion-icon slot="start"  :icon="handLeftOutline"></ion-icon>
             <ion-label
               >¿Cuál de los siguientes documentos corresponde al a la
               información entregada en el siguiente enunciado?</ion-label
@@ -213,18 +223,12 @@
     </ion-content>
   </ion-page>
 </template>
-
 <script>
-// import axios from "axios";
-//import { ref } from "vue";
-//import { tokenHeader} from "../globalService";
-//import router from "../router";
 import {
   arrowBackOutline,
   refreshOutline,
   handLeftOutline,
 } from "ionicons/icons";
-
 import {
   IonLabel,
   IonItem,
@@ -240,9 +244,7 @@ import {
   IonCard,
   IonCardTitle,
   IonCardSubtitle,
-  onIonViewWillEnter
 } from "@ionic/vue";
-
 export default {
   components: {
     IonHeader,
@@ -261,13 +263,6 @@ export default {
     IonCardSubtitle,
   },
   setup() {
-    onIonViewWillEnter(() => {
-      console.log( this.$route.params.id);
-      /* axios.get("/cuestionarios/" + router.params.id).then((response) => {
-        cuestionario.value = response.data;
-      }); */
-    });
-
     return {
       arrowBackOutline,
       handLeftOutline,
