@@ -83,8 +83,9 @@ export default {
   },
   setup() {
      onIonViewWillEnter(() => {
-       console.log(2)
-      
+       console.log($route.params.id);
+       console.log($route.params.id);
+            
     });
 
     return {
