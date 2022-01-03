@@ -7,9 +7,9 @@
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
-        <ion-title size="large" class="ion-text-center">20-03-2011</ion-title>
+        <ion-title size="large" class="ion-text-center">{{cuestionario.fecha}}</ion-title>
         <ion-buttons slot="end" class="ion-margin-end">
-          <ion-button href="/cuestionario">
+          <ion-button :href="'/cuestionario/' + cuestionario.id">
             <ion-icon :icon="refreshOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -28,11 +28,10 @@
       </ion-card>
       <ion-card>
         <ion-list>
-          <ion-item href="/pregunta">
+          <ion-item href="/pregunta" v-for="pregunta in cuestionario.preguntas" :key="pregunta.id">
             <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
             <ion-label
-              >¿Cuál de los siguientes documentos corresponde al a la
-              información entregada en el siguiente enunciado?</ion-label
+              ><strong>{{pregunta.letra}}</strong> {{pregunta.enunciado}}</ion-label
             >
           </ion-item>
         </ion-list>
