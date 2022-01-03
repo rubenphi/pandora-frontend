@@ -18,7 +18,7 @@
       <ion-card>
         <ion-card-header>
           <ion-card-title class="ion-text-center"
-            >1. Primera Pregunta</ion-card-title
+            >Esta pregunta vale: + {{pregunta.valor}} puntos</ion-card-title
           >
         </ion-card-header>
       </ion-card>
@@ -29,14 +29,7 @@
       </ion-card>
       <ion-card>
         <ion-card-content>
-          El Romanticismo es un movimiento cultural que se originó en Alemania y
-          en Reino Unido a finales del siglo XVIII como una reacción
-          revolucionaria contra la Ilustración y el Neoclasicismo, confiriendo
-          prioridad a los sentimientos. Es considerado como el primer movimiento
-          de cultura que cubrió el mapa completo de Europa. En la mayoría de las
-          áreas estuvo en su apogeo en el período aproximado de 1800 a 1850.
-          Luego, cedió su lugar al positivismo, que fomenta el pensamiento
-          crítico y el empirismo como bases del conocimiento y la sociedad.
+          {{pregunta.enunciado}}
         </ion-card-content>
       </ion-card>
 
@@ -47,36 +40,13 @@
           </ion-card-subtitle>
           <hr>
           <ion-radio-group value="biff">
-            <ion-item lines="none">
+            <ion-item lines="none" v-for="opcion in pregunta.opciones" :key="opcion.id">
               <ion-label class="ion-text-wrap"
-                >Demasiada información completa para poder rellenar más de una
-                línea, la idea es probar que esto funciona</ion-label
+                >{{opcion.letra}} {{opcion.enunciado}}</ion-label
               >
-              <ion-radio slot="start" value="biff"></ion-radio>
+              <ion-radio slot="start" :value="opcion.id"></ion-radio>
             </ion-item>
 
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap"
-                >Demasiada información completa para poder rellenar más de una
-                línea, la idea es probar que esto funciona</ion-label
-              >
-              <ion-radio slot="start" value="griff"></ion-radio>
-            </ion-item>
-
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap"
-                >Demasiada información completa para poder rellenar más de una
-                línea, la idea es probar que esto funciona</ion-label
-              >
-              <ion-radio slot="start" value="buford"></ion-radio>
-            </ion-item>
-            <ion-item lines="none">
-              <ion-label class="ion-text-wrap"
-                >Demasiada información completa para poder rellenar más de una
-                línea, la idea es probar que esto funciona</ion-label
-              >
-              <ion-radio slot="start" value="Nanai"></ion-radio>
-            </ion-item>
           </ion-radio-group>
         </ion-list>
       </ion-card>
@@ -93,6 +63,11 @@
 </template>
 
 <script>
+import axios from "axios";
+import { ref } from "vue";
+import { tokenHeader } from "../globalService";
+
+
 import {
   arrowBackOutline,
   refreshOutline,
@@ -136,7 +111,28 @@ export default {
     IonCardSubtitle,
   },
   setup() {
+
+    const mroute = useRoute();
+    const { id } = mroute.params;
+    const pregunta = ref ({
+      puntaje: '',
+      enunciado: '',
+      opciones: {
+        enunciado: ''
+      }
+
+    });
+     onIonViewDidEnter(() => {
+       tokenHeader();
+        axios.get("/preguntass/" + id).then((response) => {
+        pregunta.value = response.data;
+      })
+      
+    });
+
+
     return {
+      pregunta,
       arrowBackOutline,
       handLeftOutline,
       refreshOutline,
