@@ -19,7 +19,7 @@
       <ion-card href="/ganadores">
         <ion-card-header>
           <ion-card-title class="ion-text-center"
-            >Romanticismo y Realismo {{ id }}</ion-card-title
+            >{{cuestionario.tema}}</ion-card-title
           >
           <ion-card-subtitle class="ion-text-center"
             >Ver Resultados</ion-card-subtitle
@@ -41,6 +41,10 @@
   </ion-page>
 </template>
 <script>
+import axios from "axios";
+import { ref } from "vue";
+import { tokenHeader } from "../globalService";
+
 
 import {
   arrowBackOutline,
@@ -87,8 +91,12 @@ export default {
   setup() {
     const mroute = useRoute();
     const { id } = mroute.params;
+    const cuestionario = ref ();
      onIonViewDidEnter(() => {
-       console.log(id)
+       tokenHeader();
+        axios.get("/cuestionarios/" + id).then((response) => {
+        cuestionario.value = response.data;
+      })
       
     });
 

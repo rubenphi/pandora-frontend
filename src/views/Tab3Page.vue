@@ -64,7 +64,7 @@ export default {
   const cuestionarios = ref ([]);
   onIonViewWillEnter(() => {
         tokenHeader();
-         axios.get("/cuestionarios/curso/" + usuario.curso_id).then((response) => {
+        axios.get("/cuestionarios/curso/" + usuario.curso_id).then((response) => {
         cuestionarios.value = response.data;
       })
     });
