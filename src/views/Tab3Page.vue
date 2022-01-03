@@ -60,7 +60,7 @@ export default {
     IonPage,
   },
   setup() {
-  const usuario = ref(usuarioGet());
+  let usuario = usuarioGet();
   const cuestionarios = ref ([]);
   onIonViewWillEnter(() => {
         tokenHeader();
