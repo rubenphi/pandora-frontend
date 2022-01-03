@@ -240,6 +240,7 @@ import {
   IonCard,
   IonCardTitle,
   IonCardSubtitle,
+  onIonViewWillEnter
 } from "@ionic/vue";
 
 export default {
@@ -263,7 +264,7 @@ export default {
     const cuestionario = ref();
     onIonViewWillEnter(() => {
       tokenHeader();
-      axios.get("/cuestionario/" + $route.params.id).then((response) => {
+      axios.get("/cuestionario/" + route.params.id).then((response) => {
         cuestionario.value = response.data;
       });
     });
