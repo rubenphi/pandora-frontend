@@ -54,20 +54,12 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes
-})
+});
 
-
-
-function existToken() {
-  return !!localStorage.token;
-}
 
 router.beforeEach((to, from, next) => {
-  if (to.path != 'login' && existToken()) {
-      next();
-  } else {
-      next('login');
-  }
+  if (to.path !== '/login' && localStorage.getItem('token') == undefined) next({ path: '/login' })
+  else next()
 });
 
 
