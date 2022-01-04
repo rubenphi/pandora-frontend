@@ -15,7 +15,7 @@
       <ion-list>
         <ion-item v-for="miembro in miembros" :key="miembro.id" >
           <ion-icon slot="start" :icon="personOutline"></ion-icon>
-          <ion-label>{{miembro.name}}</ion-label>
+          <ion-label>{{miembro.nombre}}</ion-label>
         </ion-item>
         
       </ion-list>
@@ -30,7 +30,6 @@ import { ref } from "vue";
 import { tokenHeader , usuarioGet } from "../globalService";
 
 import {
-  onIonViewWillEnter,
   IonLabel,
   IonItem,
   IonIcon,
@@ -40,6 +39,7 @@ import {
   IonToolbar,
   IonTitle,
   IonContent,
+  onIonViewWillEnter
 } from "@ionic/vue";
 
 export default {
@@ -55,13 +55,19 @@ export default {
     IonIcon,
   },
   setup() {
+    const miembros  = ref([
+      {id: 1, nombre:'Felipito'},
+      {id: 2, nombre:'Susanita'},
+      {id: 3, nombre:'Mafalda'},
+      {id: 4, nombre:'Guille'}
+    ])
+
+    const mayus = ref({});
     let usuario = usuarioGet();
-    const miembros = ref([]);
+    const cuestionarios = ref([]);
     onIonViewWillEnter(() => {
       tokenHeader();
-      axios.get("/user/grupo/" + usuario.grupo_id).then((response) => {
-        miembros.value = response.data;
-      });
+      console.log(usuario.grupo_id)
     });
     return {
       usuario,
