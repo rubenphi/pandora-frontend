@@ -59,14 +59,8 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   axios.defaults.headers.common["Authorization"] = localStorage.getItem("token");
   axios.get("/user/loged").then((response) => {
-    console.log(response.data.name);
-    if (response.data.name == null || response.data.name == undefined ) {
-      localStorage.setItem("user", false);
-    } else {
-      localStorage.setItem("user", true);
-    }
     localStorage.setItem("usuario", JSON.stringify(response.data));
-    if (to.path !== "/login" && localStorage.getItem('user')) next({ path: "/login" });
+    if (to.path !== "/login" && response.data.name == undefined) next({ path: "/login" });
     else next();
   });
 });
