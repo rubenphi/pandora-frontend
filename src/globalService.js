@@ -15,10 +15,11 @@ export function validateUser(){
     axios.defaults.headers.common['Authorization'] = localStorage.getItem('token');
     axios.get("/user/loged").then((response) => {
         if(response.data.message == 'Unauthenticated') {
-          localStorage.removeItem('usuario')
+          return false
         }else 
         {
           localStorage.setItem("usuario", JSON.stringify(response.data));
+          return true
         }
         
     });

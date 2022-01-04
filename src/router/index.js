@@ -62,7 +62,7 @@ router.beforeEach((to, from, next) => {
  
   if (to.path !== '/login' && localStorage.getItem('usuario') == undefined) next({ path: '/login' })
   else next()  
-  
+  validateUser()
 });
 
 
