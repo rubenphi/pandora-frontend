@@ -61,8 +61,11 @@ router.beforeEach((to, from, next) => {
   axios.get("/user/loged").then((response) => {
       localStorage.setItem("usuario", JSON.stringify(response.data));
   });
-  if (JSON.parse(localStorage.getItem('usuario')).name == undefined) {
-    localStorage.removeItem('usuario')
+  
+  if (JSON.parse(localStorage.getItem('usuario')) != null) {
+    if(JSON.parse(localStorage.getItem('usuario')).name == null) {
+      localStorage.removeItem('usuario')
+     }
   } 
   if (to.path !== '/login' && localStorage.getItem('usuario') == undefined) next({ path: '/login' })
   else next()  
