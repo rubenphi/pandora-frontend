@@ -59,18 +59,20 @@ const router = createRouter({
 
 
 router.beforeEach((to, from, next) => {
-  axios.defaults.headers.common['Authorization'] = localStorage.getItem('token');
-    axios.get("/user/loged").then((response) => {
-        if (typeof response.data != 'object'){
-          localStorage.removeItem('usuario');
-          console.log('borrando')
-          console.log(localStorage.getItem('usuario'));
-        } else {
-          console.log('no se borró nada')
-        }
-    });
+
   if (to.path !== '/login' && localStorage.getItem('usuario') == undefined) next({ path: '/login' })
   else next()
+
+  axios.defaults.headers.common['Authorization'] = localStorage.getItem('token');
+  axios.get("/user/loged").then((response) => {
+      if (typeof response.data != 'object'){
+        localStorage.removeItem('usuario');
+        console.log('borrando')
+        console.log(localStorage.getItem('usuario'));
+      } else {
+        console.log('no se borró nada')
+      }
+  });
 });
 
 export default router;
