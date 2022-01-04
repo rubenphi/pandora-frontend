@@ -11,7 +11,7 @@ export function usuarioGet() {
 */
 
 let usuario = '';
-export function guardaDato(){
+export async function guardaDato(){
     tokenHeader();
     await axios.get("/user/loged").then((response) => {
         localStorage.setItem("usuario", JSON.stringify(response.data));
@@ -20,7 +20,7 @@ export function guardaDato(){
       });
 
 }
-export async function usuarioGet() {
+export  function usuarioGet() {
 guardaDato()
 
 return this.usuario();
