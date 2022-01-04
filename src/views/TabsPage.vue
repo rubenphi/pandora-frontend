@@ -53,8 +53,7 @@ export default {
     };
   onIonViewWillEnter(() => {
         usuario = usuarioGet();
-      })
-    });
+      });
     return {
       usuario,
       helpCircleOutline,
