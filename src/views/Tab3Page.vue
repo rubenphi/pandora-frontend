@@ -26,7 +26,7 @@
 
 <script>
 import axios from "axios";
-import { ref, mounted } from "vue";
+import { ref } from "vue";
 import { tokenHeader , usuarioGet } from "../globalService";
 
 
@@ -57,26 +57,22 @@ export default {
     IonContent,
     IonPage,
   },
- 
   setup() {
   let usuario = usuarioGet();
-  console.log(JSON.stringify(usuario));
   const cuestionarios = ref ([]);
- 
+  onIonViewWillEnter(() => {
+        tokenHeader();
+        axios.get("/cuestionarios/curso/" + usuario.curso_id).then((response) => {
+        cuestionarios.value = response.data;
+      })
+    });
 
     return {
-  
       usuario,
       cuestionarios
       
     }
-    
+       
   },
-  async mounted() {
-    tokenHeader();
-       await axios.get("/cuestionarios/curso/" + usuario.curso_id).then((response) => {
-        cuestionarios.value = response.data;
-      })
-  }
 };
 </script>
