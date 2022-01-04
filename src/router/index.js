@@ -58,14 +58,15 @@ const router = createRouter({
 });
 
 function validador(){
-  localStorage.setItem("usuario", "{name: null}");
+  let user = {name: null};
   axios.defaults.headers.common['Authorization'] = localStorage.getItem('token');
   console.log(localStorage.getItem('token'));
   axios.get("/user/loged").then((response) => {
     localStorage.setItem("usuario", JSON.stringify(response.data));
   });
-
-  if (JSON.parse(localStorage.getItem('usuario')).name == null) {
+  
+  user = JSON.parse(localStorage.getItem('usuario')) 
+  if ( name.name == null) {
     return false
   } else {
     return true
