@@ -64,7 +64,7 @@ function validador(){
   axios.get("/user/loged").then((response) => {
     localStorage.setItem("usuario", JSON.stringify(response.data));
   });
-  
+  console.log(localStorage.getItem('usuario'))
   user = JSON.parse(localStorage.getItem('usuario')) 
   if ( user.name == undefined) {
     return false
