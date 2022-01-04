@@ -55,14 +55,12 @@ export default {
     IonIcon,
   },
   setup() {
-
-    const mayus = ref({})
     let usuario = usuarioGet();
     const miembros = ref([]);
     onIonViewWillEnter(() => {
       tokenHeader();
       axios.get("/user/grupo/" + usuario.grupo_id).then((response) => {
-        cuestionarios.value = response.data;
+        miembros.value = response.data;
       });
     });
     return {
