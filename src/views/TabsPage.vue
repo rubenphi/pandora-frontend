@@ -3,7 +3,7 @@
     <ion-tabs>
       <ion-router-outlet></ion-router-outlet>
       <ion-tab-bar slot="bottom">
-        <ion-tab-button tab="tab1" href="/login">
+        <ion-tab-button tab="tab1" href="/grupo">
           <ion-icon :icon="peopleOutline" />
           <ion-label>Grupo</ion-label>
         </ion-tab-button>

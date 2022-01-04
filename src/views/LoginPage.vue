@@ -8,7 +8,7 @@
     <ion-content class="ion-padding-start ion-padding-end">
       <ion-grid>
         <ion-row class="ion-align-items-center">
-          <ion-col size-s="1" size-xs="1" size-md="4" size-lg="8" size-xl="8">
+          <ion-col size-s="1" size-xs="1" size-md="4" size-lg="5" size-xl="5">
           </ion-col>
           <ion-col
             size-s="10"
@@ -128,7 +128,7 @@
               </ion-buttons>
             </ion-card>
           </ion-col>
-          <ion-col size-s="1" size-xs="1" size-md="4" size-lg="8" size-xl="8">
+          <ion-col size-s="1" size-xs="1" size-md="4" size-lg="5" size-xl="5">
           </ion-col>
         </ion-row>
       </ion-grid>
