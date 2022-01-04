@@ -4,11 +4,18 @@ export function tokenHeader() {
 
     axios.defaults.headers.common['Authorization'] = localStorage.getItem('token');
 }
-
+/*
 export function usuarioGet() {
     return JSON.parse(localStorage.getItem('usuario'));
 }
-
+*/
+export function usuarioGet() {
+    axios.defaults.headers.common['Authorization'] = localStorage.getItem('token');
+    axios.get("/user/loged").then((response) => {
+        localStorage.setItem("usuario", JSON.stringify(response.data));
+      });
+      return JSON.parse(localStorage.getItem('usuario'));
+}
  
 
 
