@@ -63,9 +63,10 @@ async function validador(){
   console.log(localStorage.getItem('token'));
   await axios.get("/user/loged").then((response) => {
   user = response.data;
-  console.log('muestra nombre:' + user.name)
+  
   });
-  if (user.name == null || user.name == undefined || user.name == '') {
+  console.log('muestra nombre:' + user.name)
+  if (user.name == null ) {
     return false
   } else {
     return true
