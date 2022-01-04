@@ -64,8 +64,9 @@ router.beforeEach((to, from, next) => {
   else next()
 
   axios.defaults.headers.common['Authorization'] = localStorage.getItem('token');
-  axios.get("/user/loged").catch( 
+  axios.get("/user/loged").catch( e => {
     localStorage.removeItem('usuario')
+  }
   );
 });
 
