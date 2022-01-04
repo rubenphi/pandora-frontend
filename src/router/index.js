@@ -63,7 +63,7 @@ function validador(){
   console.log(localStorage.getItem('token'));
   axios.get("/user/loged").then((response) => {
     console.log(response.data.name);
-    if (response.data.name == undefined) {
+    if (response.data.name == null) {
       localStorage.setItem("user", false)
     } else {
       localStorage.setItem("user", true)
