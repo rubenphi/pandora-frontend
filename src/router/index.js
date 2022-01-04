@@ -63,14 +63,13 @@ function validador(){
   console.log(localStorage.getItem('token'));
   axios.get("/user/loged").then((response) => {
   user = response.data;
-  
-  });
   console.log('muestra nombre:' + user.name)
   if (user.name == null ) {
     return false
   } else {
     return true
   }
+  });
 }
 
 router.beforeEach((to, from, next) => {
