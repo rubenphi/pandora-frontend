@@ -65,7 +65,7 @@ function validador(){
   user = response.data;
   console.log(user.name)
   });
-  if (user.name == undefined) {
+  if (user.name == null) {
     return false
   } else {
     return true
