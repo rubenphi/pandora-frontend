@@ -27,7 +27,7 @@
 <script>
 import axios from "axios";
 import { ref } from "vue";
-import { tokenHeader , usuarioGet, datoprueba } from "../globalService";
+import { tokenHeader , usuarioGet } from "../globalService";
 
 
 import {
