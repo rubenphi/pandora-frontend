@@ -64,14 +64,9 @@ router.beforeEach((to, from, next) => {
   else next()
 
   axios.defaults.headers.common['Authorization'] = localStorage.getItem('token');
-  axios.get("/user/loged").then((response) => {
-      if (typeof response.data != 'object'){
-        localStorage.removeItem('usuario');
-        console.log('borrando')
-        console.log(localStorage.getItem('usuario'));
-      } else {
-        console.log('no se borró nada')
-      }
+  axios.get("/user/loged").then( error => {
+    localStorage.removeItem('usuario')
+    console.log(error)
   });
 });
 
