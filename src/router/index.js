@@ -73,6 +73,7 @@ function validador(){
 }
 
 router.beforeEach((to, from, next) => {
+  console.log(validador());
   if (to.path !== '/login' && validador() == false) next({ path: '/login' })
   else next()
 });
