@@ -59,8 +59,6 @@ export default {
         miembros.value = response.data;
         
       });
-      localStorage.removeItem('usuario');
-        console.log(localStorage.getItem('usuario'));
     });
     return {
       usuario,
