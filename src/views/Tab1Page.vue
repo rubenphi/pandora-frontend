@@ -15,7 +15,7 @@
       <ion-list>
         <ion-item v-for="miembro in miembros" :key="miembro.id" >
           <ion-icon slot="start" :icon="personOutline"></ion-icon>
-          <ion-label>{{miembro.nombre}}</ion-label>
+          <ion-label>{{miembro.name}}</ion-label>
         </ion-item>
         
       </ion-list>
@@ -25,8 +25,12 @@
 
 <script>
 import { personOutline } from "ionicons/icons";
+import axios from "axios";
 import { ref } from "vue";
+import { tokenHeader , usuarioGet } from "../globalService";
+
 import {
+  onIonViewWillEnter,
   IonLabel,
   IonItem,
   IonIcon,
@@ -51,27 +55,17 @@ export default {
     IonIcon,
   },
   setup() {
-    const miembros  = ref([
-      {id: 1, nombre:'Felipito'},
-      {id: 2, nombre:'Susanita'},
-      {id: 3, nombre:'Mafalda'},
-      {id: 4, nombre:'Guille'}
-    ])
 
     const mayus = ref({})
-
+    let usuario = usuarioGet();
+    const miembros = ref([]);
+    onIonViewWillEnter(() => {
+      tokenHeader();
+      axios.get("/user/grupo/" + usuario.grupo_id).then((response) => {
+        cuestionarios.value = response.data;
+      });
+    });
     return {
-      changeMayus (miembro){
-          if ( miembro.id in miembros.value ) {
-            console.log('Existe');
-          } else {
-            console.log('no existe');
-          }
-          mayus.value[miembro.id] =  miembro
-          miembro.nombre = miembro.nombre.toUpperCase();
-          console.log(mayus.value.nombre);
-          console.log(miembro.nombre)
-      },
       personOutline,
       miembros
     };

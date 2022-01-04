@@ -137,7 +137,6 @@
 </template>
 
 <script>
-
 import { ref } from "vue";
 import axios from "axios";
 import { tokenHeader } from "../globalService";
@@ -184,6 +183,8 @@ export default {
       estatus: 0,
       data: "",
     });
+
+
     return {
       error,
       axios,
@@ -199,13 +200,13 @@ export default {
               error.value.data = "Error al iniciar sesión";
               console.log(response.data.message);
             } else {
-              localStorage.setItem('token', 'Bearer ' + response.data.token);
+              localStorage.setItem("token", "Bearer " + response.data.token);
               tokenHeader();
-               axios.get("/user/loged").then((response) => {
-    localStorage.setItem('usuario', JSON.stringify(response.data));
-  }) ;
-              error.value.estatus = 0 
-              router.push('/inicio')
+              axios.get("/user/loged").then((response) => {
+                localStorage.setItem("usuario", JSON.stringify(response.data));
+              });
+              error.value.estatus = 0;
+              router.push("/inicio");
             }
           });
         }
