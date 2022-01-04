@@ -25,7 +25,7 @@
 
 <script>
 import { personOutline } from "ionicons/icons";
-import axios from "axios";
+// import axios from "axios";
 import { ref } from "vue";
 import { tokenHeader , usuarioGet } from "../globalService";
 
@@ -62,9 +62,9 @@ export default {
       {id: 4, nombre:'Guille'}
     ])
 
-    const mayus = ref({});
+   // const mayus = ref({});
     let usuario = usuarioGet();
-    const cuestionarios = ref([]);
+  //  const cuestionarios = ref([]);
     onIonViewWillEnter(() => {
       tokenHeader();
       console.log(usuario.grupo_id)
