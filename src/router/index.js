@@ -59,17 +59,15 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   axios.defaults.headers.common['Authorization'] = localStorage.getItem('token');
   axios.get("/user/loged").then((response) => {
-      console.log(JSON.stringify(response.data));
-      localStorage.setItem("usuario", JSON.stringify(response.data));
+      if(response.data.message == 'Unauthenticated') {
+        localStorage.removeItem('usuario')
+      }else 
+      {
+        localStorage.setItem("usuario", JSON.stringify(response.data));
+      }
+      
   });
-  
-  if (JSON.parse(localStorage.getItem('usuario')) != null) {
-    console.log (typeof JSON.parse(localStorage.getItem('usuario')).name);
-    console.log  (JSON.parse(localStorage.getItem('usuario')).name);
-    if(JSON.parse(localStorage.getItem('usuario')).name == undefined) {
-      localStorage.removeItem('usuario')
-     }
-  } 
+ 
   if (to.path !== '/login' && localStorage.getItem('usuario') == undefined) next({ path: '/login' })
   else next()  
   
