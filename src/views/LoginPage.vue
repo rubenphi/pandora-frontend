@@ -205,10 +205,12 @@ export default {
               
               axios.get("/user/loged").then((response) => {
                 localStorage.setItem("usuario", JSON.stringify(response.data));
+
+                 error.value.estatus = 0;
+              router.push("/inicio");
               });
               
-              error.value.estatus = 0;
-              await router.push("/inicio");
+             
             }
           });
         }
