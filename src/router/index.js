@@ -58,18 +58,17 @@ const router = createRouter({
 });
 
 function validador(){
-  let user = '';
   axios.defaults.headers.common['Authorization'] = localStorage.getItem('token');
   console.log(localStorage.getItem('token'));
   axios.get("/user/loged").then((response) => {
-  user = response.data;
-  console.log('muestra nombre:' + user.name)
-  if (user.name == null ) {
+    localStorage.setItem("usuario", JSON.stringify(response.data));
+  });
+
+  if (JSON.parse(localStorage.getItem('usuario')).name == undefined) {
     return false
   } else {
     return true
   }
-  });
 }
 
 router.beforeEach((to, from, next) => {
