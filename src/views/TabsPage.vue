@@ -23,8 +23,6 @@
 </template>
 
 <script>
-import { usuarioGet } from "../globalService";
-
 import {
   IonTabBar,
   IonTabButton,
@@ -32,8 +30,7 @@ import {
   IonLabel,
   IonIcon,
   IonPage,
-  IonRouterOutlet,
-  onIonViewWillEnter
+  IonRouterOutlet
 } from "@ionic/vue";
 import { helpCircleOutline, homeOutline, peopleOutline } from "ionicons/icons";
 
