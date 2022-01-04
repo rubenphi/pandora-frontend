@@ -33,6 +33,7 @@ import {
   IonIcon,
   IonPage,
   IonRouterOutlet,
+  onIonViewWillEnter
 } from "@ionic/vue";
 import { helpCircleOutline, homeOutline, peopleOutline } from "ionicons/icons";
 
@@ -47,7 +48,13 @@ export default {
     IonRouterOutlet,
   },
   setup() {
-    let usuario = usuarioGet();
+    let usuario = {
+      grupo: 0
+    };
+  onIonViewWillEnter(() => {
+        usuario = usuarioGet();
+      })
+    });
     return {
       usuario,
       helpCircleOutline,
