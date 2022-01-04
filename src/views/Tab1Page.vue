@@ -64,6 +64,7 @@ export default {
       });
     });
     return {
+      usuario,
       personOutline,
       miembros
     };

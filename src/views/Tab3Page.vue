@@ -69,8 +69,7 @@ export default {
 
     return {
       usuario,
-      axios,
-      cuestionarios,
+      cuestionarios
       
     }
        
