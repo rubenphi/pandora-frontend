@@ -64,10 +64,9 @@ router.beforeEach((to, from, next) => {
   else next()
 
   axios.defaults.headers.common['Authorization'] = localStorage.getItem('token');
-  axios.get("/user/loged").catch( error => {
+  axios.get("/user/loged").catch( 
     localStorage.removeItem('usuario')
-    console.log(error)
-  });
+  );
 });
 
 export default router;
