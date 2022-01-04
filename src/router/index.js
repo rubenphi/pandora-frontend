@@ -1,90 +1,74 @@
-import { createRouter, createWebHistory } from '@ionic/vue-router';
-import TabsPage from '../views/TabsPage.vue';
+import { createRouter, createWebHistory } from "@ionic/vue-router";
+import TabsPage from "../views/TabsPage.vue";
 import axios from "axios";
-
-
 
 const routes = [
   {
-    path: '/',
-    redirect: '/inicio'
+    path: "/",
+    redirect: "/inicio",
   },
   {
-    path: '/',
+    path: "/",
     component: TabsPage,
     children: [
       {
-        path: '',
-        redirect: '/inicio'
+        path: "",
+        redirect: "/inicio",
       },
       {
-        path: 'grupo',
-        component: () => import('@/views/Tab1Page.vue')
+        path: "grupo",
+        component: () => import("@/views/Tab1Page.vue"),
       },
       {
-        path: 'inicio',
-        component: () => import('@/views/Tab2Page.vue')
+        path: "inicio",
+        component: () => import("@/views/Tab2Page.vue"),
       },
       {
-        path: 'cuestionarios',
-        component: () => import('@/views/Tab3Page.vue')
+        path: "cuestionarios",
+        component: () => import("@/views/Tab3Page.vue"),
       },
       {
-        path: 'cuestionario/:id',
-        component: () => import('@/views/CuestionarioView.vue')
+        path: "cuestionario/:id",
+        component: () => import("@/views/CuestionarioView.vue"),
       },
       {
-        path: 'pregunta/:id',
-        component: () => import('@/views/PreguntaView.vue')
+        path: "pregunta/:id",
+        component: () => import("@/views/PreguntaView.vue"),
       },
       {
-        path: 'resultado/:id',
-        component: () => import('@/views/PreguntaResult.vue')
+        path: "resultado/:id",
+        component: () => import("@/views/PreguntaResult.vue"),
       },
       {
-        path: 'ganadores/:id',
-        component: () => import('@/views/CuestionarioResult.vue')
+        path: "ganadores/:id",
+        component: () => import("@/views/CuestionarioResult.vue"),
       },
       {
-        path: 'login',
-        component: () => import('@/views/LoginPage.vue')
-      }
-    ]
-  }
-]
+        path: "login",
+        component: () => import("@/views/LoginPage.vue"),
+      },
+    ],
+  },
+];
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
-  routes
+  routes,
 });
 
-function validador(){
-  let user = false;
-  axios.defaults.headers.common['Authorization'] = localStorage.getItem('token');
-  console.log(localStorage.getItem('token'));
-  axios.get("/user/loged").then((response) => {
-    console.log(response.data.name);
-    if (response.data.name == null) {
-      localStorage.setItem("user", false)
-    } else {
-      localStorage.setItem("user", true)
-    }
-    localStorage.setItem("usuario", JSON.stringify(response.data));
-    console.log(localStorage.getItem('usuario'));
-  });
-  
-  user = localStorage.getItem('user')
-  if ( user == false) {
-    return false
-  } else {
-    return true
-  }
-}
 
 router.beforeEach((to, from, next) => {
-  console.log(validador());
-  if (to.path !== '/login' && validador() == false) next({ path: '/login' })
-  else next()
+  axios.defaults.headers.common["Authorization"] = localStorage.getItem("token");
+  axios.get("/user/loged").then((response) => {
+    console.log(response.data.name);
+    if (response.data.name == null || response.data.name == undefined ) {
+      localStorage.setItem("user", false);
+    } else {
+      localStorage.setItem("user", true);
+    }
+    localStorage.setItem("usuario", JSON.stringify(response.data));
+    if (to.path !== "/login" && localStorage.getItem('user')) next({ path: "/login" });
+    else next();
+  });
 });
 
-
-export default  router
+export default router;
