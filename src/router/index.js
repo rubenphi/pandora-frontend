@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from "@ionic/vue-router";
 import TabsPage from "../views/TabsPage.vue";
 import axios from "axios";
+import { validateUser } from "../globalService";
+
 
 const routes = [
   {
@@ -57,16 +59,7 @@ const router = createRouter({
 
 
 router.beforeEach((to, from, next) => {
-  axios.defaults.headers.common['Authorization'] = localStorage.getItem('token');
-  axios.get("/user/loged").then((response) => {
-      if(response.data.message == 'Unauthenticated') {
-        localStorage.removeItem('usuario')
-      }else 
-      {
-        localStorage.setItem("usuario", JSON.stringify(response.data));
-      }
-      
-  });
+   validateUser()
  
   if (to.path !== '/login' && localStorage.getItem('usuario') == undefined) next({ path: '/login' })
   else next()  
