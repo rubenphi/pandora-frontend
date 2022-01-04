@@ -57,11 +57,11 @@ const router = createRouter({
   routes
 });
 
-async function validador(){
+function validador(){
   let user = '';
   axios.defaults.headers.common['Authorization'] = localStorage.getItem('token');
   console.log(localStorage.getItem('token'));
-  await axios.get("/user/loged").then((response) => {
+  axios.get("/user/loged").then((response) => {
   user = response.data;
   
   });
