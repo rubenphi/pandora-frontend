@@ -63,7 +63,8 @@ router.beforeEach((to, from, next) => {
   });
   
   if (JSON.parse(localStorage.getItem('usuario')) != null) {
-    console.log (typeof JSON.parse(localStorage.getItem('usuario')).name); 
+    console.log (typeof JSON.parse(localStorage.getItem('usuario')).name);
+    console.log  (JSON.parse(localStorage.getItem('usuario')).name);
     if(JSON.parse(localStorage.getItem('usuario')).name == undefined) {
       localStorage.removeItem('usuario')
      }
