@@ -66,7 +66,7 @@ router.beforeEach((to, from, next) => {
   if (to.path != '/login' && existToken()) {
       next();
   } else {
-      next('login');
+      next('/login');
   }
 });
 
