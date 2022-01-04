@@ -59,12 +59,12 @@ export default {
   },
   setup() {
   let usuario = usuarioGet();
+  console.log(JSON.stringify(usuario));
   const cuestionarios = ref ([]);
-  onIonViewWillEnter(() => {
+  async onIonViewWillEnter(() => {
         tokenHeader();
-        axios.get("/cuestionarios/curso/" + usuario.curso_id).then((response) => {
+       await axios.get("/cuestionarios/curso/" + usuario.curso_id).then((response) => {
         cuestionarios.value = response.data;
-        console.log(JSON.stringify(usuarioGet()));
       })
     });
 
