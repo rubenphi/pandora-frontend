@@ -208,7 +208,7 @@ export default {
               });
               
               error.value.estatus = 0;
-              router.push("/inicio");
+              await router.push("/inicio");
             }
           });
         }
