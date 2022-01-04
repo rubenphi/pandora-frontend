@@ -62,6 +62,7 @@ function validador(){
   axios.defaults.headers.common['Authorization'] = localStorage.getItem('token');
   console.log(localStorage.getItem('token'));
   axios.get("/user/loged").then((response) => {
+    console.log(response.data.name);
     if (response.data.name == undefined) {
       localStorage.setItem("user", false)
     } else {
