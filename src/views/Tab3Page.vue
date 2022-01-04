@@ -64,9 +64,7 @@ export default {
         tokenHeader();
         axios.get("/cuestionarios/curso/" + usuario.curso_id).then((response) => {
         cuestionarios.value = response.data;
-        console.log(datoprueba());
         console.log(JSON.stringify(usuarioGet()));
-
       })
     });
 

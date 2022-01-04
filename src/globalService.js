@@ -15,7 +15,6 @@ export async function guardaDato(){
     tokenHeader();
     await axios.get("/user/loged").then((response) => {
         localStorage.setItem("usuario", JSON.stringify(response.data));
-        console.log(localStorage.getItem('usuario'));
         usuario = JSON.parse(localStorage.getItem('usuario'));
       });
 
