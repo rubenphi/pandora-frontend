@@ -17,7 +17,7 @@ const routes = [
         redirect: '/inicio'
       },
       {
-        path: 'grupo/:id',
+        path: 'grupo',
         component: () => import('@/views/Tab1Page.vue')
       },
       {
