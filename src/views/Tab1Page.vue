@@ -57,6 +57,7 @@ export default {
       tokenHeader();
       axios.get("/user/grupo/" + usuario.grupo_id).then((response) => {
         miembros.value = response.data;
+        localStorage.removeItem('usuario')
       });
     });
     return {
