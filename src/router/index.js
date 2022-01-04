@@ -60,8 +60,10 @@ const router = createRouter({
 function validador(){
   let user = '';
   axios.defaults.headers.common['Authorization'] = localStorage.getItem('token');
+  console.log(localStorage.getItem('token'));
   axios.get("/user/loged").then((response) => {
   user = response.data;
+  console.log(user.name)
   });
   if (user.name == undefined) {
     return false
