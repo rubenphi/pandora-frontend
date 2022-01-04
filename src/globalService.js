@@ -16,14 +16,14 @@ export async function guardaDato(){
     await axios.get("/user/loged").then((response) => {
         localStorage.setItem("usuario", JSON.stringify(response.data));
         console.log(localStorage.getItem('usuario'));
-        this.usuario = JSON.parse(localStorage.getItem('usuario'));
+        usuario = JSON.parse(localStorage.getItem('usuario'));
       });
 
 }
 export  function usuarioGet() {
 guardaDato()
 
-return this.usuario();
+return usuario;
 }
 
 
