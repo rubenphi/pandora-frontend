@@ -56,7 +56,8 @@ const router = createRouter({
 });
 
 
-router.beforeEach((to, from, next) => {
+/*
+ router.beforeEach((to, from, next) => {
   axios.defaults.headers.common["Authorization"] = localStorage.getItem("token");
   axios.get("/user/loged").then((response) => {
     
@@ -64,5 +65,5 @@ router.beforeEach((to, from, next) => {
     else next();
   });
 });
-
+*/
 export default router;
