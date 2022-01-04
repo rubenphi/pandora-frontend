@@ -58,7 +58,7 @@ const router = createRouter({
 
 
 router.beforeEach((to, from, next) => {
-   validateUser()
+
    console.log(localStorage.getItem('usuario'));
   if (to.path !== '/login' && localStorage.getItem('usuario') == undefined) next({ path: '/login' })
   else next()  
