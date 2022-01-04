@@ -16,6 +16,9 @@ export async function usuarioGet() {
       });
       return JSON.parse(localStorage.getItem('usuario'));
 }
- 
+
+export function datoprueba() {
+    return 'hola';
+}
 
 

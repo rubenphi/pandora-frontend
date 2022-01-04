@@ -27,7 +27,7 @@
 <script>
 import axios from "axios";
 import { ref } from "vue";
-import { tokenHeader , usuarioGet } from "../globalService";
+import { tokenHeader , usuarioGet, datoprueba } from "../globalService";
 
 
 import {
@@ -64,7 +64,7 @@ export default {
         tokenHeader();
         axios.get("/cuestionarios/curso/" + usuario.curso_id).then((response) => {
         cuestionarios.value = response.data;
-        console.log(usuario.curso_id);
+        console.log(datoprueba());
         console.log(JSON.stringify(usuarioGet()));
 
       })
