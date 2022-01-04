@@ -49,10 +49,11 @@ export default {
   },
   setup() {
     let usuario = {
-      grupo: 0
+      grupo_id: 0
     };
   onIonViewWillEnter(() => {
         usuario = usuarioGet();
+        console.log(usuario.grupo_id)
       });
     return {
       usuario,
