@@ -57,15 +57,15 @@ const router = createRouter({
   routes
 });
 
-function validador(){
+async function validador(){
   let user = '';
   axios.defaults.headers.common['Authorization'] = localStorage.getItem('token');
   console.log(localStorage.getItem('token'));
-  axios.get("/user/loged").then((response) => {
+  await axios.get("/user/loged").then((response) => {
   user = response.data;
-  console.log(user.name)
+  console.log('muestra nombre:' + user.name)
   });
-  if (user.name == null) {
+  if (user.name == null || user.name == undefined || user.name == '') {
     return false
   } else {
     return true
