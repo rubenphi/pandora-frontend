@@ -3,7 +3,7 @@
     <ion-tabs>
       <ion-router-outlet></ion-router-outlet>
       <ion-tab-bar slot="bottom">
-        <ion-tab-button tab="tab1" href="/grupo">
+        <ion-tab-button tab="tab1" :href="'/grupo/' + usuario.grupo_id">
           <ion-icon :icon="peopleOutline" />
           <ion-label>Grupo</ion-label>
         </ion-tab-button>
@@ -23,6 +23,8 @@
 </template>
 
 <script>
+import { usuarioGet } from "../globalService";
+
 import {
   IonTabBar,
   IonTabButton,
@@ -45,7 +47,9 @@ export default {
     IonRouterOutlet,
   },
   setup() {
+    let usuario = usuarioGet();
     return {
+      usuario,
       helpCircleOutline,
       homeOutline,
       peopleOutline
