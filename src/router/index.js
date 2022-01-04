@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from "@ionic/vue-router";
 import TabsPage from "../views/TabsPage.vue";
-import axios from "axios";
 import { validateUser } from "../globalService";
 
 
