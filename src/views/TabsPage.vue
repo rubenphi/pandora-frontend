@@ -3,7 +3,7 @@
     <ion-tabs>
       <ion-router-outlet></ion-router-outlet>
       <ion-tab-bar slot="bottom">
-        <ion-tab-button tab="tab1" :href="'/grupo/' + usuario.grupo_id">
+        <ion-tab-button tab="tab1" href="/grupo">
           <ion-icon :icon="peopleOutline" />
           <ion-label>Grupo</ion-label>
         </ion-tab-button>
@@ -48,15 +48,8 @@ export default {
     IonRouterOutlet,
   },
   setup() {
-    let usuario = {
-      grupo_id: 0
-    };
-  onIonViewWillEnter(() => {
-        usuario = usuarioGet();
-        console.log(usuario.grupo_id)
-      });
+
     return {
-      usuario,
       helpCircleOutline,
       homeOutline,
       peopleOutline
