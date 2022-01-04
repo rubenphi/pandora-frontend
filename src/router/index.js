@@ -66,7 +66,7 @@ function validador(){
   });
   
   user = JSON.parse(localStorage.getItem('usuario')) 
-  if ( name.name == null) {
+  if ( user.name == null) {
     return false
   } else {
     return true
