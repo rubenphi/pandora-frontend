@@ -59,10 +59,8 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
 
-   console.log(localStorage.getItem('usuario'));
   if (to.path !== '/login' && localStorage.getItem('usuario') == undefined) next({ path: '/login' })
-  else next()  
-  validateUser()
+  else next()
 });
 
 export default router;
