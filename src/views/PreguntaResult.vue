@@ -88,11 +88,11 @@ export default {
     const mroute = useRoute();
     const { id } = mroute.params;
     const respuestas = ref ({
-      id: '',
-      grupo: '',
-      puntaje: '',
+      id: 'Cargando',
+      grupo: {nombre: 'Cargando'},
+      puntaje: 0,
       opcion: {
-        letra: ''
+        letra: 'Cargando'
       }
 
     });
