@@ -95,7 +95,7 @@ export default {
       fecha: '',
       tema: '',
       preguntas: {
-        enunciado: ''
+        
       }
 
     });
