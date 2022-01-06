@@ -22,10 +22,11 @@
           >
         </ion-card-header>
       </ion-card>
-      <ion-card :v-if="pregunta.photo !== null && pregunta.photo !== '' && pregunta.photo !== undefined ">
+      <ion-card :v-if="pregunta.photo !== null && pregunta.photo !== '' && pregunta.photo !== undefined && pregunta.photo !== ' ' ">
         <ion-img
           :src="pregunta.photo"
         ></ion-img>
+        la variable es '{{pregunta.photo}}'
       </ion-card>
       <ion-card>
         <ion-card-content>
