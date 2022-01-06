@@ -26,11 +26,10 @@
         <ion-img
           :src="pregunta.photo"
         ></ion-img>
-        la variable es '{{pregunta.photo}}'
       </ion-card>
       <ion-card>
         <ion-card-content>
-          {{pregunta.enunciado}}
+          <div v-html="pregunta.enunciado"></div>
         </ion-card-content>
       </ion-card>
 
@@ -130,7 +129,6 @@ export default {
        tokenHeader();
         axios.get("/preguntas/" + id).then((response) => {
         pregunta.value = response.data;
-        console.log( pregunta.value.photo)
       })
       
     });
