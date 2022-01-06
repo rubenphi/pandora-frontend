@@ -22,7 +22,7 @@
           >
         </ion-card-header>
       </ion-card>
-      <ion-card v-if="pregunta.photo != null || pregunta.photo != '' || pregunta.photo != undefined ">
+      <ion-card v-if="pregunta.photo !== null || pregunta.photo !== '' || pregunta.photo !== undefined ">
         <ion-img
           :src="pregunta.imagen"
         ></ion-img>
@@ -129,7 +129,7 @@ export default {
        tokenHeader();
         axios.get("/preguntas/" + id).then((response) => {
         pregunta.value = response.data;
-        console.log(pregunta.value.photo)
+        console.log(typeof pregunta.value.photo)
       })
       
     });
