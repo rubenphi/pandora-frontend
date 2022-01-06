@@ -108,7 +108,7 @@ export default {
     });
 
     return {
-    async  cuestionario,
+      cuestionario,
       id,
       arrowBackOutline,
       handLeftOutline,
