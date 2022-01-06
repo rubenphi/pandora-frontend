@@ -87,25 +87,23 @@ export default {
   setup() {
     const mroute = useRoute();
     const { id } = mroute.params;
-    const respuestas = ref ({
+    const respuestas = ref ([{
       id: 'Cargando',
       grupo: {nombre: 'Cargando'},
       puntaje: 0,
       opcion: {
         letra: 'Cargando'
       }
-
-    });
+    }]);
     
-    const respuestes = ref ({
+    const respuestes = ref ([{
       id: 'Cargando',
       grupo: {nombre: 'Cargando'},
       puntaje: 0,
       opcion: {
         letra: 'Cargando'
       }
-
-    });
+    }]);
      onIonViewDidEnter(() => {
        tokenHeader();
         axios.get("/respuestas/pregunta/" + id).then((response) => {
