@@ -19,7 +19,7 @@
     </ion-header>
     <ion-content :fullscreen="true">
       <ion-list>
-        <ion-item v-for="(respuesta, index) in respuestes" :key="respuesta.id" lines="full" class="ion-padding-end">
+        <ion-item v-for="(respuesta, index) in respuestas" :key="respuesta.id" lines="full" class="ion-padding-end">
           <ion-icon v-if="index === 0" :icon="ribbonOutline" size="large" slot="start"></ion-icon>
           <ion-icon v-else-if="respuesta.puntaje > 0" :icon="happyOutline" size="large" slot="start"></ion-icon>
           <ion-icon v-else :icon="sadOutline" size="large" slot="start"></ion-icon>
@@ -96,14 +96,7 @@ export default {
       }
     }]);
     
-    const respuestes = ref ([{
-      id: 'Cargando',
-      grupo: {nombre: 'Cargando'},
-      puntaje: 0,
-      opcion: {
-        letra: 'Cargando'
-      }
-    }]);
+    
      onIonViewDidEnter(() => {
        tokenHeader();
         axios.get("/respuestas/pregunta/" + id).then((response) => {
@@ -113,7 +106,6 @@ export default {
     });
 
     return {
-      respuestes,
       respuestas,
       arrowBackOutline,
       handLeftOutline,
