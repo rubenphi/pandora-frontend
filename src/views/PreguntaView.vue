@@ -22,7 +22,7 @@
           >
         </ion-card-header>
       </ion-card>
-      <ion-card :v-if="pregunta.photo !== null && pregunta.photo !== '' && pregunta.photo !== undefined && pregunta.photo !== ' ' && pregunta.photo ">
+      <ion-card v-if="pregunta.photo">
         <ion-img
           :src="pregunta.photo"
         ></ion-img>
