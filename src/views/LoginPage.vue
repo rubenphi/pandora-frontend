@@ -96,7 +96,7 @@
                   >Usuario</ion-label
                 >
                 <ion-input
-                  v-model="login.name"
+                  v-model="login.code"
                   placeholder="Código de estudiante"
                 ></ion-input>
               </ion-item>
@@ -176,7 +176,7 @@ export default {
   },
   setup() {
     const login = ref({
-      name: "",
+      code: "",
       password: "",
     });
     const error = ref({
@@ -190,7 +190,7 @@ export default {
       axios,
       login,
       async mostrar() {
-        if (login.value.name == "" || login.value.password == "") {
+        if (login.value.code == "" || login.value.password == "") {
           error.value.estatus = 1;
           error.value.data = "Debe ingresar usuario y contraseña";
         } else {
