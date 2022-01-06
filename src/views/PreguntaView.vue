@@ -129,7 +129,7 @@ export default {
        tokenHeader();
         axios.get("/preguntas/" + id).then((response) => {
         pregunta.value = response.data;
-        console.log(typeof pregunta.value.photo)
+        console.log( pregunta.value.photo)
       })
       
     });
