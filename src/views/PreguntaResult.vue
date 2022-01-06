@@ -24,11 +24,11 @@
           <ion-icon v-else-if="respuesta.puntaje > 0" :icon="happyOutline" size="large" slot="start"></ion-icon>
           <ion-icon v-else :icon="sadOutline" size="large" slot="start"></ion-icon>
           
-          <ion-label color="medium">{{respuesta.grupo}}</ion-label>
+          <ion-label color="medium">{{respuesta.grupo.nombre}}</ion-label>
           <ion-note slot="end">
             <ion-text v-if="respuesta.puntaje > 0" color="success"><h6>Obtienen: +{{respuesta.puntaje}}</h6></ion-text>
             <ion-text v-else color="danger"><h6>Obtienen: {{respuesta.puntaje}}</h6></ion-text>
-            <ion-text color="warning"><h6>Respuesta: {{respuesta.opcion}}</h6></ion-text>
+            <ion-text color="warning"><h6>Respuesta: {{respuesta.opcion.letra}}</h6></ion-text>
           </ion-note>
         </ion-item>
       </ion-list>
@@ -37,6 +37,11 @@
 </template>
 
 <script>
+import { ref } from "vue";
+import { tokenHeader } from "../globalService";
+import { useRoute } from 'vue-router';
+
+
 import {
   arrowBackOutline,
   refreshOutline,
@@ -46,7 +51,7 @@ import {
   sadOutline,
   ribbonOutline
 } from "ionicons/icons";
-import { ref } from "vue";
+
 import {
   IonIcon,
   IonPage,
@@ -78,13 +83,24 @@ export default {
     IonLabel,
   },
   setup() {
+    const mroute = useRoute();
+    const { id } = mroute.params;
+    const respuestas = ref ({
+      id: '',
+      grupo: '',
+      puntaje: '',
+      opcion: {
+        letra: ''
+      }
 
-    const respuestas = ref([
-      {id: 1, grupo:'Grupo 2', puntaje:9, opcion:"B"},
-      {id: 2, grupo:'Grupo 3', puntaje:6, opcion:"B"},
-      {id: 3, grupo:'Grupo 1', puntaje:0, opcion:"C"}
-     
-])
+    });
+     onIonViewDidEnter(() => {
+       tokenHeader();
+        axios.get("/respuestas/pregunta/" + id).then((response) => {
+        respuestas.value = response.data;
+      })
+      
+    });
 
     return {
       respuestas,
