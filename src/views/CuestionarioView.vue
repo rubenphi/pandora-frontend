@@ -31,7 +31,7 @@
           <ion-item  v-for="pregunta in cuestionario.preguntas" :key="pregunta.id" :href="'/pregunta/' + pregunta.id">
             <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
             <ion-label
-              >{{pregunta.enunciado}}</ion-label
+              > <b>Pregunta {{index + 1}}</b></ion-label
             >
           </ion-item>
         </ion-list>
