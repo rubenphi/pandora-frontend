@@ -11,7 +11,7 @@
           </ion-button>
         </ion-buttons>
         <ion-buttons slot="end" class="ion-margin-end">
-          <ion-button:href="'/resultado/' + id">
+          <ion-button :href="'/resultado/' + id">
             <ion-icon :icon="refreshOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
