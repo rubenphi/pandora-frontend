@@ -3,12 +3,12 @@
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start" class="ion-margin-start">
-          <ion-button href="/cuestionario">
+          <ion-button :href="'/cuestionario/' + {{ pregunta.cuestionario_id}}">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
         <ion-buttons slot="end" class="ion-margin-end">
-          <ion-button href="/resultado">
+          <ion-button :href="'/resultado/' + {{pregunta.id}}">
             <ion-icon :icon="podiumOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
