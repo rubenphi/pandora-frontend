@@ -106,6 +106,7 @@ export default {
     });
 
     return {
+      id,
       respuestas,
       arrowBackOutline,
       handLeftOutline,
