@@ -28,7 +28,7 @@
       </ion-card>
       <ion-card>
         <ion-list>
-          <ion-item  v-for="pregunta in cuestionario.preguntas" :key="pregunta.id" :href="'/pregunta/' + pregunta.id">
+          <ion-item  v-for="(pregunta , index) in cuestionario.preguntas" :key="pregunta.id" :href="'/pregunta/' + pregunta.id">
             <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
             <ion-label
               > <b>Pregunta {{index + 1}}</b></ion-label
