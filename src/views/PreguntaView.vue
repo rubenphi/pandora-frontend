@@ -42,7 +42,7 @@
           <ion-radio-group value="biff">
             <ion-item lines="none" v-for="opcion in pregunta.opciones" :key="opcion.id">
               <ion-label class="ion-text-wrap"
-                >{{opcion.letra}} {{opcion.enunciado}}</ion-label
+                ><b>{{opcion.letra}} </b> {{opcion.enunciado}}</ion-label
               >
               <ion-radio slot="start" :value="opcion.id"></ion-radio>
             </ion-item>
