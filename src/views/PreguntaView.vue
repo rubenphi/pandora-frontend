@@ -35,8 +35,11 @@
 
       <ion-card class="ion-padding-top ion-padding-bottom">
         <ion-list>
-          <ion-card-subtitle class="ion-text-center">
+          <ion-card-subtitle v-if="error.estatus === 0" class="ion-text-center">
             Selecciona tu respuesta
+          </ion-card-subtitle>
+          <ion-card-subtitle color="danger" v-if="error.estatus === 1" class="ion-text-center">
+           {{ error.data }}
           </ion-card-subtitle>
           <hr>
           <ion-radio-group v-model="respuesta.opcion_id">
@@ -65,7 +68,7 @@
 <script>
 import axios from "axios";
 import { ref } from "vue";
-import { tokenHeader } from "../globalService";
+import { tokenHeader, usuarioGet } from "../globalService";
 import { useRoute } from 'vue-router';
 
 
@@ -132,6 +135,12 @@ export default {
       grupo_id: ''
 
     });
+    
+    const error = ref({
+      estatus: 0,
+      data: "",
+    });
+    
      onIonViewDidEnter(() => {
        tokenHeader();
         axios.get("/preguntas/" + id).then((response) => {
@@ -142,12 +151,21 @@ export default {
 
 
     return {
-       responder(){
+      async responder(){
         if(respuesta.value.opcion_id == ''){
-          console.log('debe seleccionar una respuesta')
+          error.value.estatus = 1;
+          error.value.data = "Debe seleccionar una opción.";
         }
         else {
-          console.log('Usted seleccionó: ' + respuesta.value.opcion_id)
+          respuesta.value.pregunta_id = pregunta.value.id;
+          respuesta.value.grupo_id = usuarioGet().grupo_id;
+          await axios.post("/respuestas", respuesta.value).then((response) => {
+            router.push("/resultado/" + pregunta.id);
+            console.log(response.data.message)
+          }).catch((response) => {
+            error.value.estatus = 1;
+            error.value.data = response.data.message;
+          })
         }
       },
       respuesta,
