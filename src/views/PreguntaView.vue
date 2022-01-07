@@ -70,7 +70,7 @@ import axios from "axios";
 import { ref } from "vue";
 import { tokenHeader, usuarioGet } from "../globalService";
 import { useRoute } from 'vue-router';
-
+import router from "../router";
 
 import {
   arrowBackOutline,
@@ -160,7 +160,7 @@ export default {
           respuesta.value.pregunta_id = pregunta.value.id;
           respuesta.value.grupo_id = usuarioGet().grupo_id;
           await axios.post("/respuestas", respuesta.value).then((response) => {
-            router.push("/resultado/" + pregunta.id);
+            router.push("/resultado/" + pregunta.value.id);
             console.log(response.data.message)
           }).catch((response) => {
             error.value.estatus = 1;
