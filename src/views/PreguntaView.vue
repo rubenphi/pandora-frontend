@@ -143,13 +143,14 @@ export default {
 
     return {
        responder(){
-        if(respuesta.opcion_id == ''){
+        if(respuesta.value.opcion_id == ''){
           console.log('debe seleccionar una respuesta')
         }
         else {
-          console.log('Usted seleccionó: ' + respuesta.opcion_id)
+          console.log('Usted seleccionó: ' + respuesta.value.opcion_id)
         }
       },
+      respuesta,
       pregunta,
       arrowBackOutline,
       handLeftOutline,
