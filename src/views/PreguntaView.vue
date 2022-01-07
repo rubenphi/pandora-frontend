@@ -165,7 +165,7 @@ export default {
           }).catch((response) => {
             localStorage.setItem('error' ,response.message)
             error.value.estatus = 1;
-            error.value.data = "Error, al responder la pregunta";
+            error.value.data = "Error: ya respondiste la pregunta o no se te permite responder";
           })
         }
       },
