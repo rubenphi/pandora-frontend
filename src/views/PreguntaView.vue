@@ -44,7 +44,7 @@
               <ion-label class="ion-text-wrap"
                 ><b>{{opcion.letra}}. </b> {{opcion.enunciado}}</ion-label
               >
-              <ion-radio slot="start" :value="opcion.id"></ion-radio>
+              <ion-radio v-model="respuesta.opcion_id" slot="start" :value="opcion.id"></ion-radio>
             </ion-item>
 
           </ion-radio-group>
@@ -52,7 +52,7 @@
       </ion-card>
 
       <ion-buttons class="ion-justify-content-center ion-padding-top ion-padding-bottom">
-        <ion-button expand="full" fill="outline" shape="round" color="primary" class="ion-align-self-center">
+        <ion-button expand="full" fill="outline" shape="round" color="primary" class="ion-align-self-center"  @click="responder">
           <ion-icon slot="end" :icon="paperPlaneOutline"></ion-icon>
           <ion-label class="ion-text-center"> Enviar Respuesta </ion-label>
         </ion-button>
@@ -125,6 +125,13 @@ export default {
       }
 
     });
+    
+    const respuesta = ref ({
+      opcion_id: '',
+      pregunta_id: '',
+      grupo_id: ''
+
+    });
      onIonViewDidEnter(() => {
        tokenHeader();
         axios.get("/preguntas/" + id).then((response) => {
@@ -135,6 +142,14 @@ export default {
 
 
     return {
+       responder(){
+        if(respuesta.opcion_id == ''){
+          console.log('debe seleccionar una respuesta')
+        }
+        else {
+          console.log('Usted seleccionó: ' + respuesta.opcion_id)
+        }
+      },
       pregunta,
       arrowBackOutline,
       handLeftOutline,
