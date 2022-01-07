@@ -68,7 +68,7 @@
 <script>
 import axios from "axios";
 import { ref } from "vue";
-import { tokenHeader, usuarioGet } from "../globalService";
+import { tokenHeader, /*usuarioGet*/ } from "../globalService";
 import { useRoute } from 'vue-router';
 import router from "../router";
 
@@ -164,6 +164,7 @@ export default {
             router.push("/resultado/" + pregunta.value.id);
             console.log(response.data.message)
           }).catch((response) => {
+            localStorage.setItem(''error , response.message)
             error.value.estatus = 1;
             error.value.data = "Error, al responder la pregunta";
           })
