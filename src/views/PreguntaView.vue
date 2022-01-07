@@ -158,16 +158,14 @@ export default {
         }
         else {
           respuesta.value.pregunta_id = pregunta.value.id;
-          respuesta.value.grupo_id = usuarioGet().grupo_id;
+          //respuesta.value.grupo_id = usuarioGet().grupo_id;
+          respuesta.value.grupo_id = 4;
           await axios.post("/respuestas", respuesta.value).then((response) => {
             router.push("/resultado/" + pregunta.value.id);
             console.log(response.data.message)
           }).catch((response) => {
-            console.log("data: " + JSON.stringify(response.data))
-            
-console.log("respose:" + JSON.stringify(response))
             error.value.estatus = 1;
-            error.value.data = response.data.message;
+            error.value.data = "Error, al responder la pregunta";
           })
         }
       },
