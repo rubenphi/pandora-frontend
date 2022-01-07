@@ -158,7 +158,7 @@ export default {
         }
         else {
           respuesta.value.pregunta_id = pregunta.value.id;
-          .value.grupo_id = usuarioGet().grupo_id;
+          respuesta.value.grupo_id = usuarioGet().grupo_id;
           await axios.post("/respuestas", respuesta.value).then((response) => {
             router.push("/resultado/" + pregunta.value.id);
             localStorage.setItem('error' ,response.data.message)
