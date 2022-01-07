@@ -163,6 +163,9 @@ export default {
             router.push("/resultado/" + pregunta.value.id);
             console.log(response.data.message)
           }).catch((response) => {
+            console.log("data: " + JSON.stringify(respose.data))
+            
+console.log("respose:" + JSON.stringify(respose))
             error.value.estatus = 1;
             error.value.data = response.data.message;
           })
