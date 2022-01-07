@@ -168,6 +168,7 @@ export default {
           })
         }
       },
+      error,
       respuesta,
       pregunta,
       arrowBackOutline,
