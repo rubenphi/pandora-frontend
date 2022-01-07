@@ -39,12 +39,12 @@
             Selecciona tu respuesta
           </ion-card-subtitle>
           <hr>
-          <ion-radio-group value="biff">
+          <ion-radio-group v-model="respuesta.opcion_id">
             <ion-item lines="none" v-for="opcion in pregunta.opciones" :key="opcion.id">
               <ion-label class="ion-text-wrap"
                 ><b>{{opcion.letra}}. </b> {{opcion.enunciado}}</ion-label
               >
-              <ion-radio v-model="respuesta.opcion_id" slot="start" :value="opcion.id" :id="opcion.id"></ion-radio>
+              <ion-radio slot="start" :value="opcion.id" :id="opcion.id"></ion-radio>
             </ion-item>
 
           </ion-radio-group>
