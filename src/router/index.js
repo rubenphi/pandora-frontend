@@ -10,6 +10,10 @@ const routes = [
     redirect: "/inicio",
   },
   {
+    path: "/login",
+    component: () => import("@/views/LoginPage.vue"),
+  },
+  {
     path: "/",
     component: TabsPage,
     children: [
@@ -48,11 +52,7 @@ const routes = [
       {
         path: "cursos/",
         component: () => import("@/views/CursosPage.vue"),
-      },
-      {
-        path: "login",
-        component: () => import("@/views/LoginPage.vue"),
-      },
+      }
     ],
   },
 ];
