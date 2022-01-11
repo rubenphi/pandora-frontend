@@ -64,18 +64,18 @@ export default {
   },
   setup() {
     const mroute = useRoute();
-    const { id } = mroute.params;
+    const { curso } = mroute.params;
     let usuario = usuarioGet();
     const cuestionarios = ref([]);
     onIonViewWillEnter(() => {
-      if (id != usuario.curso_id) {
+      if (curso != usuario.curso_id) {
         if (usuario.rol != "admin" || usuario.rol != "profesor") {
           router.push("/cuestionarios/curso/" + usuario.curso_id);
         }
       } else {
         tokenHeader();
         axios
-          .get("/cuestionarios/curso/" + id)
+          .get("/cuestionarios/curso/" + curso)
           .then((response) => {
             cuestionarios.value = response.data;
           });
