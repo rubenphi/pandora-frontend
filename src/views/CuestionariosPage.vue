@@ -37,11 +37,6 @@ import { addOutline } from "ionicons/icons";
 
 import {
   onIonViewWillEnter,
-  IonCard,
-  IonCardContent,
-  IonCardHeader,
-  IonCardSubtitle,
-  IonCardTitle,
   IonPage,
   IonHeader,
   IonToolbar,
@@ -54,11 +49,6 @@ import {
 
 export default {
   components: {
-    IonCard,
-    IonCardContent,
-    IonCardHeader,
-    IonCardSubtitle,
-    IonCardTitle,
     IonHeader,
     IonToolbar,
     IonTitle,
@@ -81,7 +71,7 @@ export default {
     return {
       addOutline,
       usuario,
-      cuestionarios,
+      cursos
     };
   },
 };
