@@ -61,7 +61,7 @@ export default {
     
     return {
       uso(){
-        if (usuario.rol == 'estudiante' ){
+        if (usuario.value.rol == 'estudiante' ){
           return true;
         }
       },
