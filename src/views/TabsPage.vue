@@ -62,8 +62,7 @@ export default {
         if(usuarioGet().rol != undefined){
           usuario.value.rol = usuarioGet().rol;
         }
-      })
-    });
+      });
 
     
     return {
