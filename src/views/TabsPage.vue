@@ -60,11 +60,7 @@ export default {
      });
 
      onIonViewWillEnter(() => {
-        if(usuarioGet().rol != undefined){
-          usuario.value.rol = usuarioGet().rol;
-          console.log('se ejecutó el if');
-          console.log('tipo: ' + typeof usuarioGet().rol) 
-                 }
+        console.log('tipo: ' + typeof usuarioGet().rol);
       });
 
     
