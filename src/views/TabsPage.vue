@@ -64,7 +64,7 @@ export default {
         if (usuario.rol == 'estudiante' ){
           return true;
         }
-      }
+      },
       usuario: usuarioGet(),
       helpCircleOutline,
       homeOutline,
