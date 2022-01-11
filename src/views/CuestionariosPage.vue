@@ -21,7 +21,7 @@ import axios from "axios";
 import { ref } from "vue";
 import { tokenHeader, usuarioGet } from "../globalService";
 
-import { addOutline, peopleCircleOutline } from "ionicons/icons";
+import { peopleCircleOutline } from "ionicons/icons";
 
 import {
   onIonViewWillEnter,
@@ -59,7 +59,6 @@ export default {
     });
 
     return {
-      addOutline,
       peopleCircleOutline,
       usuario,
       cursos,

@@ -4,14 +4,13 @@
       <ion-toolbar>
         <ion-title>Cuestionarios</ion-title>
       </ion-toolbar>
+      <ion-buttons v-if="usuario.rol == 'admin' || usuario.rol =='profesor'" slot="end" class="ion-margin-end">
+        <ion-button :href="'/agregar/cuestionario/' + id">
+          <ion-icon :icon="addOutline"></ion-icon>
+        </ion-button>
+      </ion-buttons>
     </ion-header>
     <ion-content :fullscreen="true">
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">Cuestionarios</ion-title>
-        </ion-toolbar>
-      </ion-header>
-
       <ion-card
         v-for="cuestionario in cuestionarios"
         :key="cuestionario.id"
@@ -34,6 +33,7 @@ import { ref } from "vue";
 import { tokenHeader, usuarioGet } from "../globalService";
 import { useRoute } from "vue-router";
 import router from "../router";
+import { addOutline } from "ionicons/icons";
 
 import {
   onIonViewWillEnter,
@@ -47,6 +47,8 @@ import {
   IonToolbar,
   IonTitle,
   IonContent,
+  IonButton,
+  IonButtons,
 } from "@ionic/vue";
 
 export default {
@@ -61,6 +63,8 @@ export default {
     IonTitle,
     IonContent,
     IonPage,
+    IonButtons,
+    IonButton,
   },
   setup() {
     const mroute = useRoute();
@@ -74,15 +78,14 @@ export default {
         }
       } else {
         tokenHeader();
-        axios
-          .get("/cuestionarios/curso/" + curso)
-          .then((response) => {
-            cuestionarios.value = response.data;
-          });
+        axios.get("/cuestionarios/curso/" + curso).then((response) => {
+          cuestionarios.value = response.data;
+        });
       }
     });
 
     return {
+      addOutline,
       usuario,
       cuestionarios,
     };
