@@ -52,10 +52,10 @@ export default {
     IonRouterOutlet,
   },
   setup() {
-      let usuario = { rol: 'estudiante'};
+      
 
     return {
-      usuario: usuarioGet(),
+      usuario: {rol : usuarioGet().rol},
       helpCircleOutline,
       homeOutline,
       peopleOutline
