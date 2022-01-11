@@ -43,7 +43,7 @@ import {
 import { ref } from "vue";
 import { helpCircleOutline, homeOutline, peopleOutline } from "ionicons/icons";
 
-//import { usuarioGet } from "../globalService";
+import { usuarioGet } from "../globalService";
 export default {
   components: {
     IonLabel,
@@ -60,7 +60,7 @@ export default {
      });
 
      onIonViewWillEnter(() => {
-       console.log('hola');
+       console.log(usuarioGet());
     
       });
 

@@ -7,7 +7,7 @@ export function tokenHeader() {
 
 export function usuarioGet() {
   if (localStorage.getItem('usuario') == undefined){
-    return null;
+    return false;
   } else{
     return JSON.parse(localStorage.getItem('usuario'));
   }
