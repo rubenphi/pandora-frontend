@@ -9,7 +9,7 @@
           href="/cursos"
         >
           <ion-icon :icon="peopleOutline" />
-          <ion-label>Cursos</ion-label>
+          <ion-label>Grupos</ion-label>
         </ion-tab-button>
 
         <ion-tab-button v-else tab="tab1" href="/grupo">
@@ -22,7 +22,15 @@
           <ion-label>Inicio</ion-label>
         </ion-tab-button>
 
-        <ion-tab-button tab="tab3" href="/cuestionarios">
+        <ion-tab-button tab="tab3"  v-if="usuario.rol === 'admin' || usuario.rol === 'profesor'"
+          tab="tab1"
+          href="/admin/cuestionarios">
+          <ion-icon :icon="helpCircleOutline" />
+
+          <ion-label>Cuestionarios</ion-label>
+        </ion-tab-button>
+
+        <ion-tab-button v-else tab="tab3" href="/cuestionarios">
           <ion-icon :icon="helpCircleOutline" />
 
           <ion-label>Cuestionarios</ion-label>

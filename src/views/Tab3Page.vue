@@ -12,13 +12,17 @@
         </ion-toolbar>
       </ion-header>
 
-      <ion-card v-for="cuestionario in cuestionarios" :key="cuestionario.id" :href="'/cuestionario/' + cuestionario.id" >
+      <ion-card
+        v-for="cuestionario in cuestionarios"
+        :key="cuestionario.id"
+        :href="'/cuestionario/' + cuestionario.id"
+      >
         <ion-card-header>
-          <ion-card-subtitle>{{cuestionario.curso.nombre}}</ion-card-subtitle>
-          <ion-card-title>{{cuestionario.fecha}}</ion-card-title>
+          <ion-card-subtitle>{{ cuestionario.curso.nombre }}</ion-card-subtitle>
+          <ion-card-title>{{ cuestionario.fecha }}</ion-card-title>
         </ion-card-header>
 
-        <ion-card-content> {{cuestionario.tema}} </ion-card-content>
+        <ion-card-content> {{ cuestionario.tema }} </ion-card-content>
       </ion-card>
     </ion-content>
   </ion-page>
@@ -27,8 +31,9 @@
 <script>
 import axios from "axios";
 import { ref } from "vue";
-import { tokenHeader , usuarioGet } from "../globalService";
-
+import { tokenHeader, usuarioGet } from "../globalService";
+import { useRoute } from "vue-router";
+import router from "../router";
 
 import {
   onIonViewWillEnter,
@@ -58,21 +63,29 @@ export default {
     IonPage,
   },
   setup() {
-  let usuario = usuarioGet();
-  const cuestionarios = ref ([]);
-  onIonViewWillEnter(() => {
+    const mroute = useRoute();
+    const { id } = mroute.params;
+    let usuario = usuarioGet();
+    const cuestionarios = ref([]);
+    onIonViewWillEnter(() => {
+      if (id != usuario.curso_id) {
+        if (usuario.rol != "admin" || usuario.rol != "profesor") {
+          router.push("/cuestionarios/curso/" + usuario.curso_id);
+        }
+      } else {
         tokenHeader();
-        axios.get("/cuestionarios/curso/" + usuario.curso_id).then((response) => {
-        cuestionarios.value = response.data;
-      })
+        axios
+          .get("/cuestionarios/curso/" + id)
+          .then((response) => {
+            cuestionarios.value = response.data;
+          });
+      }
     });
 
     return {
       usuario,
-      cuestionarios
-      
-    }
-       
+      cuestionarios,
+    };
   },
 };
 </script>
