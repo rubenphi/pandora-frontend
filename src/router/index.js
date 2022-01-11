@@ -34,6 +34,10 @@ const routes = [
         component: () => import("@/views/Tab3Page.vue"),
       },
       {
+        path: "admin/cuestionarios",
+        component: () => import("@/views/CuestionariosPage.vue"),
+      },
+      {
         path: "cuestionario/:id",
         component: () => import("@/views/CuestionarioView.vue"),
       },

@@ -6,7 +6,7 @@
         <ion-tab-button
           v-if="usuario.rol === 'admin' || usuario.rol === 'profesor'"
           tab="tab1"
-          href="/grupo"
+          href="/cursos"
         >
           <ion-icon :icon="peopleOutline" />
           <ion-label>Cursos</ion-label>
