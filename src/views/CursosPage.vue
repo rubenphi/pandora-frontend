@@ -55,7 +55,7 @@ export default {
     const cursos = ref([]);
     onIonViewWillEnter(() => {
       tokenHeader();
-      axios.get("/cursos/").then((response) => {
+      axios.get("/cursos").then((response) => {
         cursos.value = response.data;
       });
     });
