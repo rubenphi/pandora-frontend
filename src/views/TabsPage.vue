@@ -61,7 +61,7 @@ export default {
 
      onIonViewWillEnter(() => {
        console.log('hola');
-       //console.log('tipo: ' + typeof usuarioGet().rol);
+       console.log('tipo: ' usuarioGet().rol);
       });
 
     
