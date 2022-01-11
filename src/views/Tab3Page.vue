@@ -3,12 +3,13 @@
     <ion-header>
       <ion-toolbar>
         <ion-title>Cuestionarios</ion-title>
-      </ion-toolbar>
-      <ion-buttons  slot="end" class="ion-margin-end">
+         <ion-buttons v-if="usuario.rol == 'admin' || usuario.rol =='profesor'" slot="end" class="ion-margin-end">
         <ion-button :href="'/agregar/cuestionario/' + id">
           <ion-icon :icon="addOutline"></ion-icon>
         </ion-button>
       </ion-buttons>
+      </ion-toolbar>
+     
     </ion-header>
     <ion-content :fullscreen="true">
       <ion-card
