@@ -13,7 +13,7 @@
       </ion-header>
       <ion-list>
         <ion-item v-for="curso in cursos" :key="curso.id" >
-          <ion-icon slot="start" :icon="personOutline"></ion-icon>
+          <ion-icon slot="start" :icon="peopleCircleOutline"></ion-icon>
           <ion-label>{{curso.nombre}}</ion-label>
         </ion-item>
         
@@ -22,7 +22,7 @@
   </ion-page>
 </template>
 <script>
-import { personOutline } from "ionicons/icons";
+import { peopleCircleOutline } from "ionicons/icons";
 import axios from "axios";
 import { ref } from "vue";
 import { tokenHeader , usuarioGet } from "../globalService";
@@ -57,12 +57,11 @@ export default {
       tokenHeader();
       axios.get("/cursos").then((response) => {
         cursos.value = response.data;
-        console.log(JSON.stringify(response.data));
       });
     });
     return {
       usuario,
-      personOutline,
+      peopleCircleOutline,
       cursos
     };
   
