@@ -8,13 +8,15 @@
           <ion-icon :icon="peopleOutline" />
           <ion-label>Cursos</ion-label>
         </ion-tab-button>
-        <ion-tab-button tab="tab2" href="/inicio">
-          <ion-icon :icon="homeOutline" />
-          <ion-label>Inicio</ion-label>
-        </ion-tab-button>
+
         <ion-tab-button v-else tab="tab1" href="/grupo">
           <ion-icon :icon="peopleOutline" />
           <ion-label>Grupo</ion-label>
+        </ion-tab-button>
+        
+        <ion-tab-button tab="tab2" href="/inicio">
+          <ion-icon :icon="homeOutline" />
+          <ion-label>Inicio</ion-label>
         </ion-tab-button>
 
         <ion-tab-button tab="tab3" href="/cuestionarios">
