@@ -3,10 +3,7 @@
     <ion-tabs>
       <ion-router-outlet></ion-router-outlet>
       <ion-tab-bar slot="bottom">
-        <ion-tab-button v-if="usuario.rol === 'estudiante'" tab="tab1" href="/grupo">
-          <ion-icon :icon="peopleOutline" />
-          <ion-label>Grupo</ion-label>
-        </ion-tab-button>
+        
 <ion-tab-button  v-if="usuario.rol === 'admin' || usuario.rol === 'profesor'" tab="tab1" href="/grupo">
           <ion-icon :icon="peopleOutline" />
           <ion-label>Cursos</ion-label>
@@ -14,6 +11,10 @@
         <ion-tab-button tab="tab2" href="/inicio">
           <ion-icon :icon="homeOutline" />
           <ion-label>Inicio</ion-label>
+        </ion-tab-button>
+        <ion-tab-button v-else tab="tab1" href="/grupo">
+          <ion-icon :icon="peopleOutline" />
+          <ion-label>Grupo</ion-label>
         </ion-tab-button>
 
         <ion-tab-button tab="tab3" href="/cuestionarios">
@@ -49,7 +50,7 @@ export default {
     IonRouterOutlet,
   },
   setup() {
-    let usuario = {rol: 'estudiante'};
+  
 
     return {
       usuario: usuarioGet(),
