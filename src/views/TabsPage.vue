@@ -23,7 +23,6 @@
         </ion-tab-button>
 
         <ion-tab-button tab="tab3"  v-if="usuario.rol === 'admin' || usuario.rol === 'profesor'"
-          tab="tab1"
           href="/admin/cuestionarios">
           <ion-icon :icon="helpCircleOutline" />
 
