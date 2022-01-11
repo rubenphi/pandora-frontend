@@ -38,6 +38,8 @@ import {
   IonPage,
   IonRouterOutlet
 } from "@ionic/vue";
+
+import { ref } from "vue";
 import { helpCircleOutline, homeOutline, peopleOutline } from "ionicons/icons";
 
 import { usuarioGet } from "../globalService";
@@ -52,8 +54,9 @@ export default {
     IonRouterOutlet,
   },
   setup() {
-     localStorage.setItem("usuario", JSON.stringify({rol: "estudiante"}));
-
+     const usuario = ref({
+       rol: 'estudiante'
+     })
 
     return {
       usuario: usuarioGet(),
