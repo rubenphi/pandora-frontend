@@ -49,7 +49,7 @@ import {
   IonContent,
   IonButton,
   IonButtons,
-  Ionicon
+  IonIcon
 } from "@ionic/vue";
 
 export default {
@@ -66,7 +66,7 @@ export default {
     IonPage,
     IonButtons,
     IonButton,
-    Ionicon
+    IonIcon
   },
   setup() {
     const mroute = useRoute();
