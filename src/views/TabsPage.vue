@@ -36,7 +36,8 @@ import {
   IonLabel,
   IonIcon,
   IonPage,
-  IonRouterOutlet
+  IonRouterOutlet,
+  onIonViewWillEnter
 } from "@ionic/vue";
 
 import { ref } from "vue";
