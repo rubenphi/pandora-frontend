@@ -52,10 +52,11 @@ export default {
     IonRouterOutlet,
   },
   setup() {
-      
+     localStorage.setItem("usuario", "{rol: 'estudiante'}");
+
 
     return {
-      usuario: {rol : usuarioGet().rol},
+      usuario: usuarioGet(),
       helpCircleOutline,
       homeOutline,
       peopleOutline
