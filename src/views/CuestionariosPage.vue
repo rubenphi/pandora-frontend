@@ -12,18 +12,18 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <ion-card
-        v-for="cuestionario in cuestionarios"
-        :key="cuestionario.id"
-        :href="'/cuestionario/' + cuestionario.id"
-      >
-        <ion-card-header>
-          <ion-card-subtitle>{{ cuestionario.curso.nombre }}</ion-card-subtitle>
-          <ion-card-title>{{ cuestionario.fecha }}</ion-card-title>
-        </ion-card-header>
-
-        <ion-card-content> {{ cuestionario.tema }} </ion-card-content>
-      </ion-card>
+      <ion-header collapse="condense">
+        <ion-toolbar>
+          <ion-title size="large">Cursos</ion-title>
+        </ion-toolbar>
+      </ion-header>
+      <ion-list>
+        <ion-item v-for="curso in cursos" :key="curso.id" >
+          <ion-icon slot="start" :icon="peopleCircleOutline"></ion-icon>
+          <ion-label>{{curso.nombre}}</ion-label>
+        </ion-item>
+        
+      </ion-list>
     </ion-content>
   </ion-page>
 </template>
@@ -70,11 +70,11 @@ export default {
   },
   setup() {
     let usuario = usuarioGet();
-    const cuestionarios = ref([]);
+    const cursos = ref([]);
     onIonViewWillEnter(() => {
       tokenHeader();
-      axios.get("/cuestionarios/").then((response) => {
-        cuestionarios.value = response.data;
+      axios.get("/cursos").then((response) => {
+        cursos.value = response.data;
       });
     });
 
