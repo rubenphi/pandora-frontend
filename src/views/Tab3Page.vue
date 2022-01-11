@@ -4,7 +4,7 @@
       <ion-toolbar>
         <ion-title>Cuestionarios</ion-title>
          <ion-buttons v-if="usuario.rol == 'admin' || usuario.rol =='profesor'" slot="end" class="ion-margin-end">
-        <ion-button :href="'/agregar/cuestionario/' + id">
+        <ion-button :href="'/agregar/cuestionario/' + curso">
           <ion-icon :icon="addOutline"></ion-icon>
         </ion-button>
       </ion-buttons>
