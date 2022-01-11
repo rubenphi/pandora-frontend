@@ -46,6 +46,10 @@ const routes = [
         component: () => import("@/views/CuestionarioResult.vue"),
       },
       {
+        path: "cursos/",
+        component: () => import("@/views/CursosPage.vue"),
+      },
+      {
         path: "login",
         component: () => import("@/views/LoginPage.vue"),
       },

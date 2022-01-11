@@ -4,12 +4,9 @@
       <ion-router-outlet></ion-router-outlet>
       <ion-tab-bar slot="bottom">
         
-<ion-tab-button  v-if="usuario.rol === 'admin' || usuario.rol === 'profesor'" tab="tab1" href="/grupo">
-          <ion-icon :icon="peopleOutline" />
-          <ion-label>Cursos</ion-label>
-        </ion-tab-button>
 
-        <ion-tab-button v-else tab="tab1" href="/grupo">
+
+        <ion-tab-button tab="tab1" href="/grupo">
           <ion-icon :icon="peopleOutline" />
           <ion-label>Grupo</ion-label>
         </ion-tab-button>
@@ -36,14 +33,12 @@ import {
   IonLabel,
   IonIcon,
   IonPage,
-  IonRouterOutlet,
-  onIonViewWillEnter
+  IonRouterOutlet
 } from "@ionic/vue";
 
-import { ref } from "vue";
+
 import { helpCircleOutline, homeOutline, peopleOutline } from "ionicons/icons";
 
-import { usuarioGet } from "../globalService";
 export default {
   components: {
     IonLabel,
@@ -55,21 +50,10 @@ export default {
     IonRouterOutlet,
   },
   setup() {
-     const usuario = ref({
-       rol: 'estudiante'
-     });
-
-     onIonViewWillEnter(() => {
-       
-       if(usuarioGet() != false){
-         usuario.value.rol = usuarioGet().rol;
-       }
-    
-      });
+     
 
     
     return {
-      usuario,
       helpCircleOutline,
       homeOutline,
       peopleOutline

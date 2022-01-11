@@ -2,19 +2,19 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-title>Grupo</ion-title>
+        <ion-title>Cursos</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
       <ion-header collapse="condense">
         <ion-toolbar>
-          <ion-title size="large">Grupo</ion-title>
+          <ion-title size="large">Cursos</ion-title>
         </ion-toolbar>
       </ion-header>
       <ion-list>
-        <ion-item v-for="miembro in miembros" :key="miembro.id" >
+        <ion-item v-for="curso in cursos" :key="curso.id" >
           <ion-icon slot="start" :icon="personOutline"></ion-icon>
-          <ion-label>{{miembro.name}}</ion-label>
+          <ion-label>{{curso.nombre}}</ion-label>
         </ion-item>
         
       </ion-list>
@@ -25,8 +25,6 @@
 import { personOutline } from "ionicons/icons";
 import axios from "axios";
 import { ref } from "vue";
-import router from "../router";
-
 import { tokenHeader , usuarioGet } from "../globalService";
 import {
   onIonViewWillEnter,
@@ -54,21 +52,17 @@ export default {
   },
   setup() {
     let usuario = usuarioGet();
-    const miembros = ref([]);
+    const cursos = ref([]);
     onIonViewWillEnter(() => {
-      if(usuario.rol == 'admin' || usuario.rol == 'profesor'){
-        router.push("/cursos");
-      }
       tokenHeader();
-      axios.get("/user/grupo/" + usuario.grupo_id).then((response) => {
-        miembros.value = response.data;
-        
+      axios.get("/cursos/").then((response) => {
+        cursos.value = response.data;
       });
     });
     return {
       usuario,
       personOutline,
-      miembros
+      cursos
     };
   
   },
