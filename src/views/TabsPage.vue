@@ -60,7 +60,10 @@ export default {
      });
 
      onIonViewWillEnter(() => {
-       console.log(usuarioGet());
+       
+       if(usuarioGet() != false){
+         usuario.value.rol = usuarioGet().rol;
+       }
     
       });
 
