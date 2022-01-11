@@ -56,16 +56,18 @@ export default {
   setup() {
      const usuario = ref({
        rol: 'estudiante'
-     })
+     });
+
+     onIonViewWillEnter(() => {
+        if(usuarioGet().rol != undefined){
+          usuario.value.rol = usuarioGet().rol;
+        }
+      })
+    });
 
     
     return {
-      uso(){
-        if (usuario.value.rol == 'estudiante' ){
-          return true;
-        }
-      },
-      usuario: usuarioGet(),
+      usuario,
       helpCircleOutline,
       homeOutline,
       peopleOutline
