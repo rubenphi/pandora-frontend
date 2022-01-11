@@ -51,12 +51,12 @@ export default {
   setup() {
     let usuario = {rol: 'estudiante'};
 
-    return 
+    return {
       usuario: usuarioGet(),
       helpCircleOutline,
       homeOutline,
       peopleOutline
-    },
+    };
   },
 };
 </script>
