@@ -52,7 +52,7 @@ export default {
     IonRouterOutlet,
   },
   setup() {
-     localStorage.setItem("usuario", "{'rol': 'estudiante'}");
+     localStorage.setItem("usuario", JSON.stringify({rol: "estudiante"}));
 
 
     return {
