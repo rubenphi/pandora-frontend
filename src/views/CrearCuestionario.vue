@@ -22,7 +22,7 @@
           <ion-input type="text"></ion-input>
         </ion-item>
         <ion-item>
-          <ion-buttons>
+          <ion-buttons class="ion-justify-content-center ion-padding-top ion-padding-bottom">>
             <ion-button
               expand="full"
               fill="outline"
