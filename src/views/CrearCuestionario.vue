@@ -44,6 +44,7 @@
 <script>
 import axios from "axios";
 import { ref } from "vue";
+import { useRoute } from 'vue-router';
 
 import { tokenHeader, usuarioGet } from "../globalService";
 import {
@@ -89,6 +90,7 @@ export default {
       });
     });
     return {
+      arrowBackOutline,
       curso,
       usuario,
       miembros,
