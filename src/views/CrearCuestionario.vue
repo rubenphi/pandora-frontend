@@ -37,7 +37,7 @@
               shape="round"
               color="primary"
               class="ion-align-self-center"
-              @click="mostrar"
+              @click="crearCuestionario"
             >
               <ion-label class="ion-text-center ion-padding">
                 Crear Cuestionario
