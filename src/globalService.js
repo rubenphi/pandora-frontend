@@ -16,15 +16,15 @@ export function usuarioGet() {
 
  
 
-export function validateUser(){
-    axios.defaults.headers.common['Authorization'] = localStorage.getItem('token');
-    axios.get("/user/loged").then((response) => {
-        if(response.data.message == 'Unauthenticated') {
-          localStorage.removeItem('usuario')
-        }else 
-        {
-          localStorage.setItem("usuario", JSON.stringify(response.data));
-        }
-        
-    });
+export function adminOprofesor(){
+   tokenHeader()
+   if (usuarioGet().rol == 'admin') {
+     return true;
+   } else if (usuarioGet().rol == 'profesor') {
+     return true;
+   } else {
+     return false;
+   }
+   
+   usuarioGet()
 }

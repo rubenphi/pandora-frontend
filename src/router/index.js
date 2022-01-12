@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from "@ionic/vue-router";
 import TabsPage from "../views/TabsPage.vue";
 import axios from "axios";
-import { usuarioGet } from "../globalService";
+import { adminOprofesor } from "../globalService";
 
 
 
@@ -39,7 +39,7 @@ const routes = [
         path: "admin/cuestionarios",
         component: () => import("@/views/CuestionariosPage.vue"),
         beforeEnter: (to, from, next) => {
-          if (usuarioGet().rol == 'admin' || usuarioGet().rol == 'profesor' ) next()
+          if (adminOprofesor()) next()
           else next({ path: '/inicio' })
         }
       },
