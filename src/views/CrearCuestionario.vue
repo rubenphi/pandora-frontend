@@ -26,7 +26,7 @@
     <ion-label position="stacked">Stacked Label</ion-label>
     <ion-input></ion-input>
   </ion-item>
-</template>
+
         
       </ion-list>
     </ion-content>
