@@ -33,7 +33,6 @@
   </ion-page>
 </template>
 <script>
-import { personOutline } from "ionicons/icons";
 import axios from "axios";
 import { ref } from "vue";
 
