@@ -21,8 +21,10 @@
           <ion-label position="stacked">Tema</ion-label>
           <ion-input type="text"></ion-input>
         </ion-item>
-        <ion-item class="ion-justify-content-center">
-          <ion-buttons class="ion-padding-top ion-padding-bottom">
+        
+      
+      </ion-list>
+                <ion-buttons class="ion-justify-content-center ion-padding-top ion-padding-bottom">
             <ion-button
               expand="full"
               fill="outline"
@@ -36,8 +38,7 @@
               </ion-label>
             </ion-button>
           </ion-buttons>
-        </ion-item>
-      </ion-list>
+
     </ion-content>
   </ion-page>
 </template>
