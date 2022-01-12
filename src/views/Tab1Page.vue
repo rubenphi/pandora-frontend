@@ -25,7 +25,7 @@
 import { personOutline } from "ionicons/icons";
 import axios from "axios";
 import { ref } from "vue";
-import router from "../router";
+
 
 import { tokenHeader , usuarioGet } from "../globalService";
 import {
