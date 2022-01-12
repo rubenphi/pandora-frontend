@@ -56,9 +56,6 @@ export default {
     let usuario = usuarioGet();
     const miembros = ref([]);
     onIonViewWillEnter(() => {
-      if(usuario.rol == 'admin' || usuario.rol == 'profesor'){
-        router.push("/cursos");
-      }
       tokenHeader();
       axios.get("/user/grupo/" + usuario.grupo_id).then((response) => {
         miembros.value = response.data;
