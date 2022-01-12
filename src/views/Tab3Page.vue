@@ -4,7 +4,7 @@
       <ion-toolbar>
         <ion-title>Cuestionarios</ion-title>
          <ion-buttons v-if="usuario.rol == 'admin' || usuario.rol =='profesor'" slot="end" class="ion-margin-end">
-        <ion-button :href="'/agregar/cuestionario/' + curso">
+        <ion-button :href="'/crear/cuestionario/' + curso">
           <ion-icon :icon="addOutline"></ion-icon>
         </ion-button>
       </ion-buttons>
@@ -31,7 +31,7 @@
 <script>
 import axios from "axios";
 import { ref } from "vue";
-import { tokenHeader, usuarioGet } from "../globalService";
+import { tokenHeader, usuarioGet, adminOprofesor } from "../globalService";
 import { useRoute } from "vue-router";
 import router from "../router";
 import { addOutline } from "ionicons/icons";
@@ -76,7 +76,7 @@ export default {
     const cuestionarios = ref([]);
     onIonViewWillEnter(() => {
       if (curso != usuario.curso_id) {
-        if (usuario.rol != "admin" || usuario.rol != "profesor") {
+        if ( adminOprofesor() ) {
           router.push("/cuestionarios/curso/" + usuario.curso_id);
         }
       } else {

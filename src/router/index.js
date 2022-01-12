@@ -62,6 +62,27 @@ const routes = [
       {
         path: "cursos/",
         component: () => import("@/views/CursosPage.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next()
+          else next({ path: '/inicio' })
+        }
+        
+      },
+      {
+        path: "crear/cuestionario/:curso",
+        component: () => import("@/views/CrearCuestionario.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next()
+          else next({ path: '/inicio' })
+        }
+      },
+      {
+        path: "editar/cuestionario/:id",
+        component: () => import("@/views/CrearCuestionario.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next()
+          else next({ path: '/inicio' })
+        }
       }
     ],
   },
