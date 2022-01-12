@@ -52,8 +52,9 @@
 import axios from "axios";
 import { ref } from "vue";
 import { useRoute } from 'vue-router';
+import router from "../router";
 
-import { tokenHeader, usuarioGet } from "../globalService";
+import {  usuarioGet } from "../globalService";
 import {
   IonLabel,
   IonItem,
@@ -129,8 +130,8 @@ export default {
       arrowBackOutline,
       curso,
       usuario,
-      miembros,
-      error
+      error,
+      cuestionario
     };
   },
 };
