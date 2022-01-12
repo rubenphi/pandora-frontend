@@ -43,7 +43,6 @@ import {
   onIonViewWillEnter,
   IonLabel,
   IonItem,
-  IonIcon,
   IonList,
   IonPage,
   IonHeader,
@@ -62,7 +61,6 @@ export default {
     IonList,
     IonItem,
     IonLabel,
-    IonIcon,
     IonInput
   },
   setup() {
@@ -77,7 +75,6 @@ export default {
     });
     return {
       usuario,
-      personOutline,
       miembros
     };
   
