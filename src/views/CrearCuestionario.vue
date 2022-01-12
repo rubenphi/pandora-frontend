@@ -12,14 +12,20 @@
     </ion-header>
     <ion-content :fullscreen="true">
       <ion-list>
+
+      <ion-item v-if="error.status == 1">
+          <ion-label color="danger">{{error.data}}</ion-label>
+        </ion-item>
+        
+      
         <ion-item>
           <ion-label position="stacked">Fecha</ion-label>
-          <ion-input type="date"></ion-input>
+          <ion-input v-model="cuestionario.fecha" type="date"></ion-input>
         </ion-item>
 
         <ion-item>
           <ion-label position="stacked">Tema</ion-label>
-          <ion-input type="text"></ion-input>
+          <ion-input v-model="cuestionario.tema" type="text"></ion-input>
         </ion-item>
         
       
@@ -49,7 +55,6 @@ import { useRoute } from 'vue-router';
 
 import { tokenHeader, usuarioGet } from "../globalService";
 import {
-  onIonViewWillEnter,
   IonLabel,
   IonItem,
   IonList,
@@ -81,20 +86,50 @@ export default {
   setup() {
     const mroute = useRoute();
     const { curso } = mroute.params;
+      const cuestionario = ref ({
+      fecha: '',
+      tema: '',
+      usuario_id: '',
+      curso_id: ''
+
+    });
+
+    const error = ref({
+      estatus: 0,
+      data: "",
+    });
+    
 
     let usuario = usuarioGet();
-    const miembros = ref([]);
-    onIonViewWillEnter(() => {
-      tokenHeader();
-      axios.get("/user/grupo/" + usuario.grupo_id).then((response) => {
-        miembros.value = response.data;
-      });
-    });
+    
+
+    
+
     return {
+      async crearCuestionario(){
+        if(cuestionario.value.fecha == '' || cuestionario.value.tema == ''){
+          error.value.estatus = 1;
+          error.value.data = "Debe seleccionar una fecha y añadir el tema";
+        }
+        else {
+       cuestionario.value.usuario_id = usuario.id;
+       cuestionario.value.curso_id = curso;
+       await axios.post("/cuestionarios", cuestionario.value).then((response) => {
+            router.push("/cuestionarios/" + curso);
+            localStorage.setItem('error' ,response.data.message)
+          }).catch((response) => {
+            localStorage.setItem('error' ,response.message)
+            error.value.estatus = 1;
+            error.value.data = "Error: no se pudo añadir el cuestionario";
+          })
+
+        },
+
       arrowBackOutline,
       curso,
       usuario,
       miembros,
+      error
     };
   },
 };
