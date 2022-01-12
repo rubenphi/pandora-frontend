@@ -25,6 +25,4 @@ export function adminOprofesor(){
    } else {
      return false;
    }
-   
-   usuarioGet()
 }
