@@ -7,10 +7,26 @@
     </ion-header>
     <ion-content :fullscreen="true">
       <ion-list>
-        <ion-item v-for="miembro in miembros" :key="miembro.id" >
-          <ion-icon slot="start" :icon="personOutline"></ion-icon>
-          <ion-label>{{miembro.name}}</ion-label>
-        </ion-item>
+       <ion-item>
+    <ion-label>Default Label</ion-label>
+    <ion-input></ion-input>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="floating">Floating Label</ion-label>
+    <ion-input></ion-input>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="fixed">Fixed Label</ion-label>
+    <ion-input></ion-input>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="stacked">Stacked Label</ion-label>
+    <ion-input></ion-input>
+  </ion-item>
+</template>
         
       </ion-list>
     </ion-content>
@@ -34,6 +50,7 @@ import {
   IonToolbar,
   IonTitle,
   IonContent,
+  IonInput
 } from "@ionic/vue";
 export default {
   components: {
@@ -46,6 +63,7 @@ export default {
     IonItem,
     IonLabel,
     IonIcon,
+    IonInput
   },
   setup() {
     let usuario = usuarioGet();
