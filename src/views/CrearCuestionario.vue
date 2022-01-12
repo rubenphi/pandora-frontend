@@ -63,7 +63,7 @@ import {
   IonToolbar,
   IonTitle,
   IonContent,
-  IonInput,
+  IonInput
 } from "@ionic/vue";
 
 import {
@@ -81,7 +81,7 @@ export default {
     IonList,
     IonItem,
     IonLabel,
-    IonInput,
+    IonInput
   },
   setup() {
     const mroute = useRoute();
@@ -123,7 +123,8 @@ export default {
             error.value.data = "Error: no se pudo añadir el cuestionario";
           })
 
-        },
+        }
+      },
 
       arrowBackOutline,
       curso,
