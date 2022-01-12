@@ -39,8 +39,8 @@ const routes = [
         path: "admin/cuestionarios",
         component: () => import("@/views/CuestionariosPage.vue"),
         beforeEnter: (to, from, next) => {
-          if (usuarioGet().rol != 'admin' || usuarioGet().rol != 'profesor' ) next({ path: '/inicio' })
-          else next()
+          if (usuarioGet().rol == 'admin' || usuarioGet().rol == 'profesor' ) next()
+          else next({ path: '/inicio' })
         }
       },
       {
