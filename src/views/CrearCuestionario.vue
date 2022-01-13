@@ -11,7 +11,7 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <ion-list>
+      <ion-list >
 
       <ion-item v-if="error.status == 1">
           <ion-label color="danger">{{error.data}}</ion-label>
@@ -105,9 +105,9 @@ export default {
 
     let usuario = usuarioGet();
     
-onIonViewWillEnter(() => {
+ onIonViewWillEnter( async () => {
       if(curso == undefined){
-        axios.get("/cuestionarios/" + id).then((response) => {
+      await  axios.get("/cuestionarios/" + id).then((response) => {
         cuestionario.value = response.data;
       });
       }
