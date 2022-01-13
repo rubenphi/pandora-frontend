@@ -40,7 +40,7 @@
               @click="crearCuestionario"
             >
               <ion-label class="ion-text-center ion-padding">
-                Crear Cuestionario
+                {{boton}}
               </ion-label>
             </ion-button>
           </ion-buttons>
@@ -90,7 +90,7 @@ export default {
     const { curso } = mroute.params;
     const { id } = mroute.params;
     const cuestionario = ref ();
-
+    const boton = ref();
     const error = ref({
       estatus: 0,
       data: "",
@@ -101,12 +101,14 @@ export default {
     
  onIonViewWillEnter( async () => {
       if(id != undefined){
+        boton.value = "Actualizar cuestionario";
       await  axios.get("/cuestionarios/" + id).then((response) => {
         cuestionario.value = response.data;
       });
+      
       }
       if ( curso != undefined){
-        console.log('curso de es definido')
+        boton.value = "Crear cuestionario";
       cuestionario.value = {
       fecha: '',
       tema: '',
@@ -123,7 +125,7 @@ export default {
           error.value.estatus = 1;
           error.value.data = "Debe seleccionar una fecha y añadir el tema";
         }
-        else {
+        else if (curso != undefined) {
        cuestionario.value.usuario_id = usuario.id;
        cuestionario.value.curso_id = curso;
        await axios.post("/cuestionarios", cuestionario.value).then((response) => {
@@ -136,13 +138,27 @@ export default {
           })
 
         }
+        else if (id != undefined) {
+       await axios.put("/cuestionarios/" + id, cuestionario.value).then((response) => {
+            router.push("/cuestionario/" + id);
+            localStorage.setItem('error' ,response.data.message)
+          }).catch((response) => {
+            localStorage.setItem('error' ,response.message)
+            error.value.estatus = 1;
+            error.value.data = "Error: no se pudo actualizar el cuestionario";
+          })
+
+        }
       },
+      
+      actualizar cuestionarios
 
       arrowBackOutline,
       curso,
       usuario,
       error,
-      cuestionario
+      cuestionario,
+      boton
     };
   },
 };
