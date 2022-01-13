@@ -10,7 +10,8 @@
         <ion-title>Cuestionario</ion-title>
       </ion-toolbar>
     </ion-header>
-    <ion-content v-if="cuestionario != null" :fullscreen="true">
+    <ion-content>
+      <div v-if="cuestionario != null" :fullscreen="true">
       <ion-list >
 
       <ion-item v-if="error.status == 1">
@@ -44,7 +45,7 @@
               </ion-label>
             </ion-button>
           </ion-buttons>
-
+  </div>
     </ion-content>
   </ion-page>
 </template>
