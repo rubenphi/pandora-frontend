@@ -11,7 +11,7 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <ion-list >
+      <ion-list v-if="cuestionario.tema">
 
       <ion-item v-if="error.status == 1">
           <ion-label color="danger">{{error.data}}</ion-label>
@@ -89,13 +89,7 @@ export default {
     const mroute = useRoute();
     const { curso } = mroute.params;
     const { id } = mroute.params;
-      const cuestionario = ref ({
-      fecha: '',
-      tema: '',
-      usuario_id: '',
-      curso_id: ''
-
-    });
+    const cuestionario = ref ();
 
     const error = ref({
       estatus: 0,
@@ -110,6 +104,14 @@ export default {
       await  axios.get("/cuestionarios/" + id).then((response) => {
         cuestionario.value = response.data;
       });
+      }
+      else if ( id == undefined){
+        cuestionario.value = {
+      fecha: '',
+      tema: '',
+      usuario_id: '',
+      curso_id: ''
+        }
       }
     });
     
