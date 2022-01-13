@@ -107,6 +107,7 @@ export default {
     });
 
     return {
+      admin,
       cuestionario,
       id,
       arrowBackOutline,
