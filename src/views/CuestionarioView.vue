@@ -13,6 +13,12 @@
             <ion-icon :icon="refreshOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
+        
+         <ion-buttons v-if="admin" slot="end" class="ion-margin-end">
+          <ion-button :href="'editar/cuestionario/' + cuestionario.id">
+            <ion-icon :icon="checkmarkOutline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -28,7 +34,7 @@
       </ion-card>
       <ion-card v-if="cuestionario.preguntas != ''">
         <ion-list>
-          <ion-item  v-for="(pregunta , index) in cuestionario.preguntas" :key="pregunta.id" :href="'/pregunta/' + pregunta.id">
+          <ion-item  v-for="(pregunta , index) in cuestionario.preguntas" :key="pregunta.id" :href="'/pregunta/' + pregunta.id" v-if="admin && pregunta.visible == 1">
             <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
             <ion-label
               > <b>Pregunta {{index + 1}}</b></ion-label
@@ -49,6 +55,7 @@ import {
   arrowBackOutline,
   refreshOutline,
   handLeftOutline,
+  checkmarkOutline
 } from "ionicons/icons";
 import {
   IonLabel,
@@ -113,6 +120,7 @@ export default {
       arrowBackOutline,
       handLeftOutline,
       refreshOutline,
+      checkmarkOutline
     };
   },
 };
