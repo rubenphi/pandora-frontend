@@ -20,7 +20,7 @@
           <ion-card-title class="ion-text-center"
             >Esta pregunta vale: + {{pregunta.valor}} puntos</ion-card-title
           >
-          <ion-buttons v-if="admin" slot="end" class="ion-margin-end">
+          <ion-buttons slot="end" class="ion-margin-end">
           <ion-button :href="'editar/pregunta/' + pregunta.id">
             <ion-icon :icon="createOutline"></ion-icon>
           </ion-button>
