@@ -43,7 +43,7 @@
         </ion-list>
       </ion-card>
       
-     <ion-buttons class="ion-justify-content-center ion-padding-top ion-padding-bottom">
+     <ion-buttons v-if="admin" class="ion-justify-content-center ion-padding-top ion-padding-bottom">
         <ion-button expand="full" fill="outline" shape="round" color="medium" class="ion-align-self-center" >
           <ion-icon :icon="addOutline"></ion-icon>
         </ion-button>
