@@ -26,7 +26,7 @@
           >
         </ion-card-header>
       </ion-card>
-      <ion-card v-if="cuestionario.preguntas != null">
+      <ion-card v-if="cuestionario.preguntas != ''">
         <ion-list>
           <ion-item  v-for="(pregunta , index) in cuestionario.preguntas" :key="pregunta.id" :href="'/pregunta/' + pregunta.id">
             <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
