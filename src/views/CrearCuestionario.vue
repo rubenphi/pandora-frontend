@@ -115,6 +115,7 @@ export default {
         if(cuestionario.value.fecha == '' || cuestionario.value.tema == ''){
           error.value.estatus = 1;
           error.value.data = "Debe seleccionar una fecha y añadir el tema";
+          console.log(error.value.data)
         }
         else if (curso != undefined) {
        cuestionario.value.usuario_id = usuario.id;
