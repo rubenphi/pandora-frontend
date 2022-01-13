@@ -106,8 +106,11 @@ export default {
     let usuario = usuarioGet();
     
 onIonViewWillEnter(() => {
-      console.log('El id es ' + id);     
-      console.log('El curso es ' + curso);
+      if(curso == undefined){
+        axios.get("/cuestionarios/" + id).then((response) => {
+        cuestionario.value = response.data;
+      });
+      }
     });
     
 
