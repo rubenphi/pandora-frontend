@@ -56,6 +56,7 @@ import router from "../router";
 
 import {  usuarioGet } from "../globalService";
 import {
+  onIonViewWillEnter,
   IonLabel,
   IonItem,
   IonList,
@@ -87,6 +88,7 @@ export default {
   setup() {
     const mroute = useRoute();
     const { curso } = mroute.params;
+    const { id } = mroute.params;
       const cuestionario = ref ({
       fecha: '',
       tema: '',
@@ -103,7 +105,10 @@ export default {
 
     let usuario = usuarioGet();
     
-
+onIonViewWillEnter(() => {
+      console.log('El id es ' + id);     
+      console.log('El curso es ' + curso);
+    });
     
 
     return {
