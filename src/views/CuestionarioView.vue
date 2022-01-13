@@ -42,6 +42,13 @@
           </ion-item>
         </ion-list>
       </ion-card>
+      
+     <ion-buttons class="ion-justify-content-center ion-padding-top ion-padding-bottom">
+        <ion-button expand="full" fill="outline" shape="round" color="medium" class="ion-align-self-center" >
+          <ion-icon slot="end" :icon="addOutline"></ion-icon>
+        </ion-button>
+      </ion-buttons>
+        
     </ion-content>
   </ion-page>
 </template>
@@ -55,7 +62,8 @@ import {
   arrowBackOutline,
   refreshOutline,
   handLeftOutline,
-  createOutline
+  createOutline,
+  addOutline
 } from "ionicons/icons";
 import {
   IonLabel,
@@ -122,7 +130,8 @@ export default {
       arrowBackOutline,
       handLeftOutline,
       refreshOutline,
-      createOutline
+      createOutline,
+      addOutline
     };
   },
 };
