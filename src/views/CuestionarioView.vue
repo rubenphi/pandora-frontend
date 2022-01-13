@@ -109,12 +109,10 @@ export default {
         axios.get("/cuestionarios/" + id).then((response) => {
         cuestionario.value = response.data;
         if(!admin){
-          cuestionario.value.preguntas.filter(i => i.visible === 1)
+        cuestionario.value.preguntas = cuestionario.value.preguntas.filter(i => i.visible === 1);
   }
         }
-        
       })
-      
     });
 
     return {
