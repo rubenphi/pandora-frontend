@@ -100,13 +100,13 @@ export default {
     let usuario = usuarioGet();
     
  onIonViewWillEnter( async () => {
-      if(curso == undefined){
+      if(id != undefined){
       await  axios.get("/cuestionarios/" + id).then((response) => {
         cuestionario.value = response.data;
       });
       }
-      else if ( id == undefined){
-        cuestionario.value = {
+      if ( curso != undefined){
+      cuestionario.value = {
       fecha: '',
       tema: '',
       usuario_id: '',
