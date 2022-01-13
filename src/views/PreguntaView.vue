@@ -122,7 +122,7 @@ export default {
     IonCardSubtitle,
   },
   setup() {
-    const admin = ref();
+    const admin = adminOprofesor();
     const mroute = useRoute();
     const { id } = mroute.params;
     const pregunta = ref ({
