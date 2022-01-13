@@ -11,7 +11,7 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <ion-list v-if="cuestionario.tema">
+      <ion-list v-if="cuestionario != null">
 
       <ion-item v-if="error.status == 1">
           <ion-label color="danger">{{error.data}}</ion-label>
