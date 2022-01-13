@@ -94,7 +94,7 @@ export default {
       id: 0,
       fecha: '',
       tema: '',
-      preguntas:
+      preguntas: null
     });
      onIonViewDidEnter(() => {
        tokenHeader();
