@@ -8,7 +8,7 @@
           </ion-button>
         </ion-buttons>
         <ion-title size="large" class="ion-text-center">{{cuestionario.fecha}}</ion-title>
-        <ion-buttons slot="end" class="ion-margin-end">
+        <ion-buttons v-if="!adminOprofesor()" slot="end" class="ion-margin-end">
           <ion-button :href="'/cuestionario/' + cuestionario.id">
             <ion-icon :icon="refreshOutline"></ion-icon>
           </ion-button>
@@ -42,7 +42,7 @@
 <script>
 import axios from "axios";
 import { ref } from "vue";
-import { tokenHeader } from "../globalService";
+import { tokenHeader , adminOprofesor} from "../globalService";
 
 
 import {
@@ -88,6 +88,7 @@ export default {
     IonCardSubtitle,
   },
   setup() {
+    const usuario = usuarioGet();
     const mroute = useRoute();
     const { id } = mroute.params;
     const cuestionario = ref ({
