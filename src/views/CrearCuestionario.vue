@@ -104,8 +104,9 @@ export default {
       await  axios.get("/cuestionarios/" + id).then((response) => {
         cuestionario.value = response.data;
       });
-      }
+      };
       if ( curso != undefined){
+        console.log('curso de es definido')
       cuestionario.value = {
       fecha: '',
       tema: '',
