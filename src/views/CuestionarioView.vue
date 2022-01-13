@@ -16,7 +16,7 @@
         
          <ion-buttons v-if="admin" slot="end" class="ion-margin-end">
           <ion-button :href="'editar/cuestionario/' + cuestionario.id">
-            <ion-icon :icon="checkmarkOutline"></ion-icon>
+            <ion-icon :icon="createOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -55,7 +55,7 @@ import {
   arrowBackOutline,
   refreshOutline,
   handLeftOutline,
-  checkmarkOutline
+  createOutline
 } from "ionicons/icons";
 import {
   IonLabel,
@@ -122,7 +122,7 @@ export default {
       arrowBackOutline,
       handLeftOutline,
       refreshOutline,
-      checkmarkOutline
+      createOutline
     };
   },
 };
