@@ -7,6 +7,11 @@
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
+        <ion-buttons slot="end">
+          <ion-button @click="crearCuestionario">
+            <ion-icon :icon="checkmarkOutline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
         <ion-title>Cuestionario</ion-title>
       </ion-toolbar>
     </ion-header>
@@ -31,20 +36,7 @@
         
       
       </ion-list>
-                <ion-buttons class="ion-justify-content-center ion-padding-top ion-padding-bottom">
-            <ion-button
-              expand="full"
-              fill="outline"
-              shape="round"
-              color="primary"
-              class="ion-align-self-center"
-              @click="crearCuestionario"
-            >
-              <ion-label class="ion-text-center ion-padding">
-                {{boton}}
-              </ion-label>
-            </ion-button>
-          </ion-buttons>
+         
   </div>
     </ion-content>
   </ion-page>
@@ -70,7 +62,8 @@ import {
 } from "@ionic/vue";
 
 import {
-  arrowBackOutline
+  arrowBackOutline,
+  checkmarkOutline
 } from "ionicons/icons";
 
 
@@ -91,7 +84,6 @@ export default {
     const { curso } = mroute.params;
     const { id } = mroute.params;
     const cuestionario = ref ();
-    const boton = ref();
     const error = ref({
       estatus: 0,
       data: "",
@@ -102,14 +94,12 @@ export default {
     
  onIonViewWillEnter( async () => {
       if(id != undefined){
-        boton.value = "Actualizar cuestionario";
       await  axios.get("/cuestionarios/" + id).then((response) => {
         cuestionario.value = response.data;
       });
       
       }
       if ( curso != undefined){
-        boton.value = "Crear cuestionario";
       cuestionario.value = {
       fecha: '',
       tema: '',
@@ -156,7 +146,7 @@ export default {
       usuario,
       error,
       cuestionario,
-      boton
+      checkmarkOutline
     };
   },
 };
