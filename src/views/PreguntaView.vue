@@ -15,18 +15,20 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-     <ion-buttons class="ion-justify-content-center ion-padding-top ion-padding-bottom">
-        <ion-button expand="full" fill="outline" shape="round" color="medium" class="ion-align-self-center"  @click="responder">
-          <ion-icon slot="end" :icon="createOutline"></ion-icon>
-          <ion-label class="ion-text-center"> Editar pregunta </ion-label>
-        </ion-button>
-      </ion-buttons>
+     
       <ion-card>
         <ion-card-header>
           <ion-card-title class="ion-text-center"
             >Esta pregunta vale: + {{pregunta.valor}} puntos</ion-card-title
           >
+          <ion-icon slot="end" :icon="createOutline"></ion-icon>
         </ion-card-header>
+        <ion-buttons class="ion-justify-content-center ion-padding-top ion-padding-bottom">
+        <ion-button expand="full" fill="outline" shape="round" color="medium" class="ion-align-self-center"  @click="responder">
+          <ion-icon slot="end" :icon="createOutline"></ion-icon>
+          <ion-label class="ion-text-center"> Editar pregunta </ion-label>
+        </ion-button>
+      </ion-buttons>
       </ion-card>
       <ion-card v-if="pregunta.photo">
         <ion-img
@@ -53,17 +55,24 @@
               <ion-label class="ion-text-wrap"
                 ><b>{{opcion.letra}}. </b> {{opcion.enunciado}}</ion-label
               >
-              <ion-radio slot="start" :value="opcion.id" :id="opcion.id"></ion-radio>
+              <ion-icon v-if="admin" slot="start" :icon="createOutline"></ion-icon>
+              <ion-radio v-if="!admin" slot="start" :value="opcion.id" :id="opcion.id"></ion-radio>
             </ion-item>
 
           </ion-radio-group>
         </ion-list>
       </ion-card>
 
-      <ion-buttons class="ion-justify-content-center ion-padding-top ion-padding-bottom">
+      <ion-buttons v-if="!admin" class="ion-justify-content-center ion-padding-top ion-padding-bottom">
         <ion-button expand="full" fill="outline" shape="round" color="primary" class="ion-align-self-center"  @click="responder">
           <ion-icon slot="end" :icon="paperPlaneOutline"></ion-icon>
           <ion-label class="ion-text-center"> Enviar Respuesta </ion-label>
+        </ion-button>
+      </ion-buttons>
+      
+      <ion-buttons v-if="admin" class="ion-justify-content-center ion-padding-top ion-padding-bottom">
+        <ion-button expand="full" fill="outline" shape="round" color="medium" class="ion-align-self-center" >
+          <ion-icon :icon="addOutline"></ion-icon>
         </ion-button>
       </ion-buttons>
       
@@ -84,7 +93,8 @@ import {
   handLeftOutline,
   paperPlaneOutline,
   podiumOutline,
-  createOutline
+  createOutline,
+  addOutline
 } from "ionicons/icons";
 
 import {
@@ -185,7 +195,8 @@ export default {
       refreshOutline,
       paperPlaneOutline,
       podiumOutline,
-      createOutline
+      createOutline,
+      addOutline
     };
   },
 };
