@@ -112,7 +112,7 @@ export default {
         cuestionario.value.preguntas = cuestionario.value.preguntas.filter(i => i.visible === 1);
   }
         }
-      })
+      )
     });
 
     return {
