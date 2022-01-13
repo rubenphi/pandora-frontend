@@ -150,9 +150,6 @@ export default {
 
         }
       },
-      
-      actualizar cuestionarios
-
       arrowBackOutline,
       curso,
       usuario,
