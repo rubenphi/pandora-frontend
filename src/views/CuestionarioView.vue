@@ -100,7 +100,9 @@ export default {
        tokenHeader();
         axios.get("/cuestionarios/" + id).then((response) => {
         cuestionario.value = response.data;
-        console.log(typeof cuestionario.value.preguntas)
+        console.log(typeof cuestionario.value.preguntas);
+        console.log(cuestionario.value.preguntas);
+        console.log(JSON.stringify(cuestionario.value.preguntas))
       })
       
     });
