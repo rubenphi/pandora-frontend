@@ -15,16 +15,17 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
+     <ion-buttons class="ion-justify-content-center ion-padding-top ion-padding-bottom">
+        <ion-button expand="full" fill="outline" shape="round" color="medium" class="ion-align-self-center"  @click="responder">
+          <ion-icon slot="end" :icon="createOutline"></ion-icon>
+          <ion-label class="ion-text-center"> Editar pregunta </ion-label>
+        </ion-button>
+      </ion-buttons>
       <ion-card>
         <ion-card-header>
           <ion-card-title class="ion-text-center"
             >Esta pregunta vale: + {{pregunta.valor}} puntos</ion-card-title
           >
-          <ion-buttons slot="end" class="ion-margin-end">
-          <ion-button :href="'editar/pregunta/' + pregunta.id">
-            <ion-icon :icon="createOutline"></ion-icon>
-          </ion-button>
-        </ion-buttons>
         </ion-card-header>
       </ion-card>
       <ion-card v-if="pregunta.photo">
