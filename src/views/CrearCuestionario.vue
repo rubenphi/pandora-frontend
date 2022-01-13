@@ -2,7 +2,7 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-buttons>
+        <ion-buttons slot="start">
           <ion-button :href="'/cuestionarios/' + curso">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
