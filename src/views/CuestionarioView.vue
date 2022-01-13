@@ -3,7 +3,7 @@
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start" class="ion-margin-start">
-          <ion-button href="/cuestionarios">
+          <ion-button :href="'/cuestionarios' + cuestionario.curso_id">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -26,7 +26,7 @@
           >
         </ion-card-header>
       </ion-card>
-      <ion-card>
+      <ion-card v-if="cuestionario.preguntas != null">
         <ion-list>
           <ion-item  v-for="(pregunta , index) in cuestionario.preguntas" :key="pregunta.id" :href="'/pregunta/' + pregunta.id">
             <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
