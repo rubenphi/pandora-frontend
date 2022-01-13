@@ -20,6 +20,11 @@
           <ion-card-title class="ion-text-center"
             >Esta pregunta vale: + {{pregunta.valor}} puntos</ion-card-title
           >
+          <ion-buttons v-if="admin" slot="end" class="ion-margin-end">
+          <ion-button :href="'editar/pregunta/' + pregunta.id">
+            <ion-icon :icon="createOutline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
         </ion-card-header>
       </ion-card>
       <ion-card v-if="pregunta.photo">
@@ -68,7 +73,7 @@
 <script>
 import axios from "axios";
 import { ref } from "vue";
-import { tokenHeader, usuarioGet } from "../globalService";
+import { tokenHeader, usuarioGet, adminOprofesor } from "../globalService";
 import { useRoute } from 'vue-router';
 import router from "../router";
 
@@ -77,7 +82,8 @@ import {
   refreshOutline,
   handLeftOutline,
   paperPlaneOutline,
-  podiumOutline
+  podiumOutline,
+  createOutline
 } from "ionicons/icons";
 
 import {
@@ -116,7 +122,7 @@ export default {
     IonCardSubtitle,
   },
   setup() {
-
+    const admin = ref();
     const mroute = useRoute();
     const { id } = mroute.params;
     const pregunta = ref ({
@@ -169,6 +175,7 @@ export default {
           })
         }
       },
+      admin,
       error,
       respuesta,
       pregunta,
@@ -176,7 +183,8 @@ export default {
       handLeftOutline,
       refreshOutline,
       paperPlaneOutline,
-      podiumOutline
+      podiumOutline,
+      createOutline
     };
   },
 };
