@@ -34,7 +34,7 @@
       </ion-card>
       <ion-card v-if="cuestionario.preguntas != ''">
         <ion-list>
-          <ion-item  v-for="(pregunta , index) in cuestionario.preguntas" :key="pregunta.id" :href="'/pregunta/' + pregunta.id" v-if="admin && pregunta.visible == 1">
+          <ion-item  v-for="(pregunta , index) in cuestionario.preguntas" :key="pregunta.id" :href="'/pregunta/' + pregunta.id">
             <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
             <ion-label
               > <b>Pregunta {{index + 1}}</b></ion-label
@@ -108,6 +108,10 @@ export default {
        tokenHeader();
         axios.get("/cuestionarios/" + id).then((response) => {
         cuestionario.value = response.data;
+        if(!admin){
+          cuestionario.value.preguntas.filter(i => i.visible === 1)
+  }
+        }
         
       })
       
