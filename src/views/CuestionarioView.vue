@@ -8,7 +8,7 @@
           </ion-button>
         </ion-buttons>
         <ion-title size="large" class="ion-text-center">{{cuestionario.fecha}}</ion-title>
-        <ion-buttons v-if="!adminOprofesor()" slot="end" class="ion-margin-end">
+        <ion-buttons v-if="!admin" slot="end" class="ion-margin-end">
           <ion-button :href="'/cuestionario/' + cuestionario.id">
             <ion-icon :icon="refreshOutline"></ion-icon>
           </ion-button>
@@ -88,7 +88,7 @@ export default {
     IonCardSubtitle,
   },
   setup() {
-    const usuario = usuarioGet();
+    const admin = adminOprofesor();
     const mroute = useRoute();
     const { id } = mroute.params;
     const cuestionario = ref ({
