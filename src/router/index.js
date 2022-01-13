@@ -82,15 +82,16 @@ const routes = [
         beforeEnter: (to, from, next) => {
           if (adminOprofesor()) next()
           else next({ path: '/inicio' })
-        },
-              {
+        }
+       },
+             {
         path: "crear/pregunta",
         component: () => import("@/views/CrearPregunta.vue"),
         beforeEnter: (to, from, next) => {
           if (adminOprofesor()) next()
           else next({ path: '/inicio' })
         }
-      }
+       }
     ],
   },
 ];
