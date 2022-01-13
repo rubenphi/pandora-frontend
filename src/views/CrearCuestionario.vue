@@ -19,7 +19,7 @@
       <div v-if="cuestionario != null" :fullscreen="true">
       <ion-list >
 
-      <ion-item v-if="error.status == 1">
+      <ion-item v-if="error.estatus == 1">
           <ion-label color="danger">{{error.data}}</ion-label>
         </ion-item>
         
