@@ -3,6 +3,7 @@
 </template>
 
 <script>
+import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import { defineComponent, ref } from 'vue'
 import { QuillEditor } from '@vueup/vue-quill'
 export default defineComponent({
