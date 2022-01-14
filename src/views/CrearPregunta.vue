@@ -3,16 +3,21 @@
 </template>
 
 <script>
-import '@vueup/vue-quill/dist/vue-quill.snow.css';
-import { defineComponent, ref } from 'vue'
 import { QuillEditor } from '@vueup/vue-quill'
-export default defineComponent({
-  components: {
-    QuillEditor,
-  },
-  setup() {
-    const inputValue = ref('<h1>This is header</h1><p>This is paragraph</p>')
-    return { inputValue }
-  },
-})
-</script>
+import '@vueup/vue-quill/dist/vue-quill.snow.css';
+  import {
+    defineComponent,
+    ref
+  } from 'vue'
+  export default defineComponent({
+    components: {
+      QuillEditor,
+    },
+    setup() {
+      const inputValue = ref('<h1>This is header</h1><p>This is paragraph</p>')
+      return {
+        inputValue
+      }
+    },
+  })
+  </script>
