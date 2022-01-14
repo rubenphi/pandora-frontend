@@ -3,8 +3,10 @@
 </template>
 
 <script>
-import { QuillEditor } from '@vueup/vue-quill'
-import '@vueup/vue-quill/dist/vue-quill.snow.css';
+  import {
+    QuillEditor
+  } from '@vueup/vue-quill'
+  import '@vueup/vue-quill/dist/vue-quill.snow.css';
   import {
     defineComponent,
     ref
@@ -16,7 +18,8 @@ import '@vueup/vue-quill/dist/vue-quill.snow.css';
     setup() {
       const inputValue = ref('<h1>This is header</h1><p>This is paragraph</p>')
       return {
-        inputValue
+        inputValue,
+        snow
       }
     },
   })
