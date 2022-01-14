@@ -1,12 +1,14 @@
 <template>
-  <QuillEditor v-model:content="inputValue" content-type="html" theme="snow" />
+a  <QuillEditor v-model:content="inputValue" content-type="html" theme="snow" />
+b <QuillEditor v-model:content="inputValue" content-type="html" class="snow" />
 </template>
 
 <script>
   import {
     QuillEditor
   } from '@vueup/vue-quill'
-  import { snow } from '@vueup/vue-quill/dist/vue-quill.snow.css';
+  import '@vueup/vue-quill/dist/vue-quill.snow.css';
+  import './theme/snow.css';
   import {
     defineComponent,
     ref
