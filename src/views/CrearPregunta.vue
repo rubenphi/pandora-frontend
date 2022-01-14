@@ -1,5 +1,5 @@
 <template>
-   <QuillEditor v-model:content="inputValue" content-type="html" />
+  <QuillEditor v-model:content="inputValue" content-type="html" />
 </template>
 
 <script>
@@ -7,7 +7,7 @@
     QuillEditor
   } from '@vueup/vue-quill'
   import '@vueup/vue-quill/dist/vue-quill.snow.css';
-  import './theme/snow.css';
+  import '../theme/snow.css';
   import {
     defineComponent,
     ref
