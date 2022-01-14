@@ -3,25 +3,31 @@
 </template>
 
 <script>
-import { QuillEditor } from '@vueup/vue-quill'
+import '@vueup/vue-quill/dist/vue-quill.core.css';
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
-
-export default {
-  components: {
+  import {
     QuillEditor
-  },
-  data() {
-    return { 
-      options: {
-        debug: 'info',
-        modules: {
-          toolbar: ['bold', 'italic', 'underline']
-        },
-        placeholder: 'Compose an epic...',
-        readOnly: true,
-        theme: 'snow'
+  } from '@vueup/vue-quill'
+  
+
+  export default {
+    components: {
+      QuillEditor
+    },
+    data() {
+      return {
+        options: {
+          debug: 'info',
+          modules: {
+            toolbar: ['bold',
+              'italic',
+              'underline']
+          },
+          placeholder: 'Compose an epic...',
+          readOnly: true,
+          theme: 'snow'
+        }
       }
-    }
-  },
-}
-</script>
+    },
+  }
+  </script>
