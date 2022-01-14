@@ -1,30 +1,27 @@
 <template>
-<div id="editor">
-  <p>Hello World!</p>
-  <p>Some initial <strong>bold</strong> text</p>
-  <p><br></p>
-</div>
-
+  <QuillEditor :options="options" />
 </template>
 
 <script>
-  
-  import '../theme/snow.css';
-  import '../quill.js'
-  import {
-    defineComponent,
-    ref
-  } from 'vue'
-  export default defineComponent({
-    components: {
-    },
-    setup() {
-var quill = new Quill('#editor', {
-    theme: 'snow'
-  });
-      return {
-        inputValue
+import { QuillEditor } from '@vueup/vue-quill'
+import '@vueup/vue-quill/dist/vue-quill.snow.css';
+
+export default {
+  components: {
+    QuillEditor
+  },
+  data() {
+    return { 
+      options: {
+        debug: 'info',
+        modules: {
+          toolbar: ['bold', 'italic', 'underline']
+        },
+        placeholder: 'Compose an epic...',
+        readOnly: true,
+        theme: 'snow'
       }
-    },
-  })
-  </script>
+    }
+  },
+}
+</script>
