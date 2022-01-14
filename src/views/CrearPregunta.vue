@@ -1,25 +1,23 @@
 <template>
-  <QuillEditor v-model:content="inputValue" content-type="html" />
+<div id="editor">
+  <p>Hello World!</p>
+  <p>Some initial <strong>bold</strong> text</p>
+  <p><br></p>
+</div>
+
 </template>
 
 <script>
-  import {
-    QuillEditor
-  } from '@vueup/vue-quill'
-  import '@vueup/vue-quill/dist/vue-quill.snow.css';
+  
   import '../theme/snow.css';
-  import {
-    defineComponent,
-    ref
-  } from 'vue'
+  import '../quill.js'
   export default defineComponent({
-    components: {
-      QuillEditor,
     },
     setup() {
-      const inputValue = ref('<h1>This is header</h1><p>This is paragraph</p>')
+      var quill = new Quill('#editor', {
+    theme: 'snow'
+  });
       return {
-        inputValue
       }
     },
   })
