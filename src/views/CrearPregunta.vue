@@ -3,12 +3,12 @@
 </template>
 
 <script>
-import '@vueup/vue-quill/dist/vue-quill.core.css';
-import '@vueup/vue-quill/dist/vue-quill.snow.css';
+  import '@vueup/vue-quill/dist/vue-quill.core.css';
+  import '@vueup/vue-quill/dist/vue-quill.snow.css';
   import {
     QuillEditor
   } from '@vueup/vue-quill'
-  
+
 
   export default {
     components: {
@@ -24,8 +24,7 @@ import '@vueup/vue-quill/dist/vue-quill.snow.css';
               'underline']
           },
           placeholder: 'Compose an epic...',
-          readOnly: true,
-          theme: 'snow'
+          readOnly: true
         }
       }
     },
