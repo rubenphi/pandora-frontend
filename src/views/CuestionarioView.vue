@@ -78,6 +78,7 @@ import {
   IonButtons,
   IonButton,
   IonCard,
+  IonCardHeader,
   IonCardTitle,
   IonCardSubtitle,
   onIonViewDidEnter
@@ -100,6 +101,7 @@ export default {
     IonButton,
     IonCard,
     IonCardTitle,
+    IonCardHeader,
     IonCardSubtitle,
   },
   setup() {

@@ -56,6 +56,7 @@ import {
 } from "ionicons/icons";
 
 import {
+  IonTitle,
   onIonViewDidEnter,
   IonIcon,
   IonPage,
@@ -73,6 +74,7 @@ import {
 
 export default {
   components: {
+    IonTitle,
     IonHeader,
     IonToolbar,
     IonContent,

@@ -3,7 +3,10 @@
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-button :href="'/cuestionarios/' + curso">
+          <ion-button v-if="curso" :href="'/cuestionarios/' + curso">
+            <ion-icon :icon="arrowBackOutline"></ion-icon>
+          </ion-button>
+          <ion-button v-if="id" :href="'/cuestionarios/' + cuestionario.curso_id">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -58,7 +61,10 @@ import {
   IonToolbar,
   IonTitle,
   IonContent,
-  IonInput
+  IonInput,
+  IonIcon,
+  IonButton,
+  IonButtons
 } from "@ionic/vue";
 
 import {
@@ -69,6 +75,9 @@ import {
 
 export default {
   components: {
+    IonButton,
+  IonButtons,
+    IonIcon,
     IonHeader,
     IonToolbar,
     IonTitle,
@@ -144,6 +153,7 @@ export default {
       },
       arrowBackOutline,
       curso,
+      id,
       usuario,
       error,
       cuestionario,

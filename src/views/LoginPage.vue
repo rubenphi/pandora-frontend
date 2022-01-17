@@ -154,7 +154,8 @@ import {
   IonLabel,
   IonInput,
   IonButton,
-  //IonText
+  IonButtons,
+  IonText
 } from "@ionic/vue";
 import router from "../router";
 export default {
@@ -172,7 +173,8 @@ export default {
     IonLabel,
     IonInput,
     IonButton,
-    //IonText
+    IonButtons,
+    IonText
   },
   setup() {
     const login = ref({

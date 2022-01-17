@@ -67,10 +67,12 @@ import {
   IonNote,
   IonText,
   IonLabel,
+  IonTitle
 } from "@ionic/vue";
 
 export default {
   components: {
+      IonTitle,
     IonHeader,
     IonToolbar,
     IonContent,

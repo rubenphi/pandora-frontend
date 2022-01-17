@@ -107,16 +107,23 @@ import {
   IonButtons,
   IonButton,
   IonCard,
+  IonCardHeader,
   IonCardTitle,
   IonCardContent,
   IonImg,
   IonRadio,
+  IonLabel,
   IonRadioGroup,
   IonCardSubtitle,
+  IonItem,
+  IonList
 } from "@ionic/vue";
 
 export default {
   components: {
+    IonList,
+    IonLabel,
+    IonItem,
     IonHeader,
     IonToolbar,
     IonContent,
@@ -125,6 +132,7 @@ export default {
     IonButtons,
     IonButton,
     IonCard,
+    IonCardHeader,
     IonCardTitle,
     IonCardContent,
     IonImg,
