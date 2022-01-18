@@ -16,3 +16,17 @@ export default defineComponent({
   },
 });
 </script>
+
+<style >
+
+.ProseMirror:focus {
+    outline: #92949c solid 1px;
+
+  }
+
+.ProseMirror {
+    outline: #92949c solid 1px;
+
+  }
+
+</style>

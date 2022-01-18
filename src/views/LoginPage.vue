@@ -114,6 +114,7 @@
                 class="ion-justify-content-center ion-padding-top ion-padding-bottom"
               >
                 <ion-button
+                type="submit"
                   expand="full"
                   fill="outline"
                   shape="round"

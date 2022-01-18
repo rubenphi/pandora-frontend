@@ -30,9 +30,6 @@ import '@ionic/vue/css/display.css';
 /* Theme variables */
 import './theme/variables.css';
 
-/* themes quill */
-import '@vueup/vue-quill/dist/vue-quill.bubble.css'
-import '@vueup/vue-quill/dist/vue-quill.snow.css'
 
 
 const app = createApp(App)
