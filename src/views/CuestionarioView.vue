@@ -114,9 +114,9 @@ export default {
       tema: '',
       preguntas: ''
     });
-     onIonViewDidEnter(() => {
+     onIonViewDidEnter(async () => {
        tokenHeader();
-        axios.get("/cuestionarios/" + id).then((response) => {
+       await axios.get("/cuestionarios/" + id).then((response) => {
         cuestionario.value = response.data;
         if(!admin){
         cuestionario.value.preguntas = cuestionario.value.preguntas.filter(i => i.visible === 1);

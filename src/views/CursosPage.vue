@@ -53,9 +53,9 @@ export default {
   setup() {
     let usuario = usuarioGet();
     const cursos = ref([]);
-    onIonViewWillEnter(() => {
+    onIonViewWillEnter(async () => {
       tokenHeader();
-      axios.get("/cursos").then((response) => {
+     await  axios.get("/cursos").then((response) => {
         cursos.value = response.data;
       });
     });

@@ -95,9 +95,9 @@ export default {
       {  grupo: {nombre: 'Cargando'}, total: 'Cargando' }
     ]);
     
-    onIonViewDidEnter(() => {
+    onIonViewDidEnter( async () => {
        tokenHeader();
-        axios.get("/respuestas/resultado/" + id).then((response) => {
+        await axios.get("/respuestas/resultado/" + id).then((response) => {
         respuestas.value = response.data;
       })
       

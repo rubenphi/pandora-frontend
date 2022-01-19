@@ -55,9 +55,9 @@ export default {
   setup() {
     let usuario = usuarioGet();
     const miembros = ref([]);
-    onIonViewWillEnter(() => {
+    onIonViewWillEnter(async () => {
       tokenHeader();
-      axios.get("/user/grupo/" + usuario.grupo_id).then((response) => {
+     await axios.get("/user/grupo/" + usuario.grupo_id).then((response) => {
         miembros.value = response.data;
         
       });

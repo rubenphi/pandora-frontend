@@ -99,9 +99,9 @@ export default {
     }]);
     
     
-     onIonViewDidEnter(() => {
+     onIonViewDidEnter(async () => {
        tokenHeader();
-        axios.get("/respuestas/pregunta/" + id).then((response) => {
+       await axios.get("/respuestas/pregunta/" + id).then((response) => {
         respuestas.value = response.data;
       })
       

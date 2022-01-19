@@ -24,7 +24,7 @@
           <ion-icon slot="end" :icon="createOutline"></ion-icon>
         </ion-card-header>
         <ion-buttons class="ion-justify-content-center ion-padding-top ion-padding-bottom">
-        <ion-button expand="full" fill="outline" shape="round" color="medium" class="ion-align-self-center"  @click="responder">
+        <ion-button expand="full" fill="outline" shape="round" color="medium" class="ion-align-self-center"  :href="'/editar/pregunta/' + pregunta.id">
           <ion-icon slot="end" :icon="createOutline"></ion-icon>
           <ion-label class="ion-text-center"> Editar pregunta </ion-label>
         </ion-button>
@@ -166,9 +166,9 @@ export default {
       data: "",
     });
     
-     onIonViewDidEnter(() => {
+     onIonViewDidEnter(async () => {
        tokenHeader();
-        axios.get("/preguntas/" + id).then((response) => {
+       await axios.get("/preguntas/" + id).then((response) => {
         pregunta.value = response.data;
       })
       

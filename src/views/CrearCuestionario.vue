@@ -6,7 +6,7 @@
           <ion-button v-if="curso" :href="'/cuestionarios/' + curso">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
-          <ion-button v-if="id" :href="'/cuestionarios/' + cuestionario.curso_id">
+          <ion-button v-if="id" :href="'/cuestionario/' + cuestionario.id">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -92,7 +92,10 @@ export default {
     const mroute = useRoute();
     const { curso } = mroute.params;
     const { id } = mroute.params;
-    const cuestionario = ref ();
+    const cuestionario = ref ({
+      id: 0,
+      curso_id: 0
+    });
     const error = ref({
       estatus: 0,
       data: "",
@@ -103,7 +106,7 @@ export default {
     
  onIonViewWillEnter( async () => {
       if(id != undefined){
-      await  axios.get("/cuestionarios/" + id).then((response) => {
+        await axios.get("/cuestionarios/" + id).then((response) => {
         cuestionario.value = response.data;
       });
       
