@@ -44,11 +44,11 @@
       </ion-card>
       
      <ion-buttons v-if="admin" class="ion-justify-content-center ion-padding-top ion-padding-bottom">
-        <ion-button expand="full" fill="outline" shape="round" color="medium" class="ion-align-self-center" >
+        <ion-button :href="'/crear/pregunta/' + cuestionario.id "  expand="full" fill="outline" shape="round" color="medium" class="ion-align-self-center" >
           <ion-icon :icon="addOutline"></ion-icon>
-        </ion-button>
-      </ion-buttons>
-        
+       </ion-button> 
+	</ion-buttons>
+
     </ion-content>
   </ion-page>
 </template>
