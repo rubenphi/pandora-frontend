@@ -32,7 +32,7 @@
       </ion-card>
       <ion-card v-if="pregunta.photo">
         <ion-img
-          :src="pregunta.photo"
+          :src="basedeURL + pregunta.photo"
         ></ion-img>
       </ion-card>
       <ion-card>
@@ -83,7 +83,7 @@
 <script>
 import axios from "axios";
 import { ref } from "vue";
-import { tokenHeader, usuarioGet, adminOprofesor } from "../globalService";
+import { tokenHeader, usuarioGet, adminOprofesor, basedeURL } from "../globalService";
 import { useRoute } from 'vue-router';
 import router from "../router";
 
@@ -194,6 +194,7 @@ export default {
           })
         }
       },
+      basedeURL: basedeURL(),
       admin,
       error,
       respuesta,

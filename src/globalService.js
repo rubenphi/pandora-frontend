@@ -14,6 +14,18 @@ export function usuarioGet() {
     
 }
 
+export function basedeURL() {
+  return "https://pandora-quiz.herokuapp.com/"
+}
+
+export function booltoInt(data) {
+    if (data == true) {
+      return 1
+    } else {
+      return 0
+    }
+}
+
  
 
 export function adminOprofesor(){

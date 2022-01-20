@@ -90,7 +90,7 @@
                   </ion-col>
                 </ion-row>
               </ion-grid>
-
+      
               <ion-item>
                 <ion-label color="medium" position="floating"
                   >Usuario</ion-label
@@ -127,6 +127,7 @@
                   </ion-label>
                 </ion-button>
               </ion-buttons>
+              
             </ion-card>
           </ion-col>
           <ion-col size-s="1" size-xs="1" size-md="4" size-lg="5" size-xl="5">

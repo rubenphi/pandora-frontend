@@ -4,8 +4,9 @@ import {
 import App from './App.vue'
 import router from './router';
 import axios from 'axios';
+import { basedeURL } from  "./globalService";
 
-axios.defaults.baseURL = "https://pandora-quiz.herokuapp.com/public/api/";
+axios.defaults.baseURL = basedeURL() + "public/api/";
 
 import {
   IonicVue
