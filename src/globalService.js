@@ -15,7 +15,7 @@ export function usuarioGet() {
 }
 
 export function basedeURL() {
-  return "https://pandora-quiz.herokuapp.com/"
+  return "http://localhost:8001/";
 }
 
 export function booltoInt(data) {

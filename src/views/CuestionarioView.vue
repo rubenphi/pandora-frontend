@@ -12,8 +12,7 @@
           <ion-button :href="'/cuestionario/' + cuestionario.id">
             <ion-icon :icon="refreshOutline"></ion-icon>
           </ion-button>
-        </ion-buttons>
-        
+        </ion-buttons>  
          <ion-buttons v-if="admin" slot="end" class="ion-margin-end">
           <ion-button :href="'editar/cuestionario/' + cuestionario.id">
             <ion-icon :icon="createOutline"></ion-icon>
@@ -57,6 +56,7 @@ import axios from "axios";
 import { ref } from "vue";
 import { tokenHeader , adminOprofesor} from "../globalService";
 
+   
 
 import {
   arrowBackOutline,

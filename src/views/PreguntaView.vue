@@ -67,7 +67,7 @@
         <ion-button expand="full" fill="outline" shape="round" color="primary" class="ion-align-self-center"  @click="responder">
           <ion-icon slot="end" :icon="paperPlaneOutline"></ion-icon>
           <ion-label class="ion-text-center"> Enviar Respuesta </ion-label>
-        </ion-button>
+  </ion-button>
       </ion-buttons>
       
       <ion-buttons v-if="admin" class="ion-justify-content-center ion-padding-top ion-padding-bottom">

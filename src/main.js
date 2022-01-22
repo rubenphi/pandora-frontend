@@ -6,7 +6,7 @@ import router from './router';
 import axios from 'axios';
 import { basedeURL } from  "./globalService";
 
-axios.defaults.baseURL = basedeURL() + "public/api/";
+axios.defaults.baseURL = basedeURL() + "api/";
 
 import {
   IonicVue
