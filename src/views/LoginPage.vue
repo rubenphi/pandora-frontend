@@ -90,7 +90,7 @@
                   </ion-col>
                 </ion-row>
               </ion-grid>
-      
+
               <ion-item>
                 <ion-label color="medium" position="floating"
                   >Usuario</ion-label
@@ -127,7 +127,6 @@
                   </ion-label>
                 </ion-button>
               </ion-buttons>
-              
             </ion-card>
           </ion-col>
           <ion-col size-s="1" size-xs="1" size-md="4" size-lg="5" size-xl="5">
@@ -139,9 +138,9 @@
 </template>
 
 <script>
-import { ref } from "vue";
-import axios from "axios";
-import { tokenHeader } from "../globalService";
+import {ref} from 'vue';
+import axios from 'axios';
+import {tokenHeader} from '../globalService';
 import {
   IonPage,
   IonHeader,
@@ -157,9 +156,9 @@ import {
   IonInput,
   IonButton,
   IonButtons,
-  IonText
-} from "@ionic/vue";
-import router from "../router";
+  IonText,
+} from '@ionic/vue';
+import router from '../router';
 export default {
   components: {
     IonHeader,
@@ -176,45 +175,42 @@ export default {
     IonInput,
     IonButton,
     IonButtons,
-    IonText
+    IonText,
   },
   setup() {
     const login = ref({
-      code: "",
-      password: "",
+      code: '',
+      password: '',
     });
     const error = ref({
       estatus: 0,
-      data: "",
+      data: '',
     });
-
 
     return {
       error,
       axios,
       login,
       async mostrar() {
-        if (login.value.code == "" || login.value.password == "") {
+        if (login.value.code == '' || login.value.password == '') {
           error.value.estatus = 1;
-          error.value.data = "Debe ingresar usuario y contraseña";
+          error.value.data = 'Debe ingresar usuario y contraseña';
         } else {
-          await axios.post("/users/login", login.value).then((response) => {
-            if (response.data.token == undefined) {
+          await axios.post('/users/login', login.value).then(response => {
+           if (response.data.token == undefined) {
               error.value.estatus = 1;
-              error.value.data = "Error al iniciar sesión";
+              error.value.data = 'Error al iniciar sesión';
               console.log(response.data.message);
             } else {
-              localStorage.setItem("token", "Bearer " + response.data.token);
+              localStorage.setItem('token', 'Bearer ' + response.data.token);
               tokenHeader();
-              
-              axios.get("/user/loged").then((response) => {
-                localStorage.setItem("usuario", JSON.stringify(response.data));
 
-                 error.value.estatus = 0;
-              router.push("/inicio");
+                axios.get('/user/loged').then(response => {
+                localStorage.setItem('usuario', JSON.stringify(response.data));
+
+                error.value.estatus = 0;
+                router.push('/inicio');
               });
-              
-             
             }
           });
         }

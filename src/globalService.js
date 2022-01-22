@@ -14,8 +14,11 @@ export function usuarioGet() {
     
 }
 
+
+
 export function basedeURL() {
-  return "http://localhost:8001/";
+  var puerto = '8001';
+  return window.location.protocol + '//' + window.location.host.split(':')[0] + ':' + puerto + '/' ;
 }
 
 export function booltoInt(data) {

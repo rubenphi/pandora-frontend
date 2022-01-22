@@ -5,7 +5,7 @@ import App from './App.vue'
 import router from './router';
 import axios from 'axios';
 import { basedeURL } from  "./globalService";
-
+console.log(basedeURL());
 axios.defaults.baseURL = basedeURL() + "api/";
 
 import {
