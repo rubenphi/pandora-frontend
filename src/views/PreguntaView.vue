@@ -222,6 +222,9 @@ export default {
       tokenHeader();
       await axios.get("/preguntas/" + id).then((response) => {
         pregunta.value = response.data;
+        if (!pregunta.value.photo){
+          src.value = defaultFile('thumbnail');
+        } 
       });
     });
 

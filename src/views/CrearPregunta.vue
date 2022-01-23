@@ -33,9 +33,15 @@
               />
             </ion-button>
             <ion-label>Imagen de Pregunta:</ion-label>
-             <ion-button slot="end" color="light">
+            <ion-button
+              v-if="pregunta.photo"
+              slot="end"
+              color="light"
+              @click="borrarFoto"
+            >
               <ion-icon :icon="trashOutline"></ion-icon>
-            </ion-button>       <ion-thumbnail slot="end">
+            </ion-button>
+            <ion-thumbnail slot="end">
               <img :src="src" />
             </ion-thumbnail>
           </ion-item>
@@ -141,7 +147,7 @@ import {
   arrowBackOutline,
   checkmarkOutline,
   imageOutline,
-  trashOutline
+  trashOutline,
 } from "ionicons/icons";
 
 export default {
@@ -171,7 +177,7 @@ export default {
     const { id } = mroute.params;
     const editor = ref(null);
     const src = ref();
-    const form_data = ref( new FormData() );
+    const form_data = ref(new FormData());
     const file = ref({
       name: "",
     });
@@ -189,7 +195,11 @@ export default {
       if (id != undefined) {
         await axios.get("/preguntas/" + id).then((response) => {
           pregunta.value = response.data;
-          src.value = basedeUrl + pregunta.value.photo;
+          if (pregunta.value.photo) {
+            src.value = basedeUrl + pregunta.value.photo;
+          } else {
+            src.value = defaultFile("thumbnail");
+          }
         });
       }
 
@@ -204,8 +214,8 @@ export default {
           disponible: 0,
         };
 
-        src.value = defaultFile('thumbnail')
-            }
+        src.value = defaultFile("thumbnail");
+      }
 
       editor.value = new Editor({
         extensions: [StarterKit, Underline],
@@ -225,12 +235,15 @@ export default {
     });
 
     return {
+      borrarFoto() {
+        pregunta.value.photo = "";
+        src.value = defaultFile("thumbnail");
+      },
       async crearPregunta() {
-        
         pregunta.value.visible = booltoInt(pregunta.value.visible);
         pregunta.value.disponible = booltoInt(pregunta.value.disponible);
         pregunta.value.enunciado = editor.value.getHTML();
-    
+
         for (var key in pregunta.value) {
           form_data.value.append(key, pregunta.value[key]);
         }
@@ -297,7 +310,7 @@ export default {
       arrowBackOutline,
       checkmarkOutline,
       imageOutline,
-      trashOutline
+      trashOutline,
     };
   },
 };
@@ -316,6 +329,3 @@ export default {
   opacity: 0;
 }
 </style>
-
-
-
