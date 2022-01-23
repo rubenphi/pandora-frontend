@@ -48,20 +48,17 @@
       </ion-card>
 
       <ion-card class="ion-padding-top ion-padding-bottom">
+        <ion-card-subtitle v-if="error.estatus === 0" class="ion-text-center">
+          Selecciona tu respuesta
+        </ion-card-subtitle>
         <ion-list>
-          <ion-card-subtitle v-if="error.estatus === 0" class="ion-text-center">
-            Selecciona t respuesta
-          </ion-card-subtitle>
-          <ion-card-subtitle
-            color="danger"
-            v-if="error.estatus === 1"
-            class="ion-text-center"
-          >
-            {{ error.data }}
-          </ion-card-subtitle>
-          <hr />
-          <ion-radio-group v-model="respuesta.opcion_id">
-            <div v-if="!admin">
+          <ion-item v-if="error.estatus === 1" color="danger">
+            <ion-label>
+              {{ error.data }}
+            </ion-label>
+          </ion-item>
+          <div v-if="!admin">
+            <ion-radio-group v-model="respuesta.opcion_id">
               <ion-item
                 lines="none"
                 v-for="opcion in pregunta.opciones"
@@ -77,21 +74,22 @@
                   :id="opcion.id"
                 ></ion-radio>
               </ion-item>
-            </div>
-            <div v-if="admin">
-              <ion-item
-                lines="none"
-                v-for="opcion in pregunta.opciones"
-                :key="opcion.id"
-                :href="'editar/opcion/' + opcion.id  "
+            </ion-radio-group>
+          </div>
+          <div v-if="admin">
+            <ion-item
+              button
+              lines="none"
+              v-for="opcion in pregunta.opciones"
+              :key="opcion.id"
+              :href="'editar/opcion/' + opcion.id  "
+            >
+              <ion-label class="ion-text-wrap"
+                ><b>{{ opcion.letra }}. </b> {{ opcion.enunciado }}</ion-label
               >
-                <ion-label class="ion-text-wrap"
-                  ><b>{{ opcion.letra }}. </b> {{ opcion.enunciado }}</ion-label
-                >
-                <ion-icon slot="start" :icon="createOutline"></ion-icon>
-              </ion-item>
-            </div>
-          </ion-radio-group>
+              <ion-icon slot="start" :icon="createOutline"></ion-icon>
+            </ion-item>
+          </div>
         </ion-list>
       </ion-card>
 
@@ -122,6 +120,7 @@
           shape="round"
           color="medium"
           class="ion-align-self-center"
+          :href="'crear/opcion/' + pregunta.id "
         >
           <ion-icon :icon="addOutline"></ion-icon>
         </ion-button>
