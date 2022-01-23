@@ -119,6 +119,7 @@ export default {
           correcto: 0,
           letra: "",
           pregunta_id: "",
+          existe: 1
         };
       }
     });

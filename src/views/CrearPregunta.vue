@@ -202,6 +202,7 @@ export default {
           valor: "",
           visible: 0,
           disponible: 0,
+          existe: 1
         };
 
         src.value = defaultFile('thumbnail')
