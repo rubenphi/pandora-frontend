@@ -36,7 +36,10 @@
           <ion-label position="stacked">Tema</ion-label>
           <ion-input v-model="cuestionario.tema" type="text"></ion-input>
         </ion-item>
-        
+         <ion-item v-if="id"  button color="danger" @click="borrarCuestionario()" >
+          <ion-label >Borrar Cuestionario</ion-label>
+        </ion-item>
+
       
       </ion-list>
          
@@ -69,7 +72,8 @@ import {
 
 import {
   arrowBackOutline,
-  checkmarkOutline
+  checkmarkOutline,
+  trashOutline
 } from "ionicons/icons";
 
 
@@ -116,13 +120,19 @@ export default {
       fecha: '',
       tema: '',
       usuario_id: '',
-      curso_id: ''
+      curso_id: '',
+      existe: 1
         }
       }
     });
     
 
     return {
+       borrarCuestionario(){
+        cuestionario.value.existe = 0;
+        console.log(cuestionario.value.existe)
+        this.crearCuestionario();
+      },     
       async crearCuestionario(){
         if(cuestionario.value.fecha == '' || cuestionario.value.tema == ''){
           error.value.estatus = 1;
@@ -143,8 +153,13 @@ export default {
 
         }
         else if (id != undefined) {
+        
        await axios.put("/cuestionarios/" + id, cuestionario.value).then((response) => {
-            router.push("/cuestionario/" + id);
+           if(cuestionario.value.existe == 1){
+             router.push("/cuestionario/" + id);
+           } else {
+             router.push("/cuestionarios/" + cuestionario.value.curso_id ); 
+           }
             localStorage.setItem('error' ,response.data.message)
           }).catch((response) => {
             localStorage.setItem('error' ,response.message)
@@ -154,7 +169,9 @@ export default {
 
         }
       },
+
       arrowBackOutline,
+      trashOutline,
       curso,
       id,
       usuario,
