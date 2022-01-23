@@ -34,7 +34,9 @@
             <ion-input v-model="opcion.enunciado" type="text"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-label  position="stacked">Marcar opción como correcta:</ion-label>
+            <ion-label position="stacked"
+              >Marcar opción como correcta:</ion-label
+            >
             <ion-toggle
               slot="end"
               :checked="opcion.correcto"
@@ -48,12 +50,12 @@
   </ion-page>
 </template>
 <script>
-import axios from 'axios';
-import {ref} from 'vue';
-import {useRoute} from 'vue-router';
-import router from '../router';
+import axios from "axios";
+import { ref } from "vue";
+import { useRoute } from "vue-router";
+import router from "../router";
 
-import {usuarioGet} from '../globalService';
+import { usuarioGet } from "../globalService";
 import {
   onIonViewWillEnter,
   IonToggle,
@@ -69,9 +71,9 @@ import {
   IonIcon,
   IonButton,
   IonButtons,
-} from '@ionic/vue';
+} from "@ionic/vue";
 
-import {arrowBackOutline, checkmarkOutline} from 'ionicons/icons';
+import { arrowBackOutline, checkmarkOutline } from "ionicons/icons";
 
 export default {
   components: {
@@ -91,69 +93,72 @@ export default {
   },
   setup() {
     const mroute = useRoute();
-    const {pregunta} = mroute.params;
-    const {id} = mroute.params;
+    const { pregunta } = mroute.params;
+    const { id } = mroute.params;
     const opcion = ref({
       id: 0,
       pregunta_id: 0,
     });
     const error = ref({
       estatus: 0,
-      data: '',
-      color: '',
+      data: "",
+      color: "",
     });
 
     let usuario = usuarioGet();
 
     onIonViewWillEnter(async () => {
       if (id != undefined) {
-        await axios.get('/opciones/' + id).then(response => {
+        await axios.get("/opciones/" + id).then((response) => {
           opcion.value = response.data;
         });
       }
       if (pregunta != undefined) {
         opcion.value = {
-          enunciado: '',
+          enunciado: "",
           correcto: 0,
-          letra: '',
-          pregunta_id: '',
+          letra: "",
+          pregunta_id: "",
         };
       }
     });
 
     return {
       async crearOpcion() {
-        if (opcion.value.letra == '' || opcion.value.enunciado == '') {
+        if (opcion.value.letra == "" || opcion.value.enunciado == "") {
           error.value.estatus = 1;
-          error.value.data = 'Debe seleccionar una fecha y añadir el tema';
+          error.value.data = "Debe seleccionar una fecha y añadir el tema";
         } else if (pregunta != undefined) {
           opcion.value.pregunta_id = pregunta;
           await axios
-            .post('/opciones', opcion.value)
-            .then(response => {
-              router.push('/pregunta/' + pregunta);
-              localStorage.setItem('error', response.data.message);
+            .post("/opciones", opcion.value)
+            .then((response) => {
+              router.push("/pregunta/" + pregunta);
+              localStorage.setItem("error", response.data.message);
             })
-            .catch(response => {
-              localStorage.setItem('error', response.message);
+            .catch((response) => {
+              localStorage.setItem("error", response.message);
               error.value.estatus = 1;
-              error.value.color = 'danger';
-              error.value.data = 'Error: no se pudo añadir el cuestionario';
+              error.value.color = "danger";
+              error.value.data = "Error: no se pudo añadir el cuestionario";
             });
         } else if (id != undefined) {
           await axios
-            .put('/opciones/' + id, opcion.value)
-            .then(response => {
+            .put("/opciones/" + id, opcion.value)
+            .then((response) => {
               error.value.estatus = 1;
-              error.value.data = 'Opcion actualizada';
-              error.value.color = 'success';
-              localStorage.setItem('error', response.data.message);
+              error.value.data = "Opcion actualizada";
+              error.value.color = "success";
+              localStorage.setItem("error", response.data.message);
+              setTimeout(function () {
+                router.push("/pregunta/" + opcion.value.pregunta_id);
+              }, 500);
             })
-            .catch(response => {
-              localStorage.setItem('error', response.message);
+            .catch((response) => {
+              localStorage.setItem("error", response.message);
               error.value.estatus = 1;
-              error.value.color = 'danger';
-              error.value.data = 'Error: no se pudo actualizar el cuestionario';
+              error.value.color = "danger";
+              error.value.data = "Error: no se pudo actualizar el cuestionario";
             });
         }
       },
