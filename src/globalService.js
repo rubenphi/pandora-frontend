@@ -41,3 +41,5 @@ export function adminOprofesor(){
      return false;
    }
 }
+
+

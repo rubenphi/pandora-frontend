@@ -33,7 +33,9 @@
               />
             </ion-button>
             <ion-label>Imagen de Pregunta:</ion-label>
-            <ion-thumbnail slot="end">
+             <ion-button slot="end" color="light">
+              <ion-icon :icon="trashOutline"></ion-icon>
+            </ion-button>       <ion-thumbnail slot="end">
               <img :src="src" />
             </ion-thumbnail>
           </ion-item>
@@ -139,6 +141,7 @@ import {
   arrowBackOutline,
   checkmarkOutline,
   imageOutline,
+  trashOutline
 } from "ionicons/icons";
 
 export default {
@@ -295,6 +298,7 @@ export default {
       arrowBackOutline,
       checkmarkOutline,
       imageOutline,
+      trashOutline
     };
   },
 };
