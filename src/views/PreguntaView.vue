@@ -50,7 +50,7 @@
       <ion-card class="ion-padding-top ion-padding-bottom">
         <ion-list>
           <ion-card-subtitle v-if="error.estatus === 0" class="ion-text-center">
-            Selecciona tu respuesta
+            Selecciona t respuesta
           </ion-card-subtitle>
           <ion-card-subtitle
             color="danger"
