@@ -17,7 +17,7 @@ export function usuarioGet() {
 
 
 export function basedeURL() {
-  var puerto = '8001';
+  var puerto = '8080';
   return window.location.protocol + '//' + window.location.host.split(':')[0] + ':' + puerto + '/' ;
 }
 

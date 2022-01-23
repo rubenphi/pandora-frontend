@@ -3,15 +3,15 @@
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-button v-if="pregunta" :href="'/preguntas/' + pregunta">
+          <ion-button v-if="pregunta" :href="'/pregunta/' + pregunta">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
-          <ion-button v-if="id" :href="'/opcion/' + opcion.id">
+          <ion-button v-if="id" :href="'/pregunta/' + opcion.pregunta_id">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
         <ion-buttons slot="end">
-          <ion-button @click="crearCuestionario">
+          <ion-button @click="crearOpcion">
             <ion-icon :icon="checkmarkOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -22,7 +22,7 @@
       <div v-if="opcion != null" :fullscreen="true">
         <ion-list>
           <ion-item v-if="error.estatus == 1">
-            <ion-label color="danger">{{ error.data }}</ion-label>
+            <ion-label :color="error.color">{{ error.data }}</ion-label>
           </ion-item>
 
           <ion-item>
@@ -129,9 +129,9 @@ export default {
         } else if (pregunta != undefined) {
           opcion.value.pregunta_id = pregunta;
           await axios
-            .post('/opcion', opcion.value)
+            .post('/opciones', opcion.value)
             .then(response => {
-              router.push('/pregunta/' + id);
+              router.push('/pregunta/' + pregunta);
               localStorage.setItem('error', response.data.message);
             })
             .catch(response => {
@@ -142,7 +142,7 @@ export default {
             });
         } else if (id != undefined) {
           await axios
-            .put('/opcion/' + id, opcion.value)
+            .put('/opciones/' + id, opcion.value)
             .then(response => {
               error.value.estatus = 1;
               error.value.data = 'Opcion actualizada';
@@ -152,6 +152,7 @@ export default {
             .catch(response => {
               localStorage.setItem('error', response.message);
               error.value.estatus = 1;
+              error.value.color = 'danger';
               error.value.data = 'Error: no se pudo actualizar el cuestionario';
             });
         }

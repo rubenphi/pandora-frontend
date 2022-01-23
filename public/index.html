@@ -2,10 +2,46 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Ionic App</title>
+    <title>Pandora</title>
 
     <base href="/" />
-
+    <script>
+      var console = (function (n) {
+        return {
+          log: function (o) {
+            n.log(o), customLog(o);
+          },
+          info: function (o) {
+            n.info(o), customLog(o);
+          },
+          warn: function (o) {
+            n.warn(o), customLog(o);
+          },
+          error: function (o) {
+            n.error(o), customLog(o);
+          },
+        };
+      })(window.console);
+      function customLog(n) {
+        null === document.getElementById("log4browserContainer") &&
+          initializeLog(),
+          (document.getElementById("log4browserContainer").innerHTML +=
+            "- " + n + "\n");
+      }
+      function initializeLog() {
+        if (null === document.getElementById("log4browserContainer")) {
+          var n = document.createElement("pre");
+          n.setAttribute("id", "log4browserContainer"),
+            (n.style.cssText =
+              "\n\t\tposition:absolute;\n\t\tbottom:0px;\n\t\tleft:0px;\n\t\tcolor:greenyellow;\n\t\tpadding: 5px;\n\t\twhite-space: pre-wrap;\n\t\t"),
+            document.body.appendChild(n),
+            (window.onerror = function (n, o, t) {
+              return log("Error: \n" + n), !1;
+            });
+        }
+      }
+      window.console = console;
+    </script>
     <meta name="color-scheme" content="light dark" />
     <meta
       name="viewport"
@@ -14,7 +50,11 @@
     <meta name="format-detection" content="telephone=no" />
     <meta name="msapplication-tap-highlight" content="no" />
 
-    <link rel="shortcut icon" type="image/png" href="<%= BASE_URL %>assets/icon/favicon.png" />
+    <link
+      rel="shortcut icon"
+      type="image/png"
+      href="<%= BASE_URL %>assets/icon/favicon.png"
+    />
 
     <!-- add to homescreen for ios -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -25,6 +65,4 @@
   <body>
     <div id="app"></div>
   </body>
-
 </html>
-
