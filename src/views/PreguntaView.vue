@@ -17,35 +17,36 @@
     <ion-content :fullscreen="true">
       <ion-card>
         <ion-card-header>
-          <ion-card-title class="ion-text-center"
-            >Esta pregunta vale: + {{ pregunta.valor }} puntos</ion-card-title
-          >
+          <ion-card-title class="ion-text-center">
+            {{ pregunta.titulo }}
+          </ion-card-title>
+          <ion-card-subtitle class="ion-text-center" >
+            Esta pregunta vale: + {{ pregunta.valor }} puntos
+          </ion-card-subtitle>
           <ion-icon slot="end" :icon="createOutline"></ion-icon>
         </ion-card-header>
-        <ion-buttons
-          class="ion-justify-content-center ion-padding-top ion-padding-bottom"
-        >
-          <ion-button
-            expand="full"
-            fill="outline"
-            shape="round"
-            color="medium"
-            class="ion-align-self-center"
-            :href="'/editar/pregunta/' + pregunta.id"
-          >
-            <ion-icon slot="end" :icon="createOutline"></ion-icon>
-            <ion-label class="ion-text-center"> Editar pregunta </ion-label>
-          </ion-button>
-        </ion-buttons>
       </ion-card>
       <ion-card v-if="pregunta.photo">
         <ion-img :src="basedeURL + pregunta.photo"></ion-img>
       </ion-card>
-      <ion-card>
-        <ion-card-content>
-          <div v-html="pregunta.enunciado"></div>
-        </ion-card-content>
-      </ion-card>
+      <ion-buttons
+        class="ion-justify-content-center ion-padding-top ion-padding-bottom"
+      >
+        <ion-button
+          expand="full"
+          fill="outline"
+          shape="round"
+          color="medium"
+          class="ion-align-self-center"
+          :href="'/editar/pregunta/' + pregunta.id"
+        >
+          <ion-icon slot="end" :icon="createOutline"></ion-icon>
+          <ion-label class="ion-text-center"> Editar pregunta </ion-label>
+        </ion-button>
+      </ion-buttons>
+
+      <div class="ion-padding" v-html="pregunta.enunciado" >
+      </div>
 
       <ion-card class="ion-padding-top ion-padding-bottom">
         <ion-card-subtitle v-if="error.estatus === 0" class="ion-text-center">
@@ -82,7 +83,7 @@
               lines="none"
               v-for="opcion in pregunta.opciones"
               :key="opcion.id"
-              :href="'editar/opcion/' + opcion.id  "
+              :href="'editar/opcion/' + opcion.id"
             >
               <ion-label class="ion-text-wrap"
                 ><b>{{ opcion.letra }}. </b> {{ opcion.enunciado }}</ion-label
@@ -120,7 +121,7 @@
           shape="round"
           color="medium"
           class="ion-align-self-center"
-          :href="'crear/opcion/' + pregunta.id "
+          :href="'crear/opcion/' + pregunta.id"
         >
           <ion-icon :icon="addOutline"></ion-icon>
         </ion-button>
@@ -137,7 +138,7 @@ import {
   usuarioGet,
   adminOprofesor,
   basedeURL,
-  defaultFile
+  defaultFile,
 } from "../globalService";
 import { useRoute } from "vue-router";
 import router from "../router";
@@ -156,15 +157,15 @@ import {
   onIonViewDidEnter,
   IonIcon,
   IonPage,
+  IonContent,
   IonHeader,
   IonToolbar,
-  IonContent,
   IonButtons,
   IonButton,
   IonCard,
   IonCardHeader,
   IonCardTitle,
-  IonCardContent,
+  // IonCardContent,
   IonImg,
   IonRadio,
   IonLabel,
@@ -189,7 +190,7 @@ export default {
     IonCard,
     IonCardHeader,
     IonCardTitle,
-    IonCardContent,
+    // IonCardContent,
     IonImg,
     IonRadioGroup,
     IonRadio,
@@ -207,7 +208,7 @@ export default {
         enunciado: "",
       },
     });
-    const src = ref('');
+    const src = ref("");
     const respuesta = ref({
       opcion_id: "",
       pregunta_id: "",
@@ -223,9 +224,11 @@ export default {
       tokenHeader();
       await axios.get("/preguntas/" + id).then((response) => {
         pregunta.value = response.data;
-        if (!pregunta.value.photo){
-          src.value = defaultFile('thumbnail');
-        } 
+        if (!pregunta.value.photo) {
+          src.value = defaultFile("thumbnail");
+        }
+        var rem = new RegExp('<p></p>','g' )
+        pregunta.value.enunciado =  pregunta.value.enunciado.replace(rem , '</br>');
       });
     });
 

@@ -46,6 +46,11 @@
           <ion-item v-if="error.estatus == 1">
             <ion-label color="danger">{{ error.data }}</ion-label>
           </ion-item>
+
+           <ion-item>
+            <ion-label position="floating">Título:</ion-label>
+            <ion-input  v-model="pregunta.titulo"></ion-input>
+          </ion-item>
           <ion-item>
             <ion-button slot="start" color="light">
               <ion-icon slot="start" :icon="imageOutline"></ion-icon>
@@ -74,6 +79,8 @@
             <ion-label position="floating">Valor:</ion-label>
             <ion-input type="number" v-model="pregunta.valor"></ion-input>
           </ion-item>
+
+
           <ion-item>
             <ion-label>Visible:</ion-label>
             <ion-toggle
@@ -221,6 +228,7 @@ export default {
         await axios.get("/preguntas/" + id).then((response) => {
           pregunta.value = response.data;
           if (pregunta.value.photo == "null" || pregunta.value.photo == null) {
+            delete pregunta.value.photo;
             src.value = defaultFile("thumbnail");
           } else {
             src.value = basedeUrl + pregunta.value.photo;
@@ -230,9 +238,9 @@ export default {
 
       if (cuestionario != undefined) {
         pregunta.value = {
+          titulo: '',
           enunciado:
             "<h6><strong> Crea tu pregunta </strong></h6> <p> En esta sección <br> puedes crear tu pregunta </p>",
-          photo: "",
           cuestionario_id: cuestionario,
           valor: "",
           visible: 0,
