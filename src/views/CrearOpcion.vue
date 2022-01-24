@@ -44,6 +44,12 @@
             >
             </ion-toggle>
           </ion-item>
+         <ion-item class="ion-text-center" v-if="id && opcion.existe == 1"  button color="danger" @click="borrarOpcion(0)" >
+          <ion-label >Borrar Opción</ion-label>
+        </ion-item>
+        <ion-item class="ion-text-center" v-if="id && opcion.existe == 0"  button color="success" @click="borrarOpcion(1)" >
+          <ion-label >Recuperar Opción</ion-label>
+        </ion-item>
         </ion-list>
       </div>
     </ion-content>
@@ -125,6 +131,10 @@ export default {
     });
 
     return {
+      borrarOpcion(valor){
+        opcion.value.existe = valor;
+        this.crearOpcion();
+      }, 
       async crearOpcion() {
         if (opcion.value.letra == "" || opcion.value.enunciado == "") {
           error.value.estatus = 1;

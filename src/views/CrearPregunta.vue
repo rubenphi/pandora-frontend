@@ -3,10 +3,17 @@
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-button :href="'/cuestionario/' + pregunta.cuestionario_id">
+          <ion-button
+            v-if="cuestionario"
+            :href="'/cuestionario/' + cuestionario"
+          >
+            <ion-icon :icon="arrowBackOutline"></ion-icon>
+          </ion-button>
+          <ion-button v-if="id" :href="'/pregunta/' + id">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
+
         <ion-buttons slot="end">
           <ion-button @click="crearPregunta">
             <ion-icon :icon="checkmarkOutline"></ion-icon>
@@ -18,6 +25,24 @@
     <ion-content>
       <ion-card class="ion-padding">
         <ion-list v-if="editor" class="ion-no-padding">
+          <ion-item
+            class="ion-text-center"
+            v-if="id && pregunta.existe == 1"
+            button
+            color="danger"
+            @click="borrarPregunta(0)"
+          >
+            <ion-label>Borrar Pregunta</ion-label>
+          </ion-item>
+          <ion-item
+            class="ion-text-center"
+            v-if="id && pregunta.existe == 0"
+            button
+            color="success"
+            @click="borrarPregunta(1)"
+          >
+            <ion-label>Recuperar Pregunta</ion-label>
+          </ion-item>
           <ion-item v-if="error.estatus == 1">
             <ion-label color="danger">{{ error.data }}</ion-label>
           </ion-item>
@@ -195,10 +220,10 @@ export default {
       if (id != undefined) {
         await axios.get("/preguntas/" + id).then((response) => {
           pregunta.value = response.data;
-          if (pregunta.value.photo) {
-            src.value = basedeUrl + pregunta.value.photo;
-          } else {
+          if (pregunta.value.photo == "null" || pregunta.value.photo == null) {
             src.value = defaultFile("thumbnail");
+          } else {
+            src.value = basedeUrl + pregunta.value.photo;
           }
         });
       }
@@ -212,7 +237,7 @@ export default {
           valor: "",
           visible: 0,
           disponible: 0,
-          existe: 1
+          existe: 1,
         };
 
         src.value = defaultFile("thumbnail");
@@ -236,8 +261,12 @@ export default {
     });
 
     return {
+      borrarPregunta(valor) {
+        pregunta.value.existe = valor;
+        this.crearPregunta();
+      },
       borrarFoto() {
-        pregunta.value.photo = "";
+        delete pregunta.value.photo;
         src.value = defaultFile("thumbnail");
       },
       async crearPregunta() {
@@ -280,7 +309,12 @@ export default {
               },
             })
             .then((response) => {
-              router.push("/pregunta/" + id);
+              if (pregunta.value.existe == 1) {
+                router.push("/pregunta/" + id);
+              } else {
+                router.push("/cuestionario/" + pregunta.value.cuestionario_id);
+              }
+
               localStorage.setItem("error", response.data.message);
             })
             .catch((response) => {
@@ -300,6 +334,8 @@ export default {
         };
         reader.value.readAsDataURL(file.value);
       },
+      id,
+      cuestionario,
       basedeUrl,
       form_data,
       error,

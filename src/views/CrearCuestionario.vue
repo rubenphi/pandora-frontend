@@ -36,8 +36,11 @@
           <ion-label position="stacked">Tema</ion-label>
           <ion-input v-model="cuestionario.tema" type="text"></ion-input>
         </ion-item>
-         <ion-item v-if="id"  button color="danger" @click="borrarCuestionario()" >
+         <ion-item class="ion-text-center" v-if="id && cuestionario.existe == 1"  button color="danger" @click="borrarCuestionario(0)" >
           <ion-label >Borrar Cuestionario</ion-label>
+        </ion-item>
+         <ion-item class="ion-text-center" v-if="id && cuestionario.existe == 0"  button color="success" @click="borrarCuestionario(1)" >
+          <ion-label >Recuperar Cuestionario</ion-label>
         </ion-item>
 
       
@@ -128,9 +131,8 @@ export default {
     
 
     return {
-       borrarCuestionario(){
-        cuestionario.value.existe = 0;
-        console.log(cuestionario.value.existe)
+       borrarCuestionario(valor){
+        cuestionario.value.existe = valor;
         this.crearCuestionario();
       },     
       async crearCuestionario(){

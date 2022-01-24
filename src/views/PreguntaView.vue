@@ -137,6 +137,7 @@ import {
   usuarioGet,
   adminOprofesor,
   basedeURL,
+  defaultFile
 } from "../globalService";
 import { useRoute } from "vue-router";
 import router from "../router";
@@ -206,7 +207,7 @@ export default {
         enunciado: "",
       },
     });
-
+    const src = ref('');
     const respuesta = ref({
       opcion_id: "",
       pregunta_id: "",
