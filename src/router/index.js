@@ -69,7 +69,7 @@ const routes = [
         },
       },
       {
-        path: 'crear/cuestionario/:curso',
+        path: 'crear/cuestionario/:curso/:area',
         component: () => import('@/views/CrearCuestionario.vue'),
         beforeEnter: (to, from, next) => {
           if (adminOprofesor()) next();

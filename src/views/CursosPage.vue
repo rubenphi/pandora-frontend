@@ -12,11 +12,10 @@
         </ion-toolbar>
       </ion-header>
       <ion-list>
-        <ion-item v-for="curso in cursos" :key="curso.id" >
+        <ion-item v-for="curso in cursos" :key="curso.id">
           <ion-icon slot="start" :icon="peopleCircleOutline"></ion-icon>
-          <ion-label>{{curso.nombre}}</ion-label>
+          <ion-label>{{ curso.nombre }}</ion-label>
         </ion-item>
-        
       </ion-list>
     </ion-content>
   </ion-page>
@@ -25,7 +24,7 @@
 import { peopleCircleOutline } from "ionicons/icons";
 import axios from "axios";
 import { ref } from "vue";
-import { tokenHeader , usuarioGet } from "../globalService";
+import { tokenHeader, usuarioGet } from "../globalService";
 import {
   onIonViewWillEnter,
   IonLabel,
@@ -55,16 +54,15 @@ export default {
     const cursos = ref([]);
     onIonViewWillEnter(async () => {
       tokenHeader();
-     await  axios.get("/cursos").then((response) => {
+      await axios.get("/cursos").then((response) => {
         cursos.value = response.data;
       });
     });
     return {
       usuario,
       peopleCircleOutline,
-      cursos
+      cursos,
     };
-  
   },
 };
 </script>

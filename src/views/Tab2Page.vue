@@ -14,6 +14,7 @@
          <div id="container">
     <strong>Hola, bienvenido</strong>
     <p> Construí esta aplicación para trabajar en grupo de una manera más dinámica, espero que la clase de hoy vaya genial 😃 </p>
+<textarea v-model="token"> </textarea>
   </div>
 
     </ion-content>
@@ -23,8 +24,15 @@
 <script>
 import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent } from '@ionic/vue';
 export default  {
-  components: { IonHeader, IonToolbar, IonTitle, IonContent, IonPage }
+  components: { IonHeader, IonToolbar, IonTitle, IonContent, IonPage },
+setup(){
+return{
+token:  localStorage.getItem('token')
 }
+}
+
+}
+
 </script>
 <style scoped>
 #container {

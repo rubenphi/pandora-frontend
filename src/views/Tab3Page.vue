@@ -3,13 +3,29 @@
     <ion-header>
       <ion-toolbar>
         <ion-title>Cuestionarios</ion-title>
-         <ion-buttons v-if="usuario.rol == 'admin' || usuario.rol =='profesor'" slot="end" class="ion-margin-end">
-        <ion-button :href="'/crear/cuestionario/' + curso">
-          <ion-icon :icon="addOutline"></ion-icon>
-        </ion-button>
-      </ion-buttons>
+
+        <ion-buttons
+          slot="start"
+          class="ion-margin-end"
+        >
+          <ion-button :href="'/areas/' + curso">
+            <ion-icon :icon="arrowBackOutline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+
+        <ion-buttons
+          v-if="usuario.rol == 'admin' || usuario.rol == 'profesor'"
+          slot="end"
+          class="ion-margin-end"
+        >
+          <ion-button
+            slot="end"
+            :href="'/crear/cuestionario/' + curso + '/' + area"
+          >
+            <ion-icon :icon="addOutline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
-     
     </ion-header>
     <ion-content :fullscreen="true">
       <ion-card
@@ -34,7 +50,7 @@ import { ref } from "vue";
 import { tokenHeader, usuarioGet, adminOprofesor } from "../globalService";
 import { useRoute } from "vue-router";
 import router from "../router";
-import { addOutline } from "ionicons/icons";
+import { addOutline, arrowBackOutline } from "ionicons/icons";
 
 import {
   onIonViewWillEnter,
@@ -50,7 +66,7 @@ import {
   IonContent,
   IonButton,
   IonButtons,
-  IonIcon
+  IonIcon,
 } from "@ionic/vue";
 
 export default {
@@ -67,7 +83,7 @@ export default {
     IonPage,
     IonButtons,
     IonButton,
-    IonIcon
+    IonIcon,
   },
   setup() {
     const mroute = useRoute();
@@ -77,20 +93,26 @@ export default {
     const cuestionarios = ref([]);
     onIonViewWillEnter(async () => {
       if (curso != usuario.curso_id) {
-        if ( adminOprofesor() ) {
-          router.push("/cuestionarios/curso/area/" + usuario.curso_id + "/"+ area );
+        if (adminOprofesor()) {
+          router.push(
+            "/cuestionarios/curso/area/" + usuario.curso_id + "/" + area
+          );
         }
       } else {
         tokenHeader();
-       await axios.get("/cuestionarios/curso/area/" + curso + "/"+ area).then((response) => {
-          cuestionarios.value = response.data;
-        });
+        await axios
+          .get("/cuestionarios/curso/area/" + curso + "/" + area)
+          .then((response) => {
+            cuestionarios.value = response.data;
+          });
       }
     });
 
     return {
+      area,
       curso,
       addOutline,
+      arrowBackOutline,
       usuario,
       cuestionarios,
     };

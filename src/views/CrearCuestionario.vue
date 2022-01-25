@@ -98,6 +98,7 @@ export default {
   setup() {
     const mroute = useRoute();
     const { curso } = mroute.params;
+    const { area } = mroute.params; 
     const { id } = mroute.params;
     const cuestionario = ref ({
       id: 0,
@@ -118,12 +119,13 @@ export default {
       });
       
       }
-      if ( curso != undefined){
+      if ( curso != undefined && area != undefined ){
       cuestionario.value = {
       fecha: '',
       tema: '',
       usuario_id: '',
       curso_id: '',
+      area_id: '',
       existe: 1
         }
       }
@@ -144,8 +146,9 @@ export default {
         else if (curso != undefined) {
        cuestionario.value.usuario_id = usuario.id;
        cuestionario.value.curso_id = curso;
+       cuestionario.value.area_id = area;
        await axios.post("/cuestionarios", cuestionario.value).then((response) => {
-            router.push("/cuestionarios/" + curso);
+         router.push("/cuestionarios/" + curso + '/' + area );
             localStorage.setItem('error' ,response.data.message)
           }).catch((response) => {
             localStorage.setItem('error' ,response.message)
@@ -160,7 +163,7 @@ export default {
            if(cuestionario.value.existe == 1){
              router.push("/cuestionario/" + id);
            } else {
-             router.push("/cuestionarios/" + cuestionario.value.curso_id ); 
+             router.push("/cuestionarios/" + cuestionario.value.curso_id + '/' + cuestionario.value.area_id ); 
            }
             localStorage.setItem('error' ,response.data.message)
           }).catch((response) => {
@@ -171,7 +174,7 @@ export default {
 
         }
       },
-
+      area,
       arrowBackOutline,
       trashOutline,
       curso,

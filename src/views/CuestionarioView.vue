@@ -3,7 +3,7 @@
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start" class="ion-margin-start">
-          <ion-button :href="'/cuestionarios/' + cuestionario.curso_id">
+          <ion-button :href="'/cuestionarios/' + cuestionario.curso_id + '/' + cuestionario.area_id  ">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
