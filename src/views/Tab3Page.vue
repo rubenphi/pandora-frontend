@@ -72,16 +72,17 @@ export default {
   setup() {
     const mroute = useRoute();
     const { curso } = mroute.params;
+    const { area } = mroute.params;
     let usuario = usuarioGet();
     const cuestionarios = ref([]);
     onIonViewWillEnter(async () => {
       if (curso != usuario.curso_id) {
         if ( adminOprofesor() ) {
-          router.push("/cuestionarios/curso/" + usuario.curso_id);
+          router.push("/cuestionarios/curso/area/" + usuario.curso_id + "/"+ area );
         }
       } else {
         tokenHeader();
-       await axios.get("/cuestionarios/curso/" + curso).then((response) => {
+       await axios.get("/cuestionarios/curso/area/" + curso + "/"+ area).then((response) => {
           cuestionarios.value = response.data;
         });
       }

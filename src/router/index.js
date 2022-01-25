@@ -29,7 +29,7 @@ const routes = [
         component: () => import('@/views/Tab2Page.vue'),
       },
       {
-        path: 'cuestionarios/:curso',
+        path: 'cuestionarios/:curso/:area',
         component: () => import('@/views/Tab3Page.vue'),
       },
       {
@@ -43,6 +43,10 @@ const routes = [
       {
         path: 'cuestionario/:id',
         component: () => import('@/views/CuestionarioView.vue'),
+      },
+      {
+        path: 'areas/:id',
+        component: () => import('@/views/AreasPage.vue'),
       },
       {
         path: 'pregunta/:id',

@@ -7,7 +7,7 @@
     </ion-header>
     <ion-content :fullscreen="true">
       <ion-list>
-        <ion-item v-for="curso in cursos" :key="curso.id"  :href="'cuestionarios/' + curso.id">
+        <ion-item v-for="curso in cursos" :key="curso.id"  :href="'areas/' + curso.id">
           <ion-icon slot="start" :icon="peopleCircleOutline"></ion-icon>
           <ion-label>{{ curso.nombre }}</ion-label>
         </ion-item>

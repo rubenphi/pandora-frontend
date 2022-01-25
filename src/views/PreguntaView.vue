@@ -29,25 +29,14 @@
       <ion-card v-if="pregunta.photo">
         <ion-img :src="basedeURL + pregunta.photo"></ion-img>
       </ion-card>
-      <ion-buttons
-        class="ion-justify-content-center ion-padding-top ion-padding-bottom"
-      >
-        <ion-button
-          expand="full"
-          fill="outline"
-          shape="round"
-          color="medium"
-          class="ion-align-self-center"
-          :href="'/editar/pregunta/' + pregunta.id"
-        >
-          <ion-icon slot="end" :icon="createOutline"></ion-icon>
-          <ion-label class="ion-text-center"> Editar pregunta </ion-label>
-        </ion-button>
-      </ion-buttons>
 
+      <ion-card>
       <div class="ion-padding" v-html="pregunta.enunciado" >
       </div>
-
+      <ion-item v-if="admin" button  :href="'/editar/pregunta/' + pregunta.id">
+        <ion-icon slot="end" :icon="createOutline"></ion-icon>
+      </ion-item>
+      </ion-card>
       <ion-card class="ion-padding-top ion-padding-bottom">
         <ion-card-subtitle v-if="error.estatus === 0" class="ion-text-center">
           Selecciona tu respuesta
