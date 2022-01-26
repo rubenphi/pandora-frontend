@@ -14,7 +14,6 @@
          <div id="container">
     <strong>Hola, bienvenido</strong>
     <p> Construí esta aplicación para trabajar en grupo de una manera más dinámica, espero que la clase de hoy vaya genial 😃 </p>
-<textarea v-model="token"> </textarea>
   </div>
 
     </ion-content>
