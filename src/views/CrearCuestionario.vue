@@ -57,7 +57,7 @@ import { ref } from "vue";
 import { useRoute } from 'vue-router';
 import router from "../router";
 
-import {  usuarioGet } from "../globalService";
+import {  usuarioGet , tokenHeader} from "../globalService";
 import {
   onIonViewWillEnter,
   IonLabel,
@@ -114,6 +114,7 @@ export default {
     let usuario = usuarioGet();
     
  onIonViewWillEnter( async () => {
+   tokenHeader();
       if(id != undefined){
         await axios.get("/cuestionarios/" + id).then((response) => {
         cuestionario.value = response.data;

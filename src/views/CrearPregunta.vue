@@ -148,7 +148,7 @@
 import { Editor, EditorContent } from "@tiptap/vue-3";
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
-import { booltoInt, basedeURL, defaultFile } from "../globalService";
+import { booltoInt, basedeURL, defaultFile, tokenHeader } from "../globalService";
 
 import { ref } from "vue";
 import { useRoute } from "vue-router";
@@ -224,6 +224,7 @@ export default {
     });
 
     onIonViewWillEnter(async () => {
+      tokenHeader();
       if (id != undefined) {
         await axios.get("/preguntas/" + id).then((response) => {
           pregunta.value = response.data;

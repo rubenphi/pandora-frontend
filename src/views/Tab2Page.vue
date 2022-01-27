@@ -3,35 +3,64 @@
     <ion-header>
       <ion-toolbar>
         <ion-title>Inicio</ion-title>
+        <ion-buttons slot="end" class="ion-margin-end">
+          <ion-button slot="end" @click="salir">
+            <ion-icon :icon="exitOutline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">Inicio</ion-title>
-        </ion-toolbar>
-      </ion-header>
-         <div id="container">
-    <strong>Hola, bienvenido</strong>
-    <p> Construí esta aplicación para trabajar en grupo de una manera más dinámica, espero que la clase de hoy vaya genial 😃 </p>
-  </div>
-
+      <div id="container">
+        <strong>Hola, bienvenido</strong>
+        <p>
+          Construí esta aplicación para trabajar en grupo de una manera más
+          dinámica, espero que la clase de hoy vaya genial 😃
+        </p>
+      </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script>
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent } from '@ionic/vue';
-export default  {
-  components: { IonHeader, IonToolbar, IonTitle, IonContent, IonPage },
-setup(){
-return{
-token:  localStorage.getItem('token')
-}
-}
-
-}
-
+import {
+  IonPage,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+  IonIcon,
+  IonButton,
+  IonButtons,
+  onIonViewWillEnter,
+} from "@ionic/vue";
+import { tokenHeader } from "../globalService";
+import router from "../router";
+import { exitOutline } from "ionicons/icons";
+export default {
+  components: {
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonContent,
+    IonPage,
+    IonIcon,
+    IonButton,
+    IonButtons,
+  },
+  setup() {
+    onIonViewWillEnter(async () => {
+      tokenHeader();
+    });
+    return {
+      salir() {
+        router.push("/login");
+        localStorage.removeItem("token");
+      },
+      exitOutline,
+    };
+  },
+};
 </script>
 <style scoped>
 #container {

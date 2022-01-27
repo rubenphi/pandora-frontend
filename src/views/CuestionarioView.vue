@@ -54,7 +54,7 @@
 <script>
 import axios from "axios";
 import { ref } from "vue";
-import { tokenHeader , adminOprofesor} from "../globalService";
+import { tokenHeader , adminOprofesor } from "../globalService";
 
    
 

@@ -92,6 +92,7 @@ export default {
     let usuario = usuarioGet();
     const cuestionarios = ref([]);
     onIonViewWillEnter(async () => {
+       tokenHeader();
       if (curso != usuario.curso_id && !adminOprofesor()) {
    
           router.push(
@@ -99,7 +100,7 @@ export default {
           );
        
       } else {
-        tokenHeader();
+       
         await axios
           .get("/cuestionarios/curso/area/" + curso + "/" + area)
           .then((response) => {
