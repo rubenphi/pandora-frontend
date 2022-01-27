@@ -202,7 +202,8 @@ export default {
       opcion_id: "",
       pregunta_id: "",
       grupo_id: "",
-      user_id: ""
+      user_id: "",
+      existe: 0
     });
 
     const error = ref({
@@ -231,6 +232,7 @@ export default {
           respuesta.value.pregunta_id = pregunta.value.id;
           respuesta.value.grupo_id = usuarioGet().grupo_id;
           respuesta.value.user_id = usuarioGet().id;
+          respuesta.value.existe = 1;
           await axios
             .post("/respuestas", respuesta.value)
             .then((response) => {
