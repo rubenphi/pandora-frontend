@@ -7,7 +7,7 @@
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
-        <ion-buttons slot="end" class="ion-margin-end">
+        <ion-buttons v-if="resVisible == 1" slot="end" class="ion-margin-end">
           <ion-button :href="'/resultado/' + pregunta.id">
             <ion-icon :icon="podiumOutline"></ion-icon>
           </ion-button>
@@ -20,7 +20,7 @@
           <ion-card-title class="ion-text-center">
             {{ pregunta.titulo }}
           </ion-card-title>
-          <ion-card-subtitle class="ion-text-center" >
+          <ion-card-subtitle class="ion-text-center">
             Esta pregunta vale: + {{ pregunta.valor }} puntos
           </ion-card-subtitle>
           <ion-icon slot="end" :icon="createOutline"></ion-icon>
@@ -31,11 +31,10 @@
       </ion-card>
 
       <ion-card>
-      <div class="ion-padding" v-html="pregunta.enunciado" >
-      </div>
-      <ion-item v-if="admin" button  :href="'/editar/pregunta/' + pregunta.id">
-        <ion-icon slot="end" :icon="createOutline"></ion-icon>
-      </ion-item>
+        <div class="ion-padding" v-html="pregunta.enunciado"></div>
+        <ion-item v-if="admin" button :href="'/editar/pregunta/' + pregunta.id">
+          <ion-icon slot="end" :icon="createOutline"></ion-icon>
+        </ion-item>
       </ion-card>
       <ion-card class="ion-padding-top ion-padding-bottom">
         <ion-card-subtitle v-if="error.estatus === 0" class="ion-text-center">
@@ -203,24 +202,41 @@ export default {
       pregunta_id: "",
       grupo_id: "",
       user_id: "",
-      existe: 0
+      existe: 0,
     });
-
+    const respuestas = ref([]);
     const error = ref({
       estatus: 0,
       data: "",
     });
+    const resVisible = ref(0);
 
     onIonViewDidEnter(async () => {
       tokenHeader();
+
       await axios.get("/preguntas/" + id).then((response) => {
         pregunta.value = response.data;
         if (!pregunta.value.photo) {
           src.value = defaultFile("thumbnail");
         }
-        var rem = new RegExp('<p></p>','g' )
-        pregunta.value.enunciado =  pregunta.value.enunciado.replace(rem , '</br>');
+        var rem = new RegExp("<p></p>", "g");
+        pregunta.value.enunciado = pregunta.value.enunciado.replace(
+          rem,
+          "</br>"
+        );
       });
+
+      await axios.get("/respuestas/pregunta/" + id).then((response) => {
+        respuestas.value = response.data;
+        respuestas.value.forEach(function (item) {
+          if (item.grupo_id == usuarioGet().grupo_id || admin) {
+            resVisible.value = 1;
+          }
+        });
+      });
+      if (admin) {
+        resVisible.value = 1;
+      }
     });
 
     return {
@@ -250,6 +266,7 @@ export default {
       basedeURL: basedeURL(),
       admin,
       error,
+      resVisible,
       respuesta,
       pregunta,
       arrowBackOutline,
