@@ -92,12 +92,12 @@ export default {
     let usuario = usuarioGet();
     const cuestionarios = ref([]);
     onIonViewWillEnter(async () => {
-      if (curso != usuario.curso_id) {
-        if (adminOprofesor()) {
+      if (curso != usuario.curso_id && !adminOprofesor()) {
+   
           router.push(
-            "/cuestionarios/curso/area/" + usuario.curso_id + "/" + area
+            "/cuestionarios/" + usuario.curso_id + "/" + area
           );
-        }
+       
       } else {
         tokenHeader();
         await axios

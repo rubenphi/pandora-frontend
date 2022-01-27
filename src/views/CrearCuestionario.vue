@@ -3,7 +3,7 @@
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-button v-if="curso" :href="'/cuestionarios/' + curso">
+          <ion-button v-if="curso" :href="'/cuestionarios' + curso + '/' + area">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
           <ion-button v-if="id" :href="'/cuestionario/' + cuestionario.id">
@@ -25,6 +25,7 @@
       <ion-item v-if="error.estatus == 1">
           <ion-label color="danger">{{error.data}}</ion-label>
         </ion-item>
+        
         
       
         <ion-item>
