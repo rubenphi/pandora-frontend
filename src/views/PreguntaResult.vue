@@ -32,6 +32,23 @@
           </ion-note>
         </ion-item>
       </ion-list>
+
+        <ion-buttons
+        v-if="admin"
+        class="ion-justify-content-center ion-padding-top ion-padding-bottom"
+      >
+        <ion-button
+          expand="full"
+          fill="outline"
+          shape="round"
+          color="medium"
+          class="ion-align-self-center"
+           @click="bonus"
+        >
+          <ion-icon :icon="addOutline"></ion-icon>
+        </ion-button>
+      </ion-buttons>
+
     </ion-content>
   </ion-page>
 </template>
@@ -39,7 +56,7 @@
 <script>
 import axios from "axios";
 import { ref } from "vue";
-import { tokenHeader } from "../globalService";
+import { tokenHeader , adminOprofesor } from "../globalService";
 import { useRoute } from 'vue-router';
 
 
@@ -50,7 +67,8 @@ import {
   paperPlaneOutline,
   happyOutline,
   sadOutline,
-  ribbonOutline
+  ribbonOutline,
+  addOutline
 } from "ionicons/icons";
 
 import {
@@ -87,6 +105,7 @@ export default {
     IonLabel,
   },
   setup() {
+    const admin = adminOprofesor();
     const mroute = useRoute();
     const { id } = mroute.params;
     const respuestas = ref ([{
@@ -108,7 +127,15 @@ export default {
     });
 
     return {
+      admin,
       id,
+    async  bonus(){
+        await axios.post("/respuestas/bonus/pregunta/" + id).then((response) => {
+        localStorage.setItem('error', response);
+      });
+      window.location.reload()
+      console.log('hola');
+      },
       respuestas,
       arrowBackOutline,
       handLeftOutline,
@@ -116,7 +143,8 @@ export default {
       refreshOutline,
       happyOutline,
       sadOutline,
-      ribbonOutline
+      ribbonOutline,
+      addOutline
     };
   },
 };
