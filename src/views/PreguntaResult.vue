@@ -6,12 +6,12 @@
           >{{ pregunta.titulo }}</ion-title
         >
         <ion-buttons slot="start" class="ion-margin-start">
-          <ion-button :href="'/pregunta/' + id">
+          <ion-button v-if="id"  :href="'/pregunta/' + id">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
         <ion-buttons slot="end" class="ion-margin-end">
-          <ion-button :href="'/resultado/' + id">
+          <ion-button v-if="id"  :href="'/resultado/' + id">
             <ion-icon :icon="refreshOutline"></ion-icon>
           </ion-button>
         </ion-buttons>

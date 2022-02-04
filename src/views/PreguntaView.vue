@@ -3,7 +3,7 @@
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start" class="ion-margin-start">
-          <ion-button :href="'/cuestionario/' + pregunta.cuestionario_id">
+          <ion-button v-if="pregunta.cuestionario_id != 0" :href="'/cuestionario/' + pregunta.cuestionario_id">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -192,6 +192,7 @@ export default {
       id: "",
       puntaje: "",
       enunciado: "",
+      cuestionario_id: 0,
       opciones: {
         enunciado: "",
       },

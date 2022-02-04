@@ -2,14 +2,14 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-title size="large" class="ion-text-center">20-03-2011</ion-title>
+        <ion-title size="large" class="ion-text-center">{{cuestionario.tema}}</ion-title>
         <ion-buttons slot="start" class="ion-margin-start">
-          <ion-button :href="'/cuestionario/' + id">
+          <ion-button v-if="id" :href="'/cuestionario/' + id">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
         <ion-buttons slot="end" class="ion-margin-end">
-          <ion-button :href="'/ganadores/' + id">
+          <ion-button v-if="id" :href="'/ganadores/' + id">
             <ion-icon :icon="refreshOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -91,6 +91,9 @@ export default {
   setup() {
     const mroute = useRoute();
     const { id } = mroute.params;
+    const cuestionario =  ref({
+      tema: ''
+    });
     const respuestas = ref([
       {  grupo: {nombre: 'Cargando'}, total: 'Cargando' }
     ]);
@@ -99,12 +102,16 @@ export default {
        tokenHeader();
         await axios.get("/respuestas/resultado/" + id).then((response) => {
         respuestas.value = response.data;
-      })
+        });
+        await axios.get("/cuestionarios/" + id).then((response) => {
+          cuestionario.value = response.data;
+        });
       
     });
 
     return {
       id,
+      cuestionario,
       respuestas,
       arrowBackOutline,
       handLeftOutline,

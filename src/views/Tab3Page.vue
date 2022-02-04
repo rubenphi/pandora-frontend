@@ -8,7 +8,7 @@
           slot="start"
           class="ion-margin-end"
         >
-          <ion-button :href="'/areas/' + curso">
+          <ion-button v-if="curso"  :href="'/areas/' + curso">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -19,6 +19,7 @@
           class="ion-margin-end"
         >
           <ion-button
+            v-if="curso && area"
             slot="end"
             :href="'/crear/cuestionario/' + curso + '/' + area"
           >
