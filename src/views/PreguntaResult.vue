@@ -3,7 +3,7 @@
     <ion-header>
       <ion-toolbar>
         <ion-title size="large" class="ion-text-center"
-          >1. Primera pregunta</ion-title
+          >{{ pregunta.titulo }}</ion-title
         >
         <ion-buttons slot="start" class="ion-margin-start">
           <ion-button :href="'/pregunta/' + id">
@@ -116,10 +116,15 @@ export default {
         letra: 'Cargando'
       }
     }]);
-    
+    const pregunta = ref(
+      {titulo:'Cargando...'}
+    );
     
      onIonViewDidEnter(async () => {
        tokenHeader();
+       await axios.get("/preguntas/" + id).then((response) => {
+pregunta.value = response.data;
+       });
        await axios.get("/respuestas/pregunta/" + id).then((response) => {
         respuestas.value = response.data;
       })
@@ -144,7 +149,9 @@ export default {
       happyOutline,
       sadOutline,
       ribbonOutline,
-      addOutline
+      addOutline,
+      pregunta
+
     };
   },
 };
