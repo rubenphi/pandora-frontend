@@ -47,7 +47,8 @@
           >
         </ion-card-header>
       </ion-card>
-      <ion-card v-if="cuestionario.preguntas != ''">
+      <ion-card class="ion-padding"  v-if="cuestionario.preguntas != ''">
+        <ion-card-subtitle class="ion-text-center" >Preguntas de Seleccion Múltiple </ion-card-subtitle>
         <ion-list>
           <ion-item
             v-for="(pregunta, index) in cuestionario.preguntas"
@@ -141,6 +142,8 @@ export default {
       tema: "",
       preguntas: "",
     });
+
+    const seleccionMultiple = ref([]);  
     onIonViewDidEnter(async () => {
       tokenHeader();
       await axios.get("/cuestionarios/" + id).then((response) => {
@@ -149,7 +152,15 @@ export default {
           cuestionario.value.preguntas = cuestionario.value.preguntas.filter(
             (i) => i.visible === 1
           );
-        }
+
+          cuestionario.value.preguntas.forEach(
+            pregunta =>{
+            if (pregunta.tipo == "seleccionMultiple" ){
+
+            seleccionMultiple.value.push(pregunta)}
+          });
+
+          }  
       });
     });
 
@@ -157,6 +168,7 @@ export default {
       admin,
       cuestionario,
       id,
+      seleccionMultiple,
       arrowBackOutline,
       handLeftOutline,
       refreshOutline,
