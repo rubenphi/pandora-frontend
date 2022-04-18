@@ -28,6 +28,7 @@
             <ion-text v-if="index === 0" color="warning"><h6><ion-icon :icon="starOutline"></ion-icon>GANADOR<ion-icon :icon="starOutline"></ion-icon></h6></ion-text>
             <ion-text v-if="respuesta.total > 0" color="success"><h6>Total Puntos: {{respuesta.total}}</h6></ion-text>
             <ion-text v-else color="danger"><h6>Total Puntos: {{respuesta.total}}</h6></ion-text>
+             <ion-text >Nota: {{respuesta.nota}}</ion-text>
           </ion-note>
         </ion-item>
       </ion-list>
@@ -101,7 +102,13 @@ export default {
     onIonViewDidEnter( async () => {
        tokenHeader();
         await axios.get("/respuestas/resultado/" + id).then((response) => {
-        respuestas.value = response.data;
+          respuestas.value = response.data.map(
+            e=> {
+              e.nota =( ( e.total * 5 ) / response.data[0].total).toFixed(1);
+              return e
+            }
+          );
+          
         });
         await axios.get("/cuestionarios/" + id).then((response) => {
           cuestionario.value = response.data;
