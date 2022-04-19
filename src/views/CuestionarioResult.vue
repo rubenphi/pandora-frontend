@@ -28,7 +28,7 @@
             <ion-text v-if="index === 0" color="warning"><h6><ion-icon :icon="starOutline"></ion-icon>GANADOR<ion-icon :icon="starOutline"></ion-icon></h6></ion-text>
             <ion-text v-if="respuesta.total > 0" color="success"><h6>Total Puntos: {{respuesta.total}}</h6></ion-text>
             <ion-text v-else color="danger"><h6>Total Puntos: {{respuesta.total}}</h6></ion-text>
-             <ion-text >Nota: {{respuesta.nota}}</ion-text>
+             <ion-text v-if="respuesta.grupo_id === usuario.grupo_id || usuario.rol == 'admin'">Nota: {{respuesta.nota}}</ion-text>
           </ion-note>
         </ion-item>
       </ion-list>
@@ -40,7 +40,7 @@
 
 import axios from "axios";
 import { ref } from "vue";
-import { tokenHeader } from "../globalService";
+import { usuarioGet,  tokenHeader } from "../globalService";
 import { useRoute } from 'vue-router';
 
 
@@ -90,6 +90,7 @@ export default {
     IonLabel,
   },
   setup() {
+    const  usuario = usuarioGet();
     const mroute = useRoute();
     const { id } = mroute.params;
     const cuestionario =  ref({
@@ -117,6 +118,7 @@ export default {
     });
 
     return {
+      usuario,
       id,
       cuestionario,
       respuestas,
