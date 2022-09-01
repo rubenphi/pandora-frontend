@@ -3,7 +3,10 @@
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start" class="ion-margin-start">
-          <ion-button v-if="pregunta.cuestionario_id != 0" :href="'/cuestionario/' + pregunta.cuestionario_id">
+          <ion-button
+            v-if="pregunta.cuestionario_id != 0"
+            :href="'/cuestionario/' + pregunta.cuestionario_id"
+          >
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -76,7 +79,17 @@
               <ion-label class="ion-text-wrap"
                 ><b>{{ opcion.letra }}. </b> {{ opcion.enunciado }}</ion-label
               >
-              <ion-icon slot="start" :icon="createOutline"></ion-icon>
+              <ion-icon
+                v-if="opcion.correcto == true"
+                slot="start"
+                color="success"
+                :icon="createOutline"
+              ></ion-icon>
+              <ion-icon
+                v-if="opcion.correcto == false"
+                slot="start"
+                :icon="createOutline"
+              ></ion-icon>
             </ion-item>
           </div>
         </ion-list>
