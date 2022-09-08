@@ -19,8 +19,8 @@
           cuestionario.fecha
         }}</ion-title>
         <ion-buttons v-if="!admin" slot="end" class="ion-margin-end">
-          <ion-button v-if="cuestionario.id != 0"
-            
+          <ion-button
+            v-if="cuestionario.id != 0"
             :href="'/cuestionario/' + cuestionario.id"
           >
             <ion-icon :icon="refreshOutline"></ion-icon>
@@ -37,7 +37,10 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <ion-card v-if="cuestionario.id != 0" :href="'/ganadores/' + cuestionario.id">
+      <ion-card
+        v-if="cuestionario.id != 0"
+        :href="'/ganadores/' + cuestionario.id"
+      >
         <ion-card-header>
           <ion-card-title class="ion-text-center">{{
             cuestionario.tema
@@ -47,15 +50,26 @@
           >
         </ion-card-header>
       </ion-card>
-      <ion-card class="ion-padding"  v-if="cuestionario.preguntas != ''">
-        <ion-card-subtitle class="ion-text-center" >Preguntas de Seleccion Múltiple </ion-card-subtitle>
+      <ion-card class="ion-padding" v-if="cuestionario.preguntas != ''">
+        <ion-card-subtitle class="ion-text-center"
+          >Preguntas de Seleccion Múltiple
+        </ion-card-subtitle>
         <ion-list>
           <ion-item
             v-for="(pregunta, index) in cuestionario.preguntas"
             :key="pregunta.id"
             :href="'/pregunta/' + pregunta.id"
           >
-            <ion-icon slot="start" :icon="handLeftOutline"></ion-icon>
+            <ion-icon
+              v-if="pregunta.disponible == false"
+              slot="start"
+              :icon="lockClosedOutline"
+            ></ion-icon>
+            <ion-icon
+              v-if="pregunta.disponible == true"
+              slot="start"
+              :icon="lockOpenOutline"
+            ></ion-icon>
             <ion-label>
               <b>{{ index + 1 + ". " + pregunta.titulo }}</b></ion-label
             >
@@ -87,6 +101,8 @@ import { ref } from "vue";
 import { tokenHeader, adminOprofesor } from "../globalService";
 
 import {
+  lockClosedOutline,
+  lockOpenOutline,
   arrowBackOutline,
   refreshOutline,
   handLeftOutline,
@@ -143,7 +159,7 @@ export default {
       preguntas: "",
     });
 
-    const seleccionMultiple = ref([]);  
+    const seleccionMultiple = ref([]);
     onIonViewDidEnter(async () => {
       tokenHeader();
       await axios.get("/cuestionarios/" + id).then((response) => {
@@ -153,14 +169,12 @@ export default {
             (i) => i.visible === 1
           );
 
-          cuestionario.value.preguntas.forEach(
-            pregunta =>{
-            if (pregunta.tipo == "seleccionMultiple" ){
-
-            seleccionMultiple.value.push(pregunta)}
+          cuestionario.value.preguntas.forEach((pregunta) => {
+            if (pregunta.tipo == "seleccionMultiple") {
+              seleccionMultiple.value.push(pregunta);
+            }
           });
-
-          }  
+        }
       });
     });
 
@@ -174,6 +188,8 @@ export default {
       refreshOutline,
       createOutline,
       addOutline,
+      lockClosedOutline,
+      lockOpenOutline,
     };
   },
 };
