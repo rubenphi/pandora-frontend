@@ -47,9 +47,9 @@
             <ion-label color="danger">{{ error.data }}</ion-label>
           </ion-item>
 
-           <ion-item>
+          <ion-item>
             <ion-label position="floating">Título:</ion-label>
-            <ion-input  v-model="pregunta.titulo"></ion-input>
+            <ion-input v-model="pregunta.titulo"></ion-input>
           </ion-item>
           <ion-item>
             <ion-button slot="start" color="light">
@@ -80,7 +80,6 @@
             <ion-input type="number" v-model="pregunta.valor"></ion-input>
           </ion-item>
 
-
           <ion-item>
             <ion-label>Visible:</ion-label>
             <ion-toggle
@@ -96,6 +95,15 @@
               slot="end"
               :checked="pregunta.disponible"
               v-model="pregunta.disponible"
+            >
+            </ion-toggle>
+          </ion-item>
+          <ion-item>
+            <ion-label>Revelada:</ion-label>
+            <ion-toggle
+              slot="end"
+              :checked="pregunta.revelada"
+              v-model="pregunta.revelada"
             >
             </ion-toggle>
           </ion-item>
@@ -148,7 +156,12 @@
 import { Editor, EditorContent } from "@tiptap/vue-3";
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
-import { booltoInt, basedeURL, defaultFile, tokenHeader } from "../globalService";
+import {
+  booltoInt,
+  basedeURL,
+  defaultFile,
+  tokenHeader,
+} from "../globalService";
 
 import { ref } from "vue";
 import { useRoute } from "vue-router";
@@ -239,7 +252,7 @@ export default {
 
       if (cuestionario != undefined) {
         pregunta.value = {
-          titulo: '',
+          titulo: "",
           enunciado:
             "<h6><strong> Crea tu pregunta </strong></h6> <p> En esta sección <br> puedes crear tu pregunta </p>",
           cuestionario_id: cuestionario,
@@ -281,6 +294,7 @@ export default {
       async crearPregunta() {
         pregunta.value.visible = booltoInt(pregunta.value.visible);
         pregunta.value.disponible = booltoInt(pregunta.value.disponible);
+        pregunta.value.revelada = booltoInt(pregunta.value.revelada);
         pregunta.value.enunciado = editor.value.getHTML();
 
         for (var key in pregunta.value) {

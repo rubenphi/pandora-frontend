@@ -24,7 +24,7 @@
             {{ pregunta.titulo }}
           </ion-card-title>
           <ion-card-subtitle class="ion-text-center">
-            Esta pregunta vale: + {{ pregunta.valor }} puntos
+            Esta pregunta vale: + {{ pregunta.valor }} puntos, {{ countDown }}
           </ion-card-subtitle>
           <ion-icon slot="end" :icon="createOutline"></ion-icon>
         </ion-card-header>
@@ -100,6 +100,7 @@
         class="ion-justify-content-center ion-padding-top ion-padding-bottom"
       >
         <ion-button
+          id="enviarRespuesta"
           expand="full"
           fill="outline"
           shape="round"
@@ -135,6 +136,7 @@
 import axios from "axios";
 import { ref } from "vue";
 import {
+  countDownTimer,
   tokenHeader,
   usuarioGet,
   adminOprofesor,
@@ -224,12 +226,21 @@ export default {
       data: "",
     });
     const resVisible = ref(0);
+    const timeleft = ref("");
+    const countDown = ref("");
+    const downloadTimer = ref(0);
 
     onIonViewDidEnter(async () => {
       tokenHeader();
 
       await axios.get("/preguntas/" + id).then((response) => {
         pregunta.value = response.data;
+        pregunta.value.updated_at = new Date(pregunta.value.updated_at);
+        pregunta.value.updated_at = pregunta.value.updated_at.getTime();
+        timeleft.value =
+          (pregunta.value.updated_at - new Date().getTime()) / 1000;
+        timeleft.value = Math.round(timeleft.value + 65);
+
         if (!pregunta.value.photo) {
           src.value = defaultFile("thumbnail");
         }
@@ -251,9 +262,32 @@ export default {
       if (admin) {
         resVisible.value = 1;
       }
+
+      downloadTimer = setInterval(function () {
+        if ((timeleft.value <= 0) & !admin & (resVisible.value == 0)) {
+          const index = Math.floor(
+            Math.random() * pregunta.value.opciones.length
+          );
+          if (pregunta.value.opciones[index]) {
+            respuesta.value.opcion_id = pregunta.value.opciones[index].id;
+            document.getElementById("enviarRespuesta").click();
+          }
+        } else if (timeleft.value <= 0) {
+          clearInterval(this.downloadTimer);
+          countDown.value = "¡Responde!";
+        } else {
+          countDown.value =
+            "Tienes " + timeleft.value + " segundos para responder";
+        }
+        timeleft.value -= 1;
+      }, 1000);
     });
 
     return {
+      countDown,
+      timeleft,
+      resVisible,
+      pregunta,
       async responder() {
         if (respuesta.value.opcion_id == "") {
           error.value.estatus = 1;
@@ -280,9 +314,7 @@ export default {
       basedeURL: basedeURL(),
       admin,
       error,
-      resVisible,
       respuesta,
-      pregunta,
       arrowBackOutline,
       handLeftOutline,
       refreshOutline,
