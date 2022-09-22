@@ -95,7 +95,7 @@
           shape="round"
           color="medium"
           class="ion-align-self-center"
-          @click="bonus"
+          @click="updateTime"
         >
           <ion-icon :icon="addOutline"></ion-icon>
         </ion-button>
@@ -105,10 +105,11 @@
 </template>
 
 <script>
+import { useRoute } from "vue-router";
+import router from "../router";
 import axios from "axios";
 import { ref } from "vue";
 import { tokenHeader, adminOprofesor } from "../globalService";
-import { useRoute } from "vue-router";
 
 import {
   arrowBackOutline,
@@ -192,6 +193,20 @@ export default {
           });
         window.location.reload();
         console.log("hola");
+      },
+      async updateTime() {
+        pregunta.value.tiempo = 15;
+        pregunta.value.revelada = true;
+        await axios
+          .post("/preguntas/update/" + id, pregunta.value, {})
+          .then((response) => {
+            router.push("/pregunta/" + id);
+
+            localStorage.setItem("error", response.data.message);
+          })
+          .catch(() => {
+            router.push("/cuestionario/" + pregunta.value.cuestionario_id);
+          });
       },
       respuestas,
       arrowBackOutline,

@@ -106,6 +106,7 @@ export default {
           respuestas.value = response.data.map(
             e=> {
               e.nota =( ( e.total * 5 ) / response.data[0].total).toFixed(1);
+              e.nota = e.nota < 0 ?  0 : e.nota;
               return e
             }
           );

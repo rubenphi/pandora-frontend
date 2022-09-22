@@ -81,6 +81,11 @@
           </ion-item>
 
           <ion-item>
+            <ion-label position="floating">Tiempo:</ion-label>
+            <ion-input type="number" v-model="pregunta.tiempo"></ion-input>
+          </ion-item>
+
+          <ion-item>
             <ion-label>Visible:</ion-label>
             <ion-toggle
               slot="end"

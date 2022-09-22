@@ -166,7 +166,7 @@ export default {
         cuestionario.value = response.data;
         if (!admin) {
           cuestionario.value.preguntas = cuestionario.value.preguntas.filter(
-            (i) => i.visible === 1
+            (i) => i.visible === 1 && i.disponible
           );
 
           cuestionario.value.preguntas.forEach((pregunta) => {
