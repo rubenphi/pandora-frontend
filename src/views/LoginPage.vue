@@ -8,14 +8,14 @@
     <ion-content class="ion-padding-start ion-padding-end">
       <ion-grid>
         <ion-row class="ion-align-items-center">
-          <ion-col size-s="1" size-xs="1" size-md="4" size-lg="5" size-xl="5">
+          <ion-col size-s="1" size-xs="1" size-md="3" size-lg="4" size-xl="4">
           </ion-col>
           <ion-col
             size-s="10"
             size-xs="10"
-            size-md="4"
-            size-lg="2"
-            size-xl="2"
+            size-md="6"
+            size-lg="4"
+            size-xl="4"
             class="ion-align-items-center"
           >
             <ion-card class="ion-padding">
@@ -129,7 +129,7 @@
               </ion-buttons>
             </ion-card>
           </ion-col>
-          <ion-col size-s="1" size-xs="1" size-md="4" size-lg="5" size-xl="5">
+          <ion-col size-s="1" size-xs="1" size-md="3" size-lg="4" size-xl="4">
           </ion-col>
         </ion-row>
       </ion-grid>
@@ -157,6 +157,8 @@ import {
   IonButton,
   IonButtons,
   IonText,
+  onIonViewDidEnter,
+  alertController
 } from '@ionic/vue';
 import router from '../router';
 export default {
@@ -175,9 +177,22 @@ export default {
     IonInput,
     IonButton,
     IonButtons,
-    IonText,
+    IonText
   },
   setup() {
+    onIonViewDidEnter(async () => {
+      const presentAlert = async () => {
+        const alert = await alertController.create({
+          header: 'Cómo usar',
+          subHeader: 'Use los siguientes datos de ingreso',
+          message: 'Perfil de estudiante <br> &nbsp;Usuario: 002 <br> &nbsp;Contraseña: Clavefalsa123 <br> <br> Perfil de Profesor <br> &nbsp;Usuario: 001 <br> &nbsp;Contraseña: Clavefalsa123',
+          buttons: ['OK'],
+        });
+
+        await alert.present();
+      };
+      presentAlert()
+    });
     const login = ref({
       code: '',
       password: '',

@@ -17,8 +17,9 @@ export function usuarioGet() {
 
 
 export function basedeURL() {
-  var puerto = '8080';
-  return window.location.protocol + '//' + window.location.host.split(':')[0] + ':' + puerto + '/' ;
+  //var puerto = '8080';
+  //return window.location.protocol + '//' + window.location.host.split(':')[0] + ':' + puerto + '/' ;
+  return "http://pandora-quiz.atwebpages.com/"
 }
 
 export function booltoInt(data) {
