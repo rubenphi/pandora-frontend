@@ -17,8 +17,9 @@ export function usuarioGet() {
 
 
 export function basedeURL() {
-  var puerto = '8080';
-  return window.location.protocol + '//' + window.location.host.split(':')[0] + ':' + puerto + '/' ;
+/*   var puerto = '8080';
+  return window.location.protocol + '//' + window.location.host.split(':')[0] + ':' + puerto + '/' ; */
+  return "https://pandora-nest.onrender.com"
 }
 
 export function booltoInt(data) {
@@ -35,7 +36,7 @@ export function adminOprofesor(){
    tokenHeader()
    if (usuarioGet().rol == 'admin') {
      return true;
-   } else if (usuarioGet().rol == 'profesor') {
+   } else if (usuarioGet().rol == 'director') {
      return true;
    } else {
      return false;
