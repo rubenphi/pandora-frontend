@@ -14,7 +14,7 @@
       <ion-list>
         <ion-item v-for="area in areas" :key="area.id" :href="'cuestionarios/' + id + '/' + area.id" >
           <ion-icon slot="start" :icon="libraryOutline"></ion-icon>
-          <ion-label>{{area.nombre}}</ion-label>
+          <ion-label>{{area.name}}</ion-label>
         </ion-item>
         
       </ion-list>
@@ -59,8 +59,8 @@ export default {
     const areas = ref([]);
     onIonViewWillEnter(async () => {
       tokenHeader();
-     await  axios.get("/cursos/" + id).then((response) => {
-        areas.value = response.data.areas;
+     await  axios.get(`/courses/${id}/areas`).then((response) => {
+        areas.value = response.data;
       });
     });
     return {

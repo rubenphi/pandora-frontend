@@ -4,7 +4,7 @@
       <ion-router-outlet></ion-router-outlet>
       <ion-tab-bar slot="bottom">
         <ion-tab-button
-          v-if="usuario.rol === 'admin' || usuario.rol === 'profesor'"
+          v-if="adminOProfesor"
           tab="tab1"
           href="/cursos"
         >
@@ -22,7 +22,7 @@
           <ion-label>Inicio</ion-label>
         </ion-tab-button>
 
-        <ion-tab-button tab="tab3"  v-if="usuario.rol === 'admin' || usuario.rol === 'profesor'"
+        <ion-tab-button tab="tab3"  v-if="usuario.rol === 'admin' || usuario.rol === 'director'"
           href="/admin/cuestionarios">
           <ion-icon :icon="helpCircleOutline" />
 
@@ -49,7 +49,7 @@ import {
   IonRouterOutlet,
 } from "@ionic/vue";
 import { helpCircleOutline, homeOutline, peopleOutline } from "ionicons/icons";
-import { usuarioGet } from "../globalService";
+import { adminOprofesor, usuarioGet } from "../globalService";
 export default {
   components: {
     IonLabel,
@@ -63,6 +63,7 @@ export default {
   setup() {
     return {
       usuario: usuarioGet(),
+      adminOProfesor: adminOprofesor(),
       helpCircleOutline,
       homeOutline,
       peopleOutline,

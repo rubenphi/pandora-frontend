@@ -9,7 +9,7 @@
       <ion-list>
         <ion-item v-for="curso in cursos" :key="curso.id"  :href="'areas/' + curso.id">
           <ion-icon slot="start" :icon="peopleCircleOutline"></ion-icon>
-          <ion-label>{{ curso.nombre }}</ion-label>
+          <ion-label>{{ curso.name }}</ion-label>
         </ion-item>
       </ion-list>
     </ion-content>
@@ -53,7 +53,7 @@ export default {
     const cursos = ref([]);
     onIonViewWillEnter( async () => {
       tokenHeader();
-      await axios.get("/cursos").then((response) => {
+      await axios.get(`/institutes/${usuario.institute.id}/courses`).then((response) => {
         cursos.value = response.data;
       });
     });

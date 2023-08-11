@@ -14,7 +14,7 @@
         </ion-buttons>
 
         <ion-buttons
-          v-if="usuario.rol == 'admin' || usuario.rol == 'profesor'"
+          v-if="adminOProfesor"
           slot="end"
           class="ion-margin-end"
         >
@@ -35,11 +35,11 @@
         :href="'/cuestionario/' + cuestionario.id"
       >
         <ion-card-header>
-          <ion-card-subtitle>{{ cuestionario.curso.nombre }}</ion-card-subtitle>
-          <ion-card-title>{{ cuestionario.fecha }}</ion-card-title>
+          <ion-card-subtitle>{{ curso }}</ion-card-subtitle>
+          <ion-card-title>{{ cuestionario.date }}</ion-card-title>
         </ion-card-header>
 
-        <ion-card-content> {{ cuestionario.tema }} </ion-card-content>
+        <ion-card-content> {{ cuestionario.topic }} </ion-card-content>
       </ion-card>
     </ion-content>
   </ion-page>
@@ -91,6 +91,7 @@ export default {
     const { curso } = mroute.params;
     const { area } = mroute.params;
     let usuario = usuarioGet();
+    let adminOProfesor = adminOprofesor()
     const cuestionarios = ref([]);
     onIonViewWillEnter(async () => {
        tokenHeader();
@@ -103,14 +104,16 @@ export default {
       } else {
        
         await axios
-          .get("/cuestionarios/curso/area/" + curso + "/" + area)
+          .get(`/courses/${curso}/lessons`)
           .then((response) => {
             cuestionarios.value = response.data;
+    
           });
       }
     });
 
     return {
+      adminOProfesor,
       area,
       curso,
       addOutline,
