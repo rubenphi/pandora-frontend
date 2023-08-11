@@ -6,7 +6,7 @@ import router from './router';
 import axios from 'axios';
 import { basedeURL } from  "./globalService";
 
-axios.defaults.baseURL = "https://cors-anywhere.herokuapp.com/corsdemo/" + basedeURL();
+axios.defaults.baseURL = basedeURL();
 
 import {
   IonicVue

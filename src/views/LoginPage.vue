@@ -159,6 +159,7 @@ import {
   IonText,
 } from '@ionic/vue';
 import router from '../router';
+
 export default {
   components: {
     IonHeader,
@@ -196,21 +197,21 @@ export default {
           error.value.estatus = 1;
           error.value.data = 'Debe ingresar usuario y contraseña';
         } else {
-          await axios.post('/auth/login', login.value).then(response => {
-           if (response.data.token == undefined) {
+          await axios.post('/auth/login', login.value, {headers: {
+    "Access-Control-Allow-Origin": "*"
+  }}).then(response => {
+    console.log(response);
+           if (response.data.userLoged.accessToken == undefined) {
               error.value.estatus = 1;
               error.value.data = 'Error al iniciar sesión';
               console.log(response.data.message);
             } else {
-              localStorage.setItem('token', 'Bearer ' + response.data.token);
-              tokenHeader();
-
-                axios.get('/user/loged').then(response => {
-                localStorage.setItem('usuario', JSON.stringify(response.data));
-
-                error.value.estatus = 0;
+              localStorage.setItem('token', 'Bearer ' + response.data.userLoged.accessToken);
+              localStorage.setItem('usuario', JSON.stringify(response.data.userLoged))
+                  error.value.estatus = 0;
                 router.push('/inicio');
-              });
+
+              tokenHeader();
             }
           });
         }

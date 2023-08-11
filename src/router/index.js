@@ -131,7 +131,7 @@ router.beforeEach((to, from, next) => {
 
   axios.defaults.headers.common['Authorization'] =
     localStorage.getItem('token');
-  axios.get('/user/loged').catch(e => {
+  axios.get('/auth/profile').catch(e => {
     localStorage.removeItem('usuario');
     localStorage.setItem('error', e);
   });

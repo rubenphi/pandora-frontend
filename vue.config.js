@@ -10,7 +10,8 @@ module.exports = {
         allowedHosts: 'all',
         headers: {
           'Access-Control-Allow-Origin': '*'            
-        }
+        },
+        proxy: 'https://pandora-nest.onrender.com',
       }
     }
 }
