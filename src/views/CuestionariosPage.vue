@@ -50,7 +50,7 @@ export default {
   },
   setup() {
     let usuario = usuarioGet();
-    console.log(usuario);
+   
     const cursos = ref([]);
     onIonViewWillEnter( async () => {
       tokenHeader();

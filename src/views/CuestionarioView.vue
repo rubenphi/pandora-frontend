@@ -7,9 +7,9 @@
             v-if="cuestionario.id != 0"
             :href="
               '/cuestionarios/' +
-              cuestionario.curso_id +
+              cuestionario.courseId +
               '/' +
-              cuestionario.area_id
+              cuestionario.areaId
             "
           >
             <ion-icon :icon="arrowBackOutline"></ion-icon>
@@ -43,35 +43,35 @@
       >
         <ion-card-header>
           <ion-card-title class="ion-text-center">{{
-            cuestionario.tema
+            cuestionario.topic
           }}</ion-card-title>
           <ion-card-subtitle class="ion-text-center"
             >Ver Resultados</ion-card-subtitle
           >
         </ion-card-header>
       </ion-card>
-      <ion-card class="ion-padding" v-if="cuestionario.preguntas != ''">
+      <ion-card class="ion-padding" v-if="cuestionario.questions">
         <ion-card-subtitle class="ion-text-center"
           >Preguntas de Seleccion Múltiple
         </ion-card-subtitle>
         <ion-list>
           <ion-item
-            v-for="(pregunta, index) in cuestionario.preguntas"
-            :key="pregunta.id"
-            :href="'/pregunta/' + pregunta.id"
+            v-for="(question, index) in cuestionario.questions"
+            :key="question.id"
+            :href="'/pregunta/' + question.id"
           >
             <ion-icon
-              v-if="pregunta.disponible == false"
+              v-if="question.available == false"
               slot="start"
               :icon="lockClosedOutline"
             ></ion-icon>
             <ion-icon
-              v-if="pregunta.disponible == true"
+              v-if="question.disponible == true"
               slot="start"
               :icon="lockOpenOutline"
             ></ion-icon>
             <ion-label>
-              <b>{{ index + 1 + ". " + pregunta.titulo }}</b></ion-label
+              <b>{{ index + 1 + ". " + question.title }}</b></ion-label
             >
           </ion-item>
         </ion-list>
@@ -82,7 +82,7 @@
         class="ion-justify-content-center ion-padding-top ion-padding-bottom"
       >
         <ion-button
-          :href="'/crear/pregunta/' + cuestionario.id"
+          :href="'/crear/question/' + cuestionario.id"
           expand="full"
           fill="outline"
           shape="round"
@@ -155,34 +155,50 @@ export default {
     const cuestionario = ref({
       id: 0,
       fecha: "",
-      tema: "",
-      preguntas: "",
+      topic: "",
+      questions: "",
     });
 
-    const seleccionMultiple = ref([]);
+
     onIonViewDidEnter(async () => {
       tokenHeader();
-      await axios.get("/cuestionarios/" + id).then((response) => {
-        cuestionario.value = response.data;
-        if (!admin) {
-          cuestionario.value.preguntas = cuestionario.value.preguntas.filter(
-            (i) => i.visible === 1 && i.disponible
-          );
+      await axios.get("/lessons/" + id).then((response) => {
 
-          cuestionario.value.preguntas.forEach((pregunta) => {
-            if (pregunta.tipo == "seleccionMultiple") {
-              seleccionMultiple.value.push(pregunta);
-            }
-          });
-        }
+        cuestionario.value = {
+        id: response.data.id,
+        name: response.data.name ,
+        areaId : response.data.area.id ,
+        courseId:  response.data.course.id ,
+        topic: response.data.topic
+        };
       });
+
+      await axios.get(`/lessons/${id}/questions`).then((response) => {
+                if (!admin) {
+          cuestionario.value.questions = response.data.filter(
+            (i) => i.visible && i.available
+          );
+        } else {
+          cuestionario.value.questions = response.data.map((pregunta)=>({
+            available: pregunta.available, 
+            visible: pregunta.visible,
+            id: pregunta.id,
+            title: pregunta.title
+          }))
+        }
+
+        
+
+      })
+
+
     });
 
     return {
       admin,
       cuestionario,
       id,
-      seleccionMultiple,
+
       arrowBackOutline,
       handLeftOutline,
       refreshOutline,
