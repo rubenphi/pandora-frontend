@@ -192,7 +192,7 @@ export default {
             localStorage.setItem("error", response);
           });
         window.location.reload();
-        console.log("hola");
+  
       },
       async updateTime() {
         pregunta.value.tiempo = 15;

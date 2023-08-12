@@ -4,14 +4,14 @@
       <ion-toolbar>
         <ion-buttons slot="start" class="ion-margin-start">
           <ion-button
-            v-if="pregunta.cuestionario_id != 0"
-            :href="'/cuestionario/' + pregunta.cuestionario_id"
+            v-if="question.lessonId != 0"
+            :href="'/cuestionario/' + question.lessonId"
           >
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
         <ion-buttons v-if="resVisible == 1" slot="end" class="ion-margin-end">
-          <ion-button :href="'/resultado/' + pregunta.id">
+          <ion-button :href="'/resultado/' + question.id">
             <ion-icon :icon="podiumOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -21,21 +21,21 @@
       <ion-card>
         <ion-card-header>
           <ion-card-title class="ion-text-center">
-            {{ pregunta.titulo }}
+            {{ question.title }}
           </ion-card-title>
           <ion-card-subtitle class="ion-text-center">
-            Esta pregunta vale: + {{ pregunta.valor }} puntos, {{ countDown }}
+            Esta pregunta vale: + {{ question.points }} puntos
           </ion-card-subtitle>
           <ion-icon slot="end" :icon="createOutline"></ion-icon>
         </ion-card-header>
       </ion-card>
-      <ion-card v-if="pregunta.photo">
-        <ion-img :src="basedeURL + pregunta.photo"></ion-img>
+      <ion-card v-if="question.photo">
+        <ion-img :src="basedeURL + question.photo"></ion-img>
       </ion-card>
 
       <ion-card>
-        <div class="ion-padding" v-html="pregunta.enunciado"></div>
-        <ion-item v-if="admin" button :href="'/editar/pregunta/' + pregunta.id">
+        <div class="ion-padding" v-html="question.sentence"></div>
+        <ion-item v-if="admin" button :href="'/editar/question/' + question.id">
           <ion-icon slot="end" :icon="createOutline"></ion-icon>
         </ion-item>
       </ion-card>
@@ -50,20 +50,20 @@
             </ion-label>
           </ion-item>
           <div v-if="!admin">
-            <ion-radio-group v-model="respuesta.opcion_id">
+            <ion-radio-group v-model="respuesta.optionId">
               <ion-item
                 lines="none"
-                v-for="opcion in pregunta.opciones"
-                :key="opcion.id"
+                v-for="option in question.options"
+                :key="option.id"
               >
                 <ion-label class="ion-text-wrap"
-                  ><b>{{ opcion.letra }}. </b> {{ opcion.enunciado }}</ion-label
+                  ><b>{{ option.letra }}. </b> {{ option.sentence }}</ion-label
                 >
 
                 <ion-radio
                   slot="start"
-                  :value="opcion.id"
-                  :id="opcion.id"
+                  :value="option.id"
+                  :id="option.id"
                 ></ion-radio>
               </ion-item>
             </ion-radio-group>
@@ -72,21 +72,21 @@
             <ion-item
               button
               lines="none"
-              v-for="opcion in pregunta.opciones"
-              :key="opcion.id"
-              :href="'editar/opcion/' + opcion.id"
+              v-for="option in question.options"
+              :key="option.id"
+              :href="'editar/opcion/' + option.id"
             >
               <ion-label class="ion-text-wrap"
-                ><b>{{ opcion.letra }}. </b> {{ opcion.enunciado }}</ion-label
+                ><b>{{ option.identifier }}. </b> {{ option.sentence }}</ion-label
               >
               <ion-icon
-                v-if="opcion.correcto == true"
+                v-if="option.correct == true"
                 slot="start"
                 color="success"
                 :icon="createOutline"
               ></ion-icon>
               <ion-icon
-                v-if="opcion.correcto == false"
+                v-if="option.correct == false"
                 slot="start"
                 :icon="createOutline"
               ></ion-icon>
@@ -100,7 +100,6 @@
         class="ion-justify-content-center ion-padding-top ion-padding-bottom"
       >
         <ion-button
-          id="enviarRespuesta"
           expand="full"
           fill="outline"
           shape="round"
@@ -123,7 +122,7 @@
           shape="round"
           color="medium"
           class="ion-align-self-center"
-          :href="'crear/opcion/' + pregunta.id"
+          :href="'crear/opcion/' + question.id"
         >
           <ion-icon :icon="addOutline"></ion-icon>
         </ion-button>
@@ -202,22 +201,21 @@ export default {
     const admin = adminOprofesor();
     const mroute = useRoute();
     const { id } = mroute.params;
-    const pregunta = ref({
+    const question = ref({
       id: "",
-      valor: "",
-      enunciado: "",
-      tiempo: "",
-      cuestionario_id: 0,
-      opciones: {
-        enunciado: "",
+      points: "",
+      sentence: "",
+      lessonId: 0,
+      options: {
+        sentence: "",
       },
     });
     const src = ref("");
     const respuesta = ref({
-      opcion_id: "",
-      pregunta_id: "",
-      grupo_id: "",
-      user_id: "",
+      optionId: "",
+      questionId: "",
+      groupId: "",
+      userId: "",
       existe: 0,
     });
     const respuestas = ref([]);
@@ -226,29 +224,37 @@ export default {
       data: "",
     });
     const resVisible = ref(0);
-    const countDown = ref("");
-    const downloadTimer = ref(0);
-    const timeleft = ref(0);
+
     onIonViewDidEnter(async () => {
       tokenHeader();
 
-      await axios.get("/preguntas/" + id).then((response) => {
-        pregunta.value = response.data;
-        timeleft.value = pregunta.value.tiempo;
-        if (!pregunta.value.photo) {
+      await axios.get("/questions/" + id).then((response) => {
+        question.value = ({
+            id: response.data.id,
+      points: response.data.points,
+      sentence: response.data.sentence,
+      lessonId: response.data.lesson.id,
+      title: response.data.title
+        });
+
+        if (!question.value.photo) {
           src.value = defaultFile("thumbnail");
         }
         var rem = new RegExp("<p></p>", "g");
-        pregunta.value.enunciado = pregunta.value.enunciado.replace(
+        question.value.sentence = question.value.sentence.replace(
           rem,
           "</br>"
         );
       });
 
-      await axios.get("/respuestas/pregunta/" + id).then((response) => {
+      await axios.get(`/questions/${id}/options`).then((response) => { 
+        question.value.options = response.data
+      })
+
+      await axios.get("/respuestas/question/" + id).then((response) => {
         respuestas.value = response.data;
         respuestas.value.forEach(function (item) {
-          if (item.grupo_id == usuarioGet().grupo_id || admin) {
+          if (item.groupId == usuarioGet().groupId || admin) {
             resVisible.value = 1;
           }
         });
@@ -256,79 +262,38 @@ export default {
       if (admin) {
         resVisible.value = 1;
       }
-
-      downloadTimer.value = setInterval(function () {
-        if ((timeleft.value <= 0) & !admin & (resVisible.value == 0)) {
-          const index = Math.floor(
-            Math.random() * (pregunta.value.opciones.length - 1)
-          );
-          if (pregunta.value.opciones[index]) {
-            respuesta.value.opcion_id = pregunta.value.opciones[index].id;
-            document.getElementById("enviarRespuesta").click();
-          }
-        } else if (timeleft.value <= 0) {
-          clearInterval(this.downloadTimer);
-          countDown.value = "¡Responde!";
-        } else {
-          countDown.value =
-            "Tienes " + timeleft.value + " segundos para responder";
-        }
-
-        if (
-          (localStorage.getItem("timerOf" + pregunta.value.id) != null) &
-          (timeleft.value ==
-            parseInt(localStorage.getItem("timerOf" + pregunta.value.id)))
-        ) {
-          timeleft.value -= 1;
-          localStorage.setItem(
-            "timerOf" + pregunta.value.id,
-            parseInt(timeleft.value)
-          );
-        } else if (
-          localStorage.getItem("timerOf" + pregunta.value.id) == null
-        ) {
-          localStorage.setItem(
-            "timerOf" + pregunta.value.id,
-            parseInt(timeleft.value)
-          );
-        } else {
-          timeleft.value = localStorage.getItem("timerOf" + pregunta.value.id);
-        }
-      }, 1000);
     });
 
     return {
-      countDown,
-      timeleft,
-      resVisible,
-      pregunta,
       async responder() {
-        if (respuesta.value.opcion_id == "") {
+        if (respuesta.value.optionId == "") {
           error.value.estatus = 1;
           error.value.data = "Debe seleccionar una opción.";
         } else {
-          respuesta.value.pregunta_id = pregunta.value.id;
-          respuesta.value.grupo_id = usuarioGet().grupo_id;
-          respuesta.value.user_id = usuarioGet().id;
+          respuesta.value.questionId = question.value.id;
+          respuesta.value.groupId = usuarioGet().groupId;
+          respuesta.value.userId = usuarioGet().id;
           respuesta.value.existe = 1;
           await axios
             .post("/respuestas", respuesta.value)
             .then((response) => {
-              router.push("/resultado/" + pregunta.value.id);
+              router.push("/resultado/" + question.value.id);
               localStorage.setItem("error", response.data.message);
             })
             .catch((response) => {
               localStorage.setItem("error", response.message);
               error.value.estatus = 1;
               error.value.data =
-                "Error: ya respondiste la pregunta o no se te permite responder";
+                "Error: ya respondiste la question o no se te permite responder";
             });
         }
       },
       basedeURL: basedeURL(),
       admin,
       error,
+      resVisible,
       respuesta,
+      question,
       arrowBackOutline,
       handLeftOutline,
       refreshOutline,

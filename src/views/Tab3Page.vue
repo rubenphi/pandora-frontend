@@ -35,11 +35,11 @@
         :href="'/cuestionario/' + cuestionario.id"
       >
         <ion-card-header>
-          <ion-card-subtitle>{{ curso }}</ion-card-subtitle>
-          <ion-card-title>{{ cuestionario.date }}</ion-card-title>
+          <ion-card-subtitle>{{ cursoSelected }}</ion-card-subtitle>
+          <ion-card-title>{{ cuestionario.topic }}</ion-card-title>
         </ion-card-header>
 
-        <ion-card-content> {{ cuestionario.topic }} </ion-card-content>
+        <ion-card-content> {{ cuestionario.date.substring(0, 10) }} </ion-card-content>
       </ion-card>
     </ion-content>
   </ion-page>
@@ -86,10 +86,11 @@ export default {
     IonButton,
     IonIcon,
   },
-  setup() {
+   setup() {
     const mroute = useRoute();
     const { curso } = mroute.params;
     const { area } = mroute.params;
+    const cursoSelected = ref()
     let usuario = usuarioGet();
     let adminOProfesor = adminOprofesor()
     const cuestionarios = ref([]);
@@ -104,15 +105,22 @@ export default {
       } else {
        
         await axios
-          .get(`/courses/${curso}/lessons`)
+          .get(`/lessons?courseId=${curso}&areaId=${area}&periodId=1`)
           .then((response) => {
-            cuestionarios.value = response.data;
-    
+            cuestionarios.value = response.data.map((cuestionario) => ( {
+              id: cuestionario.id,
+              topic: cuestionario.topic,
+              date: cuestionario.date
+            }));
+          
           });
+          cursoSelected.value = (await axios
+          .get(`/courses/${curso}`)).data.name
       }
     });
 
     return {
+      cursoSelected,
       adminOProfesor,
       area,
       curso,
