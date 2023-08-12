@@ -55,7 +55,7 @@ export default {
     onIonViewWillEnter( async () => {
       tokenHeader();
       await axios.get(`/users/courses/${usuario.id}?year=2023`).then((response) => {
-        cursos.value = response.data.map((assignacion) => ({name: assignacion.course.name, id: assignacion.course.id}));
+      cursos.value = response.data.map((assignacion) => ({name: assignacion.course.name, id: assignacion.course.id}));
       });
     });
 

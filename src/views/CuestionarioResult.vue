@@ -23,11 +23,11 @@
           <ion-icon v-else :icon="sadOutline" size="large" slot="start"></ion-icon>
           
           <ion-label color="medium">
-            {{respuesta.grupo.nombre}}</ion-label>
+            {{respuesta.group.name}}</ion-label>
           <ion-note slot="end">
             <ion-text v-if="index === 0" color="warning"><h6><ion-icon :icon="starOutline"></ion-icon>GANADOR<ion-icon :icon="starOutline"></ion-icon></h6></ion-text>
-            <ion-text v-if="respuesta.total > 0" color="success"><h6>Total Puntos: {{respuesta.total}}</h6></ion-text>
-            <ion-text v-else color="danger"><h6>Total Puntos: {{respuesta.total}}</h6></ion-text>
+            <ion-text v-if="respuesta.points > 0" color="success"><h6>Total Puntos: {{respuesta.points}}</h6></ion-text>
+            <ion-text v-else color="danger"><h6>Total Puntos: {{respuesta.points}}</h6></ion-text>
              <ion-text v-if="respuesta.grupo_id === usuario.grupo_id || usuario.rol == 'admin'">Nota: {{respuesta.nota}}</ion-text>
           </ion-note>
         </ion-item>
@@ -97,15 +97,15 @@ export default {
       tema: ''
     });
     const respuestas = ref([
-      {  grupo: {nombre: 'Cargando'}, total: 'Cargando' }
+      {  group: {name: 'Cargando'}, points: 'Cargando' }
     ]);
     
     onIonViewDidEnter( async () => {
        tokenHeader();
-        await axios.get("/respuestas/resultado/" + id).then((response) => {
+        await axios.get(`/lessons/${id}/results`).then((response) => {
           respuestas.value = response.data.map(
-            e=> {
-              e.nota =( ( e.total * 5 ) / response.data[0].total).toFixed(1);
+            e=> {e.points = parseFloat(e.points) ;
+              e.nota =( ( e.points * 5 ) / response.data[0].points).toFixed(1);
               e.nota = e.nota < 0 ?  0 : e.nota;
               return e
             }
