@@ -50,11 +50,12 @@ export default {
   },
   setup() {
     let usuario = usuarioGet();
+    console.log(usuario);
     const cursos = ref([]);
     onIonViewWillEnter( async () => {
       tokenHeader();
-      await axios.get(`/institutes/${usuario.institute.id}/courses`).then((response) => {
-        cursos.value = response.data;
+      await axios.get(`/users/courses/${usuario.id}?year=2023`).then((response) => {
+        cursos.value = response.data.map((assignacion) => ({name: assignacion.course.name, id: assignacion.course.id}));
       });
     });
 
