@@ -57,7 +57,8 @@
                 :key="option.id"
               >
                 <ion-label class="ion-text-wrap"
-                  ><b>{{ option.letra }}. </b> {{ option.sentence }}</ion-label
+                  ><b>{{ option.identifier }}. </b>
+                  {{ option.sentence }}</ion-label
                 >
 
                 <ion-radio
@@ -77,7 +78,8 @@
               :href="'editar/opcion/' + option.id"
             >
               <ion-label class="ion-text-wrap"
-                ><b>{{ option.identifier }}. </b> {{ option.sentence }}</ion-label
+                ><b>{{ option.identifier }}. </b>
+                {{ option.sentence }}</ion-label
               >
               <ion-icon
                 v-if="option.correct == true"
@@ -200,6 +202,7 @@ export default {
   setup() {
     const admin = adminOprofesor();
     const mroute = useRoute();
+    const grupoUsuario = JSON.parse(localStorage.getItem("grupoUsuario"));
     const { id } = mroute.params;
     const question = ref({
       id: "",
@@ -218,7 +221,7 @@ export default {
       userId: "",
       existe: 0,
     });
-    const respuestas = ref([]);
+
     const error = ref({
       estatus: 0,
       data: "",
@@ -229,36 +232,33 @@ export default {
       tokenHeader();
 
       await axios.get("/questions/" + id).then((response) => {
-        question.value = ({
-            id: response.data.id,
-      points: response.data.points,
-      sentence: response.data.sentence,
-      lessonId: response.data.lesson.id,
-      title: response.data.title
-        });
+        question.value = {
+          id: response.data.id,
+          points: response.data.points,
+          sentence: response.data.sentence,
+          lessonId: response.data.lesson.id,
+          title: response.data.title,
+        };
 
         if (!question.value.photo) {
           src.value = defaultFile("thumbnail");
         }
         var rem = new RegExp("<p></p>", "g");
-        question.value.sentence = question.value.sentence.replace(
-          rem,
-          "</br>"
-        );
+        question.value.sentence = question.value.sentence.replace(rem, "</br>");
       });
 
-      await axios.get(`/questions/${id}/options`).then((response) => { 
-        question.value.options = response.data
-      })
+      await axios.get(`/questions/${id}/options`).then((response) => {
+        question.value.options = response.data;
+      });
 
-      await axios.get("/respuestas/question/" + id).then((response) => {
-        respuestas.value = response.data;
-        respuestas.value.forEach(function (item) {
-          if (item.groupId == usuarioGet().groupId || admin) {
+      await axios
+        .get(`/answers?=questionId=${id}&groupId=${grupoUsuario.id}`)
+        .then((response) => {
+          if (response?.data[0] || admin) {
             resVisible.value = 1;
           }
         });
-      });
+
       if (admin) {
         resVisible.value = 1;
       }
@@ -271,7 +271,7 @@ export default {
           error.value.data = "Debe seleccionar una opción.";
         } else {
           respuesta.value.questionId = question.value.id;
-          respuesta.value.groupId = usuarioGet().groupId;
+          respuesta.value.groupId = grupoUsuario.id;
           respuesta.value.userId = usuarioGet().id;
           respuesta.value.existe = 1;
           await axios

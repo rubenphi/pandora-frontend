@@ -4,20 +4,13 @@
       <ion-toolbar>
         <ion-title>Cuestionarios</ion-title>
 
-        <ion-buttons
-          slot="start"
-          class="ion-margin-end"
-        >
-          <ion-button v-if="curso"  :href="'/areas/' + curso">
+        <ion-buttons slot="start" class="ion-margin-end">
+          <ion-button v-if="curso" :href="'/areas/' + curso">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
 
-        <ion-buttons
-          v-if="adminOProfesor"
-          slot="end"
-          class="ion-margin-end"
-        >
+        <ion-buttons v-if="adminOProfesor" slot="end" class="ion-margin-end">
           <ion-button
             v-if="curso && area"
             slot="end"
@@ -32,14 +25,17 @@
       <ion-card
         v-for="cuestionario in cuestionarios"
         :key="cuestionario.id"
+        v-on:click="lessonSelected(cuestionario)"
         :href="'/cuestionario/' + cuestionario.id"
       >
         <ion-card-header>
-          <ion-card-subtitle>{{ cursoSelected }}</ion-card-subtitle>
+          <ion-card-subtitle>{{ cursoSelected.name }}</ion-card-subtitle>
           <ion-card-title>{{ cuestionario.topic }}</ion-card-title>
         </ion-card-header>
 
-        <ion-card-content> {{ cuestionario.date.substring(0, 10) }} </ion-card-content>
+        <ion-card-content>
+          {{ cuestionario.date.substring(0, 10) }}
+        </ion-card-content>
       </ion-card>
     </ion-content>
   </ion-page>
@@ -86,36 +82,40 @@ export default {
     IonButton,
     IonIcon,
   },
-   setup() {
+  methods: {
+    lessonSelected: function (cuestionario) {
+      localStorage.setItem("lessonSelected", JSON.stringify(cuestionario));
+    },
+  },
+  setup() {
     const mroute = useRoute();
     const { curso } = mroute.params;
     const { area } = mroute.params;
-    const cursoSelected = ref()
+    const cursoSelected = ref(
+      JSON.parse(localStorage.getItem("courseSelected"))
+    );
+    const cursosUsuario = ref(
+      JSON.parse(localStorage.getItem("cursosUsuario"))
+    );
     let usuario = usuarioGet();
-    let adminOProfesor = adminOprofesor()
+    let adminOProfesor = adminOprofesor();
     const cuestionarios = ref([]);
     onIonViewWillEnter(async () => {
-       tokenHeader();
-      if (curso != usuario.curso_id && !adminOprofesor()) {
-   
-          router.push(
-            "/cuestionarios/" + usuario.curso_id + "/" + area
-          );
-       
+      tokenHeader();
+      if (curso != cursosUsuario.value[0].id && !adminOprofesor()) {
+        router.push("/cuestionarios/" + cursosUsuario.value[0].id + "/" + area);
       } else {
-       
         await axios
           .get(`/lessons?courseId=${curso}&areaId=${area}&periodId=1`)
           .then((response) => {
-            cuestionarios.value = response.data.map((cuestionario) => ( {
+            cuestionarios.value = response.data.map((cuestionario) => ({
               id: cuestionario.id,
               topic: cuestionario.topic,
-              date: cuestionario.date
+              date: cuestionario.date,
+              areaId: cuestionario.area.id,
+              courseId: cuestionario.course.id,
             }));
-          
           });
-          cursoSelected.value = (await axios
-          .get(`/courses/${curso}`)).data.name
       }
     });
 

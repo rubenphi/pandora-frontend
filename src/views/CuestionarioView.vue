@@ -66,7 +66,7 @@
               :icon="lockClosedOutline"
             ></ion-icon>
             <ion-icon
-              v-if="question.disponible == true"
+              v-if="question.available == true"
               slot="start"
               :icon="lockOpenOutline"
             ></ion-icon>
@@ -152,46 +152,25 @@ export default {
     const admin = adminOprofesor();
     const mroute = useRoute();
     const { id } = mroute.params;
-    const cuestionario = ref({
-      id: 0,
-      fecha: "",
-      topic: "",
-      questions: "",
-    });
-
+    const cuestionario = ref(
+      JSON.parse(localStorage.getItem("lessonSelected"))
+    );
 
     onIonViewDidEnter(async () => {
       tokenHeader();
-      await axios.get("/lessons/" + id).then((response) => {
-
-        cuestionario.value = {
-        id: response.data.id,
-        name: response.data.name ,
-        areaId : response.data.area.id ,
-        courseId:  response.data.course.id ,
-        topic: response.data.topic
-        };
-      });
 
       await axios.get(`/lessons/${id}/questions`).then((response) => {
-                if (!admin) {
-          cuestionario.value.questions = response.data.filter(
-            (i) => i.visible && i.available
-          );
+        if (!admin) {
+          cuestionario.value.questions = response.data.filter((i) => i.visible);
         } else {
-          cuestionario.value.questions = response.data.map((pregunta)=>({
-            available: pregunta.available, 
+          cuestionario.value.questions = response.data.map((pregunta) => ({
+            available: pregunta.available,
             visible: pregunta.visible,
             id: pregunta.id,
-            title: pregunta.title
-          }))
+            title: pregunta.title,
+          }));
         }
-
-        
-
-      })
-
-
+      });
     });
 
     return {

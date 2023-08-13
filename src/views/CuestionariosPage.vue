@@ -7,7 +7,7 @@
     </ion-header>
     <ion-content :fullscreen="true">
       <ion-list>
-        <ion-item v-for="curso in cursos" :key="curso.id"  :href="'areas/' + curso.id">
+        <ion-item  v-for="curso in cursos" :key="curso.id"  :href="'areas/' + curso.id" v-on:click="courseSelected(curso)">
           <ion-icon slot="start" :icon="peopleCircleOutline"></ion-icon>
           <ion-label>{{ curso.name }}</ion-label>
         </ion-item>
@@ -17,7 +17,7 @@
 </template>
 
 <script>
-import axios from "axios";
+
 import { ref } from "vue";
 import { tokenHeader, usuarioGet  } from "../globalService";
 
@@ -48,18 +48,23 @@ export default {
     IonPage,
     IonIcon,
   },
+  methods: {
+    courseSelected:  function  (course) {
+      localStorage.setItem('courseSelected', JSON.stringify(course));
+    }
+  },
   setup() {
+     
     let usuario = usuarioGet();
    
     const cursos = ref([]);
     onIonViewWillEnter( async () => {
       tokenHeader();
-      await axios.get(`/users/courses/${usuario.id}?year=2023`).then((response) => {
-      cursos.value = response.data.map((assignacion) => ({name: assignacion.course.name, id: assignacion.course.id}));
-      });
+      cursos.value = JSON.parse(localStorage.getItem('cursosUsuario'))
     });
 
     return {
+
       peopleCircleOutline,
       usuario,
       cursos,

@@ -3,11 +3,7 @@
     <ion-tabs>
       <ion-router-outlet></ion-router-outlet>
       <ion-tab-bar slot="bottom">
-        <ion-tab-button
-          v-if="adminOProfesor"
-          tab="tab1"
-          href="/cursos"
-        >
+        <ion-tab-button v-if="adminOProfesor" tab="tab1" href="/cursos">
           <ion-icon :icon="peopleOutline" />
           <ion-label>Grupos</ion-label>
         </ion-tab-button>
@@ -22,14 +18,21 @@
           <ion-label>Inicio</ion-label>
         </ion-tab-button>
 
-        <ion-tab-button tab="tab3"  v-if="usuario.rol === 'admin' || usuario.rol === 'director'"
-          href="/admin/cuestionarios">
+        <ion-tab-button
+          tab="tab3"
+          v-if="adminOProfesor"
+          href="/admin/cuestionarios"
+        >
           <ion-icon :icon="helpCircleOutline" />
 
           <ion-label>Cuestionarios</ion-label>
         </ion-tab-button>
 
-        <ion-tab-button v-else tab="tab3" :href="'/areas/' + usuario.curso_id">
+        <ion-tab-button
+          v-else
+          tab="tab3"
+          :href="'/areas/' + cursoEstudiante.id"
+        >
           <ion-icon :icon="helpCircleOutline" />
 
           <ion-label>Cuestionarios</ion-label>
@@ -49,7 +52,7 @@ import {
   IonRouterOutlet,
 } from "@ionic/vue";
 import { helpCircleOutline, homeOutline, peopleOutline } from "ionicons/icons";
-import { adminOprofesor, usuarioGet } from "../globalService";
+import { adminOprofesor } from "../globalService";
 export default {
   components: {
     IonLabel,
@@ -62,7 +65,7 @@ export default {
   },
   setup() {
     return {
-      usuario: usuarioGet(),
+      cursoEstudiante: JSON.parse(localStorage.getItem("cursosUsuario"))[0],
       adminOProfesor: adminOprofesor(),
       helpCircleOutline,
       homeOutline,

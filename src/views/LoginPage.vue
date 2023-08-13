@@ -199,15 +199,17 @@ export default {
         } else {
           await axios.post('/auth/login', login.value, {headers: {
     "Access-Control-Allow-Origin": "*"
-  }}).then(response => {
-    console.log(response);
+  }}).then(async (response) => {
+  
            if (response.data.userLoged.accessToken == undefined) {
               error.value.estatus = 1;
               error.value.data = 'Error al iniciar sesión';
-              console.log(response.data.message);
+       
             } else {
               localStorage.setItem('token', 'Bearer ' + response.data.userLoged.accessToken);
               localStorage.setItem('usuario', JSON.stringify(response.data.userLoged))
+
+              
                   error.value.estatus = 0;
                 router.push('/inicio');
 

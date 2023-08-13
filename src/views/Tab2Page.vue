@@ -34,9 +34,16 @@ import {
   IonButtons,
   onIonViewWillEnter,
 } from "@ionic/vue";
-import { tokenHeader } from "../globalService";
+import {
+  adminOprofesor,
+  selectedPeriod,
+  selectedYear,
+  tokenHeader,
+  usuarioGet,
+} from "../globalService";
 import router from "../router";
 import { exitOutline } from "ionicons/icons";
+import axios from "axios";
 export default {
   components: {
     IonHeader,
@@ -51,6 +58,34 @@ export default {
   setup() {
     onIonViewWillEnter(async () => {
       tokenHeader();
+
+      await axios
+        .get(`/users/${usuarioGet().id}/courses?year=${selectedYear()}`)
+        .then((response) => {
+          const cursosUsuario = response.data.map((assignacion) => ({
+            name: assignacion.course.name,
+            id: assignacion.course.id,
+          }));
+          localStorage.setItem("cursosUsuario", JSON.stringify(cursosUsuario));
+        });
+
+      if (!adminOprofesor())
+        await axios
+          .get(
+            `/users/${
+              usuarioGet().id
+            }/groups?periodId=${selectedPeriod()}&active=true`
+          )
+          .then((response) => {
+            const gruposUsuario = response.data.map((assignacion) => ({
+              name: assignacion.group.name,
+              id: assignacion.group.id,
+            }));
+            localStorage.setItem(
+              "grupoUsuario",
+              JSON.stringify(gruposUsuario[0])
+            );
+          });
     });
     return {
       salir() {
