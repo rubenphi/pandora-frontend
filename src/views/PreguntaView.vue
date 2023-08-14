@@ -251,13 +251,13 @@ export default {
         question.value.options = response.data;
       });
 
-      await axios
+      if(!admin){await axios
         .get(`/answers?=questionId=${id}&groupId=${grupoUsuario.id}`)
         .then((response) => {
           if (response?.data[0] || admin) {
             resVisible.value = 1;
           }
-        });
+        });}
 
       if (admin) {
         resVisible.value = 1;
