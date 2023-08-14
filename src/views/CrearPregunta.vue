@@ -27,7 +27,7 @@
         <ion-list v-if="editor" class="ion-no-padding">
           <ion-item
             class="ion-text-center"
-            v-if="id && pregunta.existe == 1"
+            v-if="id && pregunta.exist == true"
             button
             color="danger"
             @click="borrarPregunta(0)"
@@ -36,7 +36,7 @@
           </ion-item>
           <ion-item
             class="ion-text-center"
-            v-if="id && pregunta.existe == 0"
+            v-if="id && pregunta.exist == false"
             button
             color="success"
             @click="borrarPregunta(1)"
@@ -49,7 +49,7 @@
 
           <ion-item>
             <ion-label position="floating">Título:</ion-label>
-            <ion-input v-model="pregunta.titulo"></ion-input>
+            <ion-input v-model="pregunta.title"></ion-input>
           </ion-item>
           <ion-item>
             <ion-button slot="start" color="light">
@@ -67,7 +67,7 @@
               v-if="pregunta.photo"
               slot="end"
               color="light"
-              @click="borrarFoto"
+              @click="borrarFoto()"
             >
               <ion-icon :icon="trashOutline"></ion-icon>
             </ion-button>
@@ -77,12 +77,7 @@
           </ion-item>
           <ion-item>
             <ion-label position="floating">Valor:</ion-label>
-            <ion-input type="number" v-model="pregunta.valor"></ion-input>
-          </ion-item>
-
-          <ion-item>
-            <ion-label position="floating">Tiempo:</ion-label>
-            <ion-input type="number" v-model="pregunta.tiempo"></ion-input>
+            <ion-input type="number" v-model="pregunta.points"></ion-input>
           </ion-item>
 
           <ion-item>
@@ -98,20 +93,12 @@
             <ion-label>Disponible:</ion-label>
             <ion-toggle
               slot="end"
-              :checked="pregunta.disponible"
-              v-model="pregunta.disponible"
+              :checked="pregunta.available"
+              v-model="pregunta.available"
             >
             </ion-toggle>
           </ion-item>
-          <ion-item>
-            <ion-label>Revelada:</ion-label>
-            <ion-toggle
-              slot="end"
-              :checked="pregunta.revelada"
-              v-model="pregunta.revelada"
-            >
-            </ion-toggle>
-          </ion-item>
+
           <ion-item class="ion-no-padding" lines="none">
             <ion-button
               class="margen"
@@ -162,10 +149,10 @@ import { Editor, EditorContent } from "@tiptap/vue-3";
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import {
-  booltoInt,
   basedeURL,
   defaultFile,
   tokenHeader,
+usuarioGet,
 } from "../globalService";
 
 import { ref } from "vue";
@@ -234,7 +221,7 @@ export default {
     const reader = ref();
     const pregunta = ref({
       id: 0,
-      cuestionario_id: 0,
+  
     });
     const error = ref({
       estatus: 0,
@@ -244,27 +231,29 @@ export default {
     onIonViewWillEnter(async () => {
       tokenHeader();
       if (id != undefined) {
-        await axios.get("/preguntas/" + id).then((response) => {
-          pregunta.value = response.data;
+        await axios.get("/questions/" + id).then((response) => {
+          pregunta.value = {... response.data, lessonId: cuestionario,
+          instituteId: usuarioGet().institute.id };
           if (pregunta.value.photo == "null" || pregunta.value.photo == null) {
-            delete pregunta.value.photo;
+             pregunta.value.photo = null;
             src.value = defaultFile("thumbnail");
           } else {
-            src.value = basedeUrl + pregunta.value.photo;
+            src.value = basedeUrl +'/' + pregunta.value.photo;
           }
         });
       }
 
       if (cuestionario != undefined) {
         pregunta.value = {
-          titulo: "",
-          enunciado:
+          title: "",
+          sentence:
             "<h6><strong> Crea tu pregunta </strong></h6> <p> En esta sección <br> puedes crear tu pregunta </p>",
-          cuestionario_id: cuestionario,
-          valor: "",
+          lessonId: cuestionario,
+          instituteId: usuarioGet().institute.id,
+          points: "",
           visible: 0,
-          disponible: 0,
-          existe: 1,
+          available: 0,
+          exist: true,
         };
 
         src.value = defaultFile("thumbnail");
@@ -274,7 +263,7 @@ export default {
         extensions: [StarterKit, Underline],
         autofocus: "start",
         editable: true,
-        content: pregunta.value.enunciado,
+        content: pregunta.value.sentence,
         editorProps: {
           attributes: {
             class: "",
@@ -288,41 +277,42 @@ export default {
     });
 
     return {
-      borrarPregunta(valor) {
-        pregunta.value.existe = valor;
-        this.crearPregunta();
-      },
-      borrarFoto() {
-        delete pregunta.value.photo;
-        src.value = defaultFile("thumbnail");
-      },
+
       async crearPregunta() {
-        pregunta.value.visible = booltoInt(pregunta.value.visible);
-        pregunta.value.disponible = booltoInt(pregunta.value.disponible);
-        pregunta.value.revelada = booltoInt(pregunta.value.revelada);
-        pregunta.value.enunciado = editor.value.getHTML();
+        pregunta.value.sentence = editor.value.getHTML();
+        delete pregunta.value.institute 
+        delete pregunta.value.lesson
+        delete pregunta.value.institute  
+        delete pregunta.value.id
+        delete pregunta.value.createdAt
+        delete pregunta.value.updatedAt
+
 
         for (var key in pregunta.value) {
           form_data.value.append(key, pregunta.value[key]);
         }
 
         if (
-          pregunta.value.valor == "" ||
-          pregunta.value.enunciado ==
+          pregunta.value.points == "" ||
+          pregunta.value.sentence ==
             "<h6><strong> Crea tu pregunta </strong></h6> <p> En esta sección <br> puedes crear tu pregunta </p>"
         ) {
           error.value.estatus = 1;
           error.value.data = "Debe añadir un enunciado y añadir el valor";
         } else if (cuestionario != undefined) {
           await axios
-            .post("/preguntas", form_data.value, {
+            .post("/questions", form_data.value, {
               headers: {
                 "Content-Type": "multipart/form-data",
               },
             })
             .then((response) => {
-              router.push("/cuestionario/" + cuestionario);
-              localStorage.setItem("error", response.data.message);
+              if (response.data.exist) {
+                router.push("/pregunta/" + response.data.id);
+              } else {
+                router.push("/cuestionario/" + response.data.lesson.id);
+              }
+
             })
             .catch((response) => {
               localStorage.setItem("error", response.message);
@@ -331,16 +321,16 @@ export default {
             });
         } else if (id != undefined) {
           await axios
-            .post("/preguntas/update/" + id, form_data.value, {
+            .patch("/questions/" + id, form_data.value, {
               headers: {
                 "Content-Type": "multipart/form-data",
               },
             })
             .then((response) => {
-              if (pregunta.value.existe == 1) {
-                router.push("/pregunta/" + id);
+              if (response.data.exist) {
+                router.push("/pregunta/" + response.data.id);
               } else {
-                router.push("/cuestionario/" + pregunta.value.cuestionario_id);
+                router.push("/cuestionario/" + response.data.lesson.id);
               }
 
               localStorage.setItem("error", response.data.message);
@@ -361,6 +351,14 @@ export default {
           src.value = reader.value.result;
         };
         reader.value.readAsDataURL(file.value);
+      },
+      borrarPregunta(valor) {
+        pregunta.value.exist = valor;
+        this.crearPregunta();
+      },
+      borrarFoto() {
+        pregunta.value.photo = null
+        src.value = defaultFile("thumbnail");
       },
       id,
       cuestionario,

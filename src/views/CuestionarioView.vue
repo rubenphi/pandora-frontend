@@ -82,7 +82,7 @@
         class="ion-justify-content-center ion-padding-top ion-padding-bottom"
       >
         <ion-button
-          :href="'/crear/question/' + cuestionario.id"
+          :href="'/crear/pregunta/' + cuestionario.id"
           expand="full"
           fill="outline"
           shape="round"

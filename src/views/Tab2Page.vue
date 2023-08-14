@@ -37,7 +37,6 @@ import {
 import {
   adminOprofesor,
   selectedPeriod,
-  selectedYear,
   tokenHeader,
   usuarioGet,
 } from "../globalService";
@@ -59,15 +58,7 @@ export default {
     onIonViewWillEnter(async () => {
       tokenHeader();
 
-      await axios
-        .get(`/users/${usuarioGet().id}/courses?year=${selectedYear()}`)
-        .then((response) => {
-          const cursosUsuario = response.data.map((assignacion) => ({
-            name: assignacion.course.name,
-            id: assignacion.course.id,
-          }));
-          localStorage.setItem("cursosUsuario", JSON.stringify(cursosUsuario));
-        });
+
 
       if (!adminOprofesor())
         await axios

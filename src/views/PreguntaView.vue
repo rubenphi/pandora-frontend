@@ -35,7 +35,7 @@
 
       <ion-card>
         <div class="ion-padding" v-html="question.sentence"></div>
-        <ion-item v-if="admin" button :href="'/editar/question/' + question.id">
+        <ion-item v-if="admin" button :href="'/editar/pregunta/' + question.id">
           <ion-icon slot="end" :icon="createOutline"></ion-icon>
         </ion-item>
       </ion-card>

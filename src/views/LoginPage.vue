@@ -140,7 +140,7 @@
 <script>
 import {ref} from 'vue';
 import axios from 'axios';
-import {tokenHeader} from '../globalService';
+import {selectedYear, tokenHeader, usuarioGet} from '../globalService';
 import {
   IonPage,
   IonHeader,
@@ -211,10 +211,22 @@ export default {
 
               
                   error.value.estatus = 0;
-                router.push('/inicio');
+              
 
               tokenHeader();
             }
+          }).then(async () => {
+            await axios
+        .get(`/users/${usuarioGet().id}/courses?year=${selectedYear()}`)
+        .then((response) => {
+          const cursosUsuario = response.data.map((assignacion) => ({
+            name: assignacion.course.name,
+            id: assignacion.course.id,
+          }));
+          localStorage.setItem("cursosUsuario", JSON.stringify(cursosUsuario));
+        });
+
+        router.push('/inicio');
           });
         }
       },
