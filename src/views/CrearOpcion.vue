@@ -44,12 +44,24 @@
             >
             </ion-toggle>
           </ion-item>
-         <ion-item class="ion-text-center" v-if="id && opcion.exist == true"  button color="danger" @click="borrarOpcion(0)" >
-          <ion-label >Borrar Opción</ion-label>
-        </ion-item>
-        <ion-item class="ion-text-center" v-if="id && opcion.exist == false"  button color="success" @click="borrarOpcion(1)" >
-          <ion-label >Recuperar Opción</ion-label>
-        </ion-item>
+          <ion-item
+            class="ion-text-center"
+            v-if="id && opcion.exist == true"
+            button
+            color="danger"
+            @click="borrarOpcion(0)"
+          >
+            <ion-label>Borrar Opción</ion-label>
+          </ion-item>
+          <ion-item
+            class="ion-text-center"
+            v-if="id && opcion.exist == false"
+            button
+            color="success"
+            @click="borrarOpcion(1)"
+          >
+            <ion-label>Recuperar Opción</ion-label>
+          </ion-item>
         </ion-list>
       </div>
     </ion-content>
@@ -117,16 +129,15 @@ export default {
       tokenHeader();
       if (id != undefined) {
         await axios.get("/options/" + id).then((response) => {
-        const questionId = response.data.question.id
-      delete response.data.id
-       delete response.data.createdAt
-       delete response.data.updatedAt
-     
-       delete response.data.question
-       delete response.data.institute
+          const questionId = response.data.question.id;
+          delete response.data.id;
+          delete response.data.createdAt;
+          delete response.data.updatedAt;
+
+          delete response.data.question;
+          delete response.data.institute;
           opcion.value = { ...response.data, questionId };
         });
-        
       }
       if (pregunta != undefined) {
         opcion.value = {
@@ -135,20 +146,20 @@ export default {
           indentifier: "",
           questionId: "",
           instituteId: usuarioGet().institute.id,
-          exist: true
+          exist: true,
         };
       }
     });
 
     return {
-      borrarOpcion(valor){
+      borrarOpcion(valor) {
         opcion.value.existe = valor;
         this.crearOpcion();
-      }, 
+      },
       async crearOpcion() {
         if (opcion.value.identifier == "" || opcion.value.sentence == "") {
           error.value.estatus = 1;
-          error.value.data = "Debe seleccionar una fecha y añadir el tema";
+          error.value.data = "Debe añadir un identificador y un enunciado";
         } else if (pregunta != undefined) {
           opcion.value.questionId = pregunta;
           await axios
@@ -158,10 +169,10 @@ export default {
               localStorage.setItem("error", response.data.message);
             })
             .catch((response) => {
-              localStorage.setItem("error", response.message);
+              localStorage.setItem("error", response.data.message);
               error.value.estatus = 1;
               error.value.color = "danger";
-              error.value.data = "Error: no se pudo añadir el cuestionario";
+              error.value.data = response.data.message;
             });
         } else if (id != undefined) {
           await axios
@@ -175,11 +186,13 @@ export default {
                 router.push("/pregunta/" + response.data.question.id);
               }, 500);
             })
-            .catch((response) => {
-              localStorage.setItem("error", response.message);
+            .catch((fallo) => {
+              console.log(fallo.response);
+              localStorage.setItem("error", fallo.response.data.message);
               error.value.estatus = 1;
               error.value.color = "danger";
-              error.value.data = "Error: no se pudo actualizar el cuestionario";
+              error.value.data = fallo.response.data.message;
+              console.log(error.value);
             });
         }
       },

@@ -30,7 +30,7 @@
             v-if="id && pregunta.exist == true"
             button
             color="danger"
-            @click="borrarPregunta(0)"
+            @click="borrarPregunta(false)"
           >
             <ion-label>Borrar Pregunta</ion-label>
           </ion-item>
@@ -39,7 +39,7 @@
             v-if="id && pregunta.exist == false"
             button
             color="success"
-            @click="borrarPregunta(1)"
+            @click="borrarPregunta(true)"
           >
             <ion-label>Recuperar Pregunta</ion-label>
           </ion-item>
@@ -152,7 +152,7 @@ import {
   basedeURL,
   defaultFile,
   tokenHeader,
-usuarioGet,
+  usuarioGet,
 } from "../globalService";
 
 import { ref } from "vue";
@@ -221,7 +221,6 @@ export default {
     const reader = ref();
     const pregunta = ref({
       id: 0,
-  
     });
     const error = ref({
       estatus: 0,
@@ -232,13 +231,16 @@ export default {
       tokenHeader();
       if (id != undefined) {
         await axios.get("/questions/" + id).then((response) => {
-          pregunta.value = {... response.data, lessonId: cuestionario,
-          instituteId: usuarioGet().institute.id };
-          if (pregunta.value.photo == "null" || pregunta.value.photo == null) {
-             pregunta.value.photo = null;
+          pregunta.value = {
+            ...response.data,
+            lessonId: response.data.lesson.id,
+            instituteId: usuarioGet().institute.id,
+          };
+          if (!pregunta.value.photo) {
+            pregunta.value.photo = null;
             src.value = defaultFile("thumbnail");
           } else {
-            src.value = basedeUrl +'/' + pregunta.value.photo;
+            src.value = basedeUrl + pregunta.value.photo;
           }
         });
       }
@@ -277,16 +279,14 @@ export default {
     });
 
     return {
-
       async crearPregunta() {
         pregunta.value.sentence = editor.value.getHTML();
-        delete pregunta.value.institute 
-        delete pregunta.value.lesson
-        delete pregunta.value.institute  
-        delete pregunta.value.id
-        delete pregunta.value.createdAt
-        delete pregunta.value.updatedAt
-
+        delete pregunta.value.institute;
+        delete pregunta.value.lesson;
+        delete pregunta.value.institute;
+        delete pregunta.value.id;
+        delete pregunta.value.createdAt;
+        delete pregunta.value.updatedAt;
 
         for (var key in pregunta.value) {
           form_data.value.append(key, pregunta.value[key]);
@@ -312,12 +312,11 @@ export default {
               } else {
                 router.push("/cuestionario/" + response.data.lesson.id);
               }
-
             })
-            .catch((response) => {
-              localStorage.setItem("error", response.message);
+            .catch((fallo) => {
+              localStorage.setItem("error", fallo.response.data.message);
               error.value.estatus = 1;
-              error.value.data = "Error: no se pudo añadir la pregunta";
+              error.value.data = fallo.response.data.message;
             });
         } else if (id != undefined) {
           await axios
@@ -335,10 +334,10 @@ export default {
 
               localStorage.setItem("error", response.data.message);
             })
-            .catch((response) => {
-              localStorage.setItem("error", response.message);
+            .catch((fallo) => {
+              localStorage.setItem("error", fallo.response.data.message);
               error.value.estatus = 1;
-              error.value.data = "Error: no se pudo actualizar la pregunta";
+              error.value.data = fallo.response.data.message;
             });
         }
       },
@@ -357,7 +356,7 @@ export default {
         this.crearPregunta();
       },
       borrarFoto() {
-        pregunta.value.photo = null
+        pregunta.value.photo = null;
         src.value = defaultFile("thumbnail");
       },
       id,

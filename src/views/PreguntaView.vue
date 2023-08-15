@@ -238,6 +238,7 @@ export default {
           sentence: response.data.sentence,
           lessonId: response.data.lesson.id,
           title: response.data.title,
+          photo: response.data.photo,
         };
 
         if (!question.value.photo) {
@@ -251,13 +252,15 @@ export default {
         question.value.options = response.data;
       });
 
-      if(!admin){await axios
-        .get(`/answers?=questionId=${id}&groupId=${grupoUsuario.id}`)
-        .then((response) => {
-          if (response?.data[0] || admin) {
-            resVisible.value = 1;
-          }
-        });}
+      if (!admin) {
+        await axios
+          .get(`/answers?=questionId=${id}&groupId=${grupoUsuario.id}`)
+          .then((response) => {
+            if (response?.data[0] || admin) {
+              resVisible.value = 1;
+            }
+          });
+      }
 
       if (admin) {
         resVisible.value = 1;
