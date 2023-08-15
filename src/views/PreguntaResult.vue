@@ -3,7 +3,7 @@
     <ion-header>
       <ion-toolbar>
         <ion-title size="large" class="ion-text-center">{{
-          pregunta.titulo
+          pregunta.title
         }}</ion-title>
         <ion-buttons slot="start" class="ion-margin-start">
           <ion-button v-if="id" :href="'/pregunta/' + id">
@@ -27,7 +27,7 @@
         >
           <ion-icon
             v-if="
-              (index === 0) & admin || (index === 0) & (pregunta.revelada == 1)
+              (index === 0) & admin || (index === 0) 
             "
             :icon="ribbonOutline"
             size="large"
@@ -35,8 +35,8 @@
           ></ion-icon>
           <ion-icon
             v-else-if="
-              (respuesta.puntaje > 0) & admin ||
-              (respuesta.puntaje > 0) & (pregunta.revelada == 1)
+              (respuesta.points > 0) & admin ||
+              (respuesta.points > 0) 
             "
             :icon="happyOutline"
             size="large"
@@ -44,8 +44,8 @@
           ></ion-icon>
           <ion-icon
             v-else-if="
-              (respuesta.puntaje <= 0) & admin ||
-              (respuesta.puntaje <= 0) & (pregunta.revelada == 1)
+              (respuesta.points <= 0) & admin ||
+              (respuesta.points <= 0)  
             "
             :icon="sadOutline"
             size="large"
@@ -58,27 +58,27 @@
             slot="start"
           ></ion-icon>
 
-          <ion-label color="medium">{{ respuesta.grupo.nombre }}</ion-label>
+          <ion-label color="medium">{{ respuesta.group.name }}</ion-label>
           <ion-note slot="end">
             <ion-text
               v-if="
-                (respuesta.puntaje > 0) & admin ||
-                (respuesta.puntaje > 0) & (pregunta.revelada == 1)
+                (respuesta.points > 0) & admin ||
+                (respuesta.points > 0) 
               "
               color="success"
-              ><h6>Obtienen: +{{ respuesta.puntaje }}</h6></ion-text
+              ><h6>Obtienen: +{{ respuesta.points }}</h6></ion-text
             >
             <ion-text
               v-else-if="
-                admin & (respuesta.puntaje <= 0) ||
-                (pregunta.revelada == 1) & (respuesta.puntaje <= 0)
+                admin & (respuesta.points <= 0) ||
+                  (respuesta.points <= 0)
               "
               color="danger"
-              ><h6>Obtienen: {{ respuesta.puntaje }}</h6></ion-text
+              ><h6>Obtienen: {{ respuesta.points }}</h6></ion-text
             >
             <ion-text v-else color="warning"><h6>Obtienen: ?</h6></ion-text>
-            <ion-text v-if="admin || pregunta.revelada == 1" color="warning"
-              ><h6>Respuesta: {{ respuesta.opcion.letra }}</h6></ion-text
+            <ion-text v-if="admin || grupoUsuario.id == respuesta.group.id " color="warning"
+              ><h6>Respuesta: {{ respuesta.option.identifier }}  </h6></ion-text
             >
             <ion-text v-else color="primary"><h6>Respuesta: ?</h6></ion-text>
           </ion-note>
@@ -159,25 +159,28 @@ export default {
   setup() {
     const admin = adminOprofesor();
     const mroute = useRoute();
+    const grupoUsuario = ref(
+      JSON.parse(localStorage.getItem("grupoUsuario"))
+    );
     const { id } = mroute.params;
     const respuestas = ref([
       {
         id: "Cargando",
-        grupo: { nombre: "Cargando" },
-        puntaje: 0,
-        opcion: {
-          letra: "Cargando",
+        group: { name: "Cargando" },
+        points: 0,
+        option: {
+          identifier: "Cargando",
         },
       },
     ]);
-    const pregunta = ref({ titulo: "Cargando..." });
+    const pregunta = ref({ title: "Cargando..." });
 
     onIonViewDidEnter(async () => {
       tokenHeader();
-      await axios.get("/preguntas/" + id).then((response) => {
-        pregunta.value = response.data;
+      await axios.get("/questions/" + id).then((response) => {
+        pregunta.value = { title: response.data.title};
       });
-      await axios.get("/respuestas/pregunta/" + id).then((response) => {
+      await axios.get("/questions/" + id + "/answers").then((response) => {
         respuestas.value = response.data;
       });
     });
@@ -208,6 +211,7 @@ export default {
             router.push("/cuestionario/" + pregunta.value.cuestionario_id);
           });
       },
+      grupoUsuario,
       respuestas,
       arrowBackOutline,
       handLeftOutline,

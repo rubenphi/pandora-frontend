@@ -2,7 +2,7 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-title size="large" class="ion-text-center">{{cuestionario.tema}}</ion-title>
+        <ion-title size="large" class="ion-text-center">{{cuestionario.topic}}</ion-title>
         <ion-buttons slot="start" class="ion-margin-start">
           <ion-button v-if="id" :href="'/cuestionario/' + id">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
@@ -93,9 +93,9 @@ export default {
     const  usuario = usuarioGet();
     const mroute = useRoute();
     const { id } = mroute.params;
-    const cuestionario =  ref({
-      tema: ''
-    });
+    const cuestionario = ref(
+      JSON.parse(localStorage.getItem("lessonSelected"))
+    );
     const respuestas = ref([
       {  group: {name: 'Cargando'}, points: 'Cargando' }
     ]);
@@ -112,10 +112,7 @@ export default {
           );
           
         });
-        await axios.get("/cuestionarios/" + id).then((response) => {
-          cuestionario.value = response.data;
-        });
-      
+
     });
 
     return {

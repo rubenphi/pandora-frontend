@@ -30,7 +30,7 @@
         </ion-card-header>
       </ion-card>
       <ion-card v-if="question.photo">
-        <ion-img :src="basedeURL + question.photo"></ion-img>
+        <ion-img :src="basedeURL +  question.photo"></ion-img>
       </ion-card>
 
       <ion-card>
@@ -218,8 +218,8 @@ export default {
       optionId: "",
       questionId: "",
       groupId: "",
-      userId: "",
-      existe: 0,
+      lessonId: "",
+      exist: 0,
     });
 
     const error = ref({
@@ -257,6 +257,7 @@ export default {
           .get(`/answers?=questionId=${id}&groupId=${grupoUsuario.id}`)
           .then((response) => {
             if (response?.data[0] || admin) {
+              respuesta.value = response?.data[0]
               resVisible.value = 1;
             }
           });
@@ -275,10 +276,11 @@ export default {
         } else {
           respuesta.value.questionId = question.value.id;
           respuesta.value.groupId = grupoUsuario.id;
-          respuesta.value.userId = usuarioGet().id;
-          respuesta.value.existe = 1;
+          respuesta.value.lessonId = question.value.lessonId;
+          respuesta.value.exist = true;
+          respuesta.value.instituteId = usuarioGet().institute.id
           await axios
-            .post("/respuestas", respuesta.value)
+            .post("/answers", respuesta.value)
             .then((response) => {
               router.push("/resultado/" + question.value.id);
               localStorage.setItem("error", response.data.message);
