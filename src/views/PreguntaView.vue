@@ -30,7 +30,7 @@
         </ion-card-header>
       </ion-card>
       <ion-card v-if="question.photo">
-        <ion-img :src="basedeURL +  question.photo"></ion-img>
+        <ion-img :src="basedeURL + question.photo"></ion-img>
       </ion-card>
 
       <ion-card>
@@ -107,6 +107,7 @@
           shape="round"
           color="primary"
           class="ion-align-self-center"
+          :disabled="botonActivo"
           @click="responder"
         >
           <ion-icon slot="end" :icon="paperPlaneOutline"></ion-icon>
@@ -201,6 +202,7 @@ export default {
   },
   setup() {
     const admin = adminOprofesor();
+    const botonInactivo = ref(false);
     const mroute = useRoute();
     const grupoUsuario = JSON.parse(localStorage.getItem("grupoUsuario"));
     const { id } = mroute.params;
@@ -257,8 +259,9 @@ export default {
           .get(`/answers?=questionId=${id}&groupId=${grupoUsuario.id}`)
           .then((response) => {
             if (response?.data[0] || admin) {
-              respuesta.value = response?.data[0]
+              respuesta.value.optionId = response?.data[0].option.id;
               resVisible.value = 1;
+              botonInactivo.value = true;
             }
           });
       }
@@ -278,18 +281,18 @@ export default {
           respuesta.value.groupId = grupoUsuario.id;
           respuesta.value.lessonId = question.value.lessonId;
           respuesta.value.exist = true;
-          respuesta.value.instituteId = usuarioGet().institute.id
+          respuesta.value.instituteId = usuarioGet().institute.id;
+          botonInactivo.value = true;
           await axios
             .post("/answers", respuesta.value)
-            .then((response) => {
+            .then(() => {
               router.push("/resultado/" + question.value.id);
-              localStorage.setItem("error", response.data.message);
             })
-            .catch((response) => {
-              localStorage.setItem("error", response.message);
+            .catch((fallo) => {
               error.value.estatus = 1;
-              error.value.data =
-                "Error: ya respondiste la question o no se te permite responder";
+              error.value.data = fallo.response.data.message;
+              localStorage.setItem("error", fallo.response.data.message);
+              botonInactivo.value = false;
             });
         }
       },
@@ -306,6 +309,7 @@ export default {
       podiumOutline,
       createOutline,
       addOutline,
+      botonActivo: botonInactivo,
     };
   },
 };

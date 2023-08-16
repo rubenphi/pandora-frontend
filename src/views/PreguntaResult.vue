@@ -26,27 +26,19 @@
           class="ion-padding-end"
         >
           <ion-icon
-            v-if="
-              (index === 0) & admin || (index === 0) 
-            "
+            v-if="(index === 0) & admin || index === 0"
             :icon="ribbonOutline"
             size="large"
             slot="start"
           ></ion-icon>
           <ion-icon
-            v-else-if="
-              (respuesta.points > 0) & admin ||
-              (respuesta.points > 0) 
-            "
+            v-else-if="(respuesta.points > 0) & admin || respuesta.points > 0"
             :icon="happyOutline"
             size="large"
             slot="start"
           ></ion-icon>
           <ion-icon
-            v-else-if="
-              (respuesta.points <= 0) & admin ||
-              (respuesta.points <= 0)  
-            "
+            v-else-if="(respuesta.points <= 0) & admin || respuesta.points <= 0"
             :icon="sadOutline"
             size="large"
             slot="start"
@@ -61,24 +53,22 @@
           <ion-label color="medium">{{ respuesta.group.name }}</ion-label>
           <ion-note slot="end">
             <ion-text
-              v-if="
-                (respuesta.points > 0) & admin ||
-                (respuesta.points > 0) 
-              "
+              v-if="(respuesta.points > 0) & admin || respuesta.points > 0"
               color="success"
               ><h6>Obtienen: +{{ respuesta.points }}</h6></ion-text
             >
             <ion-text
               v-else-if="
-                admin & (respuesta.points <= 0) ||
-                  (respuesta.points <= 0)
+                admin & (respuesta.points <= 0) || respuesta.points <= 0
               "
               color="danger"
               ><h6>Obtienen: {{ respuesta.points }}</h6></ion-text
             >
             <ion-text v-else color="warning"><h6>Obtienen: ?</h6></ion-text>
-            <ion-text v-if="admin || grupoUsuario.id == respuesta.group.id " color="warning"
-              ><h6>Respuesta: {{ respuesta.option.identifier }}  </h6></ion-text
+            <ion-text
+              v-if="admin || grupoUsuario.id == respuesta.group.id"
+              color="warning"
+              ><h6>Respuesta: {{ respuesta.option.identifier }}</h6></ion-text
             >
             <ion-text v-else color="primary"><h6>Respuesta: ?</h6></ion-text>
           </ion-note>
@@ -95,7 +85,7 @@
           shape="round"
           color="medium"
           class="ion-align-self-center"
-          @click="updateTime"
+          @click="bonus"
         >
           <ion-icon :icon="addOutline"></ion-icon>
         </ion-button>
@@ -159,9 +149,7 @@ export default {
   setup() {
     const admin = adminOprofesor();
     const mroute = useRoute();
-    const grupoUsuario = ref(
-      JSON.parse(localStorage.getItem("grupoUsuario"))
-    );
+    const grupoUsuario = ref(JSON.parse(localStorage.getItem("grupoUsuario")));
     const { id } = mroute.params;
     const respuestas = ref([
       {
@@ -178,7 +166,7 @@ export default {
     onIonViewDidEnter(async () => {
       tokenHeader();
       await axios.get("/questions/" + id).then((response) => {
-        pregunta.value = { title: response.data.title};
+        pregunta.value = { title: response.data.title };
       });
       await axios.get("/questions/" + id + "/answers").then((response) => {
         respuestas.value = response.data;
@@ -190,25 +178,12 @@ export default {
       id,
       async bonus() {
         await axios
-          .post("/respuestas/bonus/pregunta/" + id)
+          .post(`/answers/question/${id}/bonus`)
           .then((response) => {
             localStorage.setItem("error", response);
-          });
-        window.location.reload();
-  
-      },
-      async updateTime() {
-        pregunta.value.tiempo = 15;
-        pregunta.value.revelada = true;
-        await axios
-          .post("/preguntas/update/" + id, pregunta.value, {})
-          .then((response) => {
-            router.push("/pregunta/" + id);
-
-            localStorage.setItem("error", response.data.message);
           })
-          .catch(() => {
-            router.push("/cuestionario/" + pregunta.value.cuestionario_id);
+          .then(() => {
+            router.push("/pregunta/" + id);
           });
       },
       grupoUsuario,

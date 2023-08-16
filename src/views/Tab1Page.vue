@@ -12,11 +12,10 @@
         </ion-toolbar>
       </ion-header>
       <ion-list>
-        <ion-item v-for="miembro in miembros" :key="miembro.id" >
+        <ion-item v-for="miembro in miembros" :key="miembro.user.id">
           <ion-icon slot="start" :icon="personOutline"></ion-icon>
-          <ion-label>{{miembro.name}}</ion-label>
+          <ion-label>{{ miembro.user.name }}</ion-label>
         </ion-item>
-        
       </ion-list>
     </ion-content>
   </ion-page>
@@ -26,8 +25,7 @@ import { personOutline } from "ionicons/icons";
 import axios from "axios";
 import { ref } from "vue";
 
-
-import { tokenHeader , usuarioGet } from "../globalService";
+import { tokenHeader, usuarioGet } from "../globalService";
 import {
   onIonViewWillEnter,
   IonLabel,
@@ -54,20 +52,22 @@ export default {
   },
   setup() {
     let usuario = usuarioGet();
+    const grupoUsuario = ref(JSON.parse(localStorage.getItem("grupoUsuario")));
     const miembros = ref([]);
     onIonViewWillEnter(async () => {
       tokenHeader();
-     await axios.get("/user/grupo/" + usuario.grupo_id).then((response) => {
-        miembros.value = response.data;
-        
-      });
+      await axios
+        .get(`/groups/${grupoUsuario.value.id}/users`)
+        .then((response) => {
+          miembros.value = response.data;
+        });
     });
     return {
+      grupoUsuario,
       usuario,
       personOutline,
-      miembros
+      miembros,
     };
-  
   },
 };
 </script>
