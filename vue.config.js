@@ -5,7 +5,7 @@ module.exports = {
   
   publicPath:  '/'
 ,
-    configureWebpack: {        
+    configureWebpack: {         
       devServer: {
         allowedHosts: 'all',
         client: {
