@@ -105,7 +105,10 @@ export default {
         await axios.get(`/lessons/${id}/results`).then((response) => {
           respuestas.value = response.data.map(
             e=> {e.points = parseFloat(e.points) ;
-              e.nota =( ( e.points * 5 ) / response.data[0].points).toFixed(1);
+              e.nota = e.points != 0 ? (( e.points * 5 ) / response.data[0].points) : 0;
+
+	console.log(e.points);
+	console.log(e.nota);
               e.nota = e.nota < 0 ?  0 : e.nota;
               return e
             }
