@@ -14,7 +14,7 @@ module.exports = {
         headers: {
           'Access-Control-Allow-Origin': '*'            
         },
-        proxy: 'auto://localhost:3000',
+
       }
     }
 }

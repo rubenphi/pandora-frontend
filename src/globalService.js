@@ -14,7 +14,7 @@ export function usuarioGet() {
 }
 
 export function selectedYear() {
-  return 2023;
+  return 2024;
 }
 
 export function selectedPeriod() {
