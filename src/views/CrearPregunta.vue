@@ -288,9 +288,7 @@ export default {
         delete pregunta.value.createdAt;
         delete pregunta.value.updatedAt;
 
-        for (var key in pregunta.value) {
-          form_data.value.append(key, pregunta.value[key]);
-        }
+
 
         if (
           pregunta.value.points == "" ||
@@ -299,7 +297,13 @@ export default {
         ) {
           error.value.estatus = 1;
           error.value.data = "Debe añadir un enunciado y añadir el valor";
-        } else if (cuestionario != undefined) {
+        } else {
+          for (var key in pregunta.value) {
+          form_data.value.append(key, pregunta.value[key]);
+        }
+
+        if (cuestionario != undefined) {
+          
           await axios
             .post("/questions", form_data.value, {
               headers: {
@@ -318,7 +322,7 @@ export default {
               error.value.estatus = 1;
               error.value.data = fallo.response.data.message;
             });
-        } else if (id != undefined) {
+        } if (id != undefined) {
           await axios
             .patch("/questions/" + id, form_data.value, {
               headers: {
@@ -326,6 +330,7 @@ export default {
               },
             })
             .then((response) => {
+              console.log(form_data.value);
               if (response.data.exist) {
                 router.push("/pregunta/" + response.data.id);
               } else {
@@ -340,6 +345,9 @@ export default {
               error.value.data = fallo.response.data.message;
             });
         }
+        }
+        
+
       },
 
       onFileChange(e) {
