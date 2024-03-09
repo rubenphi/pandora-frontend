@@ -80,8 +80,9 @@ export default {
     });
     return {
       salir() {
+        localStorage.clear();
         router.push("/login");
-        localStorage.removeItem("token");
+        
       },
       exitOutline,
     };

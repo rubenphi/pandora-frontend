@@ -226,6 +226,15 @@ export default {
           localStorage.setItem("cursosUsuario", JSON.stringify(cursosUsuario));
         });
 
+        await axios
+        .get(`/periods?instituteId=${usuarioGet().institute.id}`).then((response) => {
+          const periodos = response.data.map((periodo) => ({
+            name: periodo.name,
+            id: periodo.id,
+          }))
+          localStorage.setItem("periodos", JSON.stringify(periodos));
+        })
+
         router.push('/inicio');
           });
         }
