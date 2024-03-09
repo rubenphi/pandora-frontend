@@ -30,16 +30,28 @@
 
           <ion-item>
             <ion-label position="stacked">Fecha</ion-label>
-            <ion-input v-model="cuestionario.fecha" type="date"></ion-input>
+            <ion-input v-model="cuestionario.date" type="date"></ion-input>
           </ion-item>
 
           <ion-item>
+      <ion-select v-model="cuestionario.periodId" label="Periodo" placeholder="Periodo">
+        <ion-select-option
+          v-for="periodo in periodos"
+          :key="periodo.id"
+          :value="periodo.id"
+        >
+          {{ periodo.name }}
+        </ion-select-option>
+      </ion-select>
+    </ion-item>
+
+          <ion-item>
             <ion-label position="stacked">Tema</ion-label>
-            <ion-input v-model="cuestionario.tema" type="text"></ion-input>
+            <ion-input v-model="cuestionario.topic" type="text"></ion-input>
           </ion-item>
           <ion-item
             class="ion-text-center"
-            v-if="id && cuestionario.existe == 1"
+            v-if="id && cuestionario.exist == true"
             button
             color="danger"
             @click="borrarCuestionario(0)"
@@ -48,7 +60,7 @@
           </ion-item>
           <ion-item
             class="ion-text-center"
-            v-if="id && cuestionario.existe == 0"
+            v-if="id && cuestionario.exist == false"
             button
             color="success"
             @click="borrarCuestionario(1)"
@@ -80,6 +92,8 @@ import {
   IonInput,
   IonIcon,
   IonButton,
+  IonSelect,
+  IonSelectOption,
   IonButtons,
 } from "@ionic/vue";
 
@@ -103,15 +117,19 @@ export default {
     IonItem,
     IonLabel,
     IonInput,
+    IonSelect,
+  IonSelectOption
   },
   setup() {
     const mroute = useRoute();
     const { curso } = mroute.params;
     const { area } = mroute.params;
     const { id } = mroute.params;
+    const periodos = ref(
+      JSON.parse(localStorage.getItem("periodos"))
+    );
     const cuestionario = ref({
-      id: 0,
-      curso_id: 0,
+      courseId: 0,
     });
     const error = ref({
       estatus: 0,
@@ -123,38 +141,55 @@ export default {
     onIonViewWillEnter(async () => {
       tokenHeader();
       if (id != undefined) {
-        await axios.get("/cuestionarios/" + id).then((response) => {
-          cuestionario.value = response.data;
+        await axios.get("/lessons/" + id).then((response) => {
+          cuestionario.value.date = response.data.date.substring(0, 10);
+          cuestionario.value.topic = response.data.topic;
+          cuestionario.value.periodId = response.data.period.id;
+          cuestionario.value.courseId = response.data.course.id;
+          cuestionario.value.areaId = response.data.area.id;
+          cuestionario.value.instituteId = response.data.institute.id;
+          cuestionario.value.year = response.data.year;
+          cuestionario.value.exist = response.data.exist;
+
         });
       }
       if (curso != undefined && area != undefined) {
         cuestionario.value = {
-          fecha: "",
-          tema: "",
-          usuario_id: "",
-          curso_id: "",
-          area_id: "",
-          existe: 1,
+          date: "",
+          topic: "",
+          courseId: "",
+          year: 0,
+          areaId: "",
+          periodId: "",
+          instituteId: "",
+          exist: true
         };
       }
     });
 
     return {
       borrarCuestionario(valor) {
-        cuestionario.value.existe = valor;
+        cuestionario.value.exist = valor;
         this.crearCuestionario();
       },
       async crearCuestionario() {
-        if (cuestionario.value.fecha == "" || cuestionario.value.tema == "") {
+        if (cuestionario.value.date == "" || cuestionario.value.tema == "") {
           error.value.estatus = 1;
           error.value.data = "Debe seleccionar una fecha y añadir el tema";
         } else if (curso != undefined) {
-          cuestionario.value.usuario_id = usuario.id;
-          cuestionario.value.curso_id = curso;
-          cuestionario.value.area_id = area;
+
+          cuestionario.value.courseId = parseInt(curso, 10);
+          cuestionario.value.areaId = parseInt(area, 10);
+          cuestionario.value.instituteId = parseInt(usuario.institute.id, 10);
+          cuestionario.value.year = new Date().getFullYear();
+
+
+         
+
           await axios
-            .post("/cuestionarios", cuestionario.value)
+            .post("/lessons", cuestionario.value)
             .then((response) => {
+
               router.push("/cuestionarios/" + curso + "/" + area);
               localStorage.setItem("error", response.data.message);
             })
@@ -165,16 +200,17 @@ export default {
             });
         } else if (id != undefined) {
           await axios
-            .put("/cuestionarios/" + id, cuestionario.value)
+            .patch("/lessons/" + id, cuestionario.value)
             .then((response) => {
-              if (cuestionario.value.existe == 1) {
+              localStorage.setItem("lessonSelected", JSON.stringify(response.data));
+              if (cuestionario.value.exist == true) {
                 router.push("/cuestionario/" + id);
               } else {
                 router.push(
                   "/cuestionarios/" +
-                    cuestionario.value.curso_id +
+                    cuestionario.value.courseId +
                     "/" +
-                    cuestionario.value.area_id
+                    cuestionario.value.areaId
                 );
               }
               localStorage.setItem("error", response.data.message);
@@ -192,6 +228,7 @@ export default {
       curso,
       id,
       usuario,
+      periodos,
       error,
       cuestionario,
       checkmarkOutline,
