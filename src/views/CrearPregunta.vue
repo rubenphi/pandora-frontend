@@ -330,7 +330,7 @@ export default {
               },
             })
             .then((response) => {
-              console.log(form_data.value);
+
               if (response.data.exist) {
                 router.push("/pregunta/" + response.data.id);
               } else {

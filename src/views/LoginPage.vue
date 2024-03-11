@@ -222,8 +222,10 @@ export default {
           const cursosUsuario = response.data.map((assignacion) => ({
             name: assignacion.course.name,
             id: assignacion.course.id,
+            year: assignacion.year,
           }));
           localStorage.setItem("cursosUsuario", JSON.stringify(cursosUsuario));
+          localStorage.setItem("year", selectedYear());
         });
 
         await axios

@@ -29,10 +29,39 @@
           <ion-icon slot="end" :icon="createOutline"></ion-icon>
         </ion-card-header>
       </ion-card>
-      <ion-card v-if="question.photo">
+      <ion-grid>
+        <ion-row>
+          <ion-col
+            size-xs="1"
+            size-s="1"
+            size-md="2"
+            size-lg="3"
+            size-xl="3"
+          >
+          </ion-col>
+         
+        <ion-col
+                    size-xs="10"
+                    size-s="10"
+                    size-md="8"
+                    size-lg="6"
+                    size-xl="6"
+                  >
+      <ion-card v-if="question.photo" >
         <ion-img :src="basedeURL + question.photo"></ion-img>
       </ion-card>
+      </ion-col>   
+      <ion-col
+            size-xs="1"
+            size-s="1"
+            size-md="2"
+            size-lg="3"
+            size-xl="3"
+          >
+          </ion-col>
 
+        </ion-row>
+    </ion-grid>
       <ion-card>
         <div class="ion-padding" v-html="question.sentence"></div>
         <ion-item v-if="admin" button :href="'/editar/pregunta/' + question.id">
@@ -107,7 +136,7 @@
           shape="round"
           color="primary"
           class="ion-align-self-center"
-          :disabled="botonActivo"
+          :disabled="botonInactivo"
           @click="responder"
         >
           <ion-icon slot="end" :icon="paperPlaneOutline"></ion-icon>
@@ -166,6 +195,9 @@ import {
   IonToolbar,
   IonButtons,
   IonButton,
+  IonGrid,
+    IonRow,
+    IonCol,
   IonCard,
   IonCardHeader,
   IonCardTitle,
@@ -195,6 +227,9 @@ export default {
     IonCardHeader,
     IonCardTitle,
     // IonCardContent,
+    IonGrid,
+    IonRow,
+    IonCol,
     IonImg,
     IonRadioGroup,
     IonRadio,
@@ -286,13 +321,16 @@ export default {
           await axios
             .post("/answers", respuesta.value)
             .then(() => {
+              botonInactivo.value = false;
               router.push("/resultado/" + question.value.id);
+             
             })
             .catch((fallo) => {
+              botonInactivo.value = false;
               error.value.estatus = 1;
               error.value.data = fallo.response.data.message;
               localStorage.setItem("error", fallo.response.data.message);
-              botonInactivo.value = false;
+             
             });
         }
       },
@@ -309,7 +347,7 @@ export default {
       podiumOutline,
       createOutline,
       addOutline,
-      botonActivo: botonInactivo,
+      botonInactivo,
     };
   },
 };

@@ -59,6 +59,12 @@ export default {
     const areas = ref([]);
     onIonViewWillEnter(async () => {
       tokenHeader();
+      if (usuario.rol === 'student' || usuario.rol === 'user') {
+        const year = localStorage.getItem('year');
+        const courseSelected = JSON.parse(localStorage.getItem('cursosUsuario')).find((course) => course.year ==  year);
+        localStorage.setItem('courseSelected', JSON.stringify(courseSelected));
+        
+      }
      await  axios.get(`/courses/${id}/areas`).then((response) => {
         areas.value = response.data;
       });
