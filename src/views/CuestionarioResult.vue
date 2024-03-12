@@ -28,7 +28,7 @@
             <ion-text v-if="index === 0" color="warning"><h6><ion-icon :icon="starOutline"></ion-icon>GANADOR<ion-icon :icon="starOutline"></ion-icon></h6></ion-text>
             <ion-text v-if="respuesta.points > 0" color="success"><h6>Total Puntos: {{respuesta.points}}</h6></ion-text>
             <ion-text v-else color="danger"><h6>Total Puntos: {{respuesta.points}}</h6></ion-text>
-             <ion-text v-if="respuesta.grupo_id === usuario.grupo_id || usuario.rol == 'admin'">Nota: {{respuesta.nota}}</ion-text>
+             <ion-text v-if="respuesta.grupo_id === usuario.grupo_id || usuario.rol == 'admin'">Nota: {{parseFloat(respuesta.nota).toFixed(1)}}</ion-text>
           </ion-note>
         </ion-item>
       </ion-list>
