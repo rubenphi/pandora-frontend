@@ -287,6 +287,7 @@ export default {
         delete pregunta.value.id;
         delete pregunta.value.createdAt;
         delete pregunta.value.updatedAt;
+        delete pregunta.value.options;
 
 
 

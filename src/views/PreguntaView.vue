@@ -136,7 +136,7 @@
           shape="round"
           color="primary"
           class="ion-align-self-center"
-          :disabled="botonInactivo"
+          
           @click="responder"
         >
           <ion-icon slot="end" :icon="paperPlaneOutline"></ion-icon>
@@ -276,6 +276,9 @@ export default {
           lessonId: response.data.lesson.id,
           title: response.data.title,
           photo: response.data.photo,
+          options: response.data.options.sort((a, b) => {
+            return a.identifier.localeCompare(b.identifier);
+          }),
         };
 
         if (!question.value.photo) {
@@ -285,9 +288,6 @@ export default {
         question.value.sentence = question.value.sentence.replace(rem, "</br>");
       });
 
-      await axios.get(`/questions/${id}/options`).then((response) => {
-        question.value.options = response.data;
-      });
 
       if (!admin) {
         await axios

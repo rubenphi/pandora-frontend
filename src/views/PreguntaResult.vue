@@ -3,8 +3,8 @@
     <ion-header>
       <ion-toolbar>
         <ion-title size="large" class="ion-text-center">{{
-          pregunta.title
-        }}</ion-title>
+          pregunta.title 
+        }}  - Respuestas: {{ respuestas.length  }}</ion-title>
         <ion-buttons slot="start" class="ion-margin-start">
           <ion-button v-if="id" :href="'/pregunta/' + id">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
@@ -18,7 +18,7 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <ion-list>
+      <ion-list v-if="admin || pregunta.available == false">
         <ion-item
           v-for="(respuesta, index) in respuestas"
           :key="respuesta.id"
@@ -26,7 +26,7 @@
           class="ion-padding-end"
         >
           <ion-icon
-            v-if="(index === 0) & admin || index === 0"
+            v-if="(index === 0) & admin && respuesta.points > 0 || index === 0 && respuesta.points > 0"
             :icon="ribbonOutline"
             size="large"
             slot="start"
@@ -73,6 +73,16 @@
             <ion-text v-else color="primary"><h6>Respuesta: ?</h6></ion-text>
           </ion-note>
         </ion-item>
+      </ion-list>
+
+      <ion-list v-else> 
+        <ion-item>
+
+          <ion-label color="medium" 
+          class="ion-text-center"
+          >Espere a que bloqueen la pregunta para ver resultados</ion-label>
+        </ion-item>
+
       </ion-list>
 
       <ion-buttons
@@ -166,7 +176,8 @@ export default {
     onIonViewDidEnter(async () => {
       tokenHeader();
       await axios.get("/questions/" + id).then((response) => {
-        pregunta.value = { title: response.data.title };
+        pregunta.value = { title: response.data.title, available: response.data.available };
+ 
       });
       await axios.get("/questions/" + id + "/answers").then((response) => {
         respuestas.value = response.data;

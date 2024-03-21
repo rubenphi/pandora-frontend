@@ -18,8 +18,8 @@
     <ion-content :fullscreen="true">
       <ion-list>
         <ion-item v-for="(respuesta, index) in respuestas" :key="index" lines="full" class="ion-padding-end">
-          <ion-icon v-if="index === 0" :icon="trophyOutline" size="large" slot="start"></ion-icon>
-          <ion-icon v-else-if="respuesta.total > 0" :icon="happyOutline" size="large" slot="start"></ion-icon>
+          <ion-icon v-if="index === 0 && respuesta.points > 0" :icon="trophyOutline" size="large" slot="start"></ion-icon>
+          <ion-icon v-else-if="respuesta.nota >= 3 " :icon="happyOutline" size="large" slot="start"></ion-icon>
           <ion-icon v-else :icon="sadOutline" size="large" slot="start"></ion-icon>
           
           <ion-label color="medium">

@@ -9,7 +9,7 @@
           >
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
-          <ion-button v-if="id" :href="'/cuestionario/' + cuestionario.id">
+          <ion-button v-if="id" :href="'/cuestionario/' + id">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -54,7 +54,7 @@
             v-if="id && cuestionario.exist == true"
             button
             color="danger"
-            @click="borrarCuestionario(0)"
+            @click="borrarCuestionario(false)"
           >
             <ion-label>Borrar Cuestionario</ion-label>
           </ion-item>
@@ -63,7 +63,7 @@
             v-if="id && cuestionario.exist == false"
             button
             color="success"
-            @click="borrarCuestionario(1)"
+            @click="borrarCuestionario(true)"
           >
             <ion-label>Recuperar Cuestionario</ion-label>
           </ion-item>
