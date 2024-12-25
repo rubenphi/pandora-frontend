@@ -127,6 +127,24 @@
                   </ion-label>
                 </ion-button>
               </ion-buttons>
+
+              <ion-buttons
+                class="ion-justify-content-center ion-padding-top ion-padding-bottom"
+              >
+                <ion-button
+                  type="submit"
+                  expand="full"
+                  fill="outline"
+                  shape="round"
+                  color="medium"
+                  class="ion-align-self-center"
+                  @click="register"
+                >
+                  <ion-label class="ion-text-center ion-padding">
+                    Registrarse
+                  </ion-label>
+                </ion-button>
+              </ion-buttons>
             </ion-card>
           </ion-col>
           <ion-col size-s="1" size-xs="1" size-md="4" size-lg="5" size-xl="5">
@@ -138,9 +156,9 @@
 </template>
 
 <script>
-import {ref} from 'vue';
-import axios from 'axios';
-import {selectedYear, tokenHeader, usuarioGet} from '../globalService';
+import { ref } from "vue";
+import axios from "axios";
+import { selectedYear, tokenHeader, usuarioGet } from "../globalService";
 import {
   IonPage,
   IonHeader,
@@ -157,8 +175,8 @@ import {
   IonButton,
   IonButtons,
   IonText,
-} from '@ionic/vue';
-import router from '../router';
+} from "@ionic/vue";
+import router from "../router";
 
 export default {
   components: {
@@ -180,12 +198,12 @@ export default {
   },
   setup() {
     const login = ref({
-      code: '',
-      password: '',
+      code: "",
+      password: "",
     });
     const error = ref({
       estatus: 0,
-      data: '',
+      data: "",
     });
 
     return {
@@ -193,53 +211,67 @@ export default {
       axios,
       login,
       async mostrar() {
-        if (login.value.code == '' || login.value.password == '') {
+        if (login.value.code == "" || login.value.password == "") {
           error.value.estatus = 1;
-          error.value.data = 'Debe ingresar usuario y contraseña';
+          error.value.data = "Debe ingresar usuario y contraseña";
         } else {
-          await axios.post('/auth/login', login.value, {headers: {
-    "Access-Control-Allow-Origin": "*"
-  }}).then(async (response) => {
-  
-           if (response.data.userLoged.accessToken == undefined) {
-              error.value.estatus = 1;
-              error.value.data = 'Error al iniciar sesión';
-       
-            } else {
-              localStorage.setItem('token', 'Bearer ' + response.data.userLoged.accessToken);
-              localStorage.setItem('usuario', JSON.stringify(response.data.userLoged))
+          await axios
+            .post("/auth/login", login.value, {
+              headers: {
+                "Access-Control-Allow-Origin": "*",
+              },
+            })
+            .then(async (response) => {
+              if (response.data.userLoged.accessToken == undefined) {
+                error.value.estatus = 1;
+                error.value.data = "Error al iniciar sesión";
+              } else {
+                localStorage.setItem(
+                  "token",
+                  "Bearer " + response.data.userLoged.accessToken
+                );
+                localStorage.setItem(
+                  "usuario",
+                  JSON.stringify(response.data.userLoged)
+                );
 
-              
-                  error.value.estatus = 0;
-              
+                error.value.estatus = 0;
 
-              tokenHeader();
-            }
-          }).then(async () => {
-            await axios
-        .get(`/users/${usuarioGet().id}/courses?year=${selectedYear()}`)
-        .then((response) => {
-          const cursosUsuario = response.data.map((assignacion) => ({
-            name: assignacion.course.name,
-            id: assignacion.course.id,
-            year: assignacion.year,
-          }));
-          localStorage.setItem("cursosUsuario", JSON.stringify(cursosUsuario));
-          localStorage.setItem("year", selectedYear());
-        });
+                tokenHeader();
+              }
+            })
+            .then(async () => {
+              await axios
+                .get(`/users/${usuarioGet().id}/courses?year=${selectedYear()}`)
+                .then((response) => {
+                  const cursosUsuario = response.data.map((assignacion) => ({
+                    name: assignacion.course.name,
+                    id: assignacion.course.id,
+                    year: assignacion.year,
+                  }));
+                  localStorage.setItem(
+                    "cursosUsuario",
+                    JSON.stringify(cursosUsuario)
+                  );
+                  localStorage.setItem("year", selectedYear());
+                });
 
-        await axios
-        .get(`/periods?instituteId=${usuarioGet().institute.id}`).then((response) => {
-          const periodos = response.data.map((periodo) => ({
-            name: periodo.name,
-            id: periodo.id,
-          }))
-          localStorage.setItem("periodos", JSON.stringify(periodos));
-        })
+              await axios
+                .get(`/periods?instituteId=${usuarioGet().institute.id}`)
+                .then((response) => {
+                  const periodos = response.data.map((periodo) => ({
+                    name: periodo.name,
+                    id: periodo.id,
+                  }));
+                  localStorage.setItem("periodos", JSON.stringify(periodos));
+                });
 
-        router.push('/inicio');
-          });
+              router.push("/inicio");
+            });
         }
+      },
+      register() {
+        router.push("/register");
       },
     };
   },

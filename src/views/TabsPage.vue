@@ -18,14 +18,10 @@
           <ion-label>Inicio</ion-label>
         </ion-tab-button>
 
-        <ion-tab-button
-          tab="tab3"
-          v-if="adminOProfesor"
-          href="/admin/cuestionarios"
-        >
+        <ion-tab-button tab="tab3" v-if="adminOProfesor" href="/admin/panel">
           <ion-icon :icon="helpCircleOutline" />
 
-          <ion-label>Cuestionarios</ion-label>
+          <ion-label>Panel</ion-label>
         </ion-tab-button>
 
         <ion-tab-button

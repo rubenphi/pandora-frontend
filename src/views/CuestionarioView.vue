@@ -7,9 +7,9 @@
             v-if="cuestionario.id != 0"
             :href="
               '/cuestionarios/' +
-              cuestionario.courseId +
+              cuestionario.course.id +
               '/' +
-              cuestionario.areaId
+              cuestionario.area.id
             "
           >
             <ion-icon :icon="arrowBackOutline"></ion-icon>
@@ -152,12 +152,18 @@ export default {
     const admin = adminOprofesor();
     const mroute = useRoute();
     const { id } = mroute.params;
-    const cuestionario = ref(
-      JSON.parse(localStorage.getItem("lessonSelected"))
-    );
+
+    let cuestionario = ref(JSON.parse(localStorage.getItem("lessonSelected")));
 
     onIonViewDidEnter(async () => {
       tokenHeader();
+
+      if (cuestionario.value.id !== id) {
+        await axios.get(`/lessons/${id}`).then((response) => {
+          localStorage.setItem("lessonSelected", JSON.stringify(response.data));
+          cuestionario.value = response.data;
+        });
+      }
 
       await axios.get(`/lessons/${id}/questions`).then((response) => {
         if (!admin) {

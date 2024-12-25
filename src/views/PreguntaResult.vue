@@ -2,9 +2,9 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-title size="large" class="ion-text-center">{{
-          pregunta.title 
-        }}  - Respuestas: {{ respuestas.length  }}</ion-title>
+        <ion-title size="large" class="ion-text-center">
+          {{ respuestas.length }} Respuestas - {{ pregunta.title }}
+        </ion-title>
         <ion-buttons slot="start" class="ion-margin-start">
           <ion-button v-if="id" :href="'/pregunta/' + id">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
@@ -13,6 +13,10 @@
         <ion-buttons slot="end" class="ion-margin-end">
           <ion-button v-if="id" :href="'/resultado/' + id">
             <ion-icon :icon="refreshOutline"></ion-icon>
+          </ion-button>
+          <!-- Nuevo botón para ordenar -->
+          <ion-button v-if="admin" @click="ordenarPorNombre">
+            <ion-icon :icon="arrowDownCircle"></ion-icon>
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -26,7 +30,10 @@
           class="ion-padding-end"
         >
           <ion-icon
-            v-if="(index === 0) & admin && respuesta.points > 0 || index === 0 && respuesta.points > 0"
+            v-if="
+              ((index === 0) & admin && respuesta.points > 0) ||
+              (index === 0 && respuesta.points > 0)
+            "
             :icon="ribbonOutline"
             size="large"
             slot="start"
@@ -75,14 +82,12 @@
         </ion-item>
       </ion-list>
 
-      <ion-list v-else> 
+      <ion-list v-else>
         <ion-item>
-
-          <ion-label color="medium" 
-          class="ion-text-center"
-          >Espere a que bloqueen la pregunta para ver resultados</ion-label>
+          <ion-label color="medium" class="ion-text-center"
+            >Espere a que bloqueen la pregunta para ver resultados</ion-label
+          >
         </ion-item>
-
       </ion-list>
 
       <ion-buttons
@@ -112,6 +117,7 @@ import { ref } from "vue";
 import { tokenHeader, adminOprofesor } from "../globalService";
 
 import {
+  arrowDownCircle,
   arrowBackOutline,
   refreshOutline,
   handLeftOutline,
@@ -173,11 +179,28 @@ export default {
     ]);
     const pregunta = ref({ title: "Cargando..." });
 
+    const ordenarPorNombre = () => {
+      respuestas.value.sort((a, b) => {
+        const regex = /(\D+)(\d+)/;
+        const [, textA, numberA] = a.group.name.match(regex);
+        const [, textB, numberB] = b.group.name.match(regex);
+
+        const textComparison = textA.localeCompare(textB);
+        if (textComparison !== 0) {
+          return textComparison;
+        }
+
+        return parseInt(numberA) - parseInt(numberB);
+      });
+    };
+
     onIonViewDidEnter(async () => {
       tokenHeader();
       await axios.get("/questions/" + id).then((response) => {
-        pregunta.value = { title: response.data.title, available: response.data.available };
- 
+        pregunta.value = {
+          title: response.data.title,
+          available: response.data.available,
+        };
       });
       await axios.get("/questions/" + id + "/answers").then((response) => {
         respuestas.value = response.data;
@@ -187,6 +210,7 @@ export default {
     return {
       admin,
       id,
+      ordenarPorNombre, // <-- Añadido aquí
       async bonus() {
         await axios
           .post(`/answers/question/${id}/bonus`)
@@ -200,6 +224,7 @@ export default {
       grupoUsuario,
       respuestas,
       arrowBackOutline,
+      arrowDownCircle,
       handLeftOutline,
       paperPlaneOutline,
       refreshOutline,

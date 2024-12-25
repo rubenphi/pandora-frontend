@@ -112,8 +112,8 @@ export default {
               id: cuestionario.id,
               topic: cuestionario.topic,
               date: cuestionario.date,
-              areaId: cuestionario.area.id,
-              courseId: cuestionario.course.id,
+              area: { id: cuestionario.area.id },
+              course: { id: cuestionario.course.id },
             }));
           });
       }
