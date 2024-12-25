@@ -8,8 +8,16 @@
     <ion-content :fullscreen="true">
       <ion-list>
         <ion-item :href="'admin/cuestionarios'">
-          <ion-icon slot="start" :icon="peopleCircleOutline"></ion-icon>
+          <ion-icon slot="start" :icon="helpCircleOutline"></ion-icon>
           <ion-label>Cuestionarios</ion-label>
+        </ion-item>
+        <ion-item :href="'admin/autorizaciones'">
+          <ion-icon slot="start" :icon="lockOpenOutline"></ion-icon>
+          <ion-label>Autorizaciones</ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-icon slot="start" :icon="settingsOutline"></ion-icon
+          ><ion-label>Configuraciones</ion-label>
         </ion-item>
       </ion-list>
     </ion-content>
@@ -20,7 +28,11 @@
 import { ref } from "vue";
 import { tokenHeader, usuarioGet } from "../globalService";
 
-import { peopleCircleOutline } from "ionicons/icons";
+import {
+  helpCircleOutline,
+  lockOpenOutline,
+  settingsOutline,
+} from "ionicons/icons";
 
 import {
   onIonViewWillEnter,
@@ -62,7 +74,9 @@ export default {
     });
 
     return {
-      peopleCircleOutline,
+      lockOpenOutline,
+      helpCircleOutline,
+      settingsOutline,
       usuario,
       cursos,
     };

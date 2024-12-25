@@ -102,7 +102,8 @@
           class="ion-align-self-center"
           @click="bonus"
         >
-          <ion-icon :icon="addOutline"></ion-icon>
+          Cerrar Pregunta
+          <ion-icon :icon="lockClosedOutline"></ion-icon>
         </ion-button>
       </ion-buttons>
     </ion-content>
@@ -125,8 +126,8 @@ import {
   happyOutline,
   sadOutline,
   ribbonOutline,
-  addOutline,
   helpCircleOutline,
+  lockClosedOutline,
 } from "ionicons/icons";
 
 import {
@@ -231,7 +232,7 @@ export default {
       happyOutline,
       sadOutline,
       ribbonOutline,
-      addOutline,
+      lockClosedOutline,
       pregunta,
       helpCircleOutline,
     };

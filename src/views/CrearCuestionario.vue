@@ -5,7 +5,9 @@
         <ion-buttons slot="start">
           <ion-button
             v-if="curso"
-            :href="'/cuestionarios/' + curso + '/' + area"
+            :href="
+              '/cuestionarios/' + curso + '/' + area + '/' + periodoSelected
+            "
           >
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
@@ -34,16 +36,20 @@
           </ion-item>
 
           <ion-item>
-      <ion-select v-model="cuestionario.periodId" label="Periodo" placeholder="Periodo">
-        <ion-select-option
-          v-for="periodo in periodos"
-          :key="periodo.id"
-          :value="periodo.id"
-        >
-          {{ periodo.name }}
-        </ion-select-option>
-      </ion-select>
-    </ion-item>
+            <ion-select
+              v-model="cuestionario.periodId"
+              label="Periodo"
+              placeholder="Periodo"
+            >
+              <ion-select-option
+                v-for="periodo in periodos"
+                :key="periodo.id"
+                :value="periodo.id"
+              >
+                {{ periodo.name }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
 
           <ion-item>
             <ion-label position="stacked">Tema</ion-label>
@@ -118,16 +124,22 @@ export default {
     IonLabel,
     IonInput,
     IonSelect,
-  IonSelectOption
+    IonSelectOption,
   },
   setup() {
     const mroute = useRoute();
     const { curso } = mroute.params;
     const { area } = mroute.params;
     const { id } = mroute.params;
-    const periodos = ref(
-      JSON.parse(localStorage.getItem("periodos"))
+    const periodos = ref(JSON.parse(localStorage.getItem("periodos")));
+    const periodoSelected = ref(
+      JSON.parse(localStorage.getItem("periodoSelected"))
     );
+    if (Array.isArray(periodos.value)) {
+      periodos.value = periodos.value.sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
+    }
     const cuestionario = ref({
       courseId: 0,
     });
@@ -150,7 +162,6 @@ export default {
           cuestionario.value.instituteId = response.data.institute.id;
           cuestionario.value.year = response.data.year;
           cuestionario.value.exist = response.data.exist;
-
         });
       }
       if (curso != undefined && area != undefined) {
@@ -162,7 +173,7 @@ export default {
           areaId: "",
           periodId: "",
           instituteId: "",
-          exist: true
+          exist: true,
         };
       }
     });
@@ -177,20 +188,22 @@ export default {
           error.value.estatus = 1;
           error.value.data = "Debe seleccionar una fecha y añadir el tema";
         } else if (curso != undefined) {
-
           cuestionario.value.courseId = parseInt(curso, 10);
           cuestionario.value.areaId = parseInt(area, 10);
           cuestionario.value.instituteId = parseInt(usuario.institute.id, 10);
           cuestionario.value.year = new Date().getFullYear();
 
-
-         
-
           await axios
             .post("/lessons", cuestionario.value)
             .then((response) => {
-
-              router.push("/cuestionarios/" + curso + "/" + area);
+              router.push(
+                "/cuestionarios/" +
+                  curso +
+                  "/" +
+                  area +
+                  "/" +
+                  cuestionario.value.periodId
+              );
               localStorage.setItem("error", response.data.message);
             })
             .catch((response) => {
@@ -202,7 +215,10 @@ export default {
           await axios
             .patch("/lessons/" + id, cuestionario.value)
             .then((response) => {
-              localStorage.setItem("lessonSelected", JSON.stringify(response.data));
+              localStorage.setItem(
+                "lessonSelected",
+                JSON.stringify(response.data)
+              );
               if (cuestionario.value.exist == true) {
                 router.push("/cuestionario/" + id);
               } else {
@@ -210,7 +226,9 @@ export default {
                   "/cuestionarios/" +
                     cuestionario.value.courseId +
                     "/" +
-                    cuestionario.value.areaId
+                    cuestionario.value.areaId +
+                    "/" +
+                    cuestionario.value.periodId
                 );
               }
               localStorage.setItem("error", response.data.message);
@@ -232,6 +250,7 @@ export default {
       error,
       cuestionario,
       checkmarkOutline,
+      periodoSelected,
     };
   },
 };

@@ -9,7 +9,9 @@
               '/cuestionarios/' +
               cuestionario.course.id +
               '/' +
-              cuestionario.area.id
+              cuestionario.area.id +
+              '/' +
+              periodoSelected
             "
           >
             <ion-icon :icon="arrowBackOutline"></ion-icon>
@@ -150,6 +152,7 @@ export default {
   },
   setup() {
     const admin = adminOprofesor();
+    const periodoSelected = JSON.parse(localStorage.getItem("periodoSelected"));
     const mroute = useRoute();
     const { id } = mroute.params;
 
@@ -183,7 +186,7 @@ export default {
       admin,
       cuestionario,
       id,
-
+      periodoSelected,
       arrowBackOutline,
       handLeftOutline,
       refreshOutline,

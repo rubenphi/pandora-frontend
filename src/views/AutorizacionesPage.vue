@@ -39,10 +39,18 @@
             style="cursor: pointer; color: red"
           ></ion-icon>
           <ion-icon
+            v-if="codigo.valid"
             slot="end"
             :icon="closeCircleOutline"
             @click="invalidarCodigo(codigo)"
             style="cursor: pointer; color: orange"
+          ></ion-icon>
+          <ion-icon
+            v-if="!codigo.valid"
+            slot="end"
+            :icon="checkmarkCircleOutline"
+            @click="invalidarCodigo(codigo)"
+            style="cursor: pointer; color: greenyellow"
           ></ion-icon>
         </ion-item>
       </ion-list>
@@ -51,7 +59,11 @@
 </template>
 
 <script>
-import { trashOutline, closeCircleOutline } from "ionicons/icons";
+import {
+  trashOutline,
+  closeCircleOutline,
+  checkmarkCircleOutline,
+} from "ionicons/icons";
 import axios from "axios";
 import { ref } from "vue";
 
@@ -121,11 +133,11 @@ export default {
           code: codigo.code,
           instituteId: codigo.institute.id,
           exist: codigo.exist,
-          active: false,
+          active: codigo.valid ? false : true,
         });
         const codigoActualizado = codigos.value.find((c) => c.id === codigo.id);
         if (codigoActualizado) {
-          codigoActualizado.valid = false;
+          codigoActualizado.valid = !codigo.valid;
         }
       } catch (error) {
         console.error("Error al invalidar el código:", error);
@@ -165,6 +177,7 @@ export default {
       codigos,
       trashOutline,
       closeCircleOutline,
+      checkmarkCircleOutline,
       eliminarCodigo,
       invalidarCodigo,
       numeroDeCodigos,

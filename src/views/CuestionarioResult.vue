@@ -65,7 +65,7 @@
             </ion-text>
             <ion-text
               v-if="
-                respuesta.grupo_id === usuario.grupo_id ||
+                respuesta.group.id === usuario?.grupo?.id ||
                 usuario.rol == 'admin'
               "
             >
@@ -74,12 +74,28 @@
           </ion-note>
         </ion-item>
       </ion-list>
+      <ion-buttons
+        v-if="admin"
+        class="ion-justify-content-center ion-padding-top ion-padding-bottom"
+      >
+        <ion-button
+          expand="full"
+          fill="outline"
+          shape="round"
+          color="medium"
+          class="ion-align-self-center"
+          @click="registrarNotas"
+        >
+          Registrar notas <ion-icon :icon="fileTrayFullOutline"></ion-icon>
+        </ion-button>
+      </ion-buttons>
     </ion-content>
   </ion-page>
 </template>
 
 <script>
 import axios from "axios";
+import { adminOprofesor } from "../globalService";
 import { ref } from "vue";
 import { usuarioGet, tokenHeader } from "../globalService";
 import { useRoute } from "vue-router";
@@ -95,6 +111,7 @@ import {
   ribbonOutline,
   starOutline,
   trophyOutline,
+  fileTrayFullOutline,
 } from "ionicons/icons";
 
 import {
@@ -132,13 +149,14 @@ export default {
   },
   setup() {
     const usuario = usuarioGet();
+    const admin = adminOprofesor();
     const mroute = useRoute();
     const { id } = mroute.params;
     const cuestionario = ref(
       JSON.parse(localStorage.getItem("lessonSelected"))
     );
     const respuestas = ref([
-      { group: { name: "Cargando" }, points: "Cargando" },
+      { group: { name: "Cargando", id: 0 }, points: "Cargando" },
     ]);
 
     const ordenarPorNombre = () => {
@@ -170,11 +188,30 @@ export default {
       });
     });
 
+    async function registrarNotas() {
+      for (const respuesta of respuestas.value) {
+        //search users of the group
+        const response = await axios.get(`/groups/${respuesta.group.id}/users`);
+        for (const user of response.data) {
+          const data = {
+            userId: user.id,
+            lessonId: parseInt(id, 10),
+            periodId: cuestionario.value.period.id,
+            grade: respuesta.nota,
+            instituteId: cuestionario.value.institute.id,
+          };
+          const gradeResponse = await axios.post("/grades", data);
+          console.log(gradeResponse);
+        }
+      }
+    }
+
     return {
       usuario,
       id,
       cuestionario,
       respuestas,
+      registrarNotas,
       arrowBackOutline,
       handLeftOutline,
       paperPlaneOutline,
@@ -186,6 +223,8 @@ export default {
       starOutline,
       trophyOutline,
       ordenarPorNombre,
+      admin,
+      fileTrayFullOutline,
     };
   },
 };

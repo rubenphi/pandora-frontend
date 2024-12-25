@@ -34,12 +34,7 @@ import {
   IonButtons,
   onIonViewWillEnter,
 } from "@ionic/vue";
-import {
-  adminOprofesor,
-  selectedPeriod,
-  tokenHeader,
-  usuarioGet,
-} from "../globalService";
+import { adminOprofesor, tokenHeader, usuarioGet } from "../globalService";
 import router from "../router";
 import { exitOutline } from "ionicons/icons";
 import axios from "axios";
@@ -55,34 +50,27 @@ export default {
     IonButtons,
   },
   setup() {
+    let usuario = usuarioGet();
     onIonViewWillEnter(async () => {
       tokenHeader();
 
-
-
       if (!adminOprofesor())
-        await axios
-          .get(
-            `/users/${
-              usuarioGet().id
-            }/groups?periodId=${selectedPeriod()}&active=true`
-          )
-          .then((response) => {
-            const gruposUsuario = response.data.map((assignacion) => ({
-              name: assignacion.group.name,
-              id: assignacion.group.id,
-            }));
-            localStorage.setItem(
-              "grupoUsuario",
-              JSON.stringify(gruposUsuario[0])
-            );
-          });
+        await axios.get(`/users/${usuario.id}/groups`).then((response) => {
+          const grupoUsuario = response.data.filter((g) => g.active)[0].group;
+          localStorage.setItem("grupoUsuario", JSON.stringify(grupoUsuario));
+        });
     });
     return {
       salir() {
+        const periodoSelected = JSON.parse(
+          localStorage.getItem("periodoSelected")
+        );
         localStorage.clear();
+        localStorage.setItem(
+          "periodoSelected",
+          JSON.stringify(periodoSelected)
+        );
         router.push("/login");
-        
       },
       exitOutline,
     };

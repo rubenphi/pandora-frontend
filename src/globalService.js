@@ -14,7 +14,9 @@ export function usuarioGet() {
 }
 
 export function selectedYear() {
-  return 2024;
+  var date = new Date();
+  var year = date.getFullYear();
+  return year;
 }
 
 export function selectedPeriod() {

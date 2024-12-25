@@ -35,7 +35,7 @@ const routes = [
         component: () => import("@/views/Tab2Page.vue"),
       },
       {
-        path: "cuestionarios/:curso/:area",
+        path: "cuestionarios/:curso/:area/:periodo",
         component: () => import("@/views/Tab3Page.vue"),
       },
       {
@@ -83,7 +83,7 @@ const routes = [
         },
       },
       {
-        path: "autorizaciones/",
+        path: "admin/autorizaciones/",
         component: () => import("@/views/AutorizacionesPage.vue"),
         beforeEnter: (to, from, next) => {
           if (adminOprofesor()) next();

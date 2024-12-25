@@ -9,8 +9,8 @@
         </ion-tab-button>
 
         <ion-tab-button v-else tab="tab1" href="/grupo">
-          <ion-icon :icon="peopleOutline" />
-          <ion-label>Grupo</ion-label>
+          <ion-icon :icon="personOutline" />
+          <ion-label>Perfil</ion-label>
         </ion-tab-button>
 
         <ion-tab-button tab="tab2" href="/inicio">
@@ -47,7 +47,12 @@ import {
   IonPage,
   IonRouterOutlet,
 } from "@ionic/vue";
-import { helpCircleOutline, homeOutline, peopleOutline } from "ionicons/icons";
+import {
+  helpCircleOutline,
+  homeOutline,
+  peopleOutline,
+  personOutline,
+} from "ionicons/icons";
 import { adminOprofesor } from "../globalService";
 export default {
   components: {
@@ -66,6 +71,7 @@ export default {
       helpCircleOutline,
       homeOutline,
       peopleOutline,
+      personOutline,
     };
   },
 };
