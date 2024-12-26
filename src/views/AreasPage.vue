@@ -90,7 +90,7 @@ export default {
   setup() {
     const mroute = useRoute();
     const { id } = mroute.params;
-    let usuario = usuarioGet();
+    const usuario = ref();
     const areas = ref([]);
     const isOpen = ref(false);
     const setOpen = (state) => {
@@ -114,14 +114,16 @@ export default {
     );
 
     onIonViewWillEnter(async () => {
+      usuario.value = usuarioGet();
       tokenHeader();
-      if (usuario.rol === "student" || usuario.rol === "user") {
+      if (usuario.value.rol === "student" || usuario.value.rol === "user") {
         const year = localStorage.getItem("year");
         const courseSelected = JSON.parse(
           localStorage.getItem("cursosUsuario")
         ).find((course) => course.year == year);
         localStorage.setItem("courseSelected", JSON.stringify(courseSelected));
       }
+
       await axios.get(`/courses/${id}/areas`).then((response) => {
         areas.value = response.data;
       });

@@ -148,9 +148,10 @@ export default {
       data: "",
     });
 
-    let usuario = usuarioGet();
+    const usuario = ref();
 
     onIonViewWillEnter(async () => {
+      usuario.value = usuarioGet();
       tokenHeader();
       if (id != undefined) {
         await axios.get("/lessons/" + id).then((response) => {
@@ -190,7 +191,10 @@ export default {
         } else if (curso != undefined) {
           cuestionario.value.courseId = parseInt(curso, 10);
           cuestionario.value.areaId = parseInt(area, 10);
-          cuestionario.value.instituteId = parseInt(usuario.institute.id, 10);
+          cuestionario.value.instituteId = parseInt(
+            usuario.value.institute.id,
+            10
+          );
           cuestionario.value.year = new Date().getFullYear();
 
           await axios

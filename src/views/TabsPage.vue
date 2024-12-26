@@ -27,7 +27,7 @@
         <ion-tab-button
           v-else
           tab="tab3"
-          :href="'/areas/' + cursoEstudiante.id"
+          :href="'/areas/' + cursoEstudiante?.id"
         >
           <ion-icon :icon="helpCircleOutline" />
 
@@ -38,8 +38,10 @@
   </ion-page>
 </template>
 <script>
+import { ref } from "vue";
 import {
   IonTabBar,
+  onIonViewWillEnter,
   IonTabButton,
   IonTabs,
   IonLabel,
@@ -65,9 +67,19 @@ export default {
     IonRouterOutlet,
   },
   setup() {
+    const cursoEstudiante = ref();
+    const adminOProfesor = ref();
+    onIonViewWillEnter(async () => {
+      const year = localStorage.getItem("year");
+
+      adminOProfesor.value = adminOprofesor();
+      cursoEstudiante.value = JSON.parse(
+        localStorage.getItem("cursosUsuario")
+      ).find((course) => course.year == year);
+    });
     return {
-      cursoEstudiante: JSON.parse(localStorage.getItem("cursosUsuario"))[0],
-      adminOProfesor: adminOprofesor(),
+      cursoEstudiante,
+      adminOProfesor,
       helpCircleOutline,
       homeOutline,
       peopleOutline,

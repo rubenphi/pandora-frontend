@@ -17,15 +17,15 @@
         </ion-card-header>
         <ion-card-content>
           <strong>Usuario:</strong>
-          {{ usuario.code }} <br />
+          {{ usuario?.code }} <br />
           <strong>Email:</strong>
-          {{ usuario.email }} <br />
+          {{ usuario?.email }} <br />
           <strong>Nombres:</strong>
-          {{ usuario.name }} <br />
+          {{ usuario?.name }} <br />
           <strong>Apellidos:</strong>
-          {{ usuario.lastName }} <br />
-          <strong>institución:</strong>: {{ usuario.institute.name }} <br />
-          <strong> Curso:</strong> {{ actualCurso.name }} <br />
+          {{ usuario?.lastName }} <br />
+          <strong>institución:</strong>: {{ usuario?.institute?.name }} <br />
+          <strong> Curso:</strong> {{ actualCurso?.name }} <br />
         </ion-card-content>
         <ion-card>
           <ion-card-header>
@@ -33,11 +33,11 @@
           </ion-card-header>
 
           <ion-card-content>
-            <strong>Nombre del Grupo:</strong> {{ grupoUsuario.name }} <br />
+            <strong>Nombre del Grupo:</strong> {{ grupoUsuario?.name }} <br />
             <strong>Integrantes:</strong>
             <ul>
-              <li v-for="miembro in miembros" :key="miembro.id">
-                {{ miembro.user.name + " " + miembro.user.lastName }}
+              <li v-for="miembro in miembros" :key="miembro?.id">
+                {{ miembro?.user?.name + " " + miembro?.user?.lastName }}
               </li>
             </ul>
           </ion-card-content>
@@ -47,8 +47,47 @@
           </ion-button>
         </ion-card>
       </ion-card>
+      <ion-list>
+        <ion-item>
+          <ion-label>
+            <h2>Notas</h2>
+          </ion-label>
 
-      <!-- establecer el tamaño del modal según el contenido without size="cover"  -->
+          <ion-select
+            v-model="periodoSelected"
+            placeholder="Seleccione el periodo"
+          >
+            <ion-select-option
+              v-for="periodo in periodos"
+              :key="periodo?.id"
+              :value="periodo?.id"
+            >
+              {{ periodo?.name }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+        <div v-for="area in notas" :key="area.id">
+          <ion-item>
+            <ion-label>
+              <h3>{{ area?.name }}</h3>
+            </ion-label>
+          </ion-item>
+          <div v-for="nota in area?.notas" :key="nota?.id">
+            <ion-item v-if="nota?.period?.id == periodoSelected">
+              <ion-icon :icon="easelOutline" slot="start"></ion-icon>
+              <ion-label>
+                <h2>{{ nota?.lesson?.topic }}</h2>
+
+                <p v-if="nota?.grade < 3" style="color: #bf9494">
+                  {{ nota?.grade }}
+                </p>
+                <p v-else>{{ nota?.grade }}</p>
+              </ion-label>
+            </ion-item>
+          </div>
+        </div>
+      </ion-list>
+
       <ion-modal
         ref="modal"
         trigger="open-modal"
@@ -99,7 +138,7 @@
   </ion-page>
 </template>
 <script>
-import { personOutline, syncOutline } from "ionicons/icons";
+import { easelOutline, personOutline, syncOutline } from "ionicons/icons";
 import axios from "axios";
 import { ref } from "vue";
 import { tokenHeader, usuarioGet } from "../globalService";
@@ -123,6 +162,7 @@ import {
   IonButtons,
   IonInput,
   IonLabel,
+  IonList,
 } from "@ionic/vue";
 
 export default {
@@ -145,23 +185,23 @@ export default {
     IonButtons,
     IonInput,
     IonLabel,
+    IonList,
   },
 
   setup() {
-    let usuario = usuarioGet();
-    let cursosUsuario = JSON.parse(localStorage.getItem("cursosUsuario"));
-    let actualCurso = cursosUsuario.find(
-      (curso) => curso.year == localStorage.getItem("year")
-    );
-    let year = localStorage.getItem("year");
+    const usuario = ref();
 
+    const cursosUsuario = ref();
+    const periodos = ref();
+    const periodoSelected = ref();
+    const actualCurso = ref();
+    const year = ref();
     const grupo = ref();
     const modal = ref();
     const code = ref();
 
-    const grupoUsuario = ref({
-      name: "",
-    });
+    const grupoUsuario = ref();
+    const notas = ref([]);
 
     const grupos = ref([]);
 
@@ -169,23 +209,14 @@ export default {
     const cancel = () => modal.value.$el.dismiss(null, "cancel");
 
     const confirm = () => {
-      /*
-      {
-  "groupId": 0,
-  "userId": 0,
-  "code": "string",
-  "active": true
-}
-axios users/{userId}/groups  
-*/
       let data = {
         groupId: grupo.value,
-        userId: usuario.id,
+        userId: usuario.value.id,
         code: code.value,
         active: true,
       };
 
-      axios.post(`/users/${usuario.id}/groups`, data).then(() => {
+      axios.post(`/users/${usuario.value.id}/groups`, data).then(() => {
         modal.value.$el.dismiss(data, "confirm");
         //refresh page
         location.reload();
@@ -193,9 +224,41 @@ axios users/{userId}/groups
     };
 
     onIonViewWillEnter(async () => {
-      tokenHeader();
+      usuario.value = usuarioGet();
+      periodos.value = JSON.parse(localStorage.getItem("periodos"));
+      if (Array.isArray(periodos.value)) {
+        periodos.value.sort((a, b) => a.name.localeCompare(b.name));
+      }
 
-      await axios.get(`/users/${usuario.id}/groups`).then((response) => {
+      cursosUsuario.value = JSON.parse(localStorage.getItem("cursosUsuario"));
+      actualCurso.value = cursosUsuario.value.find(
+        (curso) => curso.year == localStorage.getItem("year")
+      );
+      year.value = localStorage.getItem("year");
+
+      tokenHeader();
+      await axios.get("/grades?userId=" + usuario.value.id).then((response) => {
+        const notasByArea = response.data.reduce((acc, nota) => {
+          delete nota.area;
+          nota.grade = nota.grade.toFixed(1);
+          const area = nota.lesson.area;
+          const areaIndex = acc.findIndex((a) => a.id === area.id);
+          if (areaIndex === -1) {
+            acc.push({
+              name: area.name,
+              id: area.id,
+              notas: [nota],
+            });
+          } else {
+            acc[areaIndex].notas.push(nota);
+          }
+          return acc;
+        }, []);
+
+        notas.value = notasByArea;
+      });
+
+      await axios.get(`/users/${usuario.value.id}/groups`).then((response) => {
         grupoUsuario.value = response.data.filter((g) => g.active)[0].group;
         localStorage.setItem(
           "grupoUsuario",
@@ -209,7 +272,7 @@ axios users/{userId}/groups
         });
 
       await axios
-        .get(`/groups?courseId=${actualCurso.id}&year=${year}`)
+        .get(`/groups?courseId=${actualCurso.value.id}&year=${year.value}`)
         .then((response) => {
           grupos.value = response.data.filter((grupo) => {
             return grupo.id != grupoUsuario.value.id ?? false;
@@ -232,6 +295,10 @@ axios users/{userId}/groups
       cancel,
       confirm,
       actualCurso,
+      notas,
+      easelOutline,
+      periodos,
+      periodoSelected,
     };
   },
 };

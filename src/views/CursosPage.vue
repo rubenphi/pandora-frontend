@@ -50,11 +50,12 @@ export default {
     IonIcon,
   },
   setup() {
-    let usuario = usuarioGet();
+    const usuario = ref();
     const cursosUsuario = ref(
       JSON.parse(localStorage.getItem("cursosUsuario"))
     );
     onIonViewWillEnter(async () => {
+      usuario.value = usuarioGet();
       tokenHeader();
     });
     return {

@@ -31,37 +31,18 @@
       </ion-card>
       <ion-grid>
         <ion-row>
-          <ion-col
-            size-xs="1"
-            size-s="1"
-            size-md="2"
-            size-lg="3"
-            size-xl="3"
-          >
-          </ion-col>
-         
-        <ion-col
-                    size-xs="10"
-                    size-s="10"
-                    size-md="8"
-                    size-lg="6"
-                    size-xl="6"
-                  >
-      <ion-card v-if="question.photo" >
-        <ion-img :src="basedeURL + question.photo"></ion-img>
-      </ion-card>
-      </ion-col>   
-      <ion-col
-            size-xs="1"
-            size-s="1"
-            size-md="2"
-            size-lg="3"
-            size-xl="3"
-          >
+          <ion-col size-xs="1" size-s="1" size-md="2" size-lg="3" size-xl="3">
           </ion-col>
 
+          <ion-col size-xs="10" size-s="10" size-md="8" size-lg="6" size-xl="6">
+            <ion-card v-if="question.photo">
+              <ion-img :src="basedeURL + question.photo"></ion-img>
+            </ion-card>
+          </ion-col>
+          <ion-col size-xs="1" size-s="1" size-md="2" size-lg="3" size-xl="3">
+          </ion-col>
         </ion-row>
-    </ion-grid>
+      </ion-grid>
       <ion-card>
         <div class="ion-padding" v-html="question.sentence"></div>
         <ion-item v-if="admin" button :href="'/editar/pregunta/' + question.id">
@@ -136,7 +117,7 @@
           shape="round"
           color="primary"
           class="ion-align-self-center"
-          
+          :disabled="loading"
           @click="responder"
         >
           <ion-icon slot="end" :icon="paperPlaneOutline"></ion-icon>
@@ -196,8 +177,8 @@ import {
   IonButtons,
   IonButton,
   IonGrid,
-    IonRow,
-    IonCol,
+  IonRow,
+  IonCol,
   IonCard,
   IonCardHeader,
   IonCardTitle,
@@ -264,6 +245,7 @@ export default {
       data: "",
     });
     const resVisible = ref(0);
+    const loading = ref(false);
 
     onIonViewDidEnter(async () => {
       tokenHeader();
@@ -287,7 +269,6 @@ export default {
         var rem = new RegExp("<p></p>", "g");
         question.value.sentence = question.value.sentence.replace(rem, "</br>");
       });
-
 
       if (!admin) {
         await axios
@@ -318,19 +299,20 @@ export default {
           respuesta.value.exist = true;
           respuesta.value.instituteId = usuarioGet().institute.id;
           botonInactivo.value = true;
+          loading.value = true;
           await axios
             .post("/answers", respuesta.value)
             .then(() => {
               botonInactivo.value = false;
+              loading.value = false;
               router.push("/resultado/" + question.value.id);
-             
             })
             .catch((fallo) => {
               botonInactivo.value = false;
+              loading.value = false;
               error.value.estatus = 1;
               error.value.data = fallo.response.data.message;
               localStorage.setItem("error", fallo.response.data.message);
-             
             });
         }
       },
@@ -348,6 +330,7 @@ export default {
       createOutline,
       addOutline,
       botonInactivo,
+      loading,
     };
   },
 };

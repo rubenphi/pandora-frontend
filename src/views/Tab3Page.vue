@@ -98,10 +98,12 @@ export default {
     const cursosUsuario = ref(
       JSON.parse(localStorage.getItem("cursosUsuario"))
     );
-    let usuario = usuarioGet();
-    let adminOProfesor = adminOprofesor();
+    const usuario = ref();
+    const adminOProfesor = ref();
     const cuestionarios = ref([]);
     onIonViewWillEnter(async () => {
+      adminOProfesor.value = adminOprofesor();
+      usuario.value = usuarioGet();
       tokenHeader();
       if (curso != cursosUsuario.value[0].id && !adminOprofesor()) {
         router.push("/cuestionarios/" + cursosUsuario.value[0].id + "/" + area);

@@ -65,10 +65,11 @@ export default {
     },
   },
   setup() {
-    let usuario = usuarioGet();
+    const usuario = ref();
 
     const cursos = ref([]);
     onIonViewWillEnter(async () => {
+      usuario.value = usuarioGet();
       tokenHeader();
       cursos.value = JSON.parse(localStorage.getItem("cursosUsuario"));
     });

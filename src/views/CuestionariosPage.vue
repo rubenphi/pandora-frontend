@@ -7,7 +7,12 @@
     </ion-header>
     <ion-content :fullscreen="true">
       <ion-list>
-        <ion-item  v-for="curso in cursos" :key="curso.id"  :href="'areas/' + curso.id" v-on:click="courseSelected(curso)">
+        <ion-item
+          v-for="curso in cursos"
+          :key="curso.id"
+          :href="'areas/' + curso.id"
+          v-on:click="courseSelected(curso)"
+        >
           <ion-icon slot="start" :icon="peopleCircleOutline"></ion-icon>
           <ion-label>{{ curso.name }}</ion-label>
         </ion-item>
@@ -17,9 +22,8 @@
 </template>
 
 <script>
-
 import { ref } from "vue";
-import { tokenHeader, usuarioGet  } from "../globalService";
+import { tokenHeader, usuarioGet } from "../globalService";
 
 import { peopleCircleOutline } from "ionicons/icons";
 
@@ -49,22 +53,21 @@ export default {
     IonIcon,
   },
   methods: {
-    courseSelected:  function  (course) {
-      localStorage.setItem('courseSelected', JSON.stringify(course));
-    }
+    courseSelected: function (course) {
+      localStorage.setItem("courseSelected", JSON.stringify(course));
+    },
   },
   setup() {
-     
-    let usuario = usuarioGet();
-   
+    const usuario = ref();
+
     const cursos = ref([]);
-    onIonViewWillEnter( async () => {
+    onIonViewWillEnter(async () => {
+      usuario.value = usuarioGet();
       tokenHeader();
-      cursos.value = JSON.parse(localStorage.getItem('cursosUsuario'))
+      cursos.value = JSON.parse(localStorage.getItem("cursosUsuario"));
     });
 
     return {
-
       peopleCircleOutline,
       usuario,
       cursos,

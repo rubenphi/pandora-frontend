@@ -123,9 +123,10 @@ export default {
       color: "",
     });
 
-    let usuario = usuarioGet();
+    const usuario = ref();
 
     onIonViewWillEnter(async () => {
+      usuario.value = usuarioGet();
       tokenHeader();
       if (id != undefined) {
         await axios.get("/options/" + id).then((response) => {
@@ -145,7 +146,7 @@ export default {
           correct: false,
           indentifier: "",
           questionId: "",
-          instituteId: usuarioGet().institute.id,
+          instituteId: usuario.value.institute.id,
           exist: true,
         };
       }

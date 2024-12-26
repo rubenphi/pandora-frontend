@@ -16,7 +16,7 @@
           </ion-button>
         </ion-buttons>
         <ion-buttons slot="end" class="ion-margin-end">
-          <ion-button v-if="usuario.rol == 'admin'" @click="ordenarPorNombre">
+          <ion-button v-if="usuario?.rol == 'admin'" @click="ordenarPorNombre">
             <ion-icon :icon="arrowDownCircle"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -65,8 +65,8 @@
             </ion-text>
             <ion-text
               v-if="
-                respuesta.group.id === usuario?.grupo?.id ||
-                usuario.rol == 'admin'
+                respuesta?.group?.id === usuario?.grupo?.id ||
+                usuario?.rol == 'admin'
               "
             >
               Nota: {{ parseFloat(respuesta.nota).toFixed(1) }}
@@ -148,7 +148,7 @@ export default {
     IonLabel,
   },
   setup() {
-    const usuario = usuarioGet();
+    const usuario = ref();
     const admin = adminOprofesor();
     const mroute = useRoute();
     const { id } = mroute.params;
@@ -177,6 +177,7 @@ export default {
       });
     };
     onIonViewDidEnter(async () => {
+      usuario.value = usuarioGet();
       tokenHeader();
       await axios.get(`/lessons/${id}/results`).then((response) => {
         respuestas.value = response.data.map((e) => {
@@ -200,8 +201,7 @@ export default {
             grade: respuesta.nota,
             instituteId: cuestionario.value.institute.id,
           };
-          const gradeResponse = await axios.post("/grades", data);
-          console.log(gradeResponse);
+          await axios.post("/grades", data);
         }
       }
     }

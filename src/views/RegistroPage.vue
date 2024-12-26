@@ -126,7 +126,7 @@ export default {
   methods: {
     async crearCuestionario() {
       try {
-        const response = await axios.post(
+        await axios.post(
           "/users", // Cambia esta URL por la ruta correcta de tu API
           this.formData,
           {
@@ -136,7 +136,7 @@ export default {
             },
           }
         );
-        console.log("Registro exitoso:", response.data);
+
         //go to login page
       } catch (error) {
         console.error(

@@ -34,7 +34,7 @@ import {
   IonButtons,
   onIonViewWillEnter,
 } from "@ionic/vue";
-import { adminOprofesor, tokenHeader, usuarioGet } from "../globalService";
+import { adminOprofesor, tokenHeader } from "../globalService";
 import router from "../router";
 import { exitOutline } from "ionicons/icons";
 import axios from "axios";
@@ -50,16 +50,19 @@ export default {
     IonButtons,
   },
   setup() {
-    let usuario = usuarioGet();
+    let usuario;
+
     onIonViewWillEnter(async () => {
+      usuario = JSON.parse(localStorage.getItem("usuario"));
       tokenHeader();
 
       if (!adminOprofesor())
-        await axios.get(`/users/${usuario.id}/groups`).then((response) => {
+        await axios.get(`/users/${usuario?.id}/groups`).then((response) => {
           const grupoUsuario = response.data.filter((g) => g.active)[0].group;
           localStorage.setItem("grupoUsuario", JSON.stringify(grupoUsuario));
         });
     });
+
     return {
       salir() {
         const periodoSelected = JSON.parse(
@@ -70,6 +73,12 @@ export default {
           "periodoSelected",
           JSON.stringify(periodoSelected)
         );
+        // Limpiar cualquier estado relacionado con el usuario aquí
+        usuario = null;
+        // Limpiar datos de Tab1Page.vue
+        localStorage.removeItem("grupoUsuario");
+        localStorage.removeItem("miembros");
+        localStorage.removeItem("notas");
         router.push("/login");
       },
       exitOutline,
