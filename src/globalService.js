@@ -13,6 +13,18 @@ export function usuarioGet() {
   }
 }
 
+//JSON.parse(localStorage.getItem("periodos"))
+export function periodosGet() {
+  if (localStorage.getItem("periodos") == undefined) {
+    return false;
+  } else {
+    //alphabetical order by name
+    return JSON.parse(localStorage.getItem("periodos")).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+  }
+}
+
 export function selectedYear() {
   var date = new Date();
   var year = date.getFullYear();

@@ -35,7 +35,7 @@ const routes = [
         component: () => import("@/views/Tab2Page.vue"),
       },
       {
-        path: "cuestionarios/:curso/:area/:periodo",
+        path: "cuestionarios/:curso/:area/:periodo/:year",
         component: () => import("@/views/Tab3Page.vue"),
       },
       {
@@ -49,6 +49,22 @@ const routes = [
       {
         path: "admin/panel",
         component: () => import("@/views/PanelPage.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
+        path: "admin/grupos/:cursoId",
+        component: () => import("@/views/GruposPage.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
+        path: "admin/notas/:cursoId/:areaId/:year",
+        component: () => import("@/views/NotasPage.vue"),
         beforeEnter: (to, from, next) => {
           if (adminOprofesor()) next();
           else next({ path: "/inicio" });

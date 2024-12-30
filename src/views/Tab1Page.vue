@@ -43,7 +43,7 @@
           </ion-card-content>
           <ion-button fill="clear" @click="presentModal" id="open-modal">
             Cambiar de grupo&nbsp;
-            <ion-icon :icon="syncOutline"></ion-icon>
+            <ion-icon :icon="swapHorizontalOutline"></ion-icon>
           </ion-button>
         </ion-card>
       </ion-card>
@@ -138,10 +138,14 @@
   </ion-page>
 </template>
 <script>
-import { easelOutline, personOutline, syncOutline } from "ionicons/icons";
+import {
+  easelOutline,
+  personOutline,
+  swapHorizontalOutline,
+} from "ionicons/icons";
 import axios from "axios";
 import { ref } from "vue";
-import { tokenHeader, usuarioGet } from "../globalService";
+import { periodosGet, tokenHeader, usuarioGet } from "../globalService";
 import {
   onIonViewWillEnter,
   IonPage,
@@ -225,7 +229,7 @@ export default {
 
     onIonViewWillEnter(async () => {
       usuario.value = usuarioGet();
-      periodos.value = JSON.parse(localStorage.getItem("periodos"));
+      periodos.value = periodosGet();
       if (Array.isArray(periodos.value)) {
         periodos.value.sort((a, b) => a.name.localeCompare(b.name));
       }
@@ -237,26 +241,37 @@ export default {
       year.value = localStorage.getItem("year");
 
       tokenHeader();
-      await axios.get("/grades?userId=" + usuario.value.id).then((response) => {
-        const notasByArea = response.data.reduce((acc, nota) => {
-          delete nota.area;
-          nota.grade = nota.grade.toFixed(1);
-          const area = nota.lesson.area;
-          const areaIndex = acc.findIndex((a) => a.id === area.id);
-          if (areaIndex === -1) {
-            acc.push({
-              name: area.name,
-              id: area.id,
-              notas: [nota],
-            });
-          } else {
-            acc[areaIndex].notas.push(nota);
-          }
-          return acc;
-        }, []);
+      await axios
+        .get(`/grades?userId=${usuario.value.id}&year=${year.value}`)
+        .then((response) => {
+          const notasByArea = response.data.reduce((acc, nota) => {
+            delete nota.area;
+            nota.grade = nota.grade.toFixed(1);
+            const area = nota.lesson.area;
+            const areaIndex = acc.findIndex((a) => a.id === area.id);
+            if (areaIndex === -1) {
+              acc.push({
+                name: area.name,
+                id: area.id,
+                notas: [nota],
+              });
+            } else {
+              acc[areaIndex].notas.push(nota);
+            }
+            return acc;
+          }, []);
 
-        notas.value = notasByArea;
-      });
+          //ordenar notas por fecha las más antigua primero
+
+          notas.value = notasByArea.map((area) => {
+            return {
+              ...area,
+              notas: area.notas.sort((a, b) => {
+                return new Date(a.lesson.date) - new Date(b.lesson.date);
+              }),
+            };
+          });
+        });
 
       await axios.get(`/users/${usuario.value.id}/groups`).then((response) => {
         grupoUsuario.value = response.data.filter((g) => g.active)[0].group;
@@ -291,7 +306,7 @@ export default {
       miembros,
       modal,
       presentModal() {},
-      syncOutline,
+      swapHorizontalOutline,
       cancel,
       confirm,
       actualCurso,

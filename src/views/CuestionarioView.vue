@@ -11,7 +11,9 @@
               '/' +
               cuestionario.area.id +
               '/' +
-              periodoSelected
+              periodoSelected +
+              '/' +
+              year
             "
           >
             <ion-icon :icon="arrowBackOutline"></ion-icon>
@@ -152,13 +154,18 @@ export default {
   },
   setup() {
     const admin = adminOprofesor();
-    const periodoSelected = JSON.parse(localStorage.getItem("periodoSelected"));
+    const periodoSelected = ref();
+    const year = ref();
     const mroute = useRoute();
     const { id } = mroute.params;
 
     let cuestionario = ref(JSON.parse(localStorage.getItem("lessonSelected")));
 
     onIonViewDidEnter(async () => {
+      periodoSelected.value = JSON.parse(
+        localStorage.getItem("periodoSelected")
+      );
+      year.value = JSON.parse(localStorage.getItem("year"));
       tokenHeader();
 
       if (cuestionario.value.id !== id) {
@@ -194,6 +201,7 @@ export default {
       addOutline,
       lockClosedOutline,
       lockOpenOutline,
+      year,
     };
   },
 };

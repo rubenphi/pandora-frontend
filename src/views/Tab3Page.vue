@@ -91,6 +91,7 @@ export default {
     const mroute = useRoute();
     const { curso } = mroute.params;
     const { area } = mroute.params;
+    const { year } = mroute.params;
     const { periodo } = mroute.params;
     const cursoSelected = ref(
       JSON.parse(localStorage.getItem("courseSelected"))
@@ -109,15 +110,24 @@ export default {
         router.push("/cuestionarios/" + cursosUsuario.value[0].id + "/" + area);
       } else {
         await axios
-          .get(`/lessons?courseId=${curso}&areaId=${area}&periodId=${periodo}`)
+          .get(
+            `/lessons?courseId=${curso}&areaId=${area}&periodId=${periodo}${
+              year ? "&year=" + year : ""
+            }
+          `
+          )
           .then((response) => {
-            cuestionarios.value = response.data.map((cuestionario) => ({
-              id: cuestionario.id,
-              topic: cuestionario.topic,
-              date: cuestionario.date,
-              area: { id: cuestionario.area.id },
-              course: { id: cuestionario.course.id },
-            }));
+            cuestionarios.value = response.data
+              .map((cuestionario) => ({
+                id: cuestionario.id,
+                topic: cuestionario.topic,
+                date: cuestionario.date,
+                area: { id: cuestionario.area.id },
+                course: { id: cuestionario.course.id },
+              }))
+              .sort((a, b) => {
+                return new Date(a.date) - new Date(b.date);
+              });
           });
       }
     });

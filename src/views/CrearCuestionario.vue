@@ -6,7 +6,14 @@
           <ion-button
             v-if="curso"
             :href="
-              '/cuestionarios/' + curso + '/' + area + '/' + periodoSelected
+              '/cuestionarios/' +
+              curso +
+              '/' +
+              area +
+              '/' +
+              periodoSelected +
+              '/' +
+              year
             "
           >
             <ion-icon :icon="arrowBackOutline"></ion-icon>
@@ -84,7 +91,7 @@ import { ref } from "vue";
 import { useRoute } from "vue-router";
 import router from "../router";
 
-import { usuarioGet, tokenHeader } from "../globalService";
+import { usuarioGet, tokenHeader, periodosGet } from "../globalService";
 import {
   onIonViewWillEnter,
   IonLabel,
@@ -131,15 +138,10 @@ export default {
     const { curso } = mroute.params;
     const { area } = mroute.params;
     const { id } = mroute.params;
-    const periodos = ref(JSON.parse(localStorage.getItem("periodos")));
-    const periodoSelected = ref(
-      JSON.parse(localStorage.getItem("periodoSelected"))
-    );
-    if (Array.isArray(periodos.value)) {
-      periodos.value = periodos.value.sort((a, b) =>
-        a.name.localeCompare(b.name)
-      );
-    }
+    const periodos = ref();
+    const year = ref();
+    const periodoSelected = ref();
+
     const cuestionario = ref({
       courseId: 0,
     });
@@ -151,7 +153,12 @@ export default {
     const usuario = ref();
 
     onIonViewWillEnter(async () => {
+      periodoSelected.value = JSON.parse(
+        localStorage.getItem("periodoSelected")
+      );
+      year.value = JSON.parse(localStorage.getItem("year"));
       usuario.value = usuarioGet();
+      periodos.value = periodosGet();
       tokenHeader();
       if (id != undefined) {
         await axios.get("/lessons/" + id).then((response) => {
@@ -255,6 +262,7 @@ export default {
       cuestionario,
       checkmarkOutline,
       periodoSelected,
+      year,
     };
   },
 };

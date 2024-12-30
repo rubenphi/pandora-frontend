@@ -13,8 +13,22 @@
       </ion-header>
       <ion-list>
         <ion-item>
-          <ion-label>Periodo: </ion-label>
+          <ion-label slot="start" v-if="!adminOProfesor"
+            ><strong>Periodo:</strong></ion-label
+          >
           <ion-select
+            v-if="adminOProfesor"
+            slot="start"
+            v-model="yearSelected"
+            placeholder="Selecciona un año"
+          >
+            <ion-select-option v-for="year in years" :key="year" :value="year">
+              <strong>Año: </strong> {{ year }}
+            </ion-select-option>
+          </ion-select>
+
+          <ion-select
+            slot="end"
             v-model="periodoSelected"
             placeholder="Selecciona un periodo"
             @ionChange="changePeriodo($event)"
@@ -56,7 +70,12 @@ import router from "../router";
 import { ref } from "vue";
 import { useRoute } from "vue-router";
 
-import { tokenHeader, usuarioGet } from "../globalService";
+import {
+  tokenHeader,
+  usuarioGet,
+  periodosGet,
+  adminOprofesor,
+} from "../globalService";
 import {
   onIonViewWillEnter,
   IonLabel,
@@ -89,6 +108,7 @@ export default {
   },
   setup() {
     const mroute = useRoute();
+    const adminOProfesor = ref();
     const { id } = mroute.params;
     const usuario = ref();
     const areas = ref([]);
@@ -101,19 +121,24 @@ export default {
       isOpen.value = true;
     };
 
-    let periodos = ref(JSON.parse(localStorage.getItem("periodos")));
+    const periodos = ref();
 
-    if (Array.isArray(periodos.value)) {
-      periodos.value = periodos.value.sort((a, b) =>
-        a.name.localeCompare(b.name)
-      );
-    }
+    const periodoSelected = ref();
 
-    const periodoSelected = ref(
-      JSON.parse(localStorage.getItem("periodoSelected"))
-    );
+    const years = ref([]);
+    const yearSelected = ref();
 
     onIonViewWillEnter(async () => {
+      adminOProfesor.value = adminOprofesor();
+      periodos.value = periodosGet();
+      periodoSelected.value = JSON.parse(
+        localStorage.getItem("periodoSelected")
+      );
+      //las 10 years
+      years.value = new Array(10)
+        .fill(0)
+        .map((_, i) => new Date().getFullYear() - i);
+      yearSelected.value = new Date().getFullYear();
       usuario.value = usuarioGet();
       tokenHeader();
       if (usuario.value.rol === "student" || usuario.value.rol === "user") {
@@ -140,9 +165,12 @@ export default {
           presentToast();
           return;
         }
-        router.push(`/cuestionarios/${id}/${areaId}/${periodoSelected.value}`);
+        router.push(
+          `/cuestionarios/${id}/${areaId}/${periodoSelected.value}/${yearSelected.value}`
+        );
       },
       usuario,
+      adminOProfesor,
       libraryOutline,
       areas,
       id,
@@ -152,6 +180,8 @@ export default {
       isOpen,
       setOpen,
       presentToast,
+      years,
+      yearSelected,
     };
   },
 };

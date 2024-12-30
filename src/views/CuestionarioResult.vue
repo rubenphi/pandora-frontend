@@ -193,14 +193,15 @@ export default {
       for (const respuesta of respuestas.value) {
         //search users of the group
         const response = await axios.get(`/groups/${respuesta.group.id}/users`);
-        for (const user of response.data) {
+        for (const relacionUsuario of response.data) {
           const data = {
-            userId: user.id,
+            userId: relacionUsuario.user.id,
             lessonId: parseInt(id, 10),
             periodId: cuestionario.value.period.id,
             grade: respuesta.nota,
             instituteId: cuestionario.value.institute.id,
           };
+
           await axios.post("/grades", data);
         }
       }
