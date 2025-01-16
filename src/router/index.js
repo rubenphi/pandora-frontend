@@ -55,7 +55,7 @@ const routes = [
         },
       },
       {
-        path: "admin/grupos/:cursoId",
+        path: "admin/grupos/:cursoId/:selectedYear",
         component: () => import("@/views/GruposPage.vue"),
         beforeEnter: (to, from, next) => {
           if (adminOprofesor()) next();

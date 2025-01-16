@@ -217,6 +217,7 @@ export default {
         groupId: grupo.value,
         userId: usuario.value.id,
         code: code.value,
+        year: parseInt(year.value, 10),
         active: true,
       };
 
@@ -274,24 +275,28 @@ export default {
         });
 
       await axios.get(`/users/${usuario.value.id}/groups`).then((response) => {
-        grupoUsuario.value = response.data.filter((g) => g.active)[0].group;
-        localStorage.setItem(
-          "grupoUsuario",
-          JSON.stringify(grupoUsuario.value)
-        );
+        grupoUsuario.value =
+          response.data.filter((g) => g.active)[0]?.group ?? null;
       });
-      await axios
-        .get(`/groups/${grupoUsuario.value.id}/users`)
-        .then((response) => {
-          miembros.value = response.data;
-        });
+
+      if (grupoUsuario.value?.id) {
+        await axios
+          .get(`/groups/${grupoUsuario.value.id}/${year.value}/users`)
+          .then((response) => {
+            miembros.value = response.data;
+          });
+      }
 
       await axios
-        .get(`/groups?courseId=${actualCurso.value.id}&year=${year.value}`)
+        .get(`/groups?courseId=${actualCurso.value.id}`)
         .then((response) => {
-          grupos.value = response.data.filter((grupo) => {
-            return grupo.id != grupoUsuario.value.id ?? false;
-          });
+          grupos.value = response.data;
+
+          if (grupoUsuario.value) {
+            grupos.value = grupos.value.filter((grupo) => {
+              return grupo.id != grupoUsuario.value.id ?? false;
+            });
+          }
         });
     });
 

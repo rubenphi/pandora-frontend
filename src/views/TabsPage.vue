@@ -76,6 +76,13 @@ export default {
       cursoEstudiante.value = JSON.parse(
         localStorage.getItem("cursosUsuario")
       ).find((course) => course.year == year);
+
+      //get the last course by year
+      if (!cursoEstudiante.value?.id) {
+        cursoEstudiante.value = JSON.parse(
+          localStorage.getItem("cursosUsuario")
+        ).sort((a, b) => b.year - a.year)[0];
+      }
     });
     return {
       cursoEstudiante,

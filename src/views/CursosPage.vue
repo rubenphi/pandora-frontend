@@ -47,7 +47,11 @@
                         <IonLabel>Notas</IonLabel>
                       </IonItem>
                       <IonItem
-                        @click="router.push(`/admin/grupos/${curso.id}`)"
+                        @click="
+                          router.push(
+                            `/admin/grupos/${curso.id}/${selectedYear}`
+                          )
+                        "
                       >
                         <IonLabel>Grupos</IonLabel>
                       </IonItem>

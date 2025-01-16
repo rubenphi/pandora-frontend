@@ -242,7 +242,7 @@ export default {
             })
             .then(async () => {
               await axios
-                .get(`/users/${usuarioGet().id}/courses?year=${selectedYear()}`)
+                .get(`/users/${usuarioGet().id}/courses`)
                 .then((response) => {
                   const cursosUsuario = response.data.map((assignacion) => ({
                     name: assignacion.course.name,
@@ -253,7 +253,13 @@ export default {
                     "cursosUsuario",
                     JSON.stringify(cursosUsuario)
                   );
-                  localStorage.setItem("year", selectedYear());
+                  //si no hay un curso con el year igual a selectedYear() ,  localstorage year se convertira en el ultimo year de cursosUsuario
+                  if (!cursosUsuario.find((c) => c.year == selectedYear())) {
+                    localStorage.setItem(
+                      "year",
+                      cursosUsuario.sort((a, b) => b.year - a.year)[0].year
+                    );
+                  }
                 });
 
               await axios

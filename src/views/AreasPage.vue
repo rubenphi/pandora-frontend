@@ -138,7 +138,7 @@ export default {
       years.value = new Array(10)
         .fill(0)
         .map((_, i) => new Date().getFullYear() - i);
-      yearSelected.value = new Date().getFullYear();
+      yearSelected.value = localStorage.getItem("year");
       usuario.value = usuarioGet();
       tokenHeader();
       if (usuario.value.rol === "student" || usuario.value.rol === "user") {

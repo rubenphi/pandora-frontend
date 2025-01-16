@@ -24,12 +24,13 @@
                   v-for="miembro in groupSelectedMembers"
                   :key="miembro?.id"
                 >
-                  <ion-icon slot="start" :icon="peopleCircleOutline"></ion-icon>
+                  <ion-icon slot="start" :icon="personCircleOutline"></ion-icon>
                   <IonLabel>{{
                     miembro?.name + " " + miembro?.lastName
                   }}</IonLabel>
 
                   <ion-icon
+                    v-if="grupo?.id != 0"
                     slot="end"
                     @click="openModal(miembro?.id)"
                     id="open-modal"
@@ -37,6 +38,15 @@
                   ></ion-icon>
 
                   <ion-icon
+                    v-if="grupo?.id == 0"
+                    slot="end"
+                    @click="openModal(miembro?.id)"
+                    id="open-modal"
+                    :icon="addOutline"
+                  ></ion-icon>
+
+                  <ion-icon
+                    v-if="grupo?.id != 0"
                     slot="end"
                     :icon="personRemoveOutline"
                     @click="removeMember(grupo.id, miembro?.id)"
@@ -77,11 +87,11 @@
               placeholder="Seleccion el nuevo grupo"
             >
               <ion-select-option
-                v-for="grupo in grupos"
-                :key="grupo.id"
-                :value="grupo.id"
+                v-for="grupoEnLista in gruposLista"
+                :key="grupoEnLista.id"
+                :value="grupoEnLista.id"
               >
-                {{ grupo.name }}
+                {{ grupoEnLista.name }}
               </ion-select-option>
             </ion-select>
           </ion-item>
@@ -117,6 +127,7 @@ import {
 } from "@ionic/vue";
 
 import {
+  addOutline,
   peopleCircleOutline,
   personCircleOutline,
   personRemoveOutline,
@@ -146,8 +157,9 @@ export default {
     const mroute = useRoute();
     const modal = ref();
     const curso = ref();
-    const { cursoId } = mroute.params;
+    const { cursoId, selectedYear } = mroute.params;
     const grupos = ref([]);
+    const gruposLista = ref([]);
     const usuario = ref();
     const groupSelectedMembers = ref([]);
     const isModalOpen = ref(false);
@@ -161,6 +173,7 @@ export default {
         groupId: grupoId.value,
         userId: userId.value,
         code: "admin",
+        year: parseInt(selectedYear, 10),
         active: true,
       };
 
@@ -173,15 +186,42 @@ export default {
     };
 
     const getMembers = async (groupId) => {
-      try {
-        const response = await axios.get(`/groups/${groupId}/users`, {
-          headers: tokenHeader(),
-        });
-        groupSelectedMembers.value = response.data.map((miembro) => ({
-          ...miembro.user,
-        }));
-      } catch (error) {
-        console.error("Error fetching group members:", error);
+      //  /courses/{{cursoId}}/usersNoGroup?year={{selectedYear}}'
+      if (groupId == 0) {
+        try {
+          const response = await axios.get(
+            `/courses/${cursoId}/usersNoGroup?year=${selectedYear}`,
+            {
+              headers: tokenHeader(),
+            }
+          );
+          // only rol student
+
+          groupSelectedMembers.value = response.data
+            .map((miembro) => ({
+              ...miembro.user,
+            }))
+            .filter(
+              (estudiante) =>
+                estudiante.rol === "student" || estudiante.rol === "user"
+            );
+        } catch (error) {
+          console.error("Error fetching group members:", error);
+        }
+      } else {
+        try {
+          const response = await axios.get(
+            `/groups/${groupId}/${selectedYear}/users`,
+            {
+              headers: tokenHeader(),
+            }
+          );
+          groupSelectedMembers.value = response.data.map((miembro) => ({
+            ...miembro.user,
+          }));
+        } catch (error) {
+          console.error("Error fetching group members:", error);
+        }
       }
     };
 
@@ -198,6 +238,8 @@ export default {
           }
         );
         getMembers(groupId);
+        //refresh page
+        location.reload();
       } catch (error) {
         console.error("Error removing member from group:", error);
       }
@@ -218,21 +260,34 @@ export default {
         await axios.get(`/courses/${cursoId}`, { headers: tokenHeader() })
       ).data;
       usuario.value = usuarioGet();
-      grupos.value = (
+      const llamado = (
         await axios.get(`/courses/${cursoId}/groups`, {
           headers: tokenHeader(),
         })
       ).data;
+
+      gruposLista.value = [...llamado];
+
+      grupos.value = llamado;
+
+      grupos.value.push({
+        id: 0,
+        name: "Sin grupo",
+        year: selectedYear,
+        course: cursoId,
+        active: true,
+      });
     });
 
     return {
       mroute,
       usuario,
       grupos,
+      gruposLista,
       curso,
       getMembers,
       removeMember,
-
+      addOutline,
       groupSelectedMembers,
       peopleCircleOutline,
       personCircleOutline,

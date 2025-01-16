@@ -37,7 +37,9 @@
               slot="header"
               @click="filtrarNotasEstudiante(estudiante.id)"
             >
-              <IonLabel>{{ estudiante.name }}</IonLabel>
+              <IonLabel>{{
+                estudiante.lastName + " " + estudiante.name
+              }}</IonLabel>
             </IonItem>
             <div class="ion-padding" slot="content">
               <IonList>

@@ -108,7 +108,7 @@
       </ion-card>
 
       <ion-buttons
-        v-if="!admin"
+        v-if="!admin && grupoUsuario?.id"
         class="ion-justify-content-center ion-padding-top ion-padding-bottom"
       >
         <ion-button
@@ -124,6 +124,16 @@
           <ion-label class="ion-text-center"> Enviar Respuesta </ion-label>
         </ion-button>
       </ion-buttons>
+
+      <div v-if="!admin && !grupoUsuario?.id">
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title class="ion-text-center">
+              No puedes responder preguntas si no perteneces a un grupo
+            </ion-card-title>
+          </ion-card-header>
+        </ion-card>
+      </div>
 
       <ion-buttons
         v-if="admin"
@@ -218,9 +228,10 @@ export default {
   },
   setup() {
     const admin = adminOprofesor();
+    const usuario = usuarioGet();
     const botonInactivo = ref(false);
     const mroute = useRoute();
-    const grupoUsuario = JSON.parse(localStorage.getItem("grupoUsuario"));
+    const grupoUsuario = ref();
     const { id } = mroute.params;
     const question = ref({
       id: "",
@@ -249,6 +260,10 @@ export default {
 
     onIonViewDidEnter(async () => {
       tokenHeader();
+      if (!adminOprofesor())
+        await axios.get(`/users/${usuario?.id}/groups`).then((response) => {
+          grupoUsuario.value = response.data.filter((g) => g.active)[0]?.group;
+        });
 
       await axios.get("/questions/" + id).then((response) => {
         question.value = {
@@ -270,9 +285,9 @@ export default {
         question.value.sentence = question.value.sentence.replace(rem, "</br>");
       });
 
-      if (!admin) {
+      if (!admin && grupoUsuario.value?.id) {
         await axios
-          .get(`/answers?=questionId=${id}&groupId=${grupoUsuario.id}`)
+          .get(`/answers?=questionId=${id}&groupId=${grupoUsuario.value?.id}`)
           .then((response) => {
             if (response?.data[0] || admin) {
               respuesta.value.optionId = response?.data[0].option.id;
@@ -294,7 +309,7 @@ export default {
           error.value.data = "Debe seleccionar una opción.";
         } else {
           respuesta.value.questionId = question.value.id;
-          respuesta.value.groupId = grupoUsuario.id;
+          respuesta.value.groupId = grupoUsuario.value?.id;
           respuesta.value.lessonId = question.value.lessonId;
           respuesta.value.exist = true;
           respuesta.value.instituteId = usuarioGet().institute.id;
@@ -329,6 +344,7 @@ export default {
       podiumOutline,
       createOutline,
       addOutline,
+      grupoUsuario,
       botonInactivo,
       loading,
     };

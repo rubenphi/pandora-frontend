@@ -73,7 +73,7 @@
             >
             <ion-text v-else color="warning"><h6>Obtienen: ?</h6></ion-text>
             <ion-text
-              v-if="admin || grupoUsuario.id == respuesta.group.id"
+              v-if="admin || grupoUsuario?.id == respuesta.group.id"
               color="warning"
               ><h6>Respuesta: {{ respuesta.option.identifier }}</h6></ion-text
             >
@@ -115,7 +115,7 @@ import { useRoute } from "vue-router";
 import router from "../router";
 import axios from "axios";
 import { ref } from "vue";
-import { tokenHeader, adminOprofesor } from "../globalService";
+import { tokenHeader, adminOprofesor, usuarioGet } from "../globalService";
 
 import {
   arrowDownCircle,
@@ -164,9 +164,10 @@ export default {
     IonLabel,
   },
   setup() {
+    const usuario = usuarioGet();
     const admin = adminOprofesor();
     const mroute = useRoute();
-    const grupoUsuario = ref(JSON.parse(localStorage.getItem("grupoUsuario")));
+    const grupoUsuario = ref();
     const { id } = mroute.params;
     const respuestas = ref([
       {
@@ -196,6 +197,10 @@ export default {
     };
 
     onIonViewDidEnter(async () => {
+      if (!adminOprofesor())
+        await axios.get(`/users/${usuario?.id}/groups`).then((response) => {
+          grupoUsuario.value = response.data.filter((g) => g.active)[0]?.group;
+        });
       tokenHeader();
       await axios.get("/questions/" + id).then((response) => {
         pregunta.value = {
