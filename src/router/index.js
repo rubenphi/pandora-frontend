@@ -55,6 +55,14 @@ const routes = [
         },
       },
       {
+        path: "admin/gestionar/usuarios",
+        component: () => import("@/views/gestionUsuarios.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
         path: "admin/grupos/:cursoId/:selectedYear",
         component: () => import("@/views/GruposPage.vue"),
         beforeEnter: (to, from, next) => {
@@ -73,6 +81,10 @@ const routes = [
       {
         path: "cuestionario/:id",
         component: () => import("@/views/CuestionarioView.vue"),
+      },
+      {
+        path: "cuestionario/importar/:id",
+        component: () => import("@/views/ImportacionPregunta.vue"),
       },
       {
         path: "areas/:id",
@@ -107,7 +119,7 @@ const routes = [
         },
       },
       {
-        path: "crear/cuestionario/:curso/:area",
+        path: "crear/cuestionario/:curso/:area/:year",
         component: () => import("@/views/CrearCuestionario.vue"),
         beforeEnter: (to, from, next) => {
           if (adminOprofesor()) next();

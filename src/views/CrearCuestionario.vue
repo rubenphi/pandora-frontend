@@ -137,9 +137,10 @@ export default {
     const mroute = useRoute();
     const { curso } = mroute.params;
     const { area } = mroute.params;
+    const { year } = mroute.params;
     const { id } = mroute.params;
     const periodos = ref();
-    const year = ref();
+
     const periodoSelected = ref();
 
     const cuestionario = ref({
@@ -156,7 +157,6 @@ export default {
       periodoSelected.value = JSON.parse(
         localStorage.getItem("periodoSelected")
       );
-      year.value = JSON.parse(localStorage.getItem("year"));
       usuario.value = usuarioGet();
       periodos.value = periodosGet();
       tokenHeader();
@@ -207,14 +207,8 @@ export default {
           await axios
             .post("/lessons", cuestionario.value)
             .then((response) => {
-              router.push(
-                "/cuestionarios/" +
-                  curso +
-                  "/" +
-                  area +
-                  "/" +
-                  cuestionario.value.periodId
-              );
+              router.push("/cuestionario/" + response.data.id);
+
               localStorage.setItem("error", response.data.message);
             })
             .catch((response) => {

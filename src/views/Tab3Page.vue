@@ -14,7 +14,7 @@
           <ion-button
             v-if="curso && area"
             slot="end"
-            :href="'/crear/cuestionario/' + curso + '/' + area"
+            :href="`/crear/cuestionario/${curso}/${area}/${year}`"
           >
             <ion-icon :icon="addOutline"></ion-icon>
           </ion-button>
@@ -141,6 +141,7 @@ export default {
       arrowBackOutline,
       usuario,
       cuestionarios,
+      year,
     };
   },
 };

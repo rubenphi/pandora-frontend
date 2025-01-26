@@ -95,6 +95,16 @@
         >
           <ion-icon :icon="addOutline"></ion-icon>
         </ion-button>
+        <ion-button
+          :href="'/cuestionario/importar/' + cuestionario.id"
+          expand="full"
+          fill="outline"
+          shape="round"
+          color="medium"
+          class="ion-align-self-center"
+        >
+          <ion-icon :icon="downloadOutline"></ion-icon>
+        </ion-button>
       </ion-buttons>
     </ion-content>
   </ion-page>
@@ -112,6 +122,7 @@ import {
   handLeftOutline,
   createOutline,
   addOutline,
+  downloadOutline,
 } from "ionicons/icons";
 import {
   IonLabel,
@@ -165,7 +176,7 @@ export default {
       periodoSelected.value = JSON.parse(
         localStorage.getItem("periodoSelected")
       );
-      year.value = JSON.parse(localStorage.getItem("year"));
+      year.value = JSON.parse(localStorage.getItem("yearSelected"));
       tokenHeader();
 
       if (cuestionario.value.id !== id) {
@@ -176,15 +187,20 @@ export default {
       }
 
       await axios.get(`/lessons/${id}/questions`).then((response) => {
+        cuestionario.value.questions = response.data.filter((i) => i.exist);
         if (!admin) {
-          cuestionario.value.questions = response.data.filter((i) => i.visible);
+          cuestionario.value.questions = cuestionario.value.questions.filter(
+            (i) => i.visible
+          );
         } else {
-          cuestionario.value.questions = response.data.map((pregunta) => ({
-            available: pregunta.available,
-            visible: pregunta.visible,
-            id: pregunta.id,
-            title: pregunta.title,
-          }));
+          cuestionario.value.questions = cuestionario.value.questions.map(
+            (pregunta) => ({
+              available: pregunta.available,
+              visible: pregunta.visible,
+              id: pregunta.id,
+              title: pregunta.title,
+            })
+          );
         }
       });
     });
@@ -201,6 +217,7 @@ export default {
       addOutline,
       lockClosedOutline,
       lockOpenOutline,
+      downloadOutline,
       year,
     };
   },

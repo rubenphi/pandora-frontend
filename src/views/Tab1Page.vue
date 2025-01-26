@@ -145,7 +145,12 @@ import {
 } from "ionicons/icons";
 import axios from "axios";
 import { ref } from "vue";
-import { periodosGet, tokenHeader, usuarioGet } from "../globalService";
+import {
+  periodosGet,
+  selectedYear,
+  tokenHeader,
+  usuarioGet,
+} from "../globalService";
 import {
   onIonViewWillEnter,
   IonPage,
@@ -239,7 +244,9 @@ export default {
       actualCurso.value = cursosUsuario.value.find(
         (curso) => curso.year == localStorage.getItem("year")
       );
-      year.value = localStorage.getItem("year");
+      year.value = Number.isNaN(parseInt(localStorage.getItem("year"), 10))
+        ? selectedYear()
+        : parseInt(localStorage.getItem("year"), 10);
 
       tokenHeader();
       await axios

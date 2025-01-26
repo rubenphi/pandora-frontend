@@ -63,8 +63,12 @@ export default {
     const cursos = ref([]);
     onIonViewWillEnter(async () => {
       usuario.value = usuarioGet();
+
       tokenHeader();
-      cursos.value = JSON.parse(localStorage.getItem("cursosUsuario"));
+      //delete items with same id
+      cursos.value = JSON.parse(localStorage.getItem("cursosUsuario")).filter(
+        (item, index, self) => self.findIndex((t) => t.id === item.id) === index
+      );
     });
 
     return {

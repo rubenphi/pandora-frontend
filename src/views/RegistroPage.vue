@@ -3,16 +3,25 @@
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-button :href="'/login'">
+          <ion-button
+            v-if="Number.isInteger(userLoged.id) == false"
+            :href="'/login'"
+          >
+            <ion-icon :icon="arrowBackOutline"></ion-icon>
+          </ion-button>
+          <ion-button
+            v-if="Number.isInteger(userLoged.id) == true"
+            :href="'/admin/panel'"
+          >
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
         <ion-buttons slot="end">
-          <ion-button @click="crearCuestionario">
+          <ion-button @click="registrarUsuario">
             <ion-icon :icon="checkmarkOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
-        <ion-title>Registro</ion-title>
+        <ion-title>Registro </ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content>
@@ -71,6 +80,22 @@
           ></ion-input>
         </ion-item>
       </ion-list>
+      <ion-toast
+        :is-open="isSuccessToastOpen"
+        position="middle"
+        message="Registro exitoso. Redirigiendo a login..."
+        :duration="3000"
+        @didDismiss="setSuccessToastOpen(false)"
+        color="success"
+      ></ion-toast>
+      <ion-toast
+        :is-open="isErrorToastOpen"
+        position="middle"
+        :message="errorMessage"
+        :duration="3000"
+        @didDismiss="setErrorToastOpen(false)"
+        color="danger"
+      ></ion-toast>
     </ion-content>
   </ion-page>
 </template>
@@ -89,11 +114,14 @@ import {
   IonIcon,
   IonButton,
   IonButtons,
+  IonToast,
+  onIonViewWillEnter,
 } from "@ionic/vue";
 
 import axios from "axios";
 
 import { arrowBackOutline, checkmarkOutline } from "ionicons/icons";
+import { ref } from "vue";
 
 export default {
   components: {
@@ -109,6 +137,37 @@ export default {
     IonItem,
     IonLabel,
     IonInput,
+    IonToast,
+  },
+  setup() {
+    const isSuccessToastOpen = ref(false);
+    const isErrorToastOpen = ref(false);
+    const errorMessage = ref("");
+    const userLoged = ref({});
+
+    const setSuccessToastOpen = (state) => {
+      isSuccessToastOpen.value = state;
+    };
+
+    const setErrorToastOpen = (state) => {
+      isErrorToastOpen.value = state;
+    };
+
+    onIonViewWillEnter(async () => {
+      userLoged.value = JSON.parse(localStorage.getItem("usuario"));
+      console.log(userLoged.value.id);
+    });
+
+    return {
+      arrowBackOutline,
+      checkmarkOutline,
+      isSuccessToastOpen,
+      isErrorToastOpen,
+      setSuccessToastOpen,
+      setErrorToastOpen,
+      errorMessage,
+      userLoged,
+    };
   },
   data() {
     return {
@@ -124,36 +183,30 @@ export default {
     };
   },
   methods: {
-    async crearCuestionario() {
+    async registrarUsuario() {
       try {
-        await axios.post(
-          "/users", // Cambia esta URL por la ruta correcta de tu API
-          this.formData,
-          {
+        await axios
+          .post("/users", this.formData, {
             headers: {
               "Content-Type": "application/json",
               "Access-Control-Allow-Origin": "*",
             },
-          }
-        );
-
-        //go to login page
+          })
+          .then(() => {
+            this.isSuccessToastOpen = true;
+            setTimeout(() => {
+              if (this.userLoged.value.id !== undefined) {
+                this.$router.push("/inicio");
+              }
+              this.$router.push("/login");
+            }, 3000);
+          });
       } catch (error) {
-        console.error(
-          "Error al registrar:",
-          error.response?.data || error.message
-        );
-        this.$router.push("/login");
-        // Aquí puedes manejar errores, como mostrar un mensaje al usuario.
+        this.errorMessage =
+          error.response?.data?.message || "Error al registrar";
+        this.isErrorToastOpen = true;
       }
     },
-  },
-
-  setup() {
-    return {
-      arrowBackOutline,
-      checkmarkOutline,
-    };
   },
 };
 </script>

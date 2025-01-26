@@ -19,6 +19,15 @@
           <ion-icon slot="start" :icon="settingsOutline"></ion-icon
           ><ion-label>Configuraciones</ion-label>
         </ion-item>
+        <ion-item :href="'/register'">
+          <ion-icon slot="start" :icon="personAddOutline"></ion-icon
+          ><ion-label>Añadir usuario</ion-label>
+        </ion-item>
+
+        <ion-item :href="'/admin/gestionar/usuarios'">
+          <ion-icon slot="start" :icon="peopleCircleOutline"></ion-icon
+          ><ion-label>Gestionar usuarios</ion-label>
+        </ion-item>
       </ion-list>
     </ion-content>
   </ion-page>
@@ -31,6 +40,8 @@ import { tokenHeader, usuarioGet } from "../globalService";
 import {
   helpCircleOutline,
   lockOpenOutline,
+  peopleCircleOutline,
+  personAddOutline,
   settingsOutline,
 } from "ionicons/icons";
 
@@ -80,6 +91,8 @@ export default {
       settingsOutline,
       usuario,
       cursos,
+      personAddOutline,
+      peopleCircleOutline,
     };
   },
 };

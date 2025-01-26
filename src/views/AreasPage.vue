@@ -20,6 +20,7 @@
             v-if="adminOProfesor"
             slot="start"
             v-model="yearSelected"
+            @ionChange="changeYear($event)"
             placeholder="Selecciona un año"
           >
             <ion-select-option v-for="year in years" :key="year" :value="year">
@@ -108,18 +109,17 @@ export default {
   },
   setup() {
     const mroute = useRoute();
+    const presentToast = async () => {
+      isOpen.value = true;
+    };
+    const setOpen = (state) => {
+      isOpen.value = state;
+    };
     const adminOProfesor = ref();
     const { id } = mroute.params;
     const usuario = ref();
     const areas = ref([]);
     const isOpen = ref(false);
-    const setOpen = (state) => {
-      isOpen.value = state;
-    };
-
-    const presentToast = async () => {
-      isOpen.value = true;
-    };
 
     const periodos = ref();
 
@@ -138,14 +138,20 @@ export default {
       years.value = new Array(10)
         .fill(0)
         .map((_, i) => new Date().getFullYear() - i);
-      yearSelected.value = localStorage.getItem("year");
+      yearSelected.value =
+        localStorage.getItem("year") ?? new Date().getFullYear();
       usuario.value = usuarioGet();
       tokenHeader();
       if (usuario.value.rol === "student" || usuario.value.rol === "user") {
-        const year = localStorage.getItem("year");
+        // course with te bigest year
         const courseSelected = JSON.parse(
           localStorage.getItem("cursosUsuario")
-        ).find((course) => course.year == year);
+        ).sort((a, b) => b.year - a.year)[0];
+        if (!yearSelected.value) {
+          yearSelected.value = courseSelected.year;
+          localStorage.setItem("yearSelected", yearSelected.value);
+        }
+
         localStorage.setItem("courseSelected", JSON.stringify(courseSelected));
       }
 
@@ -160,6 +166,11 @@ export default {
           JSON.stringify(event.detail.value)
         );
       },
+
+      changeYear: (event) => {
+        localStorage.setItem("yearSelected", event.detail.value);
+      },
+
       navigateToCuestionario: (areaId) => {
         if (!periodoSelected.value) {
           presentToast();
