@@ -69,7 +69,6 @@
             clear-input
           ></ion-input>
         </ion-item>
-
         <ion-item>
           <ion-label position="stacked">Contraseña</ion-label>
           <ion-input
@@ -79,11 +78,79 @@
             clear-input
           ></ion-input>
         </ion-item>
+
+        <!-- Nuevos campos para administradores -->
+        <template v-if="esAdmin">
+          <ion-item>
+            <ion-label>Año</ion-label>
+            <ion-select
+              v-model="selectedYear"
+              placeholder="Seleccione el año"
+              @ionChange="getCursos"
+            >
+              <ion-select-option
+                v-for="year in years"
+                :key="year"
+                :value="year"
+              >
+                {{ year }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item>
+            <ion-label>Rol en el curso</ion-label>
+            <ion-select v-model="selectedRol" placeholder="Seleccione el rol">
+              <ion-select-option
+                v-for="rol in roles"
+                :key="rol.rol"
+                :value="rol.rol"
+              >
+                {{ rol.titulo }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item>
+            <ion-label>Curso</ion-label>
+            <ion-select
+              v-model="selectedCourseId"
+              placeholder="Seleccione el curso"
+              @ionChange="getGruposCurso"
+            >
+              <ion-select-option
+                v-for="curso in cursosInstituto"
+                :key="curso.id"
+                :value="curso.id"
+              >
+                {{ curso.name }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item>
+            <ion-label>Grupo</ion-label>
+            <ion-select
+              v-model="selectedGroupId"
+              placeholder="Seleccione el grupo"
+              :disabled="!selectedCourseId"
+            >
+              <ion-select-option
+                v-for="grupo in gruposCursoDestino"
+                :key="grupo.id"
+                :value="grupo.id"
+              >
+                {{ grupo.name }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+        </template>
       </ion-list>
+
       <ion-toast
         :is-open="isSuccessToastOpen"
         position="middle"
-        message="Registro exitoso. Redirigiendo a login..."
+        message="Registro exitoso. Redirigiendo..."
         :duration="3000"
         @didDismiss="setSuccessToastOpen(false)"
         color="success"
@@ -115,13 +182,15 @@ import {
   IonButton,
   IonButtons,
   IonToast,
+  IonSelect,
+  IonSelectOption,
   onIonViewWillEnter,
 } from "@ionic/vue";
 
 import axios from "axios";
-
 import { arrowBackOutline, checkmarkOutline } from "ionicons/icons";
 import { ref } from "vue";
+import { adminOdirectivo, tokenHeader } from "../globalService";
 
 export default {
   components: {
@@ -138,12 +207,32 @@ export default {
     IonLabel,
     IonInput,
     IonToast,
+    IonSelect,
+    IonSelectOption,
   },
   setup() {
     const isSuccessToastOpen = ref(false);
     const isErrorToastOpen = ref(false);
     const errorMessage = ref("");
     const userLoged = ref({});
+    const esAdmin = adminOdirectivo();
+
+    // Nuevas referencias para la gestión de cursos
+    const selectedYear = ref(new Date().getFullYear());
+    const years = ref(
+      Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i)
+    );
+    const selectedRol = ref(null);
+    const selectedCourseId = ref(null);
+    const selectedGroupId = ref(null);
+    const cursosInstituto = ref([]);
+    const gruposCursoDestino = ref([]);
+
+    const roles = ref([
+      { titulo: "Estudiante", rol: "student" },
+      { titulo: "Profesor", rol: "teacher" },
+      { titulo: "Administrador", rol: "admin" },
+    ]);
 
     const setSuccessToastOpen = (state) => {
       isSuccessToastOpen.value = state;
@@ -153,9 +242,39 @@ export default {
       isErrorToastOpen.value = state;
     };
 
+    const getCursos = async () => {
+      if (userLoged.value?.institute?.id) {
+        const response = await axios.get(
+          `/courses?instituteId=${userLoged.value.institute.id}&exist=true`,
+          tokenHeader()
+        );
+        cursosInstituto.value = response.data.sort((a, b) =>
+          a.name.localeCompare(b.name)
+        );
+      }
+    };
+
+    const getGruposCurso = async () => {
+      if (selectedCourseId.value) {
+        try {
+          const response = await axios.get(
+            `/courses/${selectedCourseId.value}/groups`,
+            tokenHeader()
+          );
+          gruposCursoDestino.value = response.data;
+          selectedGroupId.value = null;
+        } catch (error) {
+          console.error("Error fetching groups:", error);
+          gruposCursoDestino.value = [];
+        }
+      }
+    };
+
     onIonViewWillEnter(async () => {
       userLoged.value = JSON.parse(localStorage.getItem("usuario"));
-      console.log(userLoged.value.id);
+      if (esAdmin) {
+        await getCursos();
+      }
     });
 
     return {
@@ -167,6 +286,17 @@ export default {
       setErrorToastOpen,
       errorMessage,
       userLoged,
+      esAdmin,
+      selectedYear,
+      years,
+      selectedRol,
+      roles,
+      selectedCourseId,
+      selectedGroupId,
+      cursosInstituto,
+      gruposCursoDestino,
+      getCursos,
+      getGruposCurso,
     };
   },
   data() {
@@ -183,24 +313,63 @@ export default {
     };
   },
   methods: {
+    async asignarUsuarioACurso(userId) {
+      try {
+        // Asignar usuario al curso
+        await axios.post(
+          `/courses/${this.selectedCourseId}/users`,
+          [
+            {
+              userId: userId,
+              year: this.selectedYear,
+              rol: this.selectedRol,
+            },
+          ],
+          tokenHeader()
+        );
+
+        // Si hay grupo seleccionado, asignar usuario al grupo
+        if (this.selectedGroupId) {
+          axios
+            .post(`/users/${userId}/groups`, {
+              groupId: this.selectedGroupId,
+              userId: userId,
+              code: "admin",
+              year: this.selectedYear,
+              active: true,
+            })
+            .then(() => {
+              location.reload();
+            });
+        }
+      } catch (error) {
+        console.error("Error al asignar usuario:", error);
+        throw error;
+      }
+    },
+
     async registrarUsuario() {
       try {
-        await axios
-          .post("/users", this.formData, {
-            headers: {
-              "Content-Type": "application/json",
-              "Access-Control-Allow-Origin": "*",
-            },
-          })
-          .then(() => {
-            this.isSuccessToastOpen = true;
-            setTimeout(() => {
-              if (this.userLoged.value.id !== undefined) {
-                this.$router.push("/inicio");
-              }
-              this.$router.push("/login");
-            }, 3000);
-          });
+        const response = await axios.post("/users", this.formData, {
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
+
+        // Si es admin y hay curso seleccionado, asignar el usuario
+        if (this.esAdmin && this.selectedCourseId) {
+          await this.asignarUsuarioACurso(response.data.id);
+        }
+
+        this.isSuccessToastOpen = true;
+        setTimeout(() => {
+          if (this.userLoged.id !== undefined) {
+            this.$router.push("/inicio");
+          } else {
+            this.$router.push("/login");
+          }
+        }, 3000);
       } catch (error) {
         this.errorMessage =
           error.response?.data?.message || "Error al registrar";

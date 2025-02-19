@@ -75,7 +75,9 @@
               :icon="lockOpenOutline"
             ></ion-icon>
             <ion-label>
-              <b>{{ index + 1 + ". " + question.title }}</b></ion-label
+              <b>{{
+                numeroOrdinal(index, question.title) + ". " + question.title
+              }}</b></ion-label
             >
           </ion-item>
         </ion-list>
@@ -112,7 +114,7 @@
 <script>
 import axios from "axios";
 import { ref } from "vue";
-import { tokenHeader, adminOprofesor } from "../globalService";
+import { tokenHeader, adminOprofesor, numeroOrdinal } from "../globalService";
 
 import {
   lockClosedOutline,
@@ -176,13 +178,14 @@ export default {
       periodoSelected.value = JSON.parse(
         localStorage.getItem("periodoSelected")
       );
-      year.value = JSON.parse(localStorage.getItem("yearSelected"));
+
       tokenHeader();
 
       if (cuestionario.value.id !== id) {
         await axios.get(`/lessons/${id}`).then((response) => {
           localStorage.setItem("lessonSelected", JSON.stringify(response.data));
           cuestionario.value = response.data;
+          year.value = cuestionario.value.year;
         });
       }
 
@@ -219,6 +222,7 @@ export default {
       lockOpenOutline,
       downloadOutline,
       year,
+      numeroOrdinal,
     };
   },
 };

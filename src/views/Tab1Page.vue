@@ -25,7 +25,7 @@
           <strong>Apellidos:</strong>
           {{ usuario?.lastName }} <br />
           <strong>institución:</strong>: {{ usuario?.institute?.name }} <br />
-          <strong> Curso:</strong> {{ actualCurso?.name }} <br />
+          <strong> Curso:</strong> {{ actualCurso?.course?.name }} <br />
         </ion-card-content>
         <ion-card>
           <ion-card-header>
@@ -200,10 +200,10 @@ export default {
   setup() {
     const usuario = ref();
 
-    const cursosUsuario = ref();
+    const cursosUsuario = ref([]);
     const periodos = ref();
     const periodoSelected = ref();
-    const actualCurso = ref();
+    const actualCurso = ref({});
     const year = ref();
     const grupo = ref();
     const modal = ref();
@@ -234,19 +234,23 @@ export default {
     };
 
     onIonViewWillEnter(async () => {
+      year.value = Number.isNaN(parseInt(localStorage.getItem("year"), 10))
+        ? selectedYear()
+        : parseInt(localStorage.getItem("year"), 10);
+
       usuario.value = usuarioGet();
       periodos.value = periodosGet();
       if (Array.isArray(periodos.value)) {
         periodos.value.sort((a, b) => a.name.localeCompare(b.name));
       }
 
-      cursosUsuario.value = JSON.parse(localStorage.getItem("cursosUsuario"));
-      actualCurso.value = cursosUsuario.value.find(
-        (curso) => curso.year == localStorage.getItem("year")
-      );
-      year.value = Number.isNaN(parseInt(localStorage.getItem("year"), 10))
-        ? selectedYear()
-        : parseInt(localStorage.getItem("year"), 10);
+      cursosUsuario.value = (
+        await axios.get(`/users/${usuario.value.id}/courses`)
+      ).data;
+
+      actualCurso.value = cursosUsuario.value.find((curso) => {
+        return curso.year == year.value;
+      });
 
       tokenHeader();
       await axios
@@ -308,6 +312,8 @@ export default {
     });
 
     return {
+      cursosUsuario,
+      actualCurso,
       grupoUsuario,
       grupos,
       grupo,
@@ -321,7 +327,6 @@ export default {
       swapHorizontalOutline,
       cancel,
       confirm,
-      actualCurso,
       notas,
       easelOutline,
       periodos,

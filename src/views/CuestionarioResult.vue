@@ -23,57 +23,117 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <ion-list>
-        <ion-item
+      <ion-accordion-group @ionChange="handleAccordionChange">
+        <ion-accordion
           v-for="(respuesta, index) in respuestas"
           :key="index"
-          lines="full"
-          class="ion-padding-end"
+          :value="respuesta.group.id.toString()"
         >
-          <ion-icon
-            v-if="index === 0 && respuesta.points > 0"
-            :icon="trophyOutline"
-            size="large"
-            slot="start"
-          ></ion-icon>
-          <ion-icon
-            v-else-if="respuesta.nota >= 3"
-            :icon="happyOutline"
-            size="large"
-            slot="start"
-          ></ion-icon>
-          <ion-icon
-            v-else
-            :icon="sadOutline"
-            size="large"
-            slot="start"
-          ></ion-icon>
-          <ion-label color="medium">{{ respuesta.group.name }}</ion-label>
-          <ion-note slot="end">
-            <ion-text v-if="index === 0" color="warning">
-              <h6>
-                <ion-icon :icon="starOutline"></ion-icon>GANADOR<ion-icon
-                  :icon="starOutline"
-                ></ion-icon>
-              </h6>
-            </ion-text>
-            <ion-text v-if="respuesta.points > 0" color="success">
-              <h6>Total Puntos: {{ respuesta.points }}</h6>
-            </ion-text>
-            <ion-text v-else color="danger">
-              <h6>Total Puntos: {{ respuesta.points }}</h6>
-            </ion-text>
-            <ion-text
+          <ion-item slot="header" lines="full" class="ion-padding-end">
+            <ion-icon
+              v-if="index === 0 && respuesta.points > 0"
+              :icon="trophyOutline"
+              size="large"
+              slot="start"
+            ></ion-icon>
+            <ion-icon
+              v-else-if="respuesta.nota >= 3"
+              :icon="happyOutline"
+              size="large"
+              slot="start"
+            ></ion-icon>
+            <ion-icon
+              v-else
+              :icon="sadOutline"
+              size="large"
+              slot="start"
+            ></ion-icon>
+            <ion-label color="medium">{{ respuesta.group.name }}</ion-label>
+            <ion-note slot="end">
+              <ion-text v-if="index === 0" color="warning">
+                <h6>
+                  <ion-icon :icon="starOutline"></ion-icon>GANADOR<ion-icon
+                    :icon="starOutline"
+                  ></ion-icon>
+                </h6>
+              </ion-text>
+              <ion-text v-if="respuesta.points > 0" color="success">
+                <h6>Total Puntos: {{ respuesta.points }}</h6>
+              </ion-text>
+              <ion-text v-else color="danger">
+                <h6>Total Puntos: {{ respuesta.points }}</h6>
+              </ion-text>
+              <ion-text
+                v-if="
+                  respuesta?.group?.id === grupoUsuario?.id ||
+                  usuario?.rol == 'admin'
+                "
+              >
+                Nota: {{ parseFloat(respuesta.nota).toFixed(1) }}
+              </ion-text>
+            </ion-note>
+          </ion-item>
+          <div class="ion-padding" slot="content">
+            <ion-list
               v-if="
-                respuesta?.group?.id === usuario?.grupo?.id ||
+                respuesta?.group?.id === grupoUsuario?.id ||
                 usuario?.rol == 'admin'
               "
             >
-              Nota: {{ parseFloat(respuesta.nota).toFixed(1) }}
+              <ion-spinner v-if="loading" name="crescent"></ion-spinner>
+              <template v-else>
+                <div>
+                  <strong>
+                    Tienes un total de {{ respuestaDetallada.length }} preguntas
+                    resueltas.
+                    <p
+                      v-if="respuesta.points != respuestaMAyor.points"
+                      style="color: orange"
+                    >
+                      Tienes
+                      {{ respuestaMAyor.points - respuesta.points }} puntos
+                      menos que el grupo con mejor puntaje así que tienes
+                      preguntas incorrectas o que no respondiste.
+                    </p>
+                  </strong>
+                </div>
+                <ion-item v-for="answer in respuestaDetallada" :key="answer.id">
+                  <ion-label>
+                    <strong
+                      >{{ answer.numeroPregunta }}.{{
+                        answer.question.title
+                      }}</strong
+                    >
+                    <p>
+                      <strong>Respuesta seleccionada:</strong>
+                      {{
+                        answer.option.identifier + ")" + answer.option.sentence
+                      }}
+                      <ion-icon
+                        :icon="
+                          answer.option.correct
+                            ? checkmarkCircleOutline
+                            : closeCircleOutline
+                        "
+                        :color="answer.option.correct ? 'success' : 'danger'"
+                      ></ion-icon>
+                    </p>
+                    <p>
+                      <strong>Puntos obtenidos:</strong> {{ answer.points }}
+                    </p>
+                  </ion-label>
+                </ion-item>
+              </template>
+            </ion-list>
+            <ion-text v-else color="medium">
+              <p class="ion-text-center">
+                No tienes permiso para ver estas respuestas
+              </p>
             </ion-text>
-          </ion-note>
-        </ion-item>
-      </ion-list>
+          </div>
+        </ion-accordion>
+      </ion-accordion-group>
+
       <ion-buttons
         v-if="admin"
         class="ion-justify-content-center ion-padding-top ion-padding-bottom"
@@ -95,7 +155,7 @@
 
 <script>
 import axios from "axios";
-import { adminOprofesor } from "../globalService";
+import { adminOprofesor, numeroOrdinal } from "../globalService";
 import { ref } from "vue";
 import { usuarioGet, tokenHeader } from "../globalService";
 import { useRoute } from "vue-router";
@@ -112,6 +172,8 @@ import {
   starOutline,
   trophyOutline,
   fileTrayFullOutline,
+  checkmarkCircleOutline,
+  closeCircleOutline,
 } from "ionicons/icons";
 
 import {
@@ -129,6 +191,9 @@ import {
   IonNote,
   IonText,
   IonLabel,
+  IonAccordionGroup,
+  IonAccordion,
+  IonSpinner,
 } from "@ionic/vue";
 
 export default {
@@ -146,12 +211,22 @@ export default {
     IonNote,
     IonText,
     IonLabel,
+    IonAccordionGroup,
+    IonAccordion,
+    IonSpinner,
   },
   setup() {
     const usuario = ref();
     const admin = adminOprofesor();
+    const grupoUsuario = ref();
     const mroute = useRoute();
     const { id } = mroute.params;
+    const loading = ref(false);
+    const respuestaDetallada = ref({});
+    const respuestaMAyor = ref({
+      group: { name: "Cargando", id: 0 },
+      points: 0,
+    });
     const cuestionario = ref(
       JSON.parse(localStorage.getItem("lessonSelected"))
     );
@@ -159,40 +234,84 @@ export default {
       { group: { name: "Cargando", id: 0 }, points: "Cargando" },
     ]);
 
+    const handleAccordionChange = async (e) => {
+      const openedAccordion = e.detail.value;
+      if (openedAccordion) {
+        const groupId = parseInt(openedAccordion, 10);
+        await loadRespuestas(groupId);
+      }
+    };
+
     const ordenarPorNombre = () => {
       respuestas.value.sort((a, b) => {
-        // Extraer el texto y el número del nombre del grupo
         const regex = /(\D+)(\d+)/;
         const [, textA, numberA] = a.group.name.match(regex);
         const [, textB, numberB] = b.group.name.match(regex);
 
-        // Comparar el texto
         const textComparison = textA.localeCompare(textB);
         if (textComparison !== 0) {
           return textComparison;
         }
 
-        // Si el texto es el mismo, comparar el número como número en lugar de cadena
         return parseInt(numberA) - parseInt(numberB);
       });
     };
+
     onIonViewDidEnter(async () => {
       usuario.value = usuarioGet();
+      if (!adminOprofesor())
+        await axios
+          .get(`/users/${usuario.value?.id}/groups`)
+          .then((response) => {
+            grupoUsuario.value = response.data.filter(
+              (g) => g.active
+            )[0]?.group;
+          });
       tokenHeader();
-      await axios.get(`/lessons/${id}/results`).then((response) => {
-        respuestas.value = response.data.map((e) => {
-          e.points = parseFloat(e.points);
-          e.nota = e.points != 0 ? (e.points * 5) / response.data[0].points : 0;
-          e.nota = e.nota < 0 ? 0 : e.nota;
-          return e;
+      await axios
+        .get(`/lessons/${id}/results`)
+        .then((response) => {
+          respuestas.value = response.data.map((e) => {
+            e.points = parseFloat(e.points);
+            e.nota =
+              e.points != 0 ? (e.points * 5) / response.data[0].points : 0;
+            e.nota = e.nota < 0 ? 0 : e.nota;
+            return e;
+          });
+        })
+        .then(() => {
+          respuestaMAyor.value = respuestas.value.sort(
+            (a, b) => b.points - a.points
+          )[0];
         });
-      });
     });
+
+    const loadRespuestas = async (groupId) => {
+      loading.value = true;
+      try {
+        const answers = await getRespuestas(
+          groupId,
+          id,
+          cuestionario.value.institute.id
+        );
+        respuestaDetallada.value = answers
+          .map((answer, index) => {
+            answer.numeroPregunta = numeroOrdinal(index, answer.question.title);
+            return answer;
+          })
+          // order by numeroPregunta
+          .sort((a, b) => a.numeroPregunta - b.numeroPregunta);
+      } catch (error) {
+        console.error("Error loading answers:", error);
+      }
+      loading.value = false;
+    };
 
     async function registrarNotas() {
       for (const respuesta of respuestas.value) {
-        //search users of the group
-        const response = await axios.get(`/groups/${respuesta.group.id}/users`);
+        const response = await axios.get(
+          `/groups/${respuesta.group.id}/${cuestionario.value.year}/users`
+        );
         for (const relacionUsuario of response.data) {
           const data = {
             userId: relacionUsuario.user.id,
@@ -207,13 +326,29 @@ export default {
       }
     }
 
+    async function getRespuestas(groupId, lessonId, instituteId) {
+      if (groupId == grupoUsuario.value?.id || admin) {
+        const response = await axios.get(
+          `/answers?groupId=${groupId}&lessonId=${lessonId}&instituteId=${instituteId}`
+        );
+        return response.data;
+      } else {
+        return [];
+      }
+    }
+
     return {
       usuario,
       id,
       cuestionario,
       respuestas,
+      respuestaDetallada,
+      loading,
       registrarNotas,
+      loadRespuestas,
+      handleAccordionChange,
       arrowBackOutline,
+      grupoUsuario,
       handLeftOutline,
       paperPlaneOutline,
       refreshOutline,
@@ -226,6 +361,9 @@ export default {
       ordenarPorNombre,
       admin,
       fileTrayFullOutline,
+      checkmarkCircleOutline,
+      closeCircleOutline,
+      respuestaMAyor,
     };
   },
 };

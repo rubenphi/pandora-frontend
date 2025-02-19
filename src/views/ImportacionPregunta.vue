@@ -180,32 +180,55 @@ export default {
       isErrorToastOpen.value = state;
     };
 
-    const importarPreguntas = (lessonId) => {
-      axios
-        .patch(
-          `/lessons/${idCuestionario}/questions/import`,
-          {
-            fromLessonId: lessonId,
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-              "Access-Control-Allow-Origin": "*",
+    const importarPreguntas = async (lessonId) => {
+      const tryImportQuestions = async () => {
+        try {
+          await axios.patch(
+            `/lessons/${idCuestionario}/questions/import`,
+            {
+              fromLessonId: lessonId,
             },
-          }
-        )
-        .then(() => {
+            {
+              headers: {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+              },
+            }
+          );
           setSuccessToastOpen(true);
-        })
-        .catch((error) => {
-          errorMessage.value =
-            error.response?.data?.message ==
-            "You can only import options to a question that doesn't have them"
-              ? "Solo puedes importar preguntas a cuestionarios en blanco"
-              : error.response?.data?.message;
+        } catch (error) {
+          // Si es error 500, intentamos resetear los índices
+          if (
+            error.response?.status === 500 &&
+            error.response?.data?.message === "Internal server error"
+          ) {
+            try {
+              // Llamada al endpoint de reset
+              await axios.get("/questions/reset/index");
 
-          setErrorToastOpen(true);
-        });
+              // Reintentamos la importación
+              await tryImportQuestions();
+            } catch (resetError) {
+              handleError(error);
+            }
+          } else {
+            handleError(error);
+          }
+        }
+      };
+
+      const handleError = (error) => {
+        errorMessage.value =
+          error.response?.data?.message ===
+          "You can only import options to a question that doesn't have them"
+            ? "Solo puedes importar preguntas a cuestionarios en blanco"
+            : error.response?.data?.message;
+
+        setErrorToastOpen(true);
+      };
+
+      // Iniciamos el proceso
+      await tryImportQuestions();
     };
 
     const search = async () => {

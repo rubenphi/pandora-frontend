@@ -35,62 +35,121 @@
               }}</IonLabel>
             </IonItem>
             <div class="ion-padding" slot="content">
-              <IonList>
-                <IonItem v-for="usuario in usersCourse" :key="usuario.id">
-                  <IonLabel
-                    >{{ usuario.lastName + " " + usuario.name + " " }}
-                    {{
-                      usuario?.rol == "user" || usuario?.rol == "student"
-                        ? "Estudiante "
-                        : usuario?.rol == "admin"
-                        ? "Administrador "
-                        : usuario?.rol == "teacher"
-                        ? "Profesor "
-                        : usuario?.rol == ""
-                        ? ""
-                        : "Rol no identificado"
-                    }}</IonLabel
-                  >
-                </IonItem>
-              </IonList>
-            </div>
-          </ion-accordion>
+              <ion-list>
+                <ion-item v-for="usuario in usersCourse" :key="usuario.id">
+                  <ion-label class="ion-text-wrap">
+                    <h6>{{ usuario.lastName + " " + usuario.name }}</h6>
+                    <p>
+                      {{
+                        usuario?.rol == "user" || usuario?.rol == "student"
+                          ? "Estudiante "
+                          : usuario?.rol == "admin"
+                          ? "Administrador "
+                          : usuario?.rol == "teacher"
+                          ? "Profesor "
+                          : usuario?.rol == ""
+                          ? ""
+                          : "Rol no identificado"
+                      }}<br />
+                      {{ usuario.code }}
+                    </p>
+                  </ion-label>
+                  <div slot="end" style="display: flex; gap: 10px">
+                    <ion-icon
+                      :icon="swapHorizontalOutline"
+                      style="cursor: pointer; font-size: 24px"
+                      @click="openModal(usuario)"
+                    ></ion-icon>
 
-          <ion-accordion>
-            <IonItem slot="header" @click="getUsuariosSinCurso()">
-              <IonLabel v-if="!loading">Sin Curso</IonLabel>
-              <IonLabel v-if="loading && courseSelected.id">Sin Curso</IonLabel>
-              <IonLabel v-if="loading && !courseSelected.id"
-                >Sin Curso: ⏳ Cargando usuarios"</IonLabel
-              >
-            </IonItem>
-
-            <div class="ion-padding" slot="content">
-              <IonList>
-                <IonItem v-for="usuario in usersCourse" :key="usuario.id">
-                  <IonLabel
-                    >{{ usuario.lastName + " " + usuario.name + " " }}
-                    {{
-                      usuario?.rol == "user" || usuario?.rol == "student"
-                        ? "Estudiante "
-                        : usuario?.rol == "admin"
-                        ? "Administrador "
-                        : usuario?.rol == "teacher"
-                        ? "Profesor "
-                        : usuario?.rol == ""
-                        ? ""
-                        : "Rol no identificado"
-                    }}</IonLabel
-                  >
-                </IonItem>
-              </IonList>
+                    <ion-icon
+                      :icon="createOutline"
+                      style="cursor: pointer; font-size: 24px"
+                      @click="
+                        router.push(`/admin/actualizar/usuarios/${usuario.id}`)
+                      "
+                    ></ion-icon>
+                  </div>
+                </ion-item>
+              </ion-list>
             </div>
           </ion-accordion>
         </ion-accordion-group>
       </ion-list>
+
+      <!-- Modal para asignar curso y grupo -->
+      <ion-modal
+        :is-open="isModalOpen"
+        @didDismiss="closeModal"
+        ref="modal"
+        :breakpoints="[0.3, 0.5, 0.75]"
+        :initial-breakpoint="0.5"
+      >
+        <ion-header>
+          <ion-toolbar>
+            <ion-buttons slot="start">
+              <ion-button @click="closeModal">Cancelar</ion-button>
+            </ion-buttons>
+            <ion-title>Asignar Curso y Grupo</ion-title>
+            <ion-buttons slot="end">
+              <ion-button :strong="true" @click="asignarUsuario()">
+                Confirmar
+              </ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding">
+          <ion-item>
+            <ion-label>Curso Destino</ion-label>
+            <ion-select
+              v-model="selectedCourseId"
+              placeholder="Seleccione el curso"
+              @ionChange="getGruposCurso"
+            >
+              <ion-select-option
+                v-for="curso in cursosInstituto"
+                :key="curso.id"
+                :value="curso.id"
+              >
+                {{ curso.name }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item>
+            <ion-label>Rol en el curso</ion-label>
+            <ion-select v-model="rolSelected" placeholder="Seleccione el rol">
+              <ion-select-option
+                v-for="rol in roles"
+                :key="rol.rol"
+                :value="rol.rol"
+              >
+                {{ rol.titulo }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item>
+            <ion-label>Grupo Destino</ion-label>
+            <ion-select
+              v-model="selectedGroupId"
+              placeholder="Seleccione el grupo"
+              :disabled="!selectedCourseId"
+            >
+              <ion-select-option
+                v-for="grupo in gruposCursoDestino"
+                :key="grupo.id"
+                :value="grupo.id"
+              >
+                {{ grupo.name }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-content>
+      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
+
 <script>
 import axios from "axios";
 import router from "../router";
@@ -111,7 +170,14 @@ import {
   IonSelectOption,
   IonAccordionGroup,
   IonAccordion,
+  IonModal,
+  IonButton,
+  IonButtons,
+  IonIcon,
 } from "@ionic/vue";
+
+import { swapHorizontalOutline, createOutline } from "ionicons/icons";
+
 export default {
   components: {
     IonHeader,
@@ -122,11 +188,14 @@ export default {
     IonList,
     IonItem,
     IonLabel,
-
     IonSelect,
     IonSelectOption,
     IonAccordionGroup,
     IonAccordion,
+    IonModal,
+    IonButton,
+    IonButtons,
+    IonIcon,
   },
   setup() {
     const usuario = ref();
@@ -134,15 +203,154 @@ export default {
     const courseSelected = ref({});
     const abierto = ref(false);
     const loading = ref(false);
+    const gruposCursoDestino = ref([]);
+    const isModalOpen = ref(false);
+    const selectedCourseId = ref(null);
+    const selectedGroupId = ref(null);
+    const selectedUser = ref(null);
+    const rolSelected = ref(null);
+    const asignado = ref(false);
+    const roles = ref([
+      {
+        titulo: "Estudiante",
+        rol: "student",
+      },
+
+      {
+        titulo: "Profesor",
+        rol: "teacher",
+      },
+
+      {
+        titulo: "Administrador",
+        rol: "admin",
+      },
+    ]);
+
+    const cursosInstituto = ref([
+      {
+        id: 0,
+        name: "Sin Curso",
+      },
+    ]);
     const years = ref(
       Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i)
     );
     const selectedYear = ref(new Date().getFullYear());
+
+    const openModal = (user) => {
+      selectedUser.value = user;
+      isModalOpen.value = true;
+    };
+
+    const closeModal = () => {
+      isModalOpen.value = false;
+    };
+
+    const asignarUsuario = async () => {
+      console.log(selectedUser.value);
+
+      if (selectedCourseId.value == 0) {
+        await axios
+          .post(
+            `/courses/${selectedCourseId.value}/users`,
+            [
+              {
+                userId: selectedUser.value.id,
+                year: parseInt(selectedYear.value, 10),
+                rol: "student",
+              },
+            ],
+            {
+              headers: tokenHeader(),
+            }
+          )
+          .then(() => {
+            console.log("Usuario asignado al curso correctamente");
+            asignado.value = true;
+          })
+          .catch((error) => {
+            console.error("Error al asignar el usuario al curso:", error);
+          });
+      } else {
+        /* 
+        {
+  "userId": 0,
+  "year": 0,
+  "rol": "string"
+}
+  */
+        axios
+          .patch(
+            `/courses/${selectedCourseId.value}/users`,
+            [
+              {
+                userId: selectedUser.value.id,
+                year: parseInt(selectedYear.value, 10),
+                rol: rolSelected.value,
+              },
+            ],
+            {
+              headers: tokenHeader(),
+            }
+          )
+          .then(() => {
+            console.log("Usuario asignado al curso correctamente");
+            asignado.value = true;
+          })
+          .catch((error) => {
+            console.error("Error al asignar el usuario al curso:", error);
+          });
+      }
+
+      if (selectedGroupId.value && asignado.value) {
+        let data = {
+          groupId: selectedGroupId.value,
+          userId: selectedUser.value.id,
+          code: "admin",
+          year: parseInt(selectedYear.value, 10),
+          active: true,
+        };
+
+        axios.post(`/users/${selectedUser.value.id}/groups`, data).then(() => {
+          location.reload();
+        });
+        closeModal();
+
+        await axios
+          .post(
+            `/groups/${selectedGroupId.value}/users`,
+            [
+              {
+                userId: selectedUser.value.id,
+                periodId: 1,
+              },
+            ],
+            {
+              headers: tokenHeader(),
+            }
+          )
+          .then(() => {
+            console.log("Usuario asignado al grupo correctamente");
+          })
+          .catch((error) => {
+            console.error("Error al asignar el usuario al grupo:", error);
+          });
+      }
+
+      closeModal();
+      // reload
+      location.reload();
+    };
+
     const captarAbierto = (event) => {
       const selectedValue = event.detail.value;
       abierto.value = selectedValue !== undefined;
 
-      if (abierto.value && courseSelected.value?.id) {
+      if (
+        (abierto.value && courseSelected.value?.id) ||
+        (abierto.value && courseSelected.value.id == 0)
+      ) {
         getUsuarios(courseSelected.value.id, selectedYear.value);
       }
     };
@@ -151,26 +359,32 @@ export default {
       loading.value = true;
       usersCourse.value = [];
 
-      const response = await axios.get(
-        `/courses/${cursoId}/users?year=${year}`,
-        tokenHeader()
-      );
+      if (cursoId == 0) {
+        await getUsuariosSinCurso();
+      } else {
+        const response = await axios.get(
+          `/courses/${cursoId}/users?year=${year}`,
+          tokenHeader()
+        );
 
-      usersCourse.value = response.data.map((usuario) => usuario.user);
-      loading.value = false;
+        usersCourse.value = response.data.map((usuario) => usuario.user);
+        loading.value = false;
+      }
     };
 
     const getUsuariosSinCurso = async () => {
       loading.value = true;
       usersCourse.value = [];
-      courseSelected.value = {};
+      courseSelected.value = {
+        id: 0,
+        name: "Sin Curso",
+      };
 
       const response = await axios.get(
         `/institutes/${usuario.value.institute.id}/usersNoCourse?year=0`,
         tokenHeader()
       );
       usersCourse.value = response.data;
-
       loading.value = false;
     };
 
@@ -178,21 +392,42 @@ export default {
       courseSelected.value = curso;
     };
 
-    const cursosInstituto = ref([]);
+    const getGruposCurso = async () => {
+      if (selectedCourseId.value) {
+        try {
+          const response = await axios.get(
+            `/courses/${selectedCourseId.value}/groups`,
+            {
+              headers: tokenHeader(),
+            }
+          );
+          gruposCursoDestino.value = response.data;
+          selectedGroupId.value = null; // Reset group selection when course changes
+        } catch (error) {
+          console.error("Error fetching groups:", error);
+          gruposCursoDestino.value = [];
+        }
+      }
+    };
 
     onIonViewWillEnter(async () => {
       usuario.value = usuarioGet();
       await getCurso();
       tokenHeader();
     });
+
     const getCurso = async () => {
       const response = await axios.get(
         `/courses?instituteId=${usuario.value.institute.id}&exist=true`,
         tokenHeader()
       );
 
-      cursosInstituto.value = response.data.sort((a, b) => a.name - b.name);
+      cursosInstituto.value = [
+        { id: 0, name: "Sin Curso" },
+        ...response.data.sort((a, b) => a.name.localeCompare(b.name)),
+      ];
     };
+
     return {
       usuario,
       abierto,
@@ -207,7 +442,22 @@ export default {
       selectedYear,
       captarAbierto,
       getCurso,
+      getUsuarios,
+      gruposCursoDestino,
+      getGruposCurso,
+      isModalOpen,
+      openModal,
+      closeModal,
+      selectedCourseId,
+      selectedGroupId,
+      asignarUsuario,
+      roles,
+      selectedUser,
+      rolSelected,
+
+      swapHorizontalOutline,
+      createOutline,
     };
   },
-}; //  /users/1/courses?year=2024'
+};
 </script>

@@ -25,9 +25,10 @@
                   :key="miembro?.id"
                 >
                   <ion-icon slot="start" :icon="personCircleOutline"></ion-icon>
-                  <IonLabel>{{
-                    miembro?.name + " " + miembro?.lastName
-                  }}</IonLabel>
+                  <IonLabel
+                    ><h6>{{ miembro?.name + " " + miembro?.lastName }}</h6>
+                    <p>{{ miembro.code }}</p></IonLabel
+                  >
 
                   <ion-icon
                     v-if="grupo?.id != 0"

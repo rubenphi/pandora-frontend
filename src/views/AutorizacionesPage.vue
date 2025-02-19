@@ -23,7 +23,7 @@
 
       <ion-list>
         <ion-item v-for="codigo in codigos" :key="codigo.id">
-          <ion-label>
+          <ion-label @click="copiarCodigo(codigo.code)">
             <h2>{{ codigo.code }}</h2>
             <p>
               Expira: {{ new Date(codigo.expirationDate).toLocaleString() }}
@@ -54,6 +54,9 @@
           ></ion-icon>
         </ion-item>
       </ion-list>
+      <div v-if="mostrarMensaje" class="mensaje-copiado">
+        ¡Código copiado al portapapeles!
+      </div>
     </ion-content>
   </ion-page>
 </template>
@@ -100,6 +103,7 @@ export default {
   setup() {
     const codigos = ref([]);
     const numeroDeCodigos = ref(1); // Valor inicial para el número de códigos
+    const mostrarMensaje = ref(false);
 
     const cargarCodigos = async () => {
       tokenHeader();
@@ -109,6 +113,59 @@ export default {
       } catch (error) {
         console.error("Error al cargar los códigos:", error);
       }
+    };
+    const copiarCodigo = async (codigo) => {
+      let exitoso = false;
+
+      // Primero intentamos con el API moderno (Clipboard)
+      if (navigator.clipboard && window.isSecureContext) {
+        try {
+          await navigator.clipboard.writeText(codigo);
+          exitoso = true;
+        } catch (err) {
+          console.log(
+            "Clipboard API falló, intentando método alternativo:",
+            err
+          );
+        }
+      }
+
+      // Si el método moderno falla, usamos el método fallback
+      if (!exitoso) {
+        const textarea = document.createElement("textarea");
+        textarea.value = codigo;
+
+        // Necesitamos agregar el elemento al DOM para poder seleccionarlo
+        document.body.appendChild(textarea);
+
+        // Configuramos el textarea
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        textarea.style.left = "0";
+        textarea.style.top = "0";
+
+        // Seleccionamos y copiamos
+        textarea.select();
+
+        try {
+          exitoso = document.execCommand("copy");
+        } catch (err) {
+          console.error("Error al copiar:", err);
+        } finally {
+          // Limpiamos eliminando el textarea
+          document.body.removeChild(textarea);
+        }
+      }
+
+      // Mostramos el mensaje de éxito si la copia funcionó
+      if (exitoso) {
+        mostrarMensaje.value = true;
+        setTimeout(() => {
+          mostrarMensaje.value = false;
+        }, 2000);
+      }
+
+      return exitoso;
     };
 
     const eliminarCodigo = async (codigo) => {
@@ -182,6 +239,8 @@ export default {
       invalidarCodigo,
       numeroDeCodigos,
       generarCodigos,
+      copiarCodigo,
+      mostrarMensaje,
     };
   },
 };
@@ -196,5 +255,31 @@ p {
   margin: 0;
   font-size: 0.9em;
   color: gray;
+}
+
+.mensaje-copiado {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ion-color-primary);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 25px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  animation: fadeOut 2s forwards;
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 </style>

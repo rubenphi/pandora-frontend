@@ -254,10 +254,16 @@ export default {
                     JSON.stringify(cursosUsuario)
                   );
                   //si no hay un curso con el year igual a selectedYear() ,  localstorage year se convertira en el ultimo year de cursosUsuario
+
                   if (!cursosUsuario.find((c) => c.year == selectedYear())) {
+                    const year = cursosUsuario.sort(
+                      (a, b) => b.year - a.year
+                    )[0].year;
+                    localStorage.setItem("year", JSON.stringify(year));
+                  } else {
                     localStorage.setItem(
                       "year",
-                      cursosUsuario.sort((a, b) => b.year - a.year)[0].year
+                      JSON.stringify(selectedYear())
                     );
                   }
                 });

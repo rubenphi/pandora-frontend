@@ -19,7 +19,7 @@
           <ion-icon slot="start" :icon="settingsOutline"></ion-icon
           ><ion-label>Configuraciones</ion-label>
         </ion-item>
-        <ion-item :href="'/register'">
+        <ion-item :href="'/admin/registro/usuarios'">
           <ion-icon slot="start" :icon="personAddOutline"></ion-icon
           ><ion-label>Añadir usuario</ion-label>
         </ion-item>

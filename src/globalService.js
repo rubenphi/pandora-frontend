@@ -35,6 +35,117 @@ export function selectedPeriod() {
   return 1;
 }
 
+export const numerosOrdinales = [
+  "Primera pregunta",
+  "Segunda Pregunta",
+  "Tercera Pregunta",
+  "Cuarta Pregunta",
+  "Quinta Pregunta",
+  "Sexta Pregunta",
+  "Séptima Pregunta",
+  "Octava Pregunta",
+  "Novena Pregunta",
+  "Décima Pregunta",
+  "Undécima Pregunta",
+  "Duodécima Pregunta",
+  "Decimotercera Pregunta",
+  "Decimocuarta Pregunta",
+  "Decimoquinta Pregunta",
+  "Decimosexta Pregunta",
+  "Decimoséptima Pregunta",
+  "Decimoctava Pregunta",
+  "Decimonovena Pregunta",
+  "Vigésima Pregunta",
+  "Vigesimoprimera Pregunta",
+  "Vigesimosegunda Pregunta",
+  "Vigesimotercera Pregunta",
+  "Vigesimocuarta Pregunta",
+  "Vigesimoquinta Pregunta",
+  "Vigesimosexta Pregunta",
+  "Vigesimoseptima Pregunta",
+  "Vigesimoctava Pregunta",
+  "Vigesimonovena Pregunta",
+  "Trigésima Pregunta",
+  "Trigésimoprimera Pregunta",
+  "Trigésimosegunda Pregunta",
+  "Trigésimotercera Pregunta",
+  "Trigésimocuarta Pregunta",
+  "Trigésimoquinta Pregunta",
+  "Trigésimosexta Pregunta",
+  "Trigésimoseptima Pregunta",
+  "Trigésimoctava Pregunta",
+  "Trigésimonovena Pregunta",
+  "Cuadragésima Pregunta",
+  "Cuadragésimoprimera Pregunta",
+  "Cuadragésimosegunda Pregunta",
+  "Cuadragésimotercera Pregunta",
+  "Cuadragésimocuarta Pregunta",
+  "Cuadragésimoquinta Pregunta",
+  "Cuadragésimosexta Pregunta",
+  "Cuadragésimoseptima Pregunta",
+  "Cuadragésimoctava Pregunta",
+  "Cuadragésimonovena Pregunta",
+  "Quincuagésima Pregunta",
+  "Quincuagésimoprimera Pregunta",
+  "Quincuagésimosegunda Pregunta",
+  "Quincuagésimotercera Pregunta",
+  "Quincuagésimocuarta Pregunta",
+  "Quincuagésimoquinta Pregunta",
+  "Quincuagésimosexta Pregunta",
+  "Quincuagésimoseptima Pregunta",
+  "Quincuagésimoctava Pregunta",
+  "Quincuagésimonovena Pregunta",
+  "Sexagésima Pregunta",
+  "Sexagésimoprimera Pregunta",
+  "Sexagésimosegunda Pregunta",
+  "Sexagésimotercera Pregunta",
+  "Sexagésimocuarta Pregunta",
+  "Sexagésimoquinta Pregunta",
+  "Sexagésimosexta Pregunta",
+  "Sexagésimoseptima Pregunta",
+  "Sexagésimoctava Pregunta",
+  "Sexagésimonovena Pregunta",
+  "Septuagésima Pregunta",
+  "Septuagésimoprimera Pregunta",
+  "Septuagésimosegunda Pregunta",
+  "Septuagésimotercera Pregunta",
+  "Septuagésimocuarta Pregunta",
+  "Septuagésimoquinta Pregunta",
+  "Septuagésimosexta Pregunta",
+  "Septuagésimoseptima Pregunta",
+  "Septuagésimoctava Pregunta",
+  "Septuagésimonovena Pregunta",
+  "Octogésima Pregunta",
+  "Octogésimoprimera Pregunta",
+  "Octogésimosegunda Pregunta",
+  "Octogésimotercera Pregunta",
+  "Octogésimocuarta Pregunta",
+  "Octogésimoquinta Pregunta",
+  "Octogésimosexta Pregunta",
+  "Octogésimoseptima Pregunta",
+  "Octogésimoctava Pregunta",
+  "Octogésimonovena Pregunta",
+  "Nonagésima Pregunta",
+  "Nonagésimoprimera Pregunta",
+  "Nonagésimosegunda Pregunta",
+  "Nonagésimotercera Pregunta",
+  "Nonagésimocuarta Pregunta",
+  "Nonagésimoquinta Pregunta",
+  "Nonagésimosexta Pregunta",
+  "Nonagésimoseptima Pregunta",
+  "Nonagésimoctava Pregunta",
+  "Nonagésimonovena Pregunta",
+  "Centésima Pregunta",
+];
+
+export function numeroOrdinal(index, ordinal) {
+  const ordinalEncontradoIndex = numerosOrdinales.indexOf(ordinal);
+  if (ordinalEncontradoIndex != -1) {
+    return ordinalEncontradoIndex + 1;
+  } else {
+    return index + 1;
+  }
+}
 export function basedeURL() {
   var puerto = "3000";
   return (
@@ -65,6 +176,21 @@ export function adminOprofesor() {
   ) {
     return true;
   } else if (usuarioGet().rol == "student") {
+    return false;
+  }
+}
+
+export function adminOdirectivo() {
+  tokenHeader();
+  if (
+    usuarioGet().rol == "admin" ||
+    usuarioGet().rol == "director" ||
+    usuarioGet().rol == "coordinator"
+  ) {
+    return true;
+  } else if (usuarioGet().rol == "student") {
+    return false;
+  } else if (usuarioGet().rol == "teacher") {
     return false;
   }
 }

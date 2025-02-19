@@ -47,6 +47,22 @@ const routes = [
         },
       },
       {
+        path: "admin/registro/usuarios",
+        component: () => import("@/views/RegistroPage.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
+        path: "admin/actualizar/usuarios/:id",
+        component: () => import("@/views/UpdateUser.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
         path: "admin/panel",
         component: () => import("@/views/PanelPage.vue"),
         beforeEnter: (to, from, next) => {
