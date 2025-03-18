@@ -199,8 +199,8 @@ export default {
         } catch (error) {
           // Si es error 500, intentamos resetear los índices
           if (
-            error.response?.status === 500 &&
-            error.response?.data?.message === "Internal server error"
+            error.response?.status === 409 &&
+            error.response?.data?.message === 'Este registro ya existe.'
           ) {
             try {
               // Llamada al endpoint de reset
