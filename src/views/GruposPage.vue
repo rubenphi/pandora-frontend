@@ -3,6 +3,12 @@
     <ion-header>
       <ion-toolbar>
         <ion-title>Grupos - {{ curso?.name }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button @click="openCreateGroupModal">
+            <ion-icon :icon="addCircleOutline"></ion-icon>
+            Crear Grupo
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -59,6 +65,7 @@
         </ion-accordion-group>
       </ion-list>
 
+      <!-- Modal para cambio de grupo -->
       <ion-modal
         :is-open="isModalOpen"
         @didDismiss="closeModal"
@@ -98,6 +105,53 @@
           </ion-item>
         </ion-content>
       </ion-modal>
+
+      <!-- Modal para crear nuevo grupo -->
+      <ion-modal
+        :is-open="isCreateGroupModalOpen"
+        @didDismiss="closeCreateGroupModal"
+        ref="createGroupModal"
+        :breakpoints="[0.3, 0.5, 1]"
+        :initial-breakpoint="0.5"
+      >
+        <ion-header>
+          <ion-toolbar>
+            <ion-buttons slot="start">
+              <ion-button @click="cancelCreateGroup()">Cancelar</ion-button>
+            </ion-buttons>
+            <ion-title style="text-align: center">Crear Nuevo Grupo</ion-title>
+            <ion-buttons slot="end">
+              <ion-button :strong="true" @click="confirmCreateGroup()"
+                >Crear</ion-button
+              >
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding">
+          <ion-item>
+            <ion-label position="floating">Nombre del grupo</ion-label>
+            <ion-input
+              v-model="newGroupName"
+              placeholder="Ingrese el nombre del grupo"
+            ></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-select
+              v-model="periodoId"
+              label="Seleccione el periodo"
+              placeholder="Seleccione el periodo"
+            >
+              <ion-select-option
+                v-for="periodo in periodos"
+                :key="periodo.id"
+                :value="periodo.id"
+              >
+                {{ periodo.name }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-content>
+      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
@@ -105,7 +159,7 @@
 <script>
 import axios from "axios";
 import { ref } from "vue";
-import { tokenHeader, usuarioGet } from "../globalService";
+import { periodosGet, tokenHeader, usuarioGet } from "../globalService";
 import { useRoute } from "vue-router";
 import {
   onIonViewWillEnter,
@@ -125,10 +179,12 @@ import {
   IonSelectOption,
   IonButton,
   IonButtons,
+  IonInput,
 } from "@ionic/vue";
 
 import {
   addOutline,
+  addCircleOutline,
   peopleCircleOutline,
   personCircleOutline,
   personRemoveOutline,
@@ -153,10 +209,12 @@ export default {
     IonSelectOption,
     IonButton,
     IonButtons,
+    IonInput,
   },
   setup() {
     const mroute = useRoute();
     const modal = ref();
+    const createGroupModal = ref();
     const curso = ref();
     const { cursoId, selectedYear } = mroute.params;
     const grupos = ref([]);
@@ -164,9 +222,14 @@ export default {
     const usuario = ref();
     const groupSelectedMembers = ref([]);
     const isModalOpen = ref(false);
+    const isCreateGroupModalOpen = ref(false);
     const grupoId = ref();
     const userId = ref();
+    const newGroupName = ref("");
+    const periodos = periodosGet();
+    const periodoId = ref(0);
 
+    // Funciones para modal de cambio de grupo
     const cancel = () => modal.value.$el.dismiss(null, "cancel");
 
     const confirm = () => {
@@ -184,6 +247,58 @@ export default {
         location.reload();
       });
       closeModal();
+    };
+
+    // Funciones para modal de creación de grupo
+    const openCreateGroupModal = () => {
+      isCreateGroupModalOpen.value = true;
+      newGroupName.value = "";
+    };
+
+    const closeCreateGroupModal = () => {
+      isCreateGroupModalOpen.value = false;
+    };
+
+    const cancelCreateGroup = () => {
+      if (createGroupModal.value && createGroupModal.value.$el) {
+        createGroupModal.value.$el.dismiss(null, "cancel");
+      }
+      closeCreateGroupModal();
+    };
+
+    const confirmCreateGroup = async () => {
+      if (!newGroupName.value.trim()) {
+        alert("Por favor ingrese un nombre para el grupo");
+        return;
+      }
+
+      try {
+        // Crear el nuevo grupo con los datos requeridos
+        const data = {
+          name: newGroupName.value.trim(),
+          courseId: parseInt(cursoId, 10),
+          instituteId: curso.value.institute.id,
+          periodId: periodoId.value,
+          exist: true,
+          active: true,
+        };
+
+        await axios.post("/groups", data, {
+          headers: tokenHeader(),
+        });
+
+        // Cerrar el modal y actualizar la lista de grupos
+        if (createGroupModal.value && createGroupModal.value.$el) {
+          createGroupModal.value.$el.dismiss(data, "confirm");
+        }
+        closeCreateGroupModal();
+
+        // Refrescar la página para mostrar el nuevo grupo
+        location.reload();
+      } catch (error) {
+        console.error("Error creating group:", error);
+        alert("Error al crear el grupo. Por favor intente nuevamente.");
+      }
     };
 
     const getMembers = async (groupId) => {
@@ -281,6 +396,10 @@ export default {
     });
 
     return {
+      selectedYear,
+      cursoId,
+      periodoId,
+      periodos,
       mroute,
       usuario,
       grupos,
@@ -289,19 +408,27 @@ export default {
       getMembers,
       removeMember,
       addOutline,
+      addCircleOutline,
       groupSelectedMembers,
       peopleCircleOutline,
       personCircleOutline,
       personRemoveOutline,
       swapHorizontalOutline,
       modal,
+      createGroupModal,
       cancel,
       confirm,
       isModalOpen,
+      isCreateGroupModalOpen,
       grupoId,
       userId,
+      newGroupName,
       openModal,
       closeModal,
+      openCreateGroupModal,
+      closeCreateGroupModal,
+      cancelCreateGroup,
+      confirmCreateGroup,
     };
   },
 };

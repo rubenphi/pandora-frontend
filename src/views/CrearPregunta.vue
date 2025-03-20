@@ -208,6 +208,15 @@ export default {
   },
 
   setup() {
+
+    const handleError = (error) => {
+  console.error("Error:", error);
+  localStorage.setItem("error", error.response?.data?.message || "Ocurrió un error inesperado.");
+  error.value.estatus = 1;
+  error.value.data = error.response?.data?.message || "Ocurrió un error inesperado.";
+};
+
+
     const basedeUrl = basedeURL();
     const mroute = useRoute();
     const { cuestionario } = mroute.params;
@@ -279,77 +288,85 @@ export default {
     });
 
     return {
-      async crearPregunta() {
-        pregunta.value.sentence = editor.value.getHTML();
-        delete pregunta.value.institute;
-        delete pregunta.value.lesson;
-        delete pregunta.value.institute;
-        delete pregunta.value.id;
-        delete pregunta.value.createdAt;
-        delete pregunta.value.updatedAt;
-        delete pregunta.value.options;
+      async  crearPregunta() {
+  pregunta.value.sentence = editor.value.getHTML();
+  delete pregunta.value.institute;
+  delete pregunta.value.lesson;
+  delete pregunta.value.id;
+  delete pregunta.value.createdAt;
+  delete pregunta.value.updatedAt;
+  delete pregunta.value.options;
 
+  if (
+    pregunta.value.points == "" ||
+    pregunta.value.sentence ==
+      "<h6><strong> Crea tu pregunta </strong></h6> <p> En esta sección <br> puedes crear tu pregunta </p>"
+  ) {
+    error.value.estatus = 1;
+    error.value.data = "Debe añadir un enunciado y añadir el valor";
+    return;
+  }
 
+  for (var key in pregunta.value) {
+    form_data.value.append(key, pregunta.value[key]);
+  }
 
-        if (
-          pregunta.value.points == "" ||
-          pregunta.value.sentence ==
-            "<h6><strong> Crea tu pregunta </strong></h6> <p> En esta sección <br> puedes crear tu pregunta </p>"
-        ) {
-          error.value.estatus = 1;
-          error.value.data = "Debe añadir un enunciado y añadir el valor";
+  const tryCrearPregunta = async () => {
+    try {
+      if (cuestionario !== undefined) {
+        const response = await axios.post("/questions", form_data.value, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+
+        if (response.data.exist) {
+          router.push("/pregunta/" + response.data.id);
         } else {
-          for (var key in pregunta.value) {
-          form_data.value.append(key, pregunta.value[key]);
+          router.push("/cuestionario/" + response.data.lesson.id);
+        }
+      } else if (id !== undefined) {
+        const response = await axios.patch("/questions/" + id, form_data.value, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+
+        if (response.data.exist) {
+          router.push("/pregunta/" + response.data.id);
+        } else {
+          router.push("/cuestionario/" + response.data.lesson.id);
         }
 
-        if (cuestionario != undefined) {
-          
-          await axios
-            .post("/questions", form_data.value, {
-              headers: {
-                "Content-Type": "multipart/form-data",
-              },
-            })
-            .then((response) => {
-              if (response.data.exist) {
-                router.push("/pregunta/" + response.data.id);
-              } else {
-                router.push("/cuestionario/" + response.data.lesson.id);
-              }
-            })
-            .catch((fallo) => {
-              localStorage.setItem("error", fallo.response.data.message);
-              error.value.estatus = 1;
-              error.value.data = fallo.response.data.message;
-            });
-        } if (id != undefined) {
-          await axios
-            .patch("/questions/" + id, form_data.value, {
-              headers: {
-                "Content-Type": "multipart/form-data",
-              },
-            })
-            .then((response) => {
+        localStorage.setItem("error", response.data.message);
+      }
+    } catch (error) {
+      // Manejo del error 409 (conflicto de duplicados)
+      if (
+        error.response?.status === 409 &&
+        error.response?.data?.message === "Este registro ya existe."
+      ) {
+        try {
+          // Llamada al endpoint de reset
+          await axios.get("/questions/reset/index");
 
-              if (response.data.exist) {
-                router.push("/pregunta/" + response.data.id);
-              } else {
-                router.push("/cuestionario/" + response.data.lesson.id);
-              }
-
-              localStorage.setItem("error", response.data.message);
-            })
-            .catch((fallo) => {
-              localStorage.setItem("error", fallo.response.data.message);
-              error.value.estatus = 1;
-              error.value.data = fallo.response.data.message;
-            });
+          // Reintentar la creación
+          await tryCrearPregunta();
+        } catch (resetError) {
+          handleError(resetError);
         }
-        }
-        
+      } else {
+        localStorage.setItem("error", error.response?.data?.message);
+        error.value.estatus = 1;
+        error.value.data = error.response?.data?.message;
+      }
+    }
+  };
 
-      },
+  // Ejecutar la función que maneja la validación y reintento
+  await tryCrearPregunta();
+},
+
 
       onFileChange(e) {
         file.value = e.target.files[0];

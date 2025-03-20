@@ -198,10 +198,14 @@ export default {
           setSuccessToastOpen(true);
         } catch (error) {
           // Si es error 500, intentamos resetear los índices
+
+          
+          
           if (
             error.response?.status === 409 &&
             error.response?.data?.message === 'Este registro ya existe.'
           ) {
+            console.log(error.response);
             try {
               // Llamada al endpoint de reset
               await axios.get("/questions/reset/index");
