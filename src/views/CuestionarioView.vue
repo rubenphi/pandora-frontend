@@ -239,7 +239,7 @@ export default {
       for (const pregunta of cuestionario.value.questions) {
         try {
           await axios.patch(
-            `http://localhost:3000/questions/${pregunta.id}`,
+            `/questions/${pregunta.id}`,
             {
               lessonId: cuestionario.value.id,
               visible: pregunta.visible ? false : true,
