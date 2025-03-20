@@ -23,6 +23,11 @@
             <IonItem slot="header" @click="getMembers(grupo?.id)">
               <ion-icon slot="start" :icon="peopleCircleOutline"></ion-icon>
               <IonLabel>{{ grupo?.name }}</IonLabel>
+              <ion-buttons slot="end" v-if="grupo?.id !== 0">
+                <ion-button @click.stop="openEditGroupModal(grupo)">
+                  <ion-icon :icon="createOutline"></ion-icon>
+                </ion-button>
+              </ion-buttons>
             </IonItem>
             <div class="ion-padding" slot="content">
               <IonList>
@@ -152,6 +157,53 @@
           </ion-item>
         </ion-content>
       </ion-modal>
+
+      <!-- Modal para editar grupo -->
+      <ion-modal
+        :is-open="isEditGroupModalOpen"
+        @didDismiss="closeEditGroupModal"
+        ref="editGroupModal"
+        :breakpoints="[0.3, 0.5, 1]"
+        :initial-breakpoint="0.5"
+      >
+        <ion-header>
+          <ion-toolbar>
+            <ion-buttons slot="start">
+              <ion-button @click="cancelEditGroup()">Cancelar</ion-button>
+            </ion-buttons>
+            <ion-title style="text-align: center">Editar Grupo</ion-title>
+            <ion-buttons slot="end">
+              <ion-button :strong="true" @click="confirmEditGroup()"
+                >Guardar</ion-button
+              >
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding">
+          <ion-item>
+            <ion-label position="floating">Nombre del grupo</ion-label>
+            <ion-input
+              v-model="editGroupName"
+              placeholder="Ingrese el nuevo nombre del grupo"
+            ></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-select
+              v-model="periodoId"
+              label="Seleccione el periodo"
+              placeholder="Seleccione el periodo"
+            >
+              <ion-select-option
+                v-for="periodo in periodos"
+                :key="periodo.id"
+                :value="periodo.id"
+              >
+                {{ periodo.name }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-content>
+      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
@@ -185,6 +237,7 @@ import {
 import {
   addOutline,
   addCircleOutline,
+  createOutline,
   peopleCircleOutline,
   personCircleOutline,
   personRemoveOutline,
@@ -215,6 +268,7 @@ export default {
     const mroute = useRoute();
     const modal = ref();
     const createGroupModal = ref();
+    const editGroupModal = ref();
     const curso = ref();
     const { cursoId, selectedYear } = mroute.params;
     const grupos = ref([]);
@@ -223,9 +277,12 @@ export default {
     const groupSelectedMembers = ref([]);
     const isModalOpen = ref(false);
     const isCreateGroupModalOpen = ref(false);
+    const isEditGroupModalOpen = ref(false);
     const grupoId = ref();
     const userId = ref();
     const newGroupName = ref("");
+    const editGroupName = ref("");
+    const currentEditingGroup = ref(null);
     const periodos = periodosGet();
     const periodoId = ref(0);
 
@@ -298,6 +355,68 @@ export default {
       } catch (error) {
         console.error("Error creating group:", error);
         alert("Error al crear el grupo. Por favor intente nuevamente.");
+      }
+    };
+
+    // Funciones para modal de edición de grupo
+    const openEditGroupModal = (grupo) => {
+      // Detener la propagación del evento para evitar que se abra el acordeón
+      event.stopPropagation();
+
+      currentEditingGroup.value = grupo;
+      editGroupName.value = grupo.name;
+      isEditGroupModalOpen.value = true;
+    };
+
+    const closeEditGroupModal = () => {
+      isEditGroupModalOpen.value = false;
+      currentEditingGroup.value = null;
+    };
+
+    const cancelEditGroup = () => {
+      if (editGroupModal.value && editGroupModal.value.$el) {
+        editGroupModal.value.$el.dismiss(null, "cancel");
+      }
+      closeEditGroupModal();
+    };
+
+    const confirmEditGroup = async () => {
+      if (!editGroupName.value.trim()) {
+        alert("Por favor ingrese un nombre para el grupo");
+        return;
+      }
+
+      if (!currentEditingGroup.value) {
+        alert("Error: No se ha seleccionado un grupo para editar");
+        return;
+      }
+
+      try {
+        // Actualizar el grupo con los datos requeridos
+        const data = {
+          name: editGroupName.value.trim(),
+          courseId: parseInt(cursoId, 10),
+          instituteId: curso.value.institute.id,
+          periodId: periodoId.value,
+          exist: true,
+          active: true,
+        };
+
+        await axios.patch(`/groups/${currentEditingGroup.value.id}`, data, {
+          headers: tokenHeader(),
+        });
+
+        // Cerrar el modal y actualizar la lista de grupos
+        if (editGroupModal.value && editGroupModal.value.$el) {
+          editGroupModal.value.$el.dismiss(data, "confirm");
+        }
+        closeEditGroupModal();
+
+        // Refrescar la página para mostrar el grupo actualizado
+        location.reload();
+      } catch (error) {
+        console.error("Error updating group:", error);
+        alert("Error al actualizar el grupo. Por favor intente nuevamente.");
       }
     };
 
@@ -396,8 +515,6 @@ export default {
     });
 
     return {
-      selectedYear,
-      cursoId,
       periodoId,
       periodos,
       mroute,
@@ -409,6 +526,7 @@ export default {
       removeMember,
       addOutline,
       addCircleOutline,
+      createOutline,
       groupSelectedMembers,
       peopleCircleOutline,
       personCircleOutline,
@@ -416,19 +534,27 @@ export default {
       swapHorizontalOutline,
       modal,
       createGroupModal,
+      editGroupModal,
       cancel,
       confirm,
       isModalOpen,
       isCreateGroupModalOpen,
+      isEditGroupModalOpen,
       grupoId,
       userId,
       newGroupName,
+      editGroupName,
+      currentEditingGroup,
       openModal,
       closeModal,
       openCreateGroupModal,
       closeCreateGroupModal,
       cancelCreateGroup,
       confirmCreateGroup,
+      openEditGroupModal,
+      closeEditGroupModal,
+      cancelEditGroup,
+      confirmEditGroup,
     };
   },
 };
