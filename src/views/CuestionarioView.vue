@@ -37,6 +37,20 @@
           >
             <ion-icon :icon="createOutline"></ion-icon>
           </ion-button>
+          <ion-buttons v-if="admin" slot="end">
+            <ion-button
+              v-if="allVisible == false"
+              @click="marcarTodoDisponibleVisible"
+            >
+              <ion-icon :icon="lockOpenOutline"></ion-icon>
+            </ion-button>
+            <ion-button
+              v-if="allVisible == true"
+              @click="marcarTodoDisponibleVisible"
+            >
+              <ion-icon :icon="lockClosedOutline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -169,6 +183,7 @@ export default {
     const admin = adminOprofesor();
     const periodoSelected = ref();
     const year = ref();
+    const allVisible = ref(false);
     const mroute = useRoute();
     const { id } = mroute.params;
 
@@ -204,11 +219,46 @@ export default {
               title: pregunta.title,
             })
           );
+          if (
+            cuestionario.value.questions.filter((i) => i.visible).length ===
+              cuestionario.value.questions.length &&
+            cuestionario.value.questions.filter((i) => i.available).length ===
+              cuestionario.value.questions.length
+          ) {
+            allVisible.value = true;
+          }
         }
       });
     });
 
+    const marcarTodoDisponibleVisible = async function () {
+      if (!cuestionario.value.questions.length) {
+        return;
+      }
+
+      for (const pregunta of cuestionario.value.questions) {
+        try {
+          await axios.patch(
+            `http://localhost:3000/questions/${pregunta.id}`,
+            {
+              lessonId: cuestionario.value.id,
+              visible: pregunta.visible ? false : true,
+              available: pregunta.available ? false : true,
+              instituteId: cuestionario.value.institute.id,
+            },
+            tokenHeader()
+          );
+          //reload page
+          window.location.reload();
+        } catch (error) {
+          console.error(`Error al actualizar pregunta ${pregunta.id}:`, error);
+        }
+      }
+    };
+
     return {
+      allVisible,
+      marcarTodoDisponibleVisible,
       admin,
       cuestionario,
       id,
