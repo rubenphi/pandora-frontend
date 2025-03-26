@@ -37,20 +37,22 @@
           >
             <ion-icon :icon="createOutline"></ion-icon>
           </ion-button>
-          <ion-buttons v-if="admin" slot="end">
-            <ion-button
-              v-if="allVisible == false"
-              @click="marcarTodoDisponibleVisible"
-            >
-              <ion-icon :icon="lockOpenOutline"></ion-icon>
-            </ion-button>
-            <ion-button
-              v-if="allVisible == true"
-              @click="marcarTodoDisponibleVisible"
-            >
-              <ion-icon :icon="lockClosedOutline"></ion-icon>
-            </ion-button>
-          </ion-buttons>
+
+          <ion-button
+            v-if="allVisible == false"
+            @click="marcarTodoDisponibleVisible(true)"
+          >
+            <ion-icon :icon="lockOpenOutline"></ion-icon>
+          </ion-button>
+          <ion-button
+            v-if="allVisible == true"
+            @click="marcarTodoDisponibleVisible(false)"
+          >
+            <ion-icon :icon="lockClosedOutline"></ion-icon>
+          </ion-button>
+          <ion-button @click="generateAnswerKeyCsv(cuestionario.questions)">
+            <ion-icon :icon="downloadOutline"></ion-icon>
+          </ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -217,6 +219,7 @@ export default {
               visible: pregunta.visible,
               id: pregunta.id,
               title: pregunta.title,
+              options: pregunta.options,
             })
           );
           if (
@@ -231,33 +234,68 @@ export default {
       });
     });
 
-    const marcarTodoDisponibleVisible = async function () {
+    const generateAnswerKeyCsv = function (questions) {
+      // Crear el encabezado del CSV
+      let csvContent = '"Q No","KEY"\n';
+
+      // Iterar sobre las preguntas
+      questions.forEach((question, index) => {
+        // Encontrar la opción correcta
+        const correctOption = question.options.find((option) => option.correct);
+
+        // Agregar la fila al CSV
+        // Suma 1 al índice para que los números de pregunta empiecen en 1
+        csvContent += `"${index + 1}","${
+          correctOption ? correctOption.identifier : ""
+        }"\n`;
+      });
+
+      // Crear un Blob con el contenido del CSV
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+
+      // Crear un enlace de descarga
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `${cuestionario.value.topic}.csv`);
+
+      // Simular clic para descargar
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
+
+    const marcarTodoDisponibleVisible = async function (estado) {
       if (!cuestionario.value.questions.length) {
         return;
       }
 
       for (const pregunta of cuestionario.value.questions) {
+        const preguntaUpdate = {
+          lessonId: cuestionario.value.id,
+          visible: estado,
+          available: estado,
+          instituteId: cuestionario.value.institute.id,
+        };
         try {
           await axios.patch(
             `/questions/${pregunta.id}`,
-            {
-              lessonId: cuestionario.value.id,
-              visible: pregunta.visible ? false : true,
-              available: pregunta.available ? false : true,
-              instituteId: cuestionario.value.institute.id,
-            },
+            preguntaUpdate,
             tokenHeader()
           );
+
           //reload page
-          window.location.reload();
         } catch (error) {
           console.error(`Error al actualizar pregunta ${pregunta.id}:`, error);
         }
       }
+      window.location.reload();
     };
 
     return {
       allVisible,
+      generateAnswerKeyCsv,
       marcarTodoDisponibleVisible,
       admin,
       cuestionario,
