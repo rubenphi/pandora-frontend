@@ -30,7 +30,13 @@
       >
         <ion-card-header>
           <ion-card-subtitle>{{ cursoSelected.name }}</ion-card-subtitle>
-          <ion-card-title>{{ cuestionario.topic }}</ion-card-title>
+
+          <ion-card-title
+            v-if="cuestionariosSinNotasIds.includes(cuestionario.id)"
+            style="color: orange"
+            >{{ cuestionario.topic }}</ion-card-title
+          >
+          <ion-card-title v-else>{{ cuestionario.topic }}</ion-card-title>
         </ion-card-header>
 
         <ion-card-content>
@@ -44,7 +50,12 @@
 <script>
 import axios from "axios";
 import { ref } from "vue";
-import { tokenHeader, usuarioGet, adminOprofesor } from "../globalService";
+import {
+  tokenHeader,
+  usuarioGet,
+  adminOprofesor,
+  leccionesSinNotas,
+} from "../globalService";
 import { useRoute } from "vue-router";
 import router from "../router";
 import { addOutline, arrowBackOutline } from "ionicons/icons";
@@ -102,9 +113,15 @@ export default {
     const usuario = ref();
     const adminOProfesor = ref();
     const cuestionarios = ref([]);
+    const cuestionariosSinNotasIds = ref([]);
+
     onIonViewWillEnter(async () => {
       adminOProfesor.value = adminOprofesor();
       usuario.value = usuarioGet();
+
+      cuestionariosSinNotasIds.value = (
+        await leccionesSinNotas(curso, usuario)
+      ).map((leccion) => leccion.id);
       tokenHeader();
       if (curso != cursosUsuario.value[0].id && !adminOprofesor()) {
         router.push("/cuestionarios/" + cursosUsuario.value[0].id + "/" + area);
@@ -113,7 +130,7 @@ export default {
           .get(
             `/lessons?courseId=${curso}&areaId=${area}&periodId=${periodo}${
               year ? "&year=" + year : ""
-            }
+            }&exist=true
           `
           )
           .then((response) => {
@@ -141,6 +158,7 @@ export default {
       arrowBackOutline,
       usuario,
       cuestionarios,
+      cuestionariosSinNotasIds,
       year,
     };
   },
