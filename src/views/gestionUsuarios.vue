@@ -281,7 +281,7 @@ export default {
 }
   */
         axios
-          .patch(
+          .post(
             `/courses/${selectedCourseId.value}/users`,
             [
               {
