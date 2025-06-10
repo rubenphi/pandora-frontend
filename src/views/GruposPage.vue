@@ -211,7 +211,12 @@
 <script>
 import axios from "axios";
 import { ref } from "vue";
-import { periodosGet, tokenHeader, usuarioGet } from "../globalService";
+import {
+  leccionesSinNotas,
+  periodosGet,
+  tokenHeader,
+  usuarioGet,
+} from "../globalService";
 import { useRoute } from "vue-router";
 import {
   onIonViewWillEnter,
@@ -232,6 +237,7 @@ import {
   IonButton,
   IonButtons,
   IonInput,
+  alertController,
 } from "@ionic/vue";
 
 import {
@@ -247,6 +253,7 @@ import {
 export default {
   components: {
     IonLabel,
+
     IonItem,
     IonHeader,
     IonToolbar,
@@ -285,6 +292,23 @@ export default {
     const currentEditingGroup = ref(null);
     const periodos = periodosGet();
     const periodoId = ref(0);
+    const mensajeAlerta = ref({
+      header: "",
+      subHeader: "",
+      message: "",
+
+      active: false,
+      buttons: [
+        {
+          text: "Cancelar",
+          role: "cancel",
+        },
+        {
+          text: "OK",
+          role: "confirm",
+        },
+      ],
+    });
 
     // Funciones para modal de cambio de grupo
     const cancel = () => modal.value.$el.dismiss(null, "cancel");
@@ -307,7 +331,35 @@ export default {
     };
 
     // Funciones para modal de creación de grupo
-    const openCreateGroupModal = () => {
+    const openCreateGroupModal = async () => {
+      if ((await leccionesSinNotas(cursoId, usuario)).length > 0) {
+        mensajeAlerta.value.header = "Hay lecciones sin calificar";
+        mensajeAlerta.value.subHeader = "¿Seguro que desea crear un grupo?";
+        mensajeAlerta.value.message = `Las lecciones sin calificar son: <br> <ul> <li> ${(
+          await leccionesSinNotas(cursoId, usuario)
+        )
+          .map((leccion) => leccion.topic)
+          .join("<br> </li></ul> <ul> <li>")}`;
+
+        mensajeAlerta.value.buttons = [
+          {
+            text: "Cancelar",
+            role: "cancel",
+          },
+          {
+            text: "Crear",
+            role: "confirm",
+            handler: () => {
+              isCreateGroupModalOpen.value = true;
+              newGroupName.value = "";
+            },
+          },
+        ];
+        mensajeAlerta.value.active = true;
+        await presentAlert();
+        return;
+      }
+
       isCreateGroupModalOpen.value = true;
       newGroupName.value = "";
     };
@@ -359,7 +411,35 @@ export default {
     };
 
     // Funciones para modal de edición de grupo
-    const openEditGroupModal = (grupo) => {
+    const openEditGroupModal = async (grupo) => {
+      if ((await leccionesSinNotas(cursoId, usuario)).length > 0) {
+        mensajeAlerta.value.header = "Hay lecciones sin calificar";
+        mensajeAlerta.value.subHeader = "¿Seguro que desea editar un grupo?";
+        mensajeAlerta.value.message = `<strong>Las lecciones sin calificar son:  <br></strong> <ul> <li>${(
+          await leccionesSinNotas(cursoId, usuario)
+        )
+          .map((leccion) => leccion.topic)
+          .join("<br> </li></ul> <ul> <li>")}`;
+
+        mensajeAlerta.value.buttons = [
+          {
+            text: "Cancelar",
+            role: "cancel",
+          },
+          {
+            text: "Editar",
+            role: "confirm",
+            handler: () => {
+              isEditGroupModalOpen.value = true;
+              editGroupName.value = grupo.name;
+              periodoId.value = grupo.periodId || 0; // Asegurarse de que el periodo esté definido
+            },
+          },
+        ];
+        mensajeAlerta.value.active = true;
+        await presentAlert();
+        return;
+      }
       // Detener la propagación del evento para evitar que se abra el acordeón
       event.stopPropagation();
 
@@ -480,7 +560,54 @@ export default {
       }
     };
 
-    const openModal = (selectedUserId) => {
+    const presentAlert = async () => {
+      const alert = await alertController.create({
+        header: mensajeAlerta.value.header || "Default Header",
+        subHeader: mensajeAlerta.value.subHeader || "A Sub Header Is Optional",
+        message:
+          mensajeAlerta.value.message ||
+          "A message should be a short, complete sentence.",
+        buttons: mensajeAlerta.value.buttons || [
+          {
+            text: "OK",
+            role: "cancel",
+          },
+        ],
+      });
+
+      await alert.present();
+    };
+
+    const openModal = async (selectedUserId) => {
+      if ((await leccionesSinNotas(cursoId, usuario)).length > 0) {
+        mensajeAlerta.value.header = "Hay lecciones sin calificar";
+        mensajeAlerta.value.subHeader = "¿Seguro que desea mover a un grupo?";
+        mensajeAlerta.value.message = `<strong>Las lecciones sin calificar son:  <br></strong> <ul> <li>${(
+          await leccionesSinNotas(cursoId, usuario)
+        )
+          .map((leccion) => leccion.topic)
+          .join("<br> </li></ul> <ul> <li>")}`;
+
+        mensajeAlerta.value.buttons = [
+          {
+            text: "Cancelar",
+            role: "cancel",
+          },
+          {
+            text: "Crear",
+            role: "confirm",
+            handler: () => {
+              isModalOpen.value = true;
+              grupoId.value = 0; // Asignar el grupo "Sin grupo"
+              userId.value = selectedUserId;
+            },
+          },
+        ];
+        mensajeAlerta.value.active = true;
+        await presentAlert();
+        return;
+      }
+
       isModalOpen.value = true;
 
       userId.value = selectedUserId;
@@ -515,6 +642,7 @@ export default {
     });
 
     return {
+      alertController,
       periodoId,
       periodos,
       mroute,
@@ -522,6 +650,8 @@ export default {
       grupos,
       gruposLista,
       curso,
+      mensajeAlerta,
+      presentAlert,
       getMembers,
       removeMember,
       addOutline,
