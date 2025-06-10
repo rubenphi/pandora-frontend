@@ -26,13 +26,20 @@ export function periodosGet() {
 }
 
 export function selectedYear() {
-  var date = new Date();
-  var year = date.getFullYear();
-  return year;
+  if (localStorage.getItem("year") == undefined) {
+    return new Date().getFullYear();
+  } else {
+    return parseInt(JSON.parse(localStorage.getItem("year")), 10);
+  }
 }
 
 export function selectedPeriod() {
-  return 1;
+  localStorage.getItem("periodoSelected");
+  if (localStorage.getItem("periodoSelected") == undefined) {
+    return 1;
+  } else {
+    return parseInt(JSON.parse(localStorage.getItem("periodoSelected")), 10);
+  }
 }
 
 export const numerosOrdinales = [
@@ -178,6 +185,67 @@ export function adminOprofesor() {
   } else if (usuarioGet().rol == "student") {
     return false;
   }
+}
+
+export async function leccionesSinNotas(cursoId, usuario) {
+  let lecciones = [];
+  let notas = [];
+
+  try {
+    const response = await axios.get(
+      `/lessons?courseId=${cursoId}&periodId=${selectedPeriod()}&year=${selectedYear()}&instituteId=${
+        usuario.value.institute.id
+      }&exist=true`,
+      tokenHeader()
+    );
+    lecciones = response.data;
+  } catch (error) {
+    console.error("Error al cargar las lecciones:", error);
+  }
+
+  try {
+    const response = await axios.get(
+      `/grades?courseId=${cursoId}&periodId=${selectedPeriod()}&year=${selectedYear()}&instituteId=${
+        usuario.value.institute.id
+      }`,
+      tokenHeader()
+    );
+    notas = response.data;
+  } catch (error) {
+    console.error("Error al cargar las notas:", error);
+  }
+
+  // Paso 1: Obtener los IDs de las lecciones que sí tienen notas
+  const idsConNotas = new Set(notas.map((nota) => nota.lesson.id));
+
+  // Paso 2: Filtrar las lecciones que no tienen nota
+  const leccionesSinNotas = lecciones.filter(
+    (leccion) => !idsConNotas.has(leccion.id)
+  );
+
+  // Paso 3: Filtrar las lecciones sin nota pero que sí tienen respuestas
+  const leccionesConRespuestas = [];
+
+  for (const leccion of leccionesSinNotas) {
+    try {
+      const response = await axios.get(
+        `/answers?lessonId=${leccion.id}`,
+        tokenHeader()
+      );
+
+      // Solo agregar si hay al menos una respuesta
+      if (Array.isArray(response.data) && response.data.length > 0) {
+        leccionesConRespuestas.push(leccion);
+      }
+    } catch (error) {
+      console.error(
+        `Error al obtener respuestas para la lección ${leccion.id}:`,
+        error
+      );
+    }
+  }
+
+  return leccionesConRespuestas;
 }
 
 export function adminOdirectivo() {
