@@ -38,6 +38,7 @@ const routes = [
         path: "cuestionarios/:curso/:area/:periodo/:year",
         component: () => import("@/views/Tab3Page.vue"),
       },
+
       {
         path: "admin/cuestionarios",
         component: () => import("@/views/CuestionariosPage.vue"),
@@ -101,6 +102,14 @@ const routes = [
       {
         path: "cuestionario/importar/:id",
         component: () => import("@/views/ImportacionPregunta.vue"),
+      },
+      {
+        path: "cuestionario/importar/preguntas/tipo/:id",
+        component: () => import("@/views/ImportarPreguntaTipo.vue"),
+      },
+      {
+        path: "cuestionario/importar/preguntas/variables/:id",
+        component: () => import("@/views/ImportarPreguntaVariables.vue"),
       },
       {
         path: "areas/:id",

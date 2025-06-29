@@ -114,7 +114,7 @@
           <ion-icon :icon="addOutline"></ion-icon>
         </ion-button>
         <ion-button
-          :href="'/cuestionario/importar/' + cuestionario.id"
+          @click="openTypeImportModal"
           expand="full"
           fill="outline"
           shape="round"
@@ -124,6 +124,48 @@
           <ion-icon :icon="downloadOutline"></ion-icon>
         </ion-button>
       </ion-buttons>
+
+      <!-- Modal para tipo de importacion  (desde pregunta, Json de Tipos (avanzado), Json de Opciones Variables (avanzado)) -->
+
+      <ion-modal
+        :is-open="isModalOpen"
+        @didDismiss="closeModal"
+        ref="modal"
+        trigger="open-modal"
+        :breakpoints="[0.3, 0.5, 1]"
+        :initial-breakpoint="0.5"
+      >
+        <ion-header>
+          <ion-toolbar>
+            <ion-buttons slot="start">
+              <ion-button @click="cancel()">Cancelar</ion-button>
+            </ion-buttons>
+            <ion-title style="text-align: center">Importar Preguntas</ion-title>
+            <ion-buttons slot="end">
+              <ion-button :strong="true" @click="confirm()"
+                >Confirmar</ion-button
+              >
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding">
+          <ion-item>
+            <ion-select
+              label="Seleccione tipo de importación"
+              v-model="tipoImportacionUrl"
+              placeholder="Si no sabe programar, seleccione 'Desde Pregunta'"
+            >
+              <ion-select-option
+                v-for="tipoEnLista in tiposIportacion"
+                :key="tipoEnLista.id"
+                :value="tipoEnLista.url"
+              >
+                {{ tipoEnLista.name }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-content>
+      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
@@ -159,9 +201,13 @@ import {
   IonCardTitle,
   IonCardSubtitle,
   onIonViewDidEnter,
+  IonModal,
+  IonSelect,
+  IonSelectOption,
 } from "@ionic/vue";
 
 import { useRoute } from "vue-router";
+import router from "../router";
 
 export default {
   components: {
@@ -180,14 +226,36 @@ export default {
     IonCardTitle,
     IonCardHeader,
     IonCardSubtitle,
+    IonModal,
+    IonSelect,
+    IonSelectOption,
   },
   setup() {
     const admin = adminOprofesor();
     const periodoSelected = ref();
+
+    const isModalOpen = ref(false);
     const year = ref();
     const allVisible = ref(false);
     const mroute = useRoute();
+    const closeModal = () => {
+      isModalOpen.value = false;
+    };
     const { id } = mroute.params;
+    const tiposIportacion = ref([
+      { id: 1, url: "/cuestionario/importar/", name: "Desde Pregunta" },
+      {
+        id: 2,
+        url: "/cuestionario/importar/preguntas/tipo/",
+        name: "Json de Tipos (avanzado)",
+      },
+      {
+        id: 3,
+        url: "/cuestionario/importar/preguntas/variables/",
+        name: "Json de Opciones Variables (avanzado)",
+      },
+    ]);
+    const tipoImportacionUrl = ref("");
 
     let cuestionario = ref(JSON.parse(localStorage.getItem("lessonSelected")));
 
@@ -233,6 +301,25 @@ export default {
         }
       });
     });
+
+    const cancel = () => {
+      closeModal();
+      tipoImportacionUrl.value = "";
+    };
+
+    const confirm = () => {
+      if (!tipoImportacionUrl.value) {
+        return;
+      }
+      const url = tipoImportacionUrl.value + id;
+      router.push(url);
+      tipoImportacionUrl.value = "";
+      closeModal();
+    };
+
+    const openTypeImportModal = () => {
+      isModalOpen.value = true;
+    };
 
     const generateAnswerKeyCsv = function (questions) {
       // Crear el encabezado del CSV
@@ -294,6 +381,13 @@ export default {
     };
 
     return {
+      tipoImportacionUrl,
+      closeModal,
+      cancel,
+      confirm,
+      openTypeImportModal,
+      isModalOpen,
+      tiposIportacion,
       allVisible,
       generateAnswerKeyCsv,
       marcarTodoDisponibleVisible,

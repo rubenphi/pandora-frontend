@@ -2,9 +2,9 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-title size="large" class="ion-text-center">{{
-          cuestionario.topic
-        }}</ion-title>
+        <ion-title size="large" class="ion-text-center"
+          >{{ cuestionario.topic }}
+        </ion-title>
         <ion-buttons slot="start" class="ion-margin-start">
           <ion-button v-if="id" :href="'/cuestionario/' + id">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
@@ -222,6 +222,7 @@ export default {
     const mroute = useRoute();
     const { id } = mroute.params;
     const loading = ref(false);
+    const lessonPoints = ref(0);
     const respuestaDetallada = ref({});
     const respuestaMAyor = ref({
       group: { name: "Cargando", id: 0 },
@@ -268,14 +269,24 @@ export default {
             )[0]?.group;
           });
       tokenHeader();
+
+      await axios.get(`/lessons/${id}/points`).then((response) => {
+        lessonPoints.value = response.data.points;
+      });
+
       await axios
         .get(`/lessons/${id}/results`)
         .then((response) => {
           respuestas.value = response.data.map((e) => {
             e.points = parseFloat(e.points);
-            e.nota =
-              e.points != 0 ? (e.points * 5) / response.data[0].points : 0;
-            e.nota = e.nota < 0 ? 0 : e.nota;
+            if (cuestionario.value.topic == "Refuerzo") {
+              e.nota = e.points != 0 ? (e.points * 5) / lessonPoints.value : 0;
+              e.nota = e.nota < 0 ? 0 : e.nota;
+            } else {
+              e.nota =
+                e.points != 0 ? (e.points * 5) / response.data[0].points : 0;
+              e.nota = e.nota < 0 ? 0 : e.nota;
+            }
             return e;
           });
         })
@@ -339,6 +350,7 @@ export default {
 
     return {
       usuario,
+      lessonPoints,
       id,
       cuestionario,
       respuestas,

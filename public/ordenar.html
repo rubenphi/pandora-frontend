@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Separador de versos</title>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      vertical-align: top;
+      min-height: 60px;
+      text-align: center;
+    }
+    .draggable {
+      padding: 5px;
+      background-color: #e0e0e0;
+      margin: 5px;
+      cursor: move;
+      display: inline-block;
+    }
+    .dropzone {
+      min-height: 40px;
+      background-color: #f9f9f9;
+      border: 1px dashed #aaa;
+    }
+    .correct {
+      background-color: #c8f7c5 !important;
+    }
+    .incorrect {
+      background-color: #f7c5c5 !important;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Separador de versos</h2>
+
+<table id="verseTable"></table>
+
+<script>
+const texto = `hombres necios que acusáis
+a la mujer sin razón,
+sin ver que sois la ocasión
+de lo mismo que culpáis:
+
+si con ansia sin igual
+solicitáis su desdén,
+¿por qué queréis que obren bien
+si las incitáis al mal?
+
+combatís su resistencia
+y luego, con gravedad,
+decís que fue liviandad
+lo que hizo la diligencia.
+
+dan vuestras amantes penas
+a sus libertades alas,
+y después de hacerlas malas
+las queréis hallar muy buenas.
+
+¿cuál mayor culpa ha tenido
+en una pasión errada:
+la que cae de rogada,
+o el que ruega de caído?
+
+¿o cuál es más de culpar,
+aunque cualquiera mal haga:
+la que peca por la paga,
+o el que paga por pecar?
+
+pues, ¿para qué os espantáis
+de la culpa que tenéis?
+queredlas cual las hacéis
+o hacedlas cual las buscáis.
+`; // <-- Aquí cambias tu string de entrada
+
+// Función para partir en dos una línea respetando palabras
+function partirLinea(linea) {
+  const mid = Math.floor(linea.length / 2);
+  let espacioIzq = linea.lastIndexOf(' ', mid);
+  let espacioDer = linea.indexOf(' ', mid);
+  let corte = (mid - espacioIzq) <= (espacioDer - mid) ? espacioIzq : espacioDer;
+  if (corte === -1) corte = mid;
+  const parteA = linea.substring(0, corte).trim();
+  const parteB = linea.substring(corte).trim();
+  return [parteA, parteB];
+}
+
+function crearTabla(texto) {
+  const tabla = document.getElementById('verseTable');
+  const lineas = texto.split('\n').filter(linea => linea.trim() !== '');
+
+  lineas.forEach((linea, index) => {
+    const [parteA, parteB] = partirLinea(linea);
+    const fila = document.createElement('tr');
+
+    const celdaFrases = document.createElement('td');
+    const frases = [
+      { texto: parteA, tipo: 'A', fila: index },
+      { texto: parteB, tipo: 'B', fila: index }
+    ];
+    frases.sort(() => Math.random() - 0.5); // Mezclar A y B
+
+    frases.forEach((frase, idx) => {
+      const div = document.createElement('div');
+      div.textContent = frase.texto;
+      div.classList.add('draggable');
+      div.setAttribute('draggable', true);
+      div.dataset.tipo = frase.tipo;
+      div.dataset.fila = frase.fila;
+      celdaFrases.appendChild(div);
+    });
+
+    const celdaA = document.createElement('td');
+    celdaA.classList.add('dropzone');
+    celdaA.dataset.tipoEsperado = 'A';
+    celdaA.dataset.fila = index;
+
+    const celdaB = document.createElement('td');
+    celdaB.classList.add('dropzone');
+    celdaB.dataset.tipoEsperado = 'B';
+    celdaB.dataset.fila = index;
+
+    fila.appendChild(celdaFrases);
+    fila.appendChild(celdaA);
+    fila.appendChild(celdaB);
+
+    tabla.appendChild(fila);
+  });
+
+  activarDragAndDrop();
+}
+
+function activarDragAndDrop() {
+  let dragged;
+
+  document.querySelectorAll('.draggable').forEach(elem => {
+    elem.addEventListener('dragstart', e => {
+      dragged = e.target;
+    });
+  });
+
+  document.querySelectorAll('.dropzone').forEach(zone => {
+    zone.addEventListener('dragover', e => {
+      e.preventDefault();
+    });
+
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      if (!zone.hasChildNodes()) {
+        zone.appendChild(dragged);
+        checkCompletion();
+      }
+    });
+  });
+}
+
+function checkCompletion() {
+  const zonas = document.querySelectorAll('.dropzone');
+  const incompletas = Array.from(zonas).some(z => !z.hasChildNodes());
+
+  if (!incompletas) {
+    validarTodo();
+  }
+}
+
+function validarTodo() {
+  const filas = document.querySelectorAll('#verseTable tr');
+  filas.forEach(fila => {
+    const celdaFrases = fila.children[0];
+    const celdaA = fila.children[1];
+    const celdaB = fila.children[2];
+
+    const dropA = celdaA.firstChild;
+    const dropB = celdaB.firstChild;
+
+    const filaIndex = celdaA.dataset.fila;
+
+    const aCorrecto = dropA && dropA.dataset.tipo === 'A' && dropA.dataset.fila === filaIndex;
+    const bCorrecto = dropB && dropB.dataset.tipo === 'B' && dropB.dataset.fila === filaIndex;
+
+    if (aCorrecto && bCorrecto) {
+      fila.classList.remove('incorrect');
+      fila.classList.add('correct');
+    } else {
+      fila.classList.remove('correct');
+      fila.classList.add('incorrect');
+    }
+  });
+}
+
+
+crearTabla(texto);
+</script>
+
+</body>
+</html>
