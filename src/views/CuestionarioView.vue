@@ -4,16 +4,16 @@
       <ion-toolbar>
         <ion-buttons slot="start" class="ion-margin-start">
           <ion-button
-            v-if="cuestionario.id != 0"
+            v-if="cuestionario?.id != 0"
             :href="
-              '/cuestionarios/' +
-              cuestionario.course.id +
+              '/lecciones/' +
+              cuestionario?.lesson?.course?.id +
               '/' +
-              cuestionario.area.id +
+              cuestionario?.lesson?.area?.id +
               '/' +
-              periodoSelected +
+              cuestionario?.lesson?.period?.id +
               '/' +
-              year
+              cuestionario?.lesson?.year
             "
           >
             <ion-icon :icon="arrowBackOutline"></ion-icon>
@@ -92,7 +92,9 @@
             ></ion-icon>
             <ion-label>
               <b>{{
-                numeroOrdinal(index, question.title) + ". " + question.title
+                question.title
+                  ? question.title
+                  : numeroOrdinal(index + 1, question.identifier)
               }}</b></ion-label
             >
           </ion-item>
@@ -267,39 +269,29 @@ export default {
       tokenHeader();
 
       if (cuestionario.value.id !== id) {
-        await axios.get(`/lessons/${id}`).then((response) => {
-          localStorage.setItem("lessonSelected", JSON.stringify(response.data));
-          cuestionario.value = response.data;
+        await axios.get(`/quizzes/${id}`).then((response) => {
+          cuestionario.value = {
+            ...response.data,
+            id: response.data.id,
+            topic: response.data.title,
+            //order by title with ordinal number
+            questions: response.data.questions
+              .sort((a, b) => a.id - b.id) // o a.number - b.number
+              .map((question, index) => ({
+                ...question,
+                title:
+                  numeroOrdinal(index, question.title) + ". " + question.title,
+              })),
+            course: response.data.course,
+          };
+          localStorage.setItem(
+            "lessonSelected",
+            JSON.stringify(cuestionario.value)
+          );
+
           year.value = cuestionario.value.year;
         });
       }
-
-      await axios.get(`/lessons/${id}/questions`).then((response) => {
-        cuestionario.value.questions = response.data.filter((i) => i.exist);
-        if (!admin) {
-          cuestionario.value.questions = cuestionario.value.questions.filter(
-            (i) => i.visible
-          );
-        } else {
-          cuestionario.value.questions = cuestionario.value.questions.map(
-            (pregunta) => ({
-              available: pregunta.available,
-              visible: pregunta.visible,
-              id: pregunta.id,
-              title: pregunta.title,
-              options: pregunta.options,
-            })
-          );
-          if (
-            cuestionario.value.questions.filter((i) => i.visible).length ===
-              cuestionario.value.questions.length &&
-            cuestionario.value.questions.filter((i) => i.available).length ===
-              cuestionario.value.questions.length
-          ) {
-            allVisible.value = true;
-          }
-        }
-      });
     });
 
     const cancel = () => {

@@ -27,7 +27,7 @@
         <ion-accordion
           v-for="(respuesta, index) in respuestas"
           :key="index"
-          :value="respuesta.group.id.toString()"
+          :value="respuesta.group.id"
         >
           <ion-item slot="header" lines="full" class="ion-padding-end">
             <ion-icon
@@ -222,7 +222,7 @@ export default {
     const mroute = useRoute();
     const { id } = mroute.params;
     const loading = ref(false);
-    const lessonPoints = ref(0);
+    const quizPoints = ref(0);
     const respuestaDetallada = ref({});
     const respuestaMAyor = ref({
       group: { name: "Cargando", id: 0 },
@@ -270,17 +270,17 @@ export default {
           });
       tokenHeader();
 
-      await axios.get(`/lessons/${id}/points`).then((response) => {
-        lessonPoints.value = response.data.points;
+      await axios.get(`/quizzes/${id}/points`).then((response) => {
+        quizPoints.value = response.data.points;
       });
 
       await axios
-        .get(`/lessons/${id}/results`)
+        .get(`/quizzes/${id}/results`)
         .then((response) => {
           respuestas.value = response.data.map((e) => {
             e.points = parseFloat(e.points);
             if (cuestionario.value.topic == "Refuerzo") {
-              e.nota = e.points != 0 ? (e.points * 5) / lessonPoints.value : 0;
+              e.nota = e.points != 0 ? (e.points * 5) / quizPoints.value : 0;
               e.nota = e.nota < 0 ? 0 : e.nota;
             } else {
               e.nota =
@@ -299,11 +299,12 @@ export default {
 
     const loadRespuestas = async (groupId) => {
       loading.value = true;
+
       try {
         const answers = await getRespuestas(
           groupId,
           id,
-          cuestionario.value.institute.id
+          cuestionario.value.lesson.institute.id
         );
         respuestaDetallada.value = answers
           .map((answer, index) => {
@@ -319,9 +320,21 @@ export default {
     };
 
     async function registrarNotas() {
+      console.log("registrarNotas() called.");
+      if (!cuestionario.value || !cuestionario.value.lesson.year) {
+        console.error("Cuestionario data is missing or incomplete.");
+        return;
+      }
       for (const respuesta of respuestas.value) {
+        if (!respuesta.group || !respuesta.group.id) {
+          console.warn(
+            "Skipping response due to missing group data:",
+            respuesta
+          );
+          continue; // Skip to the next response
+        }
         const response = await axios.get(
-          `/groups/${respuesta.group.id}/${cuestionario.value.year}/users`
+          `/groups/${respuesta.group.id}/${cuestionario.value.lesson.year}/users`
         );
         for (const relacionUsuario of response.data) {
           const data = {
@@ -329,7 +342,7 @@ export default {
             lessonId: parseInt(id, 10),
             periodId: cuestionario.value.period.id,
             grade: respuesta.nota,
-            instituteId: cuestionario.value.institute.id,
+            instituteId: cuestionario.value.lesson.institute.id,
           };
 
           await axios.post("/grades", data);
@@ -337,10 +350,10 @@ export default {
       }
     }
 
-    async function getRespuestas(groupId, lessonId, instituteId) {
+    async function getRespuestas(groupId, quizId, instituteId) {
       if (groupId == grupoUsuario.value?.id || admin) {
         const response = await axios.get(
-          `/answers?groupId=${groupId}&lessonId=${lessonId}&instituteId=${instituteId}`
+          `/answers?groupId=${groupId}&quizId=${quizId}&instituteId=${instituteId}`
         );
         return response.data;
       } else {
@@ -350,7 +363,7 @@ export default {
 
     return {
       usuario,
-      lessonPoints,
+      lessonPoints: quizPoints,
       id,
       cuestionario,
       respuestas,

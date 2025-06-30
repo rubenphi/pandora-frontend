@@ -3,22 +3,7 @@
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-button
-            v-if="curso"
-            :href="
-              '/cuestionarios/' +
-              curso +
-              '/' +
-              area +
-              '/' +
-              periodoSelected +
-              '/' +
-              year
-            "
-          >
-            <ion-icon :icon="arrowBackOutline"></ion-icon>
-          </ion-button>
-          <ion-button v-if="id" :href="'/cuestionario/' + id">
+          <ion-button :href="backUrl">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -38,33 +23,12 @@
           </ion-item>
 
           <ion-item>
-            <ion-label position="stacked">Fecha</ion-label>
-            <ion-input v-model="cuestionario.date" type="date"></ion-input>
-          </ion-item>
-
-          <ion-item>
-            <ion-select
-              v-model="cuestionario.periodId"
-              label="Periodo"
-              placeholder="Periodo"
-            >
-              <ion-select-option
-                v-for="periodo in periodos"
-                :key="periodo.id"
-                :value="periodo.id"
-              >
-                {{ periodo.name }}
-              </ion-select-option>
-            </ion-select>
-          </ion-item>
-
-          <ion-item>
-            <ion-label position="stacked">Tema</ion-label>
-            <ion-input v-model="cuestionario.topic" type="text"></ion-input>
+            <ion-label position="stacked">Título</ion-label>
+            <ion-input v-model="cuestionario.title" type="text"></ion-input>
           </ion-item>
           <ion-item
             class="ion-text-center"
-            v-if="id && cuestionario.exist == true"
+            v-if="cuestionario.id && cuestionario.exist == true"
             button
             color="danger"
             @click="borrarCuestionario(false)"
@@ -73,7 +37,7 @@
           </ion-item>
           <ion-item
             class="ion-text-center"
-            v-if="id && cuestionario.exist == false"
+            v-if="cuestionario.id && cuestionario.exist == false"
             button
             color="success"
             @click="borrarCuestionario(true)"
@@ -87,11 +51,11 @@
 </template>
 <script>
 import axios from "axios";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useRoute } from "vue-router";
 import router from "../router";
 
-import { usuarioGet, tokenHeader, periodosGet } from "../globalService";
+import { usuarioGet, tokenHeader } from "../globalService";
 import {
   onIonViewWillEnter,
   IonLabel,
@@ -105,16 +69,10 @@ import {
   IonInput,
   IonIcon,
   IonButton,
-  IonSelect,
-  IonSelectOption,
   IonButtons,
 } from "@ionic/vue";
 
-import {
-  arrowBackOutline,
-  checkmarkOutline,
-  trashOutline,
-} from "ionicons/icons";
+import { arrowBackOutline, checkmarkOutline } from "ionicons/icons";
 
 export default {
   components: {
@@ -130,21 +88,20 @@ export default {
     IonItem,
     IonLabel,
     IonInput,
-    IonSelect,
-    IonSelectOption,
   },
   setup() {
     const mroute = useRoute();
-    const { curso } = mroute.params;
-    const { area } = mroute.params;
-    const { year } = mroute.params;
-    const { id } = mroute.params;
-    const periodos = ref();
-
-    const periodoSelected = ref();
+    //change lessonId and id to Int
+    const lessonId = parseInt(mroute.params.lessonId, 10);
+    const id = parseInt(mroute.params.id, 10); // 'id' will be quizId if editing, undefined if creating
 
     const cuestionario = ref({
-      courseId: 0,
+      id: null,
+      title: "",
+      quizType: "group", // Fixed value as per API comment
+      lessonId: parseInt(lessonId, 10),
+      instituteId: null,
+      exist: true,
     });
     const error = ref({
       estatus: 0,
@@ -152,35 +109,68 @@ export default {
     });
 
     const usuario = ref();
+    const lessonDetails = ref(null);
+
+    const backUrl = computed(() => {
+      if (cuestionario.value.id) {
+        // If editing a quiz, go back to the quiz view
+        return `/cuestionario/${cuestionario.value.id}`;
+      } else if (lessonDetails.value) {
+        // If creating a quiz, go back to the lessons page for the specific lesson
+        const { course, area, period, year } = lessonDetails.value;
+        return `/lecciones/${course.id}/${area.id}/${period.id}/${year}`;
+      } else {
+        // Fallback if lessonDetails is not yet loaded or invalid
+        return `/lecciones`; // Or a more appropriate default route
+      }
+    });
 
     onIonViewWillEnter(async () => {
-      periodoSelected.value = JSON.parse(
-        localStorage.getItem("periodoSelected")
-      );
       usuario.value = usuarioGet();
-      periodos.value = periodosGet();
       tokenHeader();
-      if (id != undefined) {
-        await axios.get("/lessons/" + id).then((response) => {
-          cuestionario.value.date = response.data.date.substring(0, 10);
-          cuestionario.value.topic = response.data.topic;
-          cuestionario.value.periodId = response.data.period.id;
-          cuestionario.value.courseId = response.data.course.id;
-          cuestionario.value.areaId = response.data.area.id;
-          cuestionario.value.instituteId = response.data.institute.id;
-          cuestionario.value.year = response.data.year;
-          cuestionario.value.exist = response.data.exist;
-        });
+
+      // Fetch lesson details first, as it's needed for backUrl and new quiz creation
+      try {
+        const response = await axios.get(`/lessons/${lessonId}`);
+        lessonDetails.value = response.data;
+      } catch (error) {
+        console.error("Error fetching lesson details:", error);
+        // Handle error, maybe redirect or show a message
+        return;
       }
-      if (curso != undefined && area != undefined) {
+
+      if (id) {
+        // If 'id' exists, it means we are editing an existing quiz
+        try {
+          const response = await axios.get(`/quizzes/${id}`);
+          cuestionario.value = {
+            id: response.data.id,
+            title: response.data.title,
+            quizType: response.data.quizType,
+            lessonId: response.data.lesson.id,
+            instituteId: response.data.institute.id,
+            exist: response.data.exist,
+          };
+        } catch (error) {
+          console.error("Error fetching quiz details:", error);
+          // If quiz not found or error, treat as new creation for this lesson
+          cuestionario.value = {
+            id: null,
+            title: "",
+            quizType: "group",
+            lessonId: parseInt(lessonId, 10),
+            instituteId: usuario.value.institute.id,
+            exist: true,
+          };
+        }
+      } else {
+        // Creating a new quiz
         cuestionario.value = {
-          date: "",
-          topic: "",
-          courseId: "",
-          year: 0,
-          areaId: "",
-          periodId: "",
-          instituteId: "",
+          id: null,
+          title: "",
+          quizType: "group",
+          lessonId: parseInt(lessonId, 10),
+          instituteId: usuario.value.institute.id,
           exist: true,
         };
       }
@@ -192,71 +182,55 @@ export default {
         this.crearCuestionario();
       },
       async crearCuestionario() {
-        if (cuestionario.value.date == "" || cuestionario.value.tema == "") {
+        if (cuestionario.value.title == "") {
           error.value.estatus = 1;
-          error.value.data = "Debe seleccionar una fecha y añadir el tema";
-        } else if (curso != undefined) {
-          cuestionario.value.courseId = parseInt(curso, 10);
-          cuestionario.value.areaId = parseInt(area, 10);
-          cuestionario.value.instituteId = parseInt(
-            usuario.value.institute.id,
-            10
+          error.value.data = "Debe añadir un título al cuestionario";
+          return;
+        }
+
+        const payload = {
+          title: cuestionario.value.title,
+          quizType: cuestionario.value.quizType,
+          lessonId: cuestionario.value.lessonId,
+          instituteId: cuestionario.value.instituteId,
+        };
+
+        try {
+          let response;
+          if (cuestionario.value.id) {
+            // Editing existing quiz
+            payload.exist = cuestionario.value.exist; // Add exist property for PATCH
+            response = await axios.patch(
+              `/quizzes/${cuestionario.value.id}`,
+              payload
+            );
+          } else {
+            // Creating new quiz
+            response = await axios.post("/quizzes", payload);
+          }
+
+          router.push("/cuestionario/" + response.data.id);
+          localStorage.setItem(
+            "error",
+            response.data.message || "Operación exitosa"
           );
-          cuestionario.value.year = new Date().getFullYear();
-
-          await axios
-            .post("/lessons", cuestionario.value)
-            .then((response) => {
-              router.push("/cuestionario/" + response.data.id);
-
-              localStorage.setItem("error", response.data.message);
-            })
-            .catch((response) => {
-              localStorage.setItem("error", response.message);
-              error.value.estatus = 1;
-              error.value.data = "Error: no se pudo añadir el cuestionario";
-            });
-        } else if (id != undefined) {
-          await axios
-            .patch("/lessons/" + id, cuestionario.value)
-            .then((response) => {
-              localStorage.setItem(
-                "lessonSelected",
-                JSON.stringify(response.data)
-              );
-              if (cuestionario.value.exist == true) {
-                router.push("/cuestionario/" + id);
-              } else {
-                router.push(
-                  "/cuestionarios/" +
-                    cuestionario.value.courseId +
-                    "/" +
-                    cuestionario.value.areaId +
-                    "/" +
-                    cuestionario.value.periodId
-                );
-              }
-              localStorage.setItem("error", response.data.message);
-            })
-            .catch((response) => {
-              localStorage.setItem("error", response.message);
-              error.value.estatus = 1;
-              error.value.data = "Error: no se pudo actualizar el cuestionario";
-            });
+        } catch (err) {
+          console.error("Error saving questionnaire:", err);
+          localStorage.setItem(
+            "error",
+            err.response?.data?.message || "Error al guardar el cuestionario"
+          );
+          error.value.estatus = 1;
+          error.value.data =
+            err.response?.data?.message ||
+            "Error: no se pudo guardar el cuestionario";
         }
       },
-      area,
       arrowBackOutline,
-      trashOutline,
-      curso,
-      id,
-      usuario,
-      periodos,
-      error,
       cuestionario,
+      error,
       checkmarkOutline,
-      periodoSelected,
-      year,
+      backUrl,
     };
   },
 };

@@ -195,18 +195,18 @@ export function adminOprofesor() {
   }
 }
 
-export async function leccionesSinNotas(cursoId, usuario) {
-  let lecciones = [];
+export async function QuizSinNotas(cursoId, usuario) {
+  let quizzes = [];
   let notas = [];
 
   try {
     const response = await axios.get(
-      `/lessons?courseId=${cursoId}&periodId=${selectedPeriod()}&year=${selectedYear()}&instituteId=${
+      `/quizzes?courseId=${cursoId}&periodId=${selectedPeriod()}&year=${selectedYear()}&instituteId=${
         usuario.value.institute.id
       }&exist=true`,
       tokenHeader()
     );
-    lecciones = response.data;
+    quizzes = response.data;
   } catch (error) {
     console.error("Error al cargar las lecciones:", error);
   }
@@ -224,30 +224,28 @@ export async function leccionesSinNotas(cursoId, usuario) {
   }
 
   // Paso 1: Obtener los IDs de las lecciones que sí tienen notas
-  const idsConNotas = new Set(notas.map((nota) => nota.lesson.id));
+  const idsConNotas = new Set(notas.map((nota) => nota.quiz.id));
 
   // Paso 2: Filtrar las lecciones que no tienen nota
-  const leccionesSinNotas = lecciones.filter(
-    (leccion) => !idsConNotas.has(leccion.id)
-  );
+  const quizzesSinNotas = quizzes.filter((quiz) => !idsConNotas.has(quiz.id));
 
   // Paso 3: Filtrar las lecciones sin nota pero que sí tienen respuestas
   const leccionesConRespuestas = [];
 
-  for (const leccion of leccionesSinNotas) {
+  for (const quiz of quizzesSinNotas) {
     try {
       const response = await axios.get(
-        `/answers?lessonId=${leccion.id}`,
+        `/answers?quizId=${quiz.id}`,
         tokenHeader()
       );
 
       // Solo agregar si hay al menos una respuesta
       if (Array.isArray(response.data) && response.data.length > 0) {
-        leccionesConRespuestas.push(leccion);
+        leccionesConRespuestas.push(quiz);
       }
     } catch (error) {
       console.error(
-        `Error al obtener respuestas para la lección ${leccion.id}:`,
+        `Error al obtener respuestas para la lección ${quiz.id}:`,
         error
       );
     }

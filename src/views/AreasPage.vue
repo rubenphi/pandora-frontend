@@ -177,7 +177,7 @@ export default {
           return;
         }
         router.push(
-          `/cuestionarios/${id}/${areaId}/${periodoSelected.value}/${yearSelected.value}`
+          `/lecciones/${id}/${areaId}/${periodoSelected.value}/${yearSelected.value}`
         );
       },
       usuario,

@@ -4,13 +4,13 @@
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-button
-            v-if="Number.isInteger(userLoged.id) == false"
+            v-if="Number.isInteger(userLoged?.id) == false"
             :href="'/login'"
           >
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
           <ion-button
-            v-if="Number.isInteger(userLoged.id) == true"
+            v-if="Number.isInteger(userLoged?.id) == true"
             :href="'/admin/panel'"
           >
             <ion-icon :icon="arrowBackOutline"></ion-icon>

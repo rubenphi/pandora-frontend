@@ -255,7 +255,10 @@ export default {
                   );
                   //si no hay un curso con el year igual a selectedYear() ,  localstorage year se convertira en el ultimo year de cursosUsuario
 
-                  if (!cursosUsuario.find((c) => c.year == selectedYear())) {
+                  if (
+                    cursosUsuario.length > 0 &&
+                    !cursosUsuario.find((c) => c.year == selectedYear())
+                  ) {
                     const year = cursosUsuario.sort(
                       (a, b) => b.year - a.year
                     )[0].year;

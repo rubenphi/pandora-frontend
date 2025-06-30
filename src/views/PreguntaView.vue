@@ -4,8 +4,8 @@
       <ion-toolbar>
         <ion-buttons slot="start" class="ion-margin-start">
           <ion-button
-            v-if="question.lessonId != 0"
-            :href="'/cuestionario/' + question.lessonId"
+            v-if="question.QuizId != 0"
+            :href="'/cuestionario/' + question.QuizId"
           >
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
@@ -237,7 +237,7 @@ export default {
       id: "",
       points: "",
       sentence: "",
-      lessonId: 0,
+      QuizId: 0,
       options: {
         sentence: "",
       },
@@ -270,7 +270,7 @@ export default {
           id: response.data.id,
           points: response.data.points,
           sentence: response.data.sentence,
-          lessonId: response.data.lesson.id,
+          QuizId: response.data.quiz.id,
           title: response.data.title,
           photo: response.data.photo,
           options: response.data.options.sort((a, b) => {
@@ -310,7 +310,7 @@ export default {
         } else {
           respuesta.value.questionId = question.value.id;
           respuesta.value.groupId = grupoUsuario.value?.id;
-          respuesta.value.lessonId = question.value.lessonId;
+          respuesta.value.lessonId = question.value.QuizId;
           respuesta.value.exist = true;
           respuesta.value.instituteId = usuarioGet().institute.id;
           botonInactivo.value = true;

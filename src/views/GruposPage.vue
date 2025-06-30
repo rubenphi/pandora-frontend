@@ -212,7 +212,7 @@
 import axios from "axios";
 import { ref } from "vue";
 import {
-  leccionesSinNotas,
+  QuizSinNotas,
   periodosGet,
   tokenHeader,
   usuarioGet,
@@ -332,11 +332,11 @@ export default {
 
     // Funciones para modal de creación de grupo
     const openCreateGroupModal = async () => {
-      if ((await leccionesSinNotas(cursoId, usuario)).length > 0) {
+      if ((await QuizSinNotas(cursoId, usuario)).length > 0) {
         mensajeAlerta.value.header = "Hay lecciones sin calificar";
         mensajeAlerta.value.subHeader = "¿Seguro que desea crear un grupo?";
         mensajeAlerta.value.message = `Las lecciones sin calificar son: <br> <ul> <li> ${(
-          await leccionesSinNotas(cursoId, usuario)
+          await QuizSinNotas(cursoId, usuario)
         )
           .map((leccion) => leccion.topic)
           .join("<br> </li></ul> <ul> <li>")}`;
@@ -412,11 +412,11 @@ export default {
 
     // Funciones para modal de edición de grupo
     const openEditGroupModal = async (grupo) => {
-      if ((await leccionesSinNotas(cursoId, usuario)).length > 0) {
+      if ((await QuizSinNotas(cursoId, usuario)).length > 0) {
         mensajeAlerta.value.header = "Hay lecciones sin calificar";
         mensajeAlerta.value.subHeader = "¿Seguro que desea editar un grupo?";
         mensajeAlerta.value.message = `<strong>Las lecciones sin calificar son:  <br></strong> <ul> <li>${(
-          await leccionesSinNotas(cursoId, usuario)
+          await QuizSinNotas(cursoId, usuario)
         )
           .map((leccion) => leccion.topic)
           .join("<br> </li></ul> <ul> <li>")}`;
@@ -579,11 +579,11 @@ export default {
     };
 
     const openModal = async (selectedUserId) => {
-      if ((await leccionesSinNotas(cursoId, usuario)).length > 0) {
+      if ((await QuizSinNotas(cursoId, usuario)).length > 0) {
         mensajeAlerta.value.header = "Hay lecciones sin calificar";
         mensajeAlerta.value.subHeader = "¿Seguro que desea mover a un grupo?";
         mensajeAlerta.value.message = `<strong>Las lecciones sin calificar son:  <br></strong> <ul> <li>${(
-          await leccionesSinNotas(cursoId, usuario)
+          await QuizSinNotas(cursoId, usuario)
         )
           .map((leccion) => leccion.topic)
           .join("<br> </li></ul> <ul> <li>")}`;

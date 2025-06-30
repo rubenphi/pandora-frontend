@@ -35,7 +35,7 @@ const routes = [
         component: () => import("@/views/Tab2Page.vue"),
       },
       {
-        path: "cuestionarios/:curso/:area/:periodo/:year",
+        path: "lecciones/:curso/:area/:periodo/:year",
         component: () => import("@/views/Tab3Page.vue"),
       },
 
@@ -144,8 +144,16 @@ const routes = [
         },
       },
       {
-        path: "crear/cuestionario/:curso/:area/:year",
+        path: "crear/cuestionario/:lessonId/:id",
         component: () => import("@/views/CrearCuestionario.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
+        path: "crear/leccion/:curso/:area/:year",
+        component: () => import("@/views/CrearLeccion.vue"),
         beforeEnter: (to, from, next) => {
           if (adminOprofesor()) next();
           else next({ path: "/inicio" });
