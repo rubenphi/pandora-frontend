@@ -244,7 +244,7 @@ export default {
         await axios.get("/questions/" + id).then((response) => {
           pregunta.value = {
             ...response.data,
-            lessonId: response.data.lesson.id,
+            quizId: response.data.quiz.id,
             instituteId: usuarioGet().institute.id,
           };
           if (!pregunta.value.photo) {
@@ -293,7 +293,7 @@ export default {
       async crearPregunta() {
         pregunta.value.sentence = editor.value.getHTML();
         delete pregunta.value.institute;
-        delete pregunta.value.lesson;
+        delete pregunta.value.quiz;
         delete pregunta.value.id;
         delete pregunta.value.createdAt;
         delete pregunta.value.updatedAt;

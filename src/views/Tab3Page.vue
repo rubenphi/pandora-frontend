@@ -23,7 +23,7 @@
     </ion-header>
     <ion-content :fullscreen="true">
       <ion-card v-for="leccion in lecciones" :key="leccion.id">
-        <div @click="lessonSelected(leccion)">
+        <div>
           <ion-card-header>
             <ion-card-subtitle>{{ cursoSelected.name }}</ion-card-subtitle>
 
@@ -97,6 +97,7 @@
             <ion-label>No hay cuestionarios</ion-label>
           </ion-item>
           <ion-item
+            @click="lessonSelected(cuestionario)"
             v-else
             v-for="cuestionario in cuestionariosList"
             :key="cuestionario.id"
@@ -203,8 +204,8 @@ export default {
     IonLabel,
   },
   methods: {
-    lessonSelected: function (leccion) {
-      localStorage.setItem("lessonSelected", JSON.stringify(leccion));
+    lessonSelected: function (cuestionario) {
+      localStorage.setItem("lessonSelected", JSON.stringify(cuestionario));
     },
   },
   setup() {

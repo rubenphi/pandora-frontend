@@ -281,7 +281,11 @@ export default {
                 ...question,
                 title:
                   numeroOrdinal(index, question.title) + ". " + question.title,
-              })),
+              }))
+              .filter(
+                //only visible
+                (question) => question.visible === true
+              ),
             course: response.data.course,
           };
           localStorage.setItem(

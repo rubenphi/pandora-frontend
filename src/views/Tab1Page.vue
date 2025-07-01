@@ -299,7 +299,7 @@ export default {
       }
 
       await axios
-        .get(`/groups?courseId=${actualCurso.value.id}`)
+        .get(`/groups?courseId=${actualCurso.value.course.id}`)
         .then((response) => {
           grupos.value = response.data;
 
