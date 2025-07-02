@@ -269,7 +269,7 @@ export default {
       }`;
 
       // Debugging con alert temporal
-      alert(`Toggle tipo: ${tipo}, checked: ${checked}`);
+   
 
       if (checked) {
         if (!tiposIncorrectos.value.includes(tipo)) {
@@ -284,13 +284,13 @@ export default {
     };
 
     const importarPreguntas = () => {
-      console.log(objetosValidos.value);
+     
       
       axios
         .post(
           "/questions/import/variable-option",
           {
-            lessonId: id ? id : 0,
+            quizId: id ? id : 0,
             points: points.value,
             questions: objetosValidos.value,
           },

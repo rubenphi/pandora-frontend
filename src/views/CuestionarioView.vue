@@ -33,7 +33,12 @@
         <ion-buttons v-if="admin" slot="end" class="ion-margin-end">
           <ion-button
             v-if="cuestionario.id != 0"
-            :href="'editar/cuestionario/' + cuestionario.id"
+            :href="
+              'crear/cuestionario/' +
+              cuestionario.lesson.id +
+              '/' +
+              cuestionario.id
+            "
           >
             <ion-icon :icon="createOutline"></ion-icon>
           </ion-button>
@@ -282,12 +287,17 @@ export default {
                 title:
                   numeroOrdinal(index, question.title) + ". " + question.title,
               }))
-              .filter(
-                //only visible
-                (question) => question.visible === true
-              ),
+              //only exist
+              .filter((question) => question.exist),
+
             course: response.data.course,
           };
+
+          if (!admin) {
+            cuestionario.value.questions = cuestionario.value.questions.filter(
+              (question) => question.visible
+            );
+          }
           localStorage.setItem(
             "lessonSelected",
             JSON.stringify(cuestionario.value)

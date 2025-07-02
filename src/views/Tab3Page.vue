@@ -307,6 +307,7 @@ export default {
             .map((cuestionario) => ({
               id: cuestionario.id,
               name: cuestionario.title,
+              lesson: cuestionario.lesson,
               url: `/cuestionario/${cuestionario.id}`,
             }))
             .sort((a, b) => {
@@ -347,11 +348,11 @@ export default {
       isLoadingActivities.value = true;
       actvitiesList.value = []; // Clear previous data
       await axios
-        .get(`/lessons/${lessonId}/activities`)
+        .get(`/activities?lessonId=${lessonId}`)
         .then((response) => {
           actvitiesList.value = response.data.map((actividad) => ({
             id: actividad.id,
-            name: actividad.name,
+            name: actividad.title, // Use 'title' from backend Activity entity
             url: `/actividades/${actividad.id}`,
           }));
         })

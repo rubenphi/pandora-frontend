@@ -224,28 +224,30 @@ export async function QuizSinNotas(cursoId, usuario) {
   }
 
   // Paso 1: Obtener los IDs de las lecciones que sí tienen notas
-  const idsConNotas = new Set(notas.map((nota) => nota.quiz.id));
+  const idsConNotas = new Set(notas.map((nota) => nota.gradableItem.id));
 
   // Paso 2: Filtrar las lecciones que no tienen nota
-  const quizzesSinNotas = quizzes.filter((quiz) => !idsConNotas.has(quiz.id));
+  const quizzesSinNotas = quizzes.filter(
+    (gradableItem) => !idsConNotas.has(gradableItem.id)
+  );
 
   // Paso 3: Filtrar las lecciones sin nota pero que sí tienen respuestas
   const leccionesConRespuestas = [];
 
-  for (const quiz of quizzesSinNotas) {
+  for (const gradableItem of quizzesSinNotas) {
     try {
       const response = await axios.get(
-        `/answers?quizId=${quiz.id}`,
+        `/answers?quizId=${gradableItem.id}`,
         tokenHeader()
       );
 
       // Solo agregar si hay al menos una respuesta
       if (Array.isArray(response.data) && response.data.length > 0) {
-        leccionesConRespuestas.push(quiz);
+        leccionesConRespuestas.push(gradableItem);
       }
     } catch (error) {
       console.error(
-        `Error al obtener respuestas para la lección ${quiz.id}:`,
+        `Error al obtener respuestas para la lección ${gradableItem.id}:`,
         error
       );
     }

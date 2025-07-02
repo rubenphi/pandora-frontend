@@ -56,6 +56,7 @@ import { useRoute } from "vue-router";
 import router from "../router";
 
 import { usuarioGet, tokenHeader } from "../globalService";
+import { arrowBackOutline, checkmarkOutline } from "ionicons/icons";
 import {
   onIonViewWillEnter,
   IonLabel,
@@ -71,8 +72,6 @@ import {
   IonButton,
   IonButtons,
 } from "@ionic/vue";
-
-import { arrowBackOutline, checkmarkOutline } from "ionicons/icons";
 
 export default {
   components: {
@@ -148,8 +147,7 @@ export default {
             title: response.data.title,
             quizType: response.data.quizType,
             lessonId: response.data.lesson.id,
-            instituteId: response.data.institute.id,
-            exist: response.data.exist,
+            instituteId: response.data.lesson.institute.id,
           };
         } catch (error) {
           console.error("Error fetching quiz details:", error);

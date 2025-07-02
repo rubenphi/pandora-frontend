@@ -323,9 +323,6 @@ export default {
         checked ? "marcado" : "desmarcado"
       }`;
 
-      // Debugging con alert temporal
-      alert(`Toggle tipo: ${tipo}, checked: ${checked}`);
-
       if (checked) {
         if (!tiposIncorrectos.value.includes(tipo)) {
           tiposIncorrectos.value.push(tipo);
@@ -337,21 +334,11 @@ export default {
         }
       }
 
-      // Mostrar estado actual con alert
-      alert(`Tipos incorrectos: ${tiposIncorrectos.value.join(", ")}`);
-      alert(`Preguntas filtradas: ${preguntasFiltradas.value.length}`);
-
       debugMessage.value += ` | Incorrectos: ${tiposIncorrectos.value.length} | Filtradas: ${preguntasFiltradas.value.length}`;
     };
 
     const removeInvalidTypes = () => {
       debugMessage.value = `Eliminando ${tiposIncorrectos.value.length} tipos incorrectos`;
-
-      // Debugging con alert
-      alert(
-        `Eliminando tipos incorrectos: ${tiposIncorrectos.value.join(", ")}`
-      );
-      alert(`Objetos antes del filtrado: ${objetosValidos.value.length}`);
 
       const tiposAEliminar = [...tiposIncorrectos.value];
 
@@ -368,8 +355,6 @@ export default {
       // Limpiar la lista de tipos incorrectos
       tiposIncorrectos.value = [];
 
-      alert(`Objetos después del filtrado: ${objetosValidos.value.length}`);
-
       debugMessage.value = `Eliminados ${tiposAEliminar.length} tipos. Quedan ${objetosValidos.value.length} objetos`;
 
       // Mostrar mensaje de éxito
@@ -383,7 +368,7 @@ export default {
         .post(
           "/questions/import/types",
           {
-            lessonId: id ? id : 0,
+            quizId: id ? id : 0,
             points: points.value,
             questions: preguntasFiltradas.value.map((objeto) => ({
               type: objeto.type,

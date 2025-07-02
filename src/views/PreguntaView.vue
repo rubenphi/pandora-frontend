@@ -163,6 +163,7 @@ import {
   adminOprofesor,
   basedeURL,
   defaultFile,
+  shuffleArray,
 } from "../globalService";
 import { useRoute } from "vue-router";
 import router from "../router";
@@ -276,8 +277,12 @@ export default {
           quiz: response.data.quiz,
           title: response.data.title,
           photo: response.data.photo,
-          options: response.data.options.sort((a, b) => {
-            return a.identifier.localeCompare(b.identifier);
+          options: shuffleArray(response.data.options).map((option, index) => {
+            // Eliminar la propiedad identifier original
+            delete option.identifier;
+            // Asignar un nuevo identificador alfabético
+            option.identifier = String.fromCharCode(65 + index); // 65 es el código ASCII para 'A'
+            return option;
           }),
         };
 

@@ -100,6 +100,18 @@ const routes = [
         component: () => import("@/views/CuestionarioView.vue"),
       },
       {
+        path: "actividades/:id",
+        component: () => import("@/views/ActividadView.vue"),
+      },
+      {
+        path: "revisar/actividad/:id",
+        component: () => import("@/views/RevisarActividad.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
         path: "cuestionario/importar/:id",
         component: () => import("@/views/ImportacionPregunta.vue"),
       },
@@ -152,8 +164,24 @@ const routes = [
         },
       },
       {
+        path: "crear/actividad/:lessonId/:id?",
+        component: () => import("@/views/CrearActividad.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
         path: "crear/leccion/:curso/:area/:year",
         component: () => import("@/views/CrearLeccion.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
+        path: "crear/criterio/:activityId",
+        component: () => import("@/views/CrearCriterio.vue"),
         beforeEnter: (to, from, next) => {
           if (adminOprofesor()) next();
           else next({ path: "/inicio" });

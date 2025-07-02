@@ -320,7 +320,6 @@ export default {
     };
 
     async function registrarNotas() {
-      console.log("registrarNotas() called.");
       if (!cuestionario.value || !cuestionario.value.lesson.year) {
         console.error("Cuestionario data is missing or incomplete.");
         return;
@@ -339,8 +338,10 @@ export default {
         for (const relacionUsuario of response.data) {
           const data = {
             userId: relacionUsuario.user.id,
-            lessonId: parseInt(id, 10),
-            periodId: cuestionario.value.period.id,
+            gradableId: parseInt(id, 10),
+            gradableType: "quiz",
+            periodId: cuestionario.value.lesson.period.id,
+            gradeType: "regular",
             grade: respuesta.nota,
             instituteId: cuestionario.value.lesson.institute.id,
           };
@@ -350,10 +351,10 @@ export default {
       }
     }
 
-    async function getRespuestas(groupId, quizId, instituteId) {
+    async function getRespuestas(groupId, gradableId, instituteId) {
       if (groupId == grupoUsuario.value?.id || admin) {
         const response = await axios.get(
-          `/answers?groupId=${groupId}&quizId=${quizId}&instituteId=${instituteId}`
+          `/answers?groupId=${groupId}&gradableId=${gradableId}&instituteId=${instituteId}`
         );
         return response.data;
       } else {
