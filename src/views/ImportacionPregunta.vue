@@ -75,36 +75,47 @@
 
         <!-- Lecciones y preguntas -->
         <ion-accordion-group :multiple="true">
-          <ion-accordion v-for="c in cuestionarios" :key="c.id">
-            <ion-item slot="header" @click="loadQuestions(c)">
-              <ion-label>{{ c.topic }}</ion-label>
-              <ion-badge v-if="preguntasPorLeccion[c.id]?.preguntas?.length">
-                {{ preguntasPorLeccion[c.id].preguntas.length }} preguntas
-              </ion-badge>
+          <ion-accordion v-for="lesson in lessons" :key="lesson.id">
+            <ion-item slot="header" @click="loadQuizzesAndQuestions(lesson)">
+              <ion-label>{{ lesson.topic }}</ion-label>
+              <!-- The badge logic will need to be updated if we want to show total questions across all quizzes in a lesson -->
             </ion-item>
 
             <div class="ion-padding" slot="content">
-              <ion-item>
-                <ion-checkbox
-                  :checked="
-                    preguntasPorLeccion[c.id]?.preguntas?.every(
-                      (p) => p.selected
-                    )
-                  "
-                  @ionChange="
-                    (event) => toggleSeleccionTodas(c.id, event.detail.checked)
-                  "
-                ></ion-checkbox>
-                <ion-label>Seleccionar todas</ion-label>
-              </ion-item>
+              <ion-accordion-group :multiple="true">
+                <ion-accordion v-for="quiz in lesson.quizzes" :key="quiz.id">
+                  <ion-item slot="header">
+                    <ion-label>{{ quiz.title }}</ion-label>
+                    <ion-badge v-if="questionsByQuiz[quiz.id]?.questions?.length">
+                      {{ questionsByQuiz[quiz.id].questions.length }} preguntas
+                    </ion-badge>
+                  </ion-item>
 
-              <ion-item
-                v-for="pregunta in preguntasPorLeccion[c.id]?.preguntas || []"
-                :key="pregunta.id"
-              >
-                <ion-checkbox v-model="pregunta.selected"></ion-checkbox>
-                <ion-label>{{ pregunta.title }}</ion-label>
-              </ion-item>
+                  <div class="ion-padding" slot="content">
+                    <ion-item>
+                      <ion-checkbox
+                        :checked="
+                          questionsByQuiz[quiz.id]?.questions?.every(
+                            (p) => p.selected
+                          )
+                        "
+                        @ionChange="
+                          (event) => toggleSeleccionTodas(quiz.id, event.detail.checked)
+                        "
+                      ></ion-checkbox>
+                      <ion-label>Seleccionar todas</ion-label>
+                    </ion-item>
+
+                    <ion-item
+                      v-for="pregunta in questionsByQuiz[quiz.id]?.questions || []"
+                      :key="pregunta.id"
+                    >
+                      <ion-checkbox v-model="pregunta.selected"></ion-checkbox>
+                      <ion-label>{{ pregunta.title }}</ion-label>
+                    </ion-item>
+                  </div>
+                </ion-accordion>
+              </ion-accordion-group>
             </div>
           </ion-accordion>
         </ion-accordion-group>
@@ -208,8 +219,8 @@ export default {
     const yearSelected = ref();
     const periodoSelected = ref();
     const periodos = ref(periodosGet());
-    const cuestionarios = ref([]);
-    const preguntasPorLeccion = ref({});
+    const lessons = ref([]); // Renamed from cuestionarios
+    const questionsByQuiz = ref({}); // Renamed from preguntasPorLeccion
     const modoOrden = ref("mix");
     const seleccionarTodas = ref(false);
 
@@ -232,7 +243,7 @@ export default {
       const res = await axios.get(
         `/lessons?courseId=${cursoSelected.value.id}&areaId=${areaSelected.value.id}&periodId=${periodoSelected.value.id}&year=${yearSelected.value}&instituteId=${userLoged.value.institute.id}&exist=true`
       );
-      cuestionarios.value = res.data.filter((c) => c.id != idCuestionario);
+      lessons.value = res.data.filter((c) => c.id != idCuestionario); // Use lessons.value
     };
 
     const areasSearch = async () => {
@@ -240,26 +251,31 @@ export default {
       areas.value = res.data;
     };
 
-    const loadQuestions = async (lesson) => {
-      const res = await axios.get(`/lessons/${lesson.id}/questions`);
-      res.data.forEach((q) => (q.selected = false));
-      preguntasPorLeccion.value[lesson.id] = {
-        nombre: lesson.name,
-        preguntas: res.data,
-      };
+    // New function to load quizzes and their questions
+    const loadQuizzesAndQuestions = async (lesson) => {
+      const quizzesRes = await axios.get(`/lessons/${lesson.id}/quizzes`);
+      lesson.quizzes = quizzesRes.data; // Populate quizzes directly on the lesson object
+
+      for (const quiz of lesson.quizzes) { // Iterate over the newly populated quizzes
+        const questionsRes = await axios.get(`/quizzes/${quiz.id}/questions`);
+        questionsRes.data.forEach((q) => (q.selected = false));
+        questionsByQuiz.value[quiz.id] = {
+          name: quiz.title, // Use quiz title as name
+          questions: questionsRes.data,
+        };
+      }
     };
 
-    const toggleSeleccionTodas = () => {
-      seleccionarTodas.value = !seleccionarTodas.value;
-      Object.values(preguntasPorLeccion.value).forEach(({ preguntas }) => {
-        preguntas.forEach((q) => (q.selected = seleccionarTodas.value));
-      });
+    const toggleSeleccionTodas = (quizId, checked) => { // Modified to take quizId and checked status
+      if (questionsByQuiz.value[quizId]) {
+        questionsByQuiz.value[quizId].questions.forEach((q) => (q.selected = checked));
+      }
     };
 
     const importarSeleccionadas = async () => {
       let seleccionadas = [];
-      Object.values(preguntasPorLeccion.value).forEach(({ preguntas }) => {
-        seleccionadas.push(...preguntas.filter((p) => p.selected));
+      Object.values(questionsByQuiz.value).forEach(({ questions }) => { // Iterate over questionsByQuiz
+        seleccionadas.push(...questions.filter((p) => p.selected));
       });
 
       if (modoOrden.value === "mix") {
@@ -272,8 +288,8 @@ export default {
       }));
 
       try {
-        await axios.patch("/lessons/questions/import-mix", {
-          toLessonId: parseInt(idCuestionario),
+        await axios.post(`/quizzes/${idCuestionario}/import-questions-mix`, {
+          toQuizId: parseInt(idCuestionario),
           questions: seleccionadas,
         });
         setSuccessToastOpen(true);
@@ -314,18 +330,18 @@ export default {
       cursoSelected,
       areas,
       areaSelected,
-      cuestionarios,
+      lessons, // Renamed
       periodos,
       years,
       yearSelected,
       periodoSelected,
       search,
       areasSearch,
-      preguntasPorLeccion,
+      questionsByQuiz, // Renamed
       modoOrden,
       seleccionarTodas,
       toggleSeleccionTodas,
-      loadQuestions,
+      loadQuizzesAndQuestions, // Renamed
     };
   },
 };
