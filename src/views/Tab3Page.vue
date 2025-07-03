@@ -255,20 +255,21 @@ export default {
     const openedSection = ref(null);
 
     const openMaterial = async (material) => {
-      if (
-        material.type === MaterialType.PDF ||
-        material.type === MaterialType.DOC
-      ) {
-        window.open(backendUrl + material.url, "_blank");
-      } else {
-        const modal = await modalController.create({
-          component: MaterialModal,
-          componentProps: {
-            material: material,
+      const modal = await modalController.create({
+        component: MaterialModal,
+        componentProps: {
+          material: {
+            id: material.id,
+            name: material.name,
+            type: material.type,
+            url: backendUrl + material.url,
+            lesson: material.lesson,
+            title: material.title,
+            content: material.content,
           },
-        });
-        modal.present();
-      }
+        },
+      });
+      modal.present();
     };
 
     const toggleSection = (leccionId, section) => {

@@ -13,6 +13,7 @@
     </ion-toolbar>
   </ion-header>
   <ion-content class="ion-padding">
+    <div v-if="material.content" v-html="material.content"></div>
     <div v-if="material.type === MaterialType.VIDEO">
       <video controls :src="material.url" style="width: 100%"></video>
     </div>
@@ -22,16 +23,32 @@
         >Abrir en nueva pestaña</ion-button
       >
     </div>
+    <div v-else-if="material.type === MaterialType.PDF">
+      <ion-button expand="full" @click="openInNewTab(material.url)"
+        >Abrir en nueva pestaña</ion-button
+      >
+      <iframe
+        :src="material.url"
+        style="width: 100%; height: 80vh"
+        frameborder="0"
+      ></iframe>
+    </div>
     <div v-else-if="material.type === MaterialType.AUDIO">
       <audio controls :src="material.url" style="width: 100%"></audio>
     </div>
-    <div v-else-if="material.type === MaterialType.TEXT_RICH || material.type === MaterialType.TEXT_SHORT">
-      <p v-html="material.content"></p>
+    <div
+      v-else-if="
+        material.type === MaterialType.TEXT_RICH ||
+        material.type === MaterialType.TEXT_SHORT
+      "
+    >
+      <!-- Content already displayed above, this block can be removed or kept for specific text formatting if needed -->
     </div>
     <div v-else>
-      <p>Tipo de material no soportado para visualización en modal.</p>
+      <br />
+      <p>Tipo de material no soportado para visualización en el navegador.</p>
       <ion-button expand="full" @click="openInNewTab(material.url)"
-        >Abrir en nueva pestaña</ion-button
+        >Abrir</ion-button
       >
     </div>
   </ion-content>
@@ -47,8 +64,8 @@ import {
   IonContent,
   modalController,
 } from "@ionic/vue";
-import { defineComponent } from 'vue';
-import { useRouter } from 'vue-router';
+import { defineComponent } from "vue";
+import { useRouter } from "vue-router";
 import { adminOprofesor } from "../globalService";
 
 const MaterialType = {
@@ -88,7 +105,9 @@ export default defineComponent({
 
     const editMaterial = () => {
       dismissModal(); // Close the modal first
-      router.push(`/crear/material/${props.material.lesson.id}/${props.material.id}`);
+      router.push(
+        `/crear/material/${props.material.lesson.id}/${props.material.id}`
+      );
     };
 
     return {

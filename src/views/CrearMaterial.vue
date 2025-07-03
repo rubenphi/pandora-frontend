@@ -23,7 +23,15 @@
 
         <ion-item>
           <ion-label>Tipo de Material</ion-label>
-          <ion-select v-model="materialForm.type" interface="popover">
+
+          <ion-select
+            @ionChange="handleTypeChange($event.detail.value)"
+            interfaceOptions="{ cssClass: 'my-custom-interface' }"
+            placeholder="Selecciona un tipo de material"
+            :value="materialForm.type"
+            interface="popover"
+          >
+            >
             <ion-select-option value="VIDEO">Video</ion-select-option>
             <ion-select-option value="PDF">PDF</ion-select-option>
             <ion-select-option value="IMAGE">Imagen</ion-select-option>
@@ -36,14 +44,12 @@
           </ion-select>
         </ion-item>
 
-        <ion-item v-if="materialForm.type === 'TEXT_RICH'">
-          <ion-label position="stacked">Contenido</ion-label>
+        <ion-item>
+          <ion-label position="stacked"
+            >Contenido o descripción del archivo</ion-label
+          >
         </ion-item>
-        <ion-item
-          class="ion-no-padding"
-          lines="none"
-          v-if="editor && materialForm.type === 'TEXT_RICH'"
-        >
+        <ion-item class="ion-no-padding" lines="none" v-if="editor">
           <ion-button
             class="margen"
             color="light"
@@ -81,52 +87,57 @@
             <u> S </u>
           </ion-button>
         </ion-item>
-        <editor-content
-          v-if="materialForm.type === 'TEXT_RICH'"
-          class="editor-content"
-          :editor="editor"
-        />
-
-        <ion-item v-if="materialForm.type !== 'TEXT_RICH'">
-          <ion-label position="stacked">{{
-            isTextType ? "Contenido" : "Descripción (Opcional)"
-          }}</ion-label>
-          <ion-textarea v-model="materialForm.content"></ion-textarea>
-        </ion-item>
+        <editor-content class="editor-content" :editor="editor" />
 
         <ion-item v-if="!isTextType">
           <ion-label position="stacked">Archivo</ion-label>
-          <input type="file" @change="handleFileUpload" />
+
+          <!-- Botón visible -->
+          <ion-button @click="triggerFileInput" expand="block" color="primary">
+            <ion-icon slot="start" name="cloud-upload-outline"></ion-icon>
+            Seleccionar archivo
+          </ion-button>
+
+          <!-- Input oculto -->
+          <input
+            type="file"
+            ref="hiddenFileInput"
+            @change="handleFileUpload"
+            style="display: none"
+          />
         </ion-item>
 
-        <ion-item v-if="uploadedFileUrl">
+        <ion-item
+          v-if="uploadedFileUrl && !isTextType"
+          :key="materialForm.type + uploadedFileUrl"
+        >
           <ion-label position="stacked">Vista Previa</ion-label>
           <div class="preview-container">
             <img
               v-if="materialForm.type === 'IMAGE'"
-              :src="urlBackend + uploadedFileUrl"
+              :src="previewSource"
               class="preview-image"
             />
             <video
               v-else-if="materialForm.type === 'VIDEO'"
-              :src="urlBackend + uploadedFileUrl"
+              :src="previewSource"
               controls
               class="preview-video"
             ></video>
             <audio
               v-else-if="materialForm.type === 'AUDIO'"
-              :src="urlBackend + uploadedFileUrl"
+              :src="previewSource"
               controls
               class="preview-audio"
             ></audio>
             <iframe
               v-else-if="materialForm.type === 'PDF'"
-              :src="urlBackend + uploadedFileUrl"
+              :src="previewSource"
               class="preview-iframe"
             ></iframe>
             <a
               v-else-if="materialForm.type === 'DOC'"
-              :href="uploadedFileUrl"
+              :href="previewSource"
               target="_blank"
               class="preview-link"
               >Ver Documento</a
@@ -168,7 +179,6 @@ import {
   IonIcon,
   IonSelect,
   IonSelectOption,
-  IonTextarea,
   alertController,
   IonText,
 } from "@ionic/vue";
@@ -194,7 +204,7 @@ export default {
     IonIcon,
     IonSelect,
     IonSelectOption,
-    IonTextarea,
+
     EditorContent,
     IonText,
   },
@@ -218,7 +228,12 @@ export default {
     const lessonDetails = ref(null);
     const editor = ref(null);
     const uploadedFileUrl = ref(null);
+    const originalFileUrl = ref(null); // New ref to store the original file URL
     const materialSaved = ref(false);
+
+    const previewSource = computed(() => {
+      return uploadedFileUrl.value ? urlBackend + uploadedFileUrl.value : null;
+    });
 
     const backUrl = ref("");
 
@@ -232,6 +247,28 @@ export default {
         materialForm.value.type === "TEXT_SHORT"
       );
     });
+
+    const handleTypeChange = (newType) => {
+      // Solo limpiar si realmente cambió el tipo
+      if (materialForm.value.type !== newType) {
+        uploadedFileUrl.value = null;
+        materialForm.value.url = null;
+
+        // Limpiar el input file
+        const fileInput = document.querySelector('input[type="file"]');
+        if (fileInput) {
+          fileInput.value = "";
+        }
+      }
+
+      materialForm.value.type = newType;
+    };
+
+    const hiddenFileInput = ref(null);
+
+    const triggerFileInput = () => {
+      hiddenFileInput.value?.click();
+    };
 
     onIonViewWillEnter(async () => {
       usuario.value = usuarioGet();
@@ -249,12 +286,18 @@ export default {
             `/materials/${materialId}`,
             tokenHeader()
           );
+
           const { title, type, content, url } = materialResponse.data;
+
           materialForm.value.title = title;
           materialForm.value.type = type;
           materialForm.value.content = content;
           materialForm.value.url = url;
-          uploadedFileUrl.value = url; // Set uploadedFileUrl for existing material
+
+          uploadedFileUrl.value = url;
+
+          // Set uploadedFileUrl for existing material
+          originalFileUrl.value = url; // Store original file URL
         }
       } catch (error) {
         console.error("Error fetching lesson or material details:", error);
@@ -277,8 +320,12 @@ export default {
       if (editor.value) {
         editor.value.destroy();
       }
-      // Clean up uploaded file if material was not saved
-      if (uploadedFileUrl.value && !materialSaved.value) {
+      // Clean up uploaded file if material was not saved and it's a temporary file
+      if (
+        uploadedFileUrl.value &&
+        !materialSaved.value &&
+        uploadedFileUrl.value !== originalFileUrl.value
+      ) {
         try {
           const filename = uploadedFileUrl.value.split("/").pop();
           await axios.delete(`/files/uploads/${filename}`, tokenHeader());
@@ -294,6 +341,9 @@ export default {
     const handleFileUpload = async (event) => {
       const file = event.target.files[0];
       if (!file) return;
+
+      // Guardar referencia al archivo anterior para eliminarlo después
+      const previousFileUrl = uploadedFileUrl.value;
 
       uploadedFileUrl.value = null; // Clear previous preview
 
@@ -311,14 +361,24 @@ export default {
       const currentAllowed = allowedExtensions[materialType];
 
       if (currentAllowed && !currentAllowed.includes(fileExtension)) {
+        //cuando se presiona ok se debe refrescar la página
+
         const alert = await alertController.create({
           header: "Error de archivo",
           message: `Para el tipo de material "${materialType}", solo se permiten archivos con las siguientes extensiones: ${currentAllowed.join(
             ", "
           )}.`,
           buttons: ["OK"],
+          backdropDismiss: false,
+          cssClass: "my-custom-alert",
         });
+
         await alert.present();
+
+        // Espera a que el usuario cierre la alerta y luego recarga la página
+        await alert.onDidDismiss();
+        location.reload();
+
         return;
       }
 
@@ -331,7 +391,28 @@ export default {
           formData,
           tokenHeader()
         );
-        uploadedFileUrl.value = response.data.url;
+
+        const newFileUrl = response.data.url;
+        uploadedFileUrl.value = newFileUrl;
+
+        // Eliminar el archivo anterior si existe y es diferente al nuevo archivo
+        // Y también diferente al archivo original (para no eliminar el archivo original antes de guardar)
+        if (
+          previousFileUrl &&
+          previousFileUrl !== newFileUrl &&
+          previousFileUrl !== originalFileUrl.value
+        ) {
+          try {
+            const filename = previousFileUrl.split("/").pop();
+            await axios.delete(`/files/uploads/${filename}`, tokenHeader());
+            console.log(`Archivo temporal anterior eliminado: ${filename}`);
+          } catch (error) {
+            console.error(
+              `Error eliminando archivo temporal anterior: ${previousFileUrl}`,
+              error
+            );
+          }
+        }
       } catch (error) {
         console.error("Error uploading file:", error);
       }
@@ -348,9 +429,7 @@ export default {
         return;
       }
 
-      if (materialForm.value.type === "TEXT_RICH") {
-        materialForm.value.content = editor.value.getHTML();
-      }
+      materialForm.value.content = editor.value.getHTML();
 
       // If it's not a text type and a file was uploaded, set the URL
       if (!isTextType.value && uploadedFileUrl.value) {
@@ -378,6 +457,25 @@ export default {
         } else {
           await axios.post("/materials", materialData, tokenHeader());
         }
+
+        // Eliminar el archivo original si se subió un archivo nuevo y es diferente al original
+        if (
+          originalFileUrl.value &&
+          uploadedFileUrl.value &&
+          uploadedFileUrl.value !== originalFileUrl.value &&
+          !isTextType.value
+        ) {
+          try {
+            const filename = originalFileUrl.value.split("/").pop();
+            await axios.delete(`/files/uploads/${filename}`, tokenHeader());
+          } catch (error) {
+            console.error(
+              `Error eliminando archivo original: ${originalFileUrl.value}`,
+              error
+            );
+          }
+        }
+
         materialSaved.value = true; // Mark as saved
         router.push(backUrl.value);
       } catch (error) {
@@ -394,6 +492,9 @@ export default {
     };
 
     return {
+      triggerFileInput,
+      hiddenFileInput,
+      handleTypeChange,
       materialForm,
       urlBackend,
       saveMaterial,
@@ -405,6 +506,7 @@ export default {
       editor,
       goBack,
       uploadedFileUrl, // Make uploadedFileUrl available in the template
+      previewSource,
     };
   },
 };
@@ -430,7 +532,7 @@ export default {
 }
 
 .editor-content {
-  min-height: 25vh; /* 25% de la altura del viewport */
+  min-height: 10vh; /* 25% de la altura del viewport */
   border: 1px solid var(--ion-color-step-150, #d7d8da); /* Borde para visualizar la altura */
   border-radius: 4px;
   padding: 8px;
