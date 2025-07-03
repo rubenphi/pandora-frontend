@@ -98,6 +98,45 @@
           <ion-label position="stacked">Archivo</ion-label>
           <input type="file" @change="handleFileUpload" />
         </ion-item>
+
+        <ion-item v-if="uploadedFileUrl">
+          <ion-label position="stacked">Vista Previa</ion-label>
+          <div class="preview-container">
+            <img
+              v-if="materialForm.type === 'IMAGE'"
+              :src="urlBackend + uploadedFileUrl"
+              class="preview-image"
+            />
+            <video
+              v-else-if="materialForm.type === 'VIDEO'"
+              :src="urlBackend + uploadedFileUrl"
+              controls
+              class="preview-video"
+            ></video>
+            <audio
+              v-else-if="materialForm.type === 'AUDIO'"
+              :src="urlBackend + uploadedFileUrl"
+              controls
+              class="preview-audio"
+            ></audio>
+            <iframe
+              v-else-if="materialForm.type === 'PDF'"
+              :src="urlBackend + uploadedFileUrl"
+              class="preview-iframe"
+            ></iframe>
+            <a
+              v-else-if="materialForm.type === 'DOC'"
+              :href="uploadedFileUrl"
+              target="_blank"
+              class="preview-link"
+              >Ver Documento</a
+            >
+            <ion-text v-else
+              >No hay vista previa disponible para este tipo de
+              archivo.</ion-text
+            >
+          </div>
+        </ion-item>
       </ion-list>
       <div class="ion-padding">
         <ion-button expand="block" @click="saveMaterial"
@@ -131,8 +170,9 @@ import {
   IonSelectOption,
   IonTextarea,
   alertController,
+  IonText,
 } from "@ionic/vue";
-import { tokenHeader, usuarioGet, basedeURL } from "../globalService";
+import { basedeURL, tokenHeader, usuarioGet } from "../globalService";
 import { arrowBackOutline } from "ionicons/icons";
 import { Editor, EditorContent } from "@tiptap/vue-3";
 import Underline from "@tiptap/extension-underline";
@@ -156,8 +196,10 @@ export default {
     IonSelectOption,
     IonTextarea,
     EditorContent,
+    IonText,
   },
   setup() {
+    const urlBackend = basedeURL();
     const router = useRouter();
     const mroute = useRoute();
     const lessonId = parseInt(mroute.params.lessonId, 10);
@@ -212,6 +254,7 @@ export default {
           materialForm.value.type = type;
           materialForm.value.content = content;
           materialForm.value.url = url;
+          uploadedFileUrl.value = url; // Set uploadedFileUrl for existing material
         }
       } catch (error) {
         console.error("Error fetching lesson or material details:", error);
@@ -237,10 +280,13 @@ export default {
       // Clean up uploaded file if material was not saved
       if (uploadedFileUrl.value && !materialSaved.value) {
         try {
-          await axios.delete(`/files/${uploadedFileUrl.value}`, tokenHeader());
-          console.log(`Temporary file ${uploadedFileUrl.value} deleted.`);
+          const filename = uploadedFileUrl.value.split("/").pop();
+          await axios.delete(`/files/uploads/${filename}`, tokenHeader());
         } catch (error) {
-          console.error(`Error deleting temporary file ${uploadedFileUrl.value}:`, error);
+          console.error(
+            `Error deleting temporary file ${uploadedFileUrl.value}:`,
+            error
+          );
         }
       }
     });
@@ -249,16 +295,45 @@ export default {
       const file = event.target.files[0];
       if (!file) return;
 
+      uploadedFileUrl.value = null; // Clear previous preview
+
+      const materialType = materialForm.value.type;
+      const fileExtension = file.name.split(".").pop().toLowerCase();
+
+      const allowedExtensions = {
+        PDF: ["pdf"],
+        IMAGE: ["jpg", "jpeg", "png", "gif", "bmp", "webp", "svg"],
+        VIDEO: ["mp4", "webm", "ogg", "mov", "avi", "mkv"],
+        AUDIO: ["mp3", "wav", "ogg", "aac", "flac"],
+        DOC: ["doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "rtf"],
+      };
+
+      const currentAllowed = allowedExtensions[materialType];
+
+      if (currentAllowed && !currentAllowed.includes(fileExtension)) {
+        const alert = await alertController.create({
+          header: "Error de archivo",
+          message: `Para el tipo de material "${materialType}", solo se permiten archivos con las siguientes extensiones: ${currentAllowed.join(
+            ", "
+          )}.`,
+          buttons: ["OK"],
+        });
+        await alert.present();
+        return;
+      }
+
       const formData = new FormData();
       formData.append("file", file);
 
       try {
-        const response = await axios.post("/files/upload", formData, tokenHeader());
-        uploadedFileUrl.value = basedeURL() + "uploads/" + response.data.filename;
-        alert("Archivo subido temporalmente: " + uploadedFileUrl.value);
+        const response = await axios.post(
+          "/files/upload",
+          formData,
+          tokenHeader()
+        );
+        uploadedFileUrl.value = response.data.url;
       } catch (error) {
         console.error("Error uploading file:", error);
-        alert("Error al subir el archivo. Por favor, intente de nuevo.");
       }
     };
 
@@ -307,7 +382,6 @@ export default {
         router.push(backUrl.value);
       } catch (error) {
         console.error("Error saving material:", error);
-        alert("Error al guardar el material. Por favor, intente de nuevo.");
       }
     };
 
@@ -321,7 +395,7 @@ export default {
 
     return {
       materialForm,
-
+      urlBackend,
       saveMaterial,
       handleFileUpload,
       isTextType,
@@ -330,6 +404,7 @@ export default {
       pageTitle,
       editor,
       goBack,
+      uploadedFileUrl, // Make uploadedFileUrl available in the template
     };
   },
 };
@@ -372,5 +447,38 @@ export default {
   outline: none !important; /* Remove the outline on focus */
   text-align: left; /* Ensure text aligns to the left */
   overflow-y: auto; /* Add scrollbar if content overflows vertically */
+}
+
+.preview-container {
+  margin-top: 16px;
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 150px; /* Adjust as needed */
+  background-color: #f9f9f9;
+}
+
+.preview-image,
+.preview-video,
+.preview-audio {
+  max-width: 100%;
+  max-height: 200px; /* Adjust as needed */
+  display: block;
+  margin: auto;
+}
+
+.preview-iframe {
+  width: 100%;
+  height: 200px; /* Adjust as needed */
+  border: none;
+}
+
+.preview-link {
+  font-size: 1.1em;
+  color: var(--ion-color-primary);
+  text-decoration: underline;
 }
 </style>

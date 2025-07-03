@@ -75,7 +75,7 @@
               v-if="adminOProfesor"
               :href="'/crear/material/' + leccion.id + '/' + material.id"
             >
-              <ion-icon :icon="addOutline"></ion-icon>
+              <ion-icon :icon="createOutline"></ion-icon>
             </ion-button>
           </ion-item>
           <ion-item v-if="adminOProfesor">
@@ -164,10 +164,11 @@ import {
   usuarioGet,
   adminOprofesor,
   QuizSinNotas,
+  basedeURL,
 } from "../globalService";
 import { useRoute } from "vue-router";
 import router from "../router";
-import { addOutline, arrowBackOutline } from "ionicons/icons";
+import { addOutline, arrowBackOutline, createOutline } from "ionicons/icons";
 import MaterialModal from "../components/MaterialModal.vue";
 
 const MaterialType = {
@@ -230,6 +231,7 @@ export default {
     const { curso } = mroute.params;
     const { area } = mroute.params;
     const { year } = mroute.params;
+    const backendUrl = basedeURL();
     const { periodo } = mroute.params;
     const cursoSelected = ref(
       JSON.parse(localStorage.getItem("courseSelected"))
@@ -257,7 +259,7 @@ export default {
         material.type === MaterialType.PDF ||
         material.type === MaterialType.DOC
       ) {
-        window.open(material.url, "_blank");
+        window.open(backendUrl + material.url, "_blank");
       } else {
         const modal = await modalController.create({
           component: MaterialModal,
@@ -367,7 +369,6 @@ export default {
       await axios
         .get(`/materials?lessonId=${lessonId}`)
         .then((response) => {
-          console.log("Raw materials response:", response.data);
           materialsList.value = response.data.map((material) => ({
             ...material,
             name: material.title, // Keep name for display in Tab3Page
@@ -404,10 +405,12 @@ export default {
     };
 
     return {
+      basedeURL,
       materialesConsulta,
       actividadesConsulta,
       cuestionarioConsulta,
       materialsList,
+      createOutline,
       cuestionariosList,
       actvitiesList,
       cursoSelected,
