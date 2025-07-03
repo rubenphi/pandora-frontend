@@ -92,7 +92,7 @@ export default {
     const mroute = useRoute();
     //change lessonId and id to Int
     const lessonId = parseInt(mroute.params.lessonId, 10);
-    const id = parseInt(mroute.params.id, 10); // 'id' will be quizId if editing, undefined if creating
+        const quizId = mroute.params.id ? parseInt(mroute.params.id, 10) : null; // 'quizId' will be quizId if editing, null if creating
 
     const cuestionario = ref({
       id: null,
@@ -138,16 +138,17 @@ export default {
         return;
       }
 
-      if (id) {
-        // If 'id' exists, it means we are editing an existing quiz
+      if (quizId) {
+        // If 'quizId' exists, it means we are editing an existing quiz
         try {
-          const response = await axios.get(`/quizzes/${id}`);
+          const response = await axios.get(`/quizzes/${quizId}`);
           cuestionario.value = {
             id: response.data.id,
             title: response.data.title,
             quizType: response.data.quizType,
             lessonId: response.data.lesson.id,
             instituteId: response.data.lesson.institute.id,
+            exist: response.data.exist,
           };
         } catch (error) {
           console.error("Error fetching quiz details:", error);
@@ -195,11 +196,11 @@ export default {
 
         try {
           let response;
-          if (cuestionario.value.id) {
+          if (quizId) {
             // Editing existing quiz
             payload.exist = cuestionario.value.exist; // Add exist property for PATCH
             response = await axios.patch(
-              `/quizzes/${cuestionario.value.id}`,
+              `/quizzes/${quizId}`,
               payload
             );
           } else {

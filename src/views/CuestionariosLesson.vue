@@ -2,7 +2,7 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-title>Cuestionarios</ion-title>
+        <ion-title>Lecciones</ion-title>
 
         <ion-buttons slot="start" class="ion-margin-end">
           <ion-button

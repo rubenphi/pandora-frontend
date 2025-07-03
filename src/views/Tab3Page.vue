@@ -65,13 +65,18 @@
           <ion-item v-else-if="materialsList.length === 0">
             <ion-label>No hay material de apoyo</ion-label>
           </ion-item>
-          <ion-item
-            v-else
-            v-for="material in materialsList"
-            :key="material.id"
-            :href="material.url"
-          >
-            <ion-label>{{ material.name }}</ion-label>
+          <ion-item v-else v-for="material in materialsList" :key="material.id">
+            <ion-label @click="openMaterial(material)">{{
+              material.name
+            }}</ion-label>
+            <ion-button
+              slot="end"
+              fill="clear"
+              v-if="adminOProfesor"
+              :href="'/crear/material/' + leccion.id + '/' + material.id"
+            >
+              <ion-icon :icon="addOutline"></ion-icon>
+            </ion-button>
           </ion-item>
           <ion-item v-if="adminOProfesor">
             <ion-button
@@ -108,7 +113,7 @@
           <ion-item v-if="adminOProfesor">
             <ion-button
               expand="full"
-              :router-link="`/crear/cuestionario/${leccion.id}/null`"
+              :router-link="`/crear/cuestionario/${leccion.id}`"
             >
               <ion-icon :icon="addOutline"></ion-icon>
               <ion-label>Crear Cuestionario</ion-label>
@@ -163,6 +168,17 @@ import {
 import { useRoute } from "vue-router";
 import router from "../router";
 import { addOutline, arrowBackOutline } from "ionicons/icons";
+import MaterialModal from "../components/MaterialModal.vue";
+
+const MaterialType = {
+  VIDEO: "VIDEO",
+  PDF: "PDF",
+  IMAGE: "IMAGE",
+  AUDIO: "AUDIO",
+  DOC: "DOC",
+  TEXT_RICH: "TEXT_RICH",
+  TEXT_SHORT: "TEXT_SHORT",
+};
 
 import {
   onIonViewWillEnter,
@@ -183,6 +199,7 @@ import {
   IonItem,
   IonLabel,
 } from "@ionic/vue";
+import { modalController } from "@ionic/vue";
 
 export default {
   components: {
@@ -234,6 +251,23 @@ export default {
 
     const openedLessonId = ref(null);
     const openedSection = ref(null);
+
+    const openMaterial = async (material) => {
+      if (
+        material.type === MaterialType.PDF ||
+        material.type === MaterialType.DOC
+      ) {
+        window.open(material.url, "_blank");
+      } else {
+        const modal = await modalController.create({
+          component: MaterialModal,
+          componentProps: {
+            material: material,
+          },
+        });
+        modal.present();
+      }
+    };
 
     const toggleSection = (leccionId, section) => {
       if (
@@ -291,6 +325,10 @@ export default {
                 return new Date(a.date) - new Date(b.date);
               });
           });
+        // Re-fetch materials if the section was open
+        if (openedLessonId.value && openedSection.value === "materiales") {
+          await materialesConsulta(openedLessonId.value);
+        }
       }
     });
 
@@ -327,12 +365,12 @@ export default {
       isLoadingMaterials.value = true;
       materialsList.value = []; // Clear previous data
       await axios
-        .get(`/lessons/${lessonId}/materials`)
+        .get(`/materials?lessonId=${lessonId}`)
         .then((response) => {
+          console.log("Raw materials response:", response.data);
           materialsList.value = response.data.map((material) => ({
-            id: material.id,
-            name: material.name,
-            url: material.url,
+            ...material,
+            name: material.title, // Keep name for display in Tab3Page
           }));
         })
         .catch((error) => {
@@ -388,6 +426,8 @@ export default {
       isLoadingMaterials,
       isLoadingCuestionarios,
       isLoadingActivities,
+      MaterialType,
+      openMaterial,
     };
   },
 };

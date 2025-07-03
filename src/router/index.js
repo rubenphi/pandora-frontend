@@ -156,7 +156,15 @@ const routes = [
         },
       },
       {
-        path: "crear/cuestionario/:lessonId/:id",
+        path: "crear/cuestionario/:lessonId/:id?",
+        component: () => import("@/views/CrearCuestionario.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
+        path: "crear/cuestionario/:lessonId",
         component: () => import("@/views/CrearCuestionario.vue"),
         beforeEnter: (to, from, next) => {
           if (adminOprofesor()) next();
@@ -187,14 +195,7 @@ const routes = [
           else next({ path: "/inicio" });
         },
       },
-      {
-        path: "editar/cuestionario/:id",
-        component: () => import("@/views/CrearCuestionario.vue"),
-        beforeEnter: (to, from, next) => {
-          if (adminOprofesor()) next();
-          else next({ path: "/inicio" });
-        },
-      },
+
       {
         path: "crear/pregunta/:cuestionario",
         component: () => import("@/views/CrearPregunta.vue"),
@@ -222,6 +223,38 @@ const routes = [
       {
         path: "editar/opcion/:id",
         component: () => import("@/views/CrearOpcion.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
+        path: "materials",
+        component: () => import("@/views/MaterialsPage.vue"), // Assuming you'll create this view later
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
+        path: "crear/material/:lessonId",
+        component: () => import("@/views/CrearMaterial.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
+        path: "crear/material/:lessonId/:id",
+        component: () => import("@/views/CrearMaterial.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
+        path: "materials/edit/:id",
+        component: () => import("@/views/CrearMaterial.vue"),
         beforeEnter: (to, from, next) => {
           if (adminOprofesor()) next();
           else next({ path: "/inicio" });

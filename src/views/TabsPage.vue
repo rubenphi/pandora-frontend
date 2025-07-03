@@ -31,7 +31,7 @@
         >
           <ion-icon :icon="helpCircleOutline" />
 
-          <ion-label>Cuestionarios</ion-label>
+          <ion-label>Lecciones</ion-label>
         </ion-tab-button>
       </ion-tab-bar>
     </ion-tabs>

@@ -1,0 +1,376 @@
+<template>
+  <ion-page>
+    <ion-header>
+      <ion-toolbar>
+        <ion-buttons slot="start">
+          <ion-button @click="goBack">
+            <ion-icon :icon="arrowBackOutline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+        <ion-title>{{ pageTitle }}</ion-title>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content :fullscreen="true">
+      <ion-list>
+        <ion-item>
+          <ion-label position="stacked">Título</ion-label>
+          <ion-input
+            v-model="materialForm.title"
+            type="text"
+            required
+          ></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label>Tipo de Material</ion-label>
+          <ion-select v-model="materialForm.type" interface="popover">
+            <ion-select-option value="VIDEO">Video</ion-select-option>
+            <ion-select-option value="PDF">PDF</ion-select-option>
+            <ion-select-option value="IMAGE">Imagen</ion-select-option>
+            <ion-select-option value="AUDIO">Audio</ion-select-option>
+            <ion-select-option value="DOC">Documento</ion-select-option>
+            <ion-select-option value="TEXT_RICH">Texto Largo</ion-select-option>
+            <ion-select-option value="TEXT_SHORT"
+              >Texto Corto</ion-select-option
+            >
+          </ion-select>
+        </ion-item>
+
+        <ion-item v-if="materialForm.type === 'TEXT_RICH'">
+          <ion-label position="stacked">Contenido</ion-label>
+        </ion-item>
+        <ion-item
+          class="ion-no-padding"
+          lines="none"
+          v-if="editor && materialForm.type === 'TEXT_RICH'"
+        >
+          <ion-button
+            class="margen"
+            color="light"
+            slot="start"
+            @click="editor.chain().focus().toggleBold().run()"
+            :class="{ 'is-active': editor.isActive('bold') }"
+          >
+            <b> B </b>
+          </ion-button>
+          <ion-button
+            class="margen"
+            slot="start"
+            color="light"
+            @click="editor.chain().focus().toggleItalic().run()"
+            :class="{ 'is-active': editor.isActive('italic') }"
+          >
+            <i> I </i>
+          </ion-button>
+          <ion-button
+            class="margen"
+            slot="start"
+            color="light"
+            @click="editor.chain().focus().toggleStrike().run()"
+            :class="{ 'is-active': editor.isActive('strike') }"
+          >
+            <s> T </s>
+          </ion-button>
+          <ion-button
+            class="margen"
+            slot="start"
+            color="light"
+            @click="editor.chain().focus().toggleUnderline().run()"
+            :class="{ 'is-active': editor.isActive('underline') }"
+          >
+            <u> S </u>
+          </ion-button>
+        </ion-item>
+        <editor-content
+          v-if="materialForm.type === 'TEXT_RICH'"
+          class="editor-content"
+          :editor="editor"
+        />
+
+        <ion-item v-if="materialForm.type !== 'TEXT_RICH'">
+          <ion-label position="stacked">{{
+            isTextType ? "Contenido" : "Descripción (Opcional)"
+          }}</ion-label>
+          <ion-textarea v-model="materialForm.content"></ion-textarea>
+        </ion-item>
+
+        <ion-item v-if="!isTextType">
+          <ion-label position="stacked">Archivo</ion-label>
+          <input type="file" @change="handleFileUpload" />
+        </ion-item>
+      </ion-list>
+      <div class="ion-padding">
+        <ion-button expand="block" @click="saveMaterial"
+          >Guardar Material</ion-button
+        >
+      </div>
+    </ion-content>
+  </ion-page>
+</template>
+
+<script>
+import { ref, computed } from "vue";
+import axios from "axios";
+import { useRouter, useRoute } from "vue-router";
+import {
+  onIonViewWillEnter,
+  onIonViewDidLeave,
+  IonPage,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+  IonList,
+  IonItem,
+  IonLabel,
+  IonInput,
+  IonButton,
+  IonButtons,
+  IonIcon,
+  IonSelect,
+  IonSelectOption,
+  IonTextarea,
+  alertController,
+} from "@ionic/vue";
+import { tokenHeader, usuarioGet, basedeURL } from "../globalService";
+import { arrowBackOutline } from "ionicons/icons";
+import { Editor, EditorContent } from "@tiptap/vue-3";
+import Underline from "@tiptap/extension-underline";
+import StarterKit from "@tiptap/starter-kit";
+
+export default {
+  components: {
+    IonPage,
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonContent,
+    IonList,
+    IonItem,
+    IonLabel,
+    IonInput,
+    IonButton,
+    IonButtons,
+    IonIcon,
+    IonSelect,
+    IonSelectOption,
+    IonTextarea,
+    EditorContent,
+  },
+  setup() {
+    const router = useRouter();
+    const mroute = useRoute();
+    const lessonId = parseInt(mroute.params.lessonId, 10);
+    let materialId = mroute.params.id ? parseInt(mroute.params.id, 10) : null;
+
+    const materialForm = ref({
+      id: materialId,
+      title: "",
+      type: "PDF",
+      content: "",
+      url: "",
+      lessonId: lessonId,
+      instituteId: null,
+    });
+    const usuario = ref(null);
+    const lessonDetails = ref(null);
+    const editor = ref(null);
+    const uploadedFileUrl = ref(null);
+    const materialSaved = ref(false);
+
+    const backUrl = ref("");
+
+    const pageTitle = computed(() => {
+      return materialId ? "Editar Material" : "Crear Material";
+    });
+
+    const isTextType = computed(() => {
+      return (
+        materialForm.value.type === "TEXT_RICH" ||
+        materialForm.value.type === "TEXT_SHORT"
+      );
+    });
+
+    onIonViewWillEnter(async () => {
+      usuario.value = usuarioGet();
+      materialForm.value.instituteId = usuario.value.institute.id;
+
+      try {
+        const response = await axios.get(`/lessons/${lessonId}`, tokenHeader());
+        lessonDetails.value = response.data;
+
+        const { course, area, period, year } = lessonDetails.value;
+        backUrl.value = `/lecciones/${course.id}/${area.id}/${period.id}/${year}`;
+
+        if (materialId) {
+          const materialResponse = await axios.get(
+            `/materials/${materialId}`,
+            tokenHeader()
+          );
+          const { title, type, content, url } = materialResponse.data;
+          materialForm.value.title = title;
+          materialForm.value.type = type;
+          materialForm.value.content = content;
+          materialForm.value.url = url;
+        }
+      } catch (error) {
+        console.error("Error fetching lesson or material details:", error);
+      }
+
+      editor.value = new Editor({
+        extensions: [StarterKit, Underline],
+        autofocus: "start",
+        editable: true,
+        content: materialForm.value.content,
+        editorProps: {
+          attributes: {
+            class: "tiptap-editor-area",
+          },
+        },
+      });
+    });
+
+    onIonViewDidLeave(async () => {
+      if (editor.value) {
+        editor.value.destroy();
+      }
+      // Clean up uploaded file if material was not saved
+      if (uploadedFileUrl.value && !materialSaved.value) {
+        try {
+          await axios.delete(`/files/${uploadedFileUrl.value}`, tokenHeader());
+          console.log(`Temporary file ${uploadedFileUrl.value} deleted.`);
+        } catch (error) {
+          console.error(`Error deleting temporary file ${uploadedFileUrl.value}:`, error);
+        }
+      }
+    });
+
+    const handleFileUpload = async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const response = await axios.post("/files/upload", formData, tokenHeader());
+        uploadedFileUrl.value = basedeURL() + "uploads/" + response.data.filename;
+        alert("Archivo subido temporalmente: " + uploadedFileUrl.value);
+      } catch (error) {
+        console.error("Error uploading file:", error);
+        alert("Error al subir el archivo. Por favor, intente de nuevo.");
+      }
+    };
+
+    const saveMaterial = async () => {
+      if (!materialForm.value.title) {
+        const alert = await alertController.create({
+          header: "Error",
+          message: "El título es obligatorio.",
+          buttons: ["OK"],
+        });
+        await alert.present();
+        return;
+      }
+
+      if (materialForm.value.type === "TEXT_RICH") {
+        materialForm.value.content = editor.value.getHTML();
+      }
+
+      // If it's not a text type and a file was uploaded, set the URL
+      if (!isTextType.value && uploadedFileUrl.value) {
+        materialForm.value.url = uploadedFileUrl.value;
+      }
+
+      // Prepare data as JSON
+      const materialData = {
+        title: materialForm.value.title,
+        type: materialForm.value.type,
+        lessonId: Number(materialForm.value.lessonId),
+        instituteId: Number(materialForm.value.instituteId),
+        exist: true,
+        content: materialForm.value.content,
+        url: materialForm.value.url, // This will be null for text types or if no file uploaded
+      };
+
+      try {
+        if (materialId) {
+          await axios.patch(
+            `/materials/${materialId}`,
+            materialData,
+            tokenHeader()
+          );
+        } else {
+          await axios.post("/materials", materialData, tokenHeader());
+        }
+        materialSaved.value = true; // Mark as saved
+        router.push(backUrl.value);
+      } catch (error) {
+        console.error("Error saving material:", error);
+        alert("Error al guardar el material. Por favor, intente de nuevo.");
+      }
+    };
+
+    const goBack = () => {
+      if (backUrl.value) {
+        router.push(backUrl.value);
+      } else {
+        router.back();
+      }
+    };
+
+    return {
+      materialForm,
+
+      saveMaterial,
+      handleFileUpload,
+      isTextType,
+      backUrl,
+      arrowBackOutline,
+      pageTitle,
+      editor,
+      goBack,
+    };
+  },
+};
+</script>
+<style>
+.ProseMirror {
+  outline: none !important;
+  height: 100%; /* Ensure ProseMirror itself takes full height */
+}
+
+.ProseMirror :focus {
+  outline: none !important; /* Remove focus outline */
+}
+.ProseMirror p {
+  margin: 0; /* Remove default paragraph margins */
+}
+
+.margen {
+  font-family: serif;
+  margin-left: 0px;
+  margin-right: 3px;
+  font-size: 12pt;
+}
+
+.editor-content {
+  min-height: 25vh; /* 25% de la altura del viewport */
+  border: 1px solid var(--ion-color-step-150, #d7d8da); /* Borde para visualizar la altura */
+  border-radius: 4px;
+  padding: 8px;
+  box-sizing: border-box; /* Incluye padding y borde en el cálculo de la altura */
+  margin: 16px;
+  display: flex; /* Make it a flex container */
+  flex-direction: column; /* Stack children vertically */
+  overflow: hidden; /* Hide overflow to prevent scrollbars on the container */
+}
+
+.tiptap-editor-area {
+  flex-grow: 1; /* Allow the editor content to grow and fill available space */
+  min-height: 100%; /* Ensure it takes at least 100% of the flex container's height */
+  outline: none !important; /* Remove the outline on focus */
+  text-align: left; /* Ensure text aligns to the left */
+  overflow-y: auto; /* Add scrollbar if content overflows vertically */
+}
+</style>

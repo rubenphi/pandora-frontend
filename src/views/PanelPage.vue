@@ -9,7 +9,7 @@
       <ion-list>
         <ion-item :href="'admin/cuestionarios'">
           <ion-icon slot="start" :icon="helpCircleOutline"></ion-icon>
-          <ion-label>Cuestionarios</ion-label>
+          <ion-label>Lecciones</ion-label>
         </ion-item>
         <ion-item :href="'admin/autorizaciones'">
           <ion-icon slot="start" :icon="lockOpenOutline"></ion-icon>
