@@ -330,17 +330,13 @@ export default {
 
         // Si hay grupo seleccionado, asignar usuario al grupo
         if (this.selectedGroupId) {
-          axios
-            .post(`/users/${userId}/groups`, {
-              groupId: this.selectedGroupId,
-              userId: userId,
-              code: "admin",
-              year: this.selectedYear,
-              active: true,
-            })
-            .then(() => {
-              location.reload();
-            });
+          axios.post(`/users/${userId}/groups`, {
+            groupId: this.selectedGroupId,
+            userId: userId,
+            code: "admin",
+            year: this.selectedYear,
+            active: true,
+          });
         }
       } catch (error) {
         console.error("Error al asignar usuario:", error);

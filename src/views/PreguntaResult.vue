@@ -79,6 +79,14 @@
             >
             <ion-text v-else color="primary"><h6>Respuesta: ?</h6></ion-text>
           </ion-note>
+          <ion-buttons
+            v-if="admin && groupAnswerCount[respuesta.group.id] > 1"
+            slot="end"
+          >
+            <ion-button @click="presentDeleteAlert(respuesta.id)">
+              <ion-icon :icon="trashOutline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
         </ion-item>
       </ion-list>
 
@@ -128,6 +136,7 @@ import {
   ribbonOutline,
   helpCircleOutline,
   lockClosedOutline,
+  trashOutline,
 } from "ionicons/icons";
 
 import {
@@ -145,11 +154,11 @@ import {
   IonText,
   IonLabel,
   IonTitle,
+  alertController,
 } from "@ionic/vue";
 
 export default {
   components: {
-    IonTitle,
     IonHeader,
     IonToolbar,
     IonContent,
@@ -162,6 +171,7 @@ export default {
     IonNote,
     IonText,
     IonLabel,
+    IonTitle,
   },
   setup() {
     const usuario = usuarioGet();
@@ -196,6 +206,48 @@ export default {
       });
     };
 
+    const groupAnswerCount = ref({});
+
+    const calcularRespuestasPorGrupo = () => {
+      const counts = {};
+      for (const respuesta of respuestas.value) {
+        counts[respuesta.group.id] = (counts[respuesta.group.id] || 0) + 1;
+      }
+      groupAnswerCount.value = counts;
+    };
+
+    const presentDeleteAlert = async (answerId) => {
+      const alert = await alertController.create({
+        header: "Confirmar Eliminación",
+        message:
+          "¿Estás seguro de que quieres eliminar esta respuesta? Esta acción no se puede deshacer.",
+        buttons: [
+          {
+            text: "Cancelar",
+            role: "cancel",
+          },
+          {
+            text: "Eliminar",
+            handler: () => {
+              deleteAnswer(answerId);
+            },
+          },
+        ],
+      });
+
+      await alert.present();
+    };
+
+    const deleteAnswer = async (answerId) => {
+      try {
+        await axios.delete(`/answers/${answerId}`, tokenHeader());
+        respuestas.value = respuestas.value.filter((r) => r.id !== answerId);
+        calcularRespuestasPorGrupo();
+      } catch (error) {
+        console.error("Error al eliminar la respuesta:", error);
+      }
+    };
+
     onIonViewDidEnter(async () => {
       if (!adminOprofesor())
         await axios.get(`/users/${usuario?.id}/groups`).then((response) => {
@@ -210,6 +262,7 @@ export default {
       });
       await axios.get("/questions/" + id + "/answers").then((response) => {
         respuestas.value = response.data;
+        calcularRespuestasPorGrupo();
       });
     });
 
@@ -229,6 +282,7 @@ export default {
       },
       grupoUsuario,
       respuestas,
+      groupAnswerCount,
       arrowBackOutline,
       arrowDownCircle,
       handLeftOutline,
@@ -240,6 +294,8 @@ export default {
       lockClosedOutline,
       pregunta,
       helpCircleOutline,
+      trashOutline,
+      presentDeleteAlert,
     };
   },
 };

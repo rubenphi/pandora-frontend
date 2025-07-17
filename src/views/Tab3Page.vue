@@ -23,22 +23,32 @@
     </ion-header>
     <ion-content :fullscreen="true">
       <ion-card v-for="leccion in lecciones" :key="leccion.id">
-        <div>
-          <ion-card-header>
-            <ion-card-subtitle>{{ cursoSelected.name }}</ion-card-subtitle>
+        <ion-item lines="none">
+          <div>
+            <ion-card-header>
+              <ion-card-subtitle>{{ cursoSelected.name }}</ion-card-subtitle>
 
-            <ion-card-title
-              v-if="leccionesSinNotasIds.includes(leccion.id)"
-              style="color: orange"
-              >{{ leccion.topic }}</ion-card-title
+              <ion-card-title
+                v-if="leccionesSinNotasIds.includes(leccion.id)"
+                style="color: orange"
+                >{{ leccion.topic }}</ion-card-title
+              >
+              <ion-card-title v-else>{{ leccion.topic }}</ion-card-title>
+            </ion-card-header>
+
+            <ion-card-content>
+              {{ leccion.date.substring(0, 10) }}
+            </ion-card-content>
+          </div>
+          <ion-buttons slot="end">
+            <ion-button
+              v-if="adminOProfesor"
+              :href="`/crear/leccion/${leccion.id}`"
             >
-            <ion-card-title v-else>{{ leccion.topic }}</ion-card-title>
-          </ion-card-header>
-
-          <ion-card-content>
-            {{ leccion.date.substring(0, 10) }}
-          </ion-card-content>
-        </div>
+              <ion-icon :icon="createOutline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-item>
         <ion-button
           fill="clear"
           @click="toggleSection(leccion.id, 'materiales')"

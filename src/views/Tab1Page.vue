@@ -73,10 +73,10 @@
             </ion-label>
           </ion-item>
           <div v-for="nota in area?.notas" :key="nota?.id">
-            <ion-item v-if="nota?.period?.id == periodoSelected">
+            <ion-item>
               <ion-icon :icon="easelOutline" slot="start"></ion-icon>
               <ion-label>
-                <h2>{{ nota?.lesson?.topic }}</h2>
+                <h2>{{ nota?.gradableItem?.title }}</h2>
 
                 <p v-if="nota?.grade < 3" style="color: #bf9494">
                   {{ nota?.grade }}
@@ -144,7 +144,7 @@ import {
   swapHorizontalOutline,
 } from "ionicons/icons";
 import axios from "axios";
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import {
   periodosGet,
   selectedYear,
@@ -253,13 +253,17 @@ export default {
       });
 
       tokenHeader();
-      await axios
-        .get(`/grades?userId=${usuario.value.id}&year=${year.value}`)
-        .then((response) => {
+      const getGrades = async () => {
+        let url = `/grades?userId=${usuario.value.id}&year=${year.value}`;
+        if (periodoSelected.value) {
+          url += `&periodId=${periodoSelected.value}`;
+        }
+        await axios.get(url).then((response) => {
           const notasByArea = response.data.reduce((acc, nota) => {
             delete nota.area;
+
             nota.grade = nota.grade.toFixed(1);
-            const area = nota.lesson.area;
+            const area = nota.gradableItem.lesson.area;
             const areaIndex = acc.findIndex((a) => a.id === area.id);
             if (areaIndex === -1) {
               acc.push({
@@ -279,11 +283,21 @@ export default {
             return {
               ...area,
               notas: area.notas.sort((a, b) => {
-                return new Date(a.lesson.date) - new Date(b.lesson.date);
+                return (
+                  new Date(a.gradableItem.lesson.date) -
+                  new Date(b.gradableItem.lesson.date)
+                );
               }),
             };
           });
         });
+      };
+
+      watch(periodoSelected, () => {
+        getGrades();
+      });
+
+      getGrades();
 
       await axios.get(`/users/${usuario.value.id}/groups`).then((response) => {
         grupoUsuario.value =

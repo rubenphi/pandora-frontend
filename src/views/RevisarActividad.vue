@@ -24,9 +24,20 @@
         >
           <IonItem slot="header">
             <IonLabel>{{ student.lastName + " " + student.name }}</IonLabel>
+            <IonNote slot="end"
+              >Nota:
+              {{
+                studentGrades[student.id] !== null
+                  ? studentGrades[student.id].toFixed(2)
+                  : "N/A"
+              }}</IonNote
+            >
           </IonItem>
           <div class="ion-padding" slot="content">
-            <ion-button expand="block" @click="saveEvaluation(student)"
+            <ion-button
+              expand="block"
+              @click="saveEvaluation(student)"
+              :disabled="isSaving"
               >Guardar</ion-button
             >
             <ion-list>
@@ -42,8 +53,9 @@
                     <ion-range
                       :value="evaluation[student.id][criterion.id].value"
                       @ionChange="
-                        evaluation[student.id][criterion.id].value =
-                          $event.detail.value
+                        (evaluation[student.id][criterion.id].value =
+                          $event.detail.value),
+                          updateGrade(student)
                       "
                       min="0"
                       max="2"
@@ -60,7 +72,9 @@
                 <ion-grid>
                   <ion-row class="button-row">
                     <ion-col size="auto">
-                      <ion-button @click="saveEvaluation(student)"
+                      <ion-button
+                        @click="saveEvaluation(student)"
+                        :disabled="isSaving"
                         >Guardar</ion-button
                       >
                     </ion-col>
@@ -71,6 +85,21 @@
           </div>
         </ion-accordion>
       </ion-accordion-group>
+      <!-- Toasts -->
+      <ion-toast
+        :is-open="isSuccessToastOpen"
+        message="Evaluación guardada correctamente"
+        :duration="3000"
+        color="success"
+        @didDismiss="setSuccessToastOpen(false)"
+      ></ion-toast>
+      <ion-toast
+        :is-open="isErrorToastOpen"
+        :message="errorMessage"
+        :duration="3000"
+        color="danger"
+        @didDismiss="setErrorToastOpen(false)"
+      ></ion-toast>
     </ion-content>
   </ion-page>
 </template>
@@ -99,7 +128,9 @@ import {
   IonRow,
   IonCol,
   alertController,
-  IonIcon, // Import alertController
+  IonIcon,
+  IonToast,
+  IonNote,
 } from "@ionic/vue";
 import { arrowBackOutline } from "ionicons/icons";
 
@@ -115,7 +146,6 @@ export default {
     IonLabel,
     IonButton,
     IonButtons,
-
     IonAccordionGroup,
     IonAccordion,
     IonRange,
@@ -123,6 +153,8 @@ export default {
     IonRow,
     IonCol,
     IonIcon,
+    IonToast,
+    IonNote,
   },
   setup() {
     const mroute = useRoute();
@@ -134,7 +166,18 @@ export default {
     const students = ref([]);
     const criteria = ref([]);
     const evaluation = ref({}); // { studentId: { criterionId: 'value' } }
+    const studentGrades = ref({});
     const currentlyOpenStudentId = ref(null); // Track the currently open student accordion
+    const isSaving = ref(false);
+
+    const isSuccessToastOpen = ref(false);
+    const setSuccessToastOpen = (val) => (isSuccessToastOpen.value = val);
+    const isErrorToastOpen = ref(false);
+    const errorMessage = ref("");
+    const setErrorToastOpen = (val, message = "") => {
+      isErrorToastOpen.value = val;
+      errorMessage.value = message;
+    };
 
     // Fetch user data on component setup
     usuario.value = usuarioGet();
@@ -237,6 +280,7 @@ export default {
 
         // Initialize evaluation for all students
         students.value.forEach((student) => {
+          studentGrades.value[student.id] = null;
           if (!evaluation.value[student.id]) {
             evaluation.value[student.id] = {};
             criteria.value.forEach((criterion) => {
@@ -268,41 +312,47 @@ export default {
       if (event.detail.checked) {
         // Check if the accordion is being opened
         currentlyOpenStudentId.value = student.id;
+        updateGrade(student);
       } else {
         currentlyOpenStudentId.value = null; // Accordion is closed
       }
     };
 
+    const updateGrade = (student) => {
+      studentGrades.value[student.id] = calculateFinalGrade(student);
+    };
+
     const saveEvaluation = async (student) => {
-      for (const criterionId in evaluation.value[student.id]) {
-        const evaluationEntry = evaluation.value[student.id][criterionId];
-        const value = evaluationEntry.value;
-        const scoreId = evaluationEntry.id;
+      isSaving.value = true;
+      try {
+        for (const criterionId in evaluation.value[student.id]) {
+          const evaluationEntry = evaluation.value[student.id][criterionId];
+          const value = evaluationEntry.value;
+          const scoreId = evaluationEntry.id;
 
-        if (value !== null) {
-          // Only include evaluated criteria
-          const criterion = criteria.value.find((c) => c.id == criterionId); // Find the criterion object
+          if (value !== null) {
+            // Only include evaluated criteria
+            const criterion = criteria.value.find((c) => c.id == criterionId); // Find the criterion object
 
-          let score = 0;
-          if (criterion) {
-            if (value === 0) {
-              score = 0; // No Cumple
-            } else if (value === 1) {
-              score = criterion.score / 2; // Cumple Parcialmente
-            } else if (value === 2) {
-              score = criterion.score; // Cumple
+            let score = 0;
+            if (criterion) {
+              if (value === 0) {
+                score = 0; // No Cumple
+              } else if (value === 1) {
+                score = criterion.score / 2; // Cumple Parcialmente
+              } else if (value === 2) {
+                score = criterion.score; // Cumple
+              }
             }
-          }
 
-          const payload = {
-            studentId: student.id,
-            criterionId: parseInt(criterionId),
-            score: score,
-            instituteId: usuario.value.institute.id, // Get instituteId from the logged-in user
-            activityId: parseInt(activityId),
-          };
+            const payload = {
+              studentId: student.id,
+              criterionId: parseInt(criterionId),
+              score: score,
+              instituteId: usuario.value.institute.id, // Get instituteId from the logged-in user
+              activityId: parseInt(activityId),
+            };
 
-          try {
             if (scoreId) {
               // Update existing score
               await axios.patch(
@@ -321,17 +371,18 @@ export default {
               // Update the evaluation ref with the new ID
               evaluation.value[student.id][criterionId].id = response.data.id;
             }
-          } catch (error) {
-            console.error(
-              `Error saving score for student ${student.name}, criterion ${criterion.description}:`,
-              error
-            );
           }
         }
+        setSuccessToastOpen(true);
+        // After saving, re-fetch scores to ensure UI is up-to-date
+        await fetchStudentCriterionScores(activityId);
+      } catch (error) {
+        const message =
+          error.response?.data?.message || "Error al guardar la evaluación";
+        setErrorToastOpen(true, message);
+      } finally {
+        isSaving.value = false;
       }
-
-      // After saving, re-fetch scores to ensure UI is up-to-date
-      await fetchStudentCriterionScores(activityId);
     };
 
     const registerAllGrades = async () => {
@@ -497,6 +548,14 @@ export default {
       fetchStudentCriterionScores,
       registerAllGrades,
       presentConfirmAlert,
+      isSaving,
+      isSuccessToastOpen,
+      setSuccessToastOpen,
+      isErrorToastOpen,
+      errorMessage,
+      setErrorToastOpen,
+      studentGrades,
+      updateGrade,
     };
   },
 };

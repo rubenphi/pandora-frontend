@@ -180,7 +180,15 @@ const routes = [
         },
       },
       {
-        path: "crear/leccion/:curso/:area/:year",
+        path: "crear/leccion/:id",
+        component: () => import("@/views/CrearLeccion.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
+        path: "/crear/leccion/:curso/:area/:year",
         component: () => import("@/views/CrearLeccion.vue"),
         beforeEnter: (to, from, next) => {
           if (adminOprofesor()) next();

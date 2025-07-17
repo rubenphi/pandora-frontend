@@ -50,9 +50,22 @@
         </ion-item>
       </ion-card>
       <ion-card class="ion-padding-top ion-padding-bottom">
-        <ion-card-subtitle v-if="error.estatus === 0" class="ion-text-center">
-          Selecciona tu respuesta
-        </ion-card-subtitle>
+        <div
+          style="position: relative; text-align: center; padding: 0 16px 10px;"
+        >
+          <ion-card-subtitle v-if="error.estatus === 0">
+            Selecciona tu respuesta
+          </ion-card-subtitle>
+          <ion-button
+            v-if="admin"
+            @click="toggleShowCorrectAnswer()"
+            fill="clear"
+            style="position: absolute; top: 50%; right: 8px; transform: translateY(-50%); margin: 0;"
+          >
+            <ion-icon :icon="showCorrectAnswer ? eyeOffOutline : eyeOutline"></ion-icon>
+          </ion-button>
+        </div>
+
         <ion-list>
           <ion-item v-if="error.estatus === 1" color="danger">
             <ion-label>
@@ -92,14 +105,8 @@
                 {{ option.sentence }}</ion-label
               >
               <ion-icon
-                v-if="option.correct == true"
                 slot="start"
-                color="success"
-                :icon="createOutline"
-              ></ion-icon>
-              <ion-icon
-                v-if="option.correct == false"
-                slot="start"
+                :color="showCorrectAnswer && option.correct ? 'success' : ''"
                 :icon="createOutline"
               ></ion-icon>
             </ion-item>
@@ -176,6 +183,8 @@ import {
   podiumOutline,
   createOutline,
   addOutline,
+  eyeOutline,
+  eyeOffOutline,
 } from "ionicons/icons";
 
 import {
@@ -261,14 +270,13 @@ export default {
     });
     const resVisible = ref(0);
     const loading = ref(false);
+    const disableRandomization = ref(false);
+    const showCorrectAnswer = ref(false);
 
     onIonViewDidEnter(async () => {
       tokenHeader();
-      if (!adminOprofesor())
-        await axios.get(`/users/${usuario?.id}/groups`).then((response) => {
-          grupoUsuario.value = response.data.filter((g) => g.active)[0]?.group;
-        });
 
+      // 1. Fetch question data first
       await axios.get("/questions/" + id).then((response) => {
         question.value = {
           id: response.data.id,
@@ -277,13 +285,7 @@ export default {
           quiz: response.data.quiz,
           title: response.data.title,
           photo: response.data.photo,
-          options: shuffleArray(response.data.options).map((option, index) => {
-            // Eliminar la propiedad identifier original
-            delete option.identifier;
-            // Asignar un nuevo identificador alfabético
-            option.identifier = String.fromCharCode(65 + index); // 65 es el código ASCII para 'A'
-            return option;
-          }),
+          options: response.data.options, // Keep original options for now
         };
 
         if (!question.value.photo) {
@@ -293,15 +295,68 @@ export default {
         question.value.sentence = question.value.sentence.replace(rem, "</br>");
       });
 
+      // 2. Now that question.value is populated, proceed with randomization logic
+      const storedRandomizationKey = localStorage.getItem("ordenOpcionesKey");
+      if (storedRandomizationKey) {
+        try {
+          const { quizId, authCode } = JSON.parse(storedRandomizationKey);
+          const invitationResponse = await axios.get(
+            `/invitations?code=${authCode}&valid=true&exist=true`,
+            tokenHeader()
+          );
+
+          if (invitationResponse.data && invitationResponse.data.length > 0) {
+            if (quizId === question.value.quiz?.id) {
+              disableRandomization.value = true;
+            }
+          } else {
+            disableRandomization.value = false;
+            localStorage.removeItem("ordenOpcionesKey");
+          }
+        } catch (e) {
+          localStorage.removeItem("ordenOpcionesKey");
+          console.error("Error parsing or validating randomization key:", e);
+        }
+      }
+
+      // 3. Process options based on admin status or disabled randomization
+      let processedOptions;
+      if (
+        admin ||
+        (disableRandomization.value &&
+          question.value.quiz?.id === question.value.quiz?.id)
+      ) {
+        processedOptions = question.value.options.sort((a, b) =>
+          a.identifier.localeCompare(b.identifier)
+        );
+      } else {
+        processedOptions = shuffleArray(question.value.options).map(
+          (option, index) => {
+            return {
+              ...option,
+              identifier: String.fromCharCode(65 + index),
+            };
+          }
+        );
+      }
+      question.value.options = processedOptions;
+
+      // 4. Fetch group answers (if not admin)
+      if (!adminOprofesor())
+        await axios.get(`/users/${usuario?.id}/groups`).then((response) => {
+          grupoUsuario.value = response.data.filter((g) => g.active)[0]?.group;
+        });
+
       if (!admin && grupoUsuario.value?.id) {
         await axios
-          .get(`/answers?=questionId=${id}&groupId=${grupoUsuario.value?.id}`)
+          .get(`/answers?questionId=${id}&groupId=${grupoUsuario.value.id}`)
           .then((response) => {
-            if (response?.data[0] || admin) {
-              respuesta.value.optionId = response?.data[0].option.id;
+            if (response.data && response.data.length > 0) {
               resVisible.value = 1;
-              botonInactivo.value = true;
             }
+          })
+          .catch(() => {
+            // Fail silently, user is treated as not having answered.
           });
       }
 
@@ -310,8 +365,23 @@ export default {
       }
     });
 
+    const toggleShowCorrectAnswer = () => {
+      showCorrectAnswer.value = !showCorrectAnswer.value;
+    };
+
     return {
       async responder() {
+        const hasCorrectOption = question.value.options.some(
+          (option) => option.correct
+        );
+
+        if (!hasCorrectOption) {
+          error.value.estatus = 1;
+          error.value.data =
+            "Esta pregunta no tiene una respuesta correcta marcada. Por favor, informa a tu profesor.";
+          return;
+        }
+
         if (respuesta.value.optionId == "") {
           error.value.estatus = 1;
           error.value.data = "Debe seleccionar una opción.";
@@ -352,9 +422,13 @@ export default {
       podiumOutline,
       createOutline,
       addOutline,
+      eyeOutline,
+      eyeOffOutline,
       grupoUsuario,
       botonInactivo,
       loading,
+      showCorrectAnswer,
+      toggleShowCorrectAnswer,
     };
   },
 };

@@ -196,7 +196,6 @@ export default {
       activityForm.value.instructions = editor.value.getHTML();
       try {
         if (activityId) {
-          delete activityForm.value.id;
           // Update existing activity
           await axios.patch(
             `/activities/${activityId}`,
@@ -204,6 +203,7 @@ export default {
             tokenHeader()
           );
         } else {
+          delete activityForm.value.id;
           // Create new activity
           await axios
             .post("/activities", activityForm.value, tokenHeader())

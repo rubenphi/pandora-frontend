@@ -26,6 +26,7 @@
     "axios": "^0.24.0",
     "core-js": "^3.6.5",
     "global": "^4.4.0",
+    "html2pdf.js": "^0.10.3",
     "ionicons": "^7.4.0",
     "vue": "^3.2.21",
     "vue-router": "^4.0.12"

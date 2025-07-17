@@ -37,20 +37,12 @@
             <ion-label position="stacked"
               >Objetos JSON (pegue su array de objetos)</ion-label
             >
+            <ion-button slot="end" @click="copyPlaceholder">
+              <ion-icon :icon="copyOutline"></ion-icon>
+            </ion-button>
             <ion-textarea
               v-model="textareaContent"
-              placeholder=' [
-    {
-      "sentence": "string",
-      "options": [
-        {
-          "sentence": "string",
-          "correct": true
-        }
-      ]
-    }
-  ]
-'
+              :placeholder="placeholderText"
               rows="8"
               @ionBlur="procesarObjetos"
             ></ion-textarea>
@@ -61,16 +53,6 @@
             <ion-button expand="block" @click="procesarObjetos">
               Procesar Objetos
             </ion-button>
-          </ion-item>
-
-          <!-- Mensaje de tipos detectados -->
-          <ion-item v-if="tiposDetectados.length > 0">
-            <ion-label>
-              <h3>
-                Estos son los tipos detectados en los objetos, valide si son
-                correctos, si alguno es incorrecto márquelo:
-              </h3>
-            </ion-label>
           </ion-item>
 
           <!-- Lista de objetos válidos -->
@@ -86,6 +68,9 @@
                 <h3>{{ objeto.sentence }}</h3>
                 <p>Opciones: <ul><li v-for="option in objeto.options" :key="option.sentence">{{ option.sentence }} <span v-if="option.correct">✓</span></li></ul></p>
               </ion-label>
+              <ion-button slot="end" @click="abrirModalEdicion(index)">
+                <ion-icon :icon="pencil"></ion-icon>
+              </ion-button>
             </ion-item>
           </ion-item-group>
 
@@ -101,6 +86,49 @@
           </ion-item>
         </ion-list>
       </div>
+
+      <!-- Modal de Edición -->
+      <ion-modal :is-open="isModalOpen" @didDismiss="cancelarEdicion">
+        <ion-header>
+          <ion-toolbar>
+            <ion-title>Editar Pregunta</ion-title>
+            <ion-buttons slot="end">
+              <ion-button @click="cancelarEdicion">Cancelar</ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding" v-if="preguntaEnEdicion">
+          <ion-item>
+            <ion-label position="stacked">Enunciado de la pregunta</ion-label>
+            <ion-input v-model="preguntaEnEdicion.sentence"></ion-input>
+          </ion-item>
+
+          <ion-item-divider>Opciones</ion-item-divider>
+
+          <ion-item
+            v-for="(opcion, optIndex) in preguntaEnEdicion.options"
+            :key="optIndex"
+          >
+            <ion-input v-model="opcion.sentence"></ion-input>
+            <ion-checkbox v-model="opcion.correct">Correcta</ion-checkbox>
+            <ion-button
+              color="danger"
+              slot="end"
+              @click="quitarOpcion(optIndex)"
+            >
+              <ion-icon :icon="trash"></ion-icon>
+            </ion-button>
+          </ion-item>
+
+          <ion-button expand="block" @click="agregarOpcion"
+            >Agregar Opción</ion-button
+          >
+
+          <ion-button expand="block" color="primary" @click="guardarCambios"
+            >Guardar Cambios</ion-button
+          >
+        </ion-content>
+      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
@@ -128,9 +156,10 @@ import {
   IonButton,
   IonButtons,
   IonInput,
+  IonModal,
 } from "@ionic/vue";
 
-import { arrowBackOutline } from "ionicons/icons";
+import { arrowBackOutline, pencil, trash, copyOutline } from "ionicons/icons";
 import axios from "axios";
 
 export default {
@@ -151,6 +180,7 @@ export default {
     IonList,
     IonItem,
     IonLabel,
+    IonModal,
   },
   setup() {
     const mroute = useRoute();
@@ -158,11 +188,6 @@ export default {
     const id = parseInt(mroute.params.id) || 0;
     const mezclarPreguntas = ref(true);
     const points = ref(10);
-
-    const opcion = ref({
-      id: 0,
-      questionId: 0,
-    });
 
     const error = ref({
       estatus: 0,
@@ -173,9 +198,24 @@ export default {
     const usuario = ref();
     const textareaContent = ref("");
     const objetosValidos = ref([]);
-    const tiposDetectados = ref([]);
-    const tiposIncorrectos = ref([]);
-    const debugMessage = ref("");
+    const placeholderText = ref(
+      `[
+  {
+    "sentence": "string",
+    "options": [
+      {
+        "sentence": "string",
+        "correct": true
+      }
+    ]
+  }
+]`
+    );
+
+    // State for the editing modal
+    const isModalOpen = ref(false);
+    const preguntaEnEdicion = ref(null);
+    const indiceEnEdicion = ref(-1);
 
     const procesarObjetos = () => {
       try {
@@ -190,7 +230,6 @@ export default {
         }
 
         let objetosProcesados = [];
-        const tipos = new Set();
 
         try {
           const arrayObjetos = JSON.parse(contenido);
@@ -246,8 +285,6 @@ export default {
           objetosProcesados = shuffleArray(objetosProcesados);
         }
         objetosValidos.value = objetosProcesados;
-        tiposDetectados.value = Array.from(tipos);
-        tiposIncorrectos.value = []; // Reset tipos incorrectos
 
         if (objetosProcesados.length === 0) {
           error.value.estatus = 1;
@@ -259,27 +296,6 @@ export default {
         error.value.color = "danger";
         error.value.data = err.message;
         objetosValidos.value = [];
-        tiposDetectados.value = [];
-      }
-    };
-
-    const toggleTipoIncorrecto = (tipo, checked) => {
-      debugMessage.value = `Toggle: ${tipo} -> ${
-        checked ? "marcado" : "desmarcado"
-      }`;
-
-      // Debugging con alert temporal
-   
-
-      if (checked) {
-        if (!tiposIncorrectos.value.includes(tipo)) {
-          tiposIncorrectos.value.push(tipo);
-        }
-      } else {
-        const index = tiposIncorrectos.value.indexOf(tipo);
-        if (index > -1) {
-          tiposIncorrectos.value.splice(index, 1);
-        }
       }
     };
 
@@ -317,6 +333,42 @@ export default {
         });
     };
 
+    const abrirModalEdicion = (index) => {
+      indiceEnEdicion.value = index;
+      // Use deep copy to avoid mutating original object until save
+      preguntaEnEdicion.value = JSON.parse(
+        JSON.stringify(objetosValidos.value[index])
+      );
+      isModalOpen.value = true;
+    };
+
+    const cancelarEdicion = () => {
+      isModalOpen.value = false;
+    };
+
+    const guardarCambios = () => {
+      if (preguntaEnEdicion.value && indiceEnEdicion.value > -1) {
+        objetosValidos.value[indiceEnEdicion.value] = preguntaEnEdicion.value;
+      }
+      isModalOpen.value = false;
+    };
+
+    const agregarOpcion = () => {
+      if (preguntaEnEdicion.value) {
+        preguntaEnEdicion.value.options.push({ sentence: "", correct: false });
+      }
+    };
+
+    const quitarOpcion = (optIndex) => {
+      if (preguntaEnEdicion.value) {
+        preguntaEnEdicion.value.options.splice(optIndex, 1);
+      }
+    };
+
+    const copyPlaceholder = () => {
+      navigator.clipboard.writeText(placeholderText.value);
+    };
+
     onIonViewWillEnter(async () => {
       usuario.value = usuarioGet();
       tokenHeader();
@@ -324,21 +376,29 @@ export default {
 
     return {
       points,
-      debugMessage,
       mezclarPreguntas,
       arrowBackOutline,
+      pencil,
+      trash,
+      copyOutline,
       pregunta,
       id,
       usuario,
       error,
-      opcion,
       textareaContent,
       objetosValidos,
-      tiposDetectados,
-      tiposIncorrectos,
       procesarObjetos,
-      toggleTipoIncorrecto,
       importarPreguntas,
+      placeholderText,
+      copyPlaceholder,
+      // Modal functions and state
+      isModalOpen,
+      preguntaEnEdicion,
+      abrirModalEdicion,
+      cancelarEdicion,
+      guardarCambios,
+      agregarOpcion,
+      quitarOpcion,
     };
   },
 };

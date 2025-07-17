@@ -175,7 +175,7 @@ export default {
           code: codigo.code,
           instituteId: codigo.institute.id,
           exist: false,
-          active: codigo.valid,
+          valid: codigo.valid,
         });
         codigos.value = codigos.value.filter((c) => c.id !== codigo.id);
       } catch (error) {
@@ -190,7 +190,7 @@ export default {
           code: codigo.code,
           instituteId: codigo.institute.id,
           exist: codigo.exist,
-          active: codigo.valid ? false : true,
+          valid: codigo.valid ? false : true,
         });
         const codigoActualizado = codigos.value.find((c) => c.id === codigo.id);
         if (codigoActualizado) {
@@ -212,7 +212,7 @@ export default {
           expirationDate: fechaExpiracion.toISOString(),
           instituteId: 1,
           exist: true,
-          active: true,
+          valid: true,
         };
         nuevosCodigos.push(nuevoCodigo);
 

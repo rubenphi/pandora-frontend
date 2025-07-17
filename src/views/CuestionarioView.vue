@@ -55,24 +55,34 @@
           >
             <ion-icon :icon="lockClosedOutline"></ion-icon>
           </ion-button>
-          <ion-button @click="generateAnswerKeyCsv(cuestionario.questions)">
+          <ion-button @click="openGeneratorModal()">
             <ion-icon :icon="downloadOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <ion-card
-        v-if="cuestionario.id != 0"
-        :href="'/ganadores/' + cuestionario.id"
-      >
-        <ion-card-header>
+      <ion-card v-if="cuestionario.id != 0">
+        <ion-card-header
+          style="position: relative"
+          @click="goToWinners(cuestionario.id)"
+        >
           <ion-card-title class="ion-text-center">{{
             cuestionario.topic
           }}</ion-card-title>
           <ion-card-subtitle class="ion-text-center"
             >Ver Resultados</ion-card-subtitle
           >
+          <ion-button
+            v-if="!admin"
+            color="medium"
+            fill="clear"
+            size="small"
+            style="position: absolute; bottom: 0; right: 0"
+            @click.stop="evitarAleatoriedadOpciones"
+          >
+            <ion-icon :icon="codeDownloadOutline"></ion-icon>
+          </ion-button>
         </ion-card-header>
       </ion-card>
       <ion-card class="ion-padding" v-if="cuestionario.questions">
@@ -173,6 +183,14 @@
           </ion-item>
         </ion-content>
       </ion-modal>
+
+      <CuestionarioGeneratorModal
+        :is-open="isGeneratorModalOpen"
+        :questions="cuestionario.questions"
+        :title="cuestionario.topic"
+        :lesson-data="cuestionario.lesson"
+        @close="closeGeneratorModal"
+      ></CuestionarioGeneratorModal>
     </ion-content>
   </ion-page>
 </template>
@@ -180,6 +198,7 @@
 import axios from "axios";
 import { ref } from "vue";
 import { tokenHeader, adminOprofesor, numeroOrdinal } from "../globalService";
+
 
 import {
   lockClosedOutline,
@@ -190,6 +209,7 @@ import {
   createOutline,
   addOutline,
   downloadOutline,
+  codeDownloadOutline,
 } from "ionicons/icons";
 import {
   IonLabel,
@@ -211,7 +231,10 @@ import {
   IonModal,
   IonSelect,
   IonSelectOption,
+  alertController,
 } from "@ionic/vue";
+
+import CuestionarioGeneratorModal from '../components/CuestionarioGeneratorModal.vue';
 
 import { useRoute } from "vue-router";
 import router from "../router";
@@ -236,17 +259,27 @@ export default {
     IonModal,
     IonSelect,
     IonSelectOption,
+    CuestionarioGeneratorModal,
   },
   setup() {
     const admin = adminOprofesor();
     const periodoSelected = ref();
 
     const isModalOpen = ref(false);
+    const isGeneratorModalOpen = ref(false);
     const year = ref();
     const allVisible = ref(false);
     const mroute = useRoute();
     const closeModal = () => {
       isModalOpen.value = false;
+    };
+
+    const openGeneratorModal = () => {
+      isGeneratorModalOpen.value = true;
+    };
+
+    const closeGeneratorModal = () => {
+      isGeneratorModalOpen.value = false;
     };
     const { id } = mroute.params;
     const tiposIportacion = ref([
@@ -281,6 +314,7 @@ export default {
             topic: response.data.title,
             //order by title with ordinal number
             questions: response.data.questions
+              .slice() // Create a shallow copy before sorting
               .sort((a, b) => a.id - b.id) // o a.number - b.number
               .map((question, index) => ({
                 ...question,
@@ -291,6 +325,7 @@ export default {
               .filter((question) => question.exist),
 
             course: response.data.course,
+            institute: response.data.institute,
           };
 
           if (!admin) {
@@ -301,6 +336,10 @@ export default {
           localStorage.setItem(
             "lessonSelected",
             JSON.stringify(cuestionario.value)
+          );
+
+          allVisible.value = cuestionario.value.questions.every(
+            (question) => question.visible
           );
 
           year.value = cuestionario.value.year;
@@ -327,63 +366,120 @@ export default {
       isModalOpen.value = true;
     };
 
-    const generateAnswerKeyCsv = function (questions) {
-      // Crear el encabezado del CSV
-      let csvContent = '"Q No","KEY"\n';
+    const goToWinners = (quizId) => {
+      router.push(`/ganadores/${quizId}`);
+    };
 
-      // Iterar sobre las preguntas
-      questions.forEach((question, index) => {
-        // Encontrar la opción correcta
-        const correctOption = question.options.find((option) => option.correct);
+    const evitarAleatoriedadOpciones = async () => {
+      const alert = await alertController.create({
+        header: "Deshabilitar Opciones al Azar",
+        message:
+          "Va a deshabilitar las opciones al azar, ingrese el código de autorización del profesor",
+        inputs: [
+          {
+            name: "authCode",
+            type: "text",
+            placeholder: "Código de autorización",
+          },
+        ],
+        buttons: [
+          {
+            text: "Cancelar",
+            role: "cancel",
+          },
+          {
+            text: "Confirmar",
+            handler: async (data) => {
+              const authCode = data.authCode;
+              if (!authCode) {
+                const errorAlert = await alertController.create({
+                  header: "Error",
+                  message: "Debe ingresar un código de autorización.",
+                  buttons: ["OK"],
+                });
+                await errorAlert.present();
+                return;
+              }
 
-        // Agregar la fila al CSV
-        // Suma 1 al índice para que los números de pregunta empiecen en 1
-        csvContent += `"${index + 1}","${
-          correctOption ? correctOption.identifier : ""
-        }"\n`;
+              try {
+                const response = await axios.get(
+                  `/invitations?code=${authCode}&valid=true&exist=true`,
+                  tokenHeader()
+                );
+
+                if (response.data && response.data.length > 0) {
+                  // Guardar en localStorage
+                  const dataToStore = {
+                    quizId: cuestionario.value.id,
+                    authCode: authCode,
+                  };
+                  localStorage.setItem(
+                    "ordenOpcionesKey",
+                    JSON.stringify(dataToStore)
+                  );
+
+                  // Mostrar mensaje de éxito
+                  const successAlert = await alertController.create({
+                    header: "Éxito",
+                    message:
+                      "Las opciones de respuesta ahora estarán en orden.",
+                    buttons: ["OK"],
+                  });
+                  await successAlert.present();
+                } else {
+                  localStorage.removeItem("ordenOpcionesKey"); // Eliminar si el código es inválido
+                  const errorAlert = await alertController.create({
+                    header: "Error de Autorización",
+                    message: "El código ingresado no es válido o ha expirado.",
+                    buttons: ["OK"],
+                  });
+                  await errorAlert.present();
+                }
+              } catch (error) {
+                console.error("Error al validar el código:", error);
+                const errorAlert = await alertController.create({
+                  header: "Error",
+                  message:
+                    "Ocurrió un error al validar el código. Intente de nuevo.",
+                  buttons: ["OK"],
+                });
+                await errorAlert.present();
+              }
+            },
+          },
+        ],
       });
-
-      // Crear un Blob con el contenido del CSV
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-
-      // Crear un enlace de descarga
-      const link = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", `${cuestionario.value.topic}.csv`);
-
-      // Simular clic para descargar
-      link.style.visibility = "hidden";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      await alert.present();
     };
 
     const marcarTodoDisponibleVisible = async function (estado) {
-      if (!cuestionario.value.questions.length) {
+      if (
+        !cuestionario.value.questions.length ||
+        !cuestionario.value.institute
+      ) {
         return;
       }
 
-      for (const pregunta of cuestionario.value.questions) {
+      const promises = cuestionario.value.questions.map((pregunta) => {
         const preguntaUpdate = {
-          lessonId: cuestionario.value.id,
+          quizId: cuestionario.value.id,
           visible: estado,
           available: estado,
           instituteId: cuestionario.value.institute.id,
         };
-        try {
-          await axios.patch(
-            `/questions/${pregunta.id}`,
-            preguntaUpdate,
-            tokenHeader()
-          );
+        return axios.patch(
+          `/questions/${pregunta.id}`,
+          preguntaUpdate,
+          tokenHeader()
+        );
+      });
 
-          //reload page
-        } catch (error) {
-          console.error(`Error al actualizar pregunta ${pregunta.id}:`, error);
-        }
+      try {
+        await Promise.all(promises);
+        window.location.reload();
+      } catch (error) {
+        console.error("Error al actualizar una o más preguntas:", error);
       }
-      window.location.reload();
     };
 
     return {
@@ -395,7 +491,6 @@ export default {
       isModalOpen,
       tiposIportacion,
       allVisible,
-      generateAnswerKeyCsv,
       marcarTodoDisponibleVisible,
       admin,
       cuestionario,
@@ -409,8 +504,14 @@ export default {
       lockClosedOutline,
       lockOpenOutline,
       downloadOutline,
+      codeDownloadOutline,
       year,
       numeroOrdinal,
+      goToWinners,
+      evitarAleatoriedadOpciones,
+      isGeneratorModalOpen,
+      openGeneratorModal,
+      closeGeneratorModal,
     };
   },
 };

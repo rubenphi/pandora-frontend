@@ -149,6 +149,22 @@
           Registrar notas <ion-icon :icon="fileTrayFullOutline"></ion-icon>
         </ion-button>
       </ion-buttons>
+
+      <!-- Toasts -->
+      <ion-toast
+        :is-open="isSuccessToastOpen"
+        message="Notas registradas correctamente"
+        :duration="3000"
+        color="success"
+        @didDismiss="setSuccessToastOpen(false)"
+      ></ion-toast>
+      <ion-toast
+        :is-open="isErrorToastOpen"
+        :message="errorMessage"
+        :duration="3000"
+        color="danger"
+        @didDismiss="setErrorToastOpen(false)"
+      ></ion-toast>
     </ion-content>
   </ion-page>
 </template>
@@ -194,6 +210,7 @@ import {
   IonAccordionGroup,
   IonAccordion,
   IonSpinner,
+  IonToast,
 } from "@ionic/vue";
 
 export default {
@@ -214,6 +231,7 @@ export default {
     IonAccordionGroup,
     IonAccordion,
     IonSpinner,
+    IonToast,
   },
   setup() {
     const usuario = ref();
@@ -234,6 +252,15 @@ export default {
     const respuestas = ref([
       { group: { name: "Cargando", id: 0 }, points: "Cargando" },
     ]);
+
+    const isSuccessToastOpen = ref(false);
+    const setSuccessToastOpen = (val) => (isSuccessToastOpen.value = val);
+    const isErrorToastOpen = ref(false);
+    const errorMessage = ref("");
+    const setErrorToastOpen = (val, message = "") => {
+      isErrorToastOpen.value = val;
+      errorMessage.value = message;
+    };
 
     const handleAccordionChange = async (e) => {
       const openedAccordion = e.detail.value;
@@ -321,40 +348,46 @@ export default {
 
     async function registrarNotas() {
       if (!cuestionario.value || !cuestionario.value.lesson.year) {
-        console.error("Cuestionario data is missing or incomplete.");
+        setErrorToastOpen(true, "Faltan datos del cuestionario.");
         return;
       }
-      for (const respuesta of respuestas.value) {
-        if (!respuesta.group || !respuesta.group.id) {
-          console.warn(
-            "Skipping response due to missing group data:",
-            respuesta
+      try {
+        for (const respuesta of respuestas.value) {
+          if (!respuesta.group || !respuesta.group.id) {
+            console.warn(
+              "Skipping response due to missing group data:",
+              respuesta
+            );
+            continue; // Skip to the next response
+          }
+          const response = await axios.get(
+            `/groups/${respuesta.group.id}/${cuestionario.value.lesson.year}/users`
           );
-          continue; // Skip to the next response
-        }
-        const response = await axios.get(
-          `/groups/${respuesta.group.id}/${cuestionario.value.lesson.year}/users`
-        );
-        for (const relacionUsuario of response.data) {
-          const data = {
-            userId: relacionUsuario.user.id,
-            gradableId: parseInt(id, 10),
-            gradableType: "quiz",
-            periodId: cuestionario.value.lesson.period.id,
-            gradeType: "regular",
-            grade: respuesta.nota,
-            instituteId: cuestionario.value.lesson.institute.id,
-          };
+          for (const relacionUsuario of response.data) {
+            const data = {
+              userId: relacionUsuario.user.id,
+              gradableId: parseInt(id, 10),
+              gradableType: "quiz",
+              periodId: cuestionario.value.lesson.period.id,
+              gradeType: "regular",
+              grade: respuesta.nota,
+              instituteId: cuestionario.value.lesson.institute.id,
+            };
 
-          await axios.post("/grades", data);
+            await axios.post("/grades", data);
+          }
         }
+        setSuccessToastOpen(true);
+      } catch (e) {
+        const message = e.response?.data?.message || "Error al registrar las notas";
+        setErrorToastOpen(true, message);
       }
     }
 
-    async function getRespuestas(groupId, gradableId, instituteId) {
+    async function getRespuestas(groupId, quizId, instituteId) {
       if (groupId == grupoUsuario.value?.id || admin) {
         const response = await axios.get(
-          `/answers?groupId=${groupId}&gradableId=${gradableId}&instituteId=${instituteId}`
+          `/answers?groupId=${groupId}&quizId=${quizId}&instituteId=${instituteId}`
         );
         return response.data;
       } else {
@@ -390,6 +423,11 @@ export default {
       checkmarkCircleOutline,
       closeCircleOutline,
       respuestaMAyor,
+      isSuccessToastOpen,
+      setSuccessToastOpen,
+      isErrorToastOpen,
+      errorMessage,
+      setErrorToastOpen,
     };
   },
 };

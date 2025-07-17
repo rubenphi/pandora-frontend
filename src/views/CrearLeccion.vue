@@ -235,15 +235,15 @@ export default {
                 JSON.stringify(response.data)
               );
               if (cuestionario.value.exist == true) {
-                router.push("/cuestionario/" + id);
-              } else {
                 router.push(
                   "/lecciones/" +
                     cuestionario.value.courseId +
                     "/" +
                     cuestionario.value.areaId +
                     "/" +
-                    cuestionario.value.periodId
+                    cuestionario.value.periodId +
+                    "/" +
+                    cuestionario.value.year
                 );
               }
               localStorage.setItem("error", response.data.message);
