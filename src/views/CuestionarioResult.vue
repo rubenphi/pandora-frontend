@@ -31,7 +31,7 @@
         >
           <ion-item slot="header" lines="full" class="ion-padding-end">
             <ion-icon
-              v-if="index === 0 && respuesta.points > 0"
+              v-if="respuesta.nota == 5"
               :icon="trophyOutline"
               size="large"
               slot="start"
@@ -379,7 +379,8 @@ export default {
         }
         setSuccessToastOpen(true);
       } catch (e) {
-        const message = e.response?.data?.message || "Error al registrar las notas";
+        const message =
+          e.response?.data?.message || "Error al registrar las notas";
         setErrorToastOpen(true, message);
       }
     }

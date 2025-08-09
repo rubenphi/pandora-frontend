@@ -23,6 +23,9 @@
               {{ year }}
             </ion-select-option>
           </ion-select>
+          <ion-button @click="presentActionSheet" color="medium">
+            <ion-icon slot="icon-only" :icon="downloadOutline"></ion-icon>
+          </ion-button>
         </ion-item>
         <ion-accordion-group @ionChange="captarAbierto($event)">
           <ion-accordion v-for="curso in cursosInstituto" :key="curso.id">
@@ -174,9 +177,14 @@ import {
   IonButton,
   IonButtons,
   IonIcon,
+  actionSheetController,
 } from "@ionic/vue";
 
-import { swapHorizontalOutline, createOutline } from "ionicons/icons";
+import {
+  swapHorizontalOutline,
+  createOutline,
+  downloadOutline,
+} from "ionicons/icons";
 
 export default {
   components: {
@@ -245,6 +253,125 @@ export default {
 
     const closeModal = () => {
       isModalOpen.value = false;
+    };
+
+    const presentActionSheet = async () => {
+      const actionSheet = await actionSheetController.create({
+        header: "Opciones",
+        buttons: [
+          {
+            text: "Descargar CSV",
+            handler: () => {
+              downloadCSV();
+            },
+          },
+          {
+            text: "Imprimir Lista",
+            handler: () => {
+              navigateToPrintableList();
+            },
+          },
+          {
+            text: "Cancelar",
+            role: "cancel",
+          },
+        ],
+      });
+      await actionSheet.present();
+    };
+
+    const navigateToPrintableList = async () => {
+      const studentData = await preparePrintableData();
+      router.push({
+        name: "PrintableStudentList",
+        state: {
+          studentData: studentData,
+          year: selectedYear.value,
+        },
+      });
+    };
+
+    const preparePrintableData = async () => {
+      const year = selectedYear.value;
+      const coursesWithStudents = [];
+
+      for (const curso of cursosInstituto.value) {
+        if (curso.id !== 0) {
+          try {
+            const response = await axios.get(
+              `/courses/${curso.id}/users?year=${year}`,
+              tokenHeader()
+            );
+            const users = response.data.map((usuario) => usuario.user);
+            const students = users.filter(
+              (user) => user.rol === "student" || user.rol === "user"
+            );
+
+            if (students.length > 0) {
+              coursesWithStudents.push({
+                id: curso.id,
+                name: curso.name,
+                students: students,
+              });
+            }
+          } catch (error) {
+            console.error(
+              `Error fetching users for course ${curso.name}:`,
+              error
+            );
+          }
+        }
+      }
+      return coursesWithStudents;
+    };
+
+    const downloadCSV = async () => {
+      let csvContent = '"ROLLNO","NAME","CLASS","EMAILID","PHONENO"\r\n';
+      const year = selectedYear.value;
+
+      for (const curso of cursosInstituto.value) {
+        if (curso.id !== 0) {
+          // Skip "Sin Curso"
+          try {
+            const response = await axios.get(
+              `/courses/${curso.id}/users?year=${year}`,
+              tokenHeader()
+            );
+            const users = response.data.map((usuario) => usuario.user);
+
+            users.forEach((user) => {
+              if (user.rol === "student" || user.rol === "user") {
+                const rollNo = user.code ? user.code.substring(1) : "";
+                const name = `${user.lastName} ${user.name}`;
+                const className = `${curso.name}-${year}`;
+                const email = user.email || "";
+                const phoneNo = ""; // As per the comment, this is empty
+
+                const row = `"${rollNo}","${name}","${className}","${email}","${phoneNo}"`;
+                csvContent += row + "\r\n";
+              }
+            });
+          } catch (error) {
+            console.error(
+              `Error fetching users for course ${curso.name}:`,
+              error
+            );
+          }
+        }
+      }
+
+      // Create a Blob from the CSV string
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `estudiantes_${year}.csv`);
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
     };
 
     const asignarUsuario = async () => {
@@ -454,9 +581,12 @@ export default {
       roles,
       selectedUser,
       rolSelected,
+      downloadCSV,
+      presentActionSheet,
 
       swapHorizontalOutline,
       createOutline,
+      downloadOutline,
     };
   },
 };

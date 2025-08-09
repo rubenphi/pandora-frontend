@@ -21,40 +21,53 @@
           <ion-label :color="error.color">{{ error.data }}</ion-label>
         </ion-item>
 
-        <div
-          v-for="(criterion, index) in criteriaForms"
-          :key="index"
-          :id="
-            criterion.id
-              ? 'criterion-' + criterion.id
-              : 'new-criterion-' + index
-          "
-        >
-          <ion-item>
-            <ion-label position="stacked">Descripción</ion-label>
-            <ion-input v-model="criterion.description" type="text"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-label position="stacked">Puntuación</ion-label>
-            <ion-input v-model="criterion.score" type="number"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-button
-              expand="full"
-              color="danger"
-              @click="removeCriterion(index)"
-            >
-              Eliminar Criterio
-            </ion-button>
-          </ion-item>
-        </div>
+        <ion-reorder-group :disabled="false" @ionItemReorder="handleReorder($event)">
+          <div
+            v-for="(criterion, index) in criteriaForms"
+            :key="index"
+            :id="
+              criterion.id
+                ? 'criterion-' + criterion.id
+                : 'new-criterion-' + index
+            "
+          >
+            <ion-item>
+              <ion-label position="stacked">Descripción</ion-label>
+              <ion-input v-model="criterion.description" type="text"></ion-input>
+              <ion-reorder slot="end"></ion-reorder>
+            </ion-item>
+            <ion-item>
+              <ion-label position="stacked">Puntuación</ion-label>
+              <ion-input v-model="criterion.score" type="number"></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-button
+                expand="full"
+                color="danger"
+                @click="removeCriterion(index)"
+              >
+                Eliminar Criterio
+              </ion-button>
+            </ion-item>
+          </div>
+        </ion-reorder-group>
 
         <ion-item>
           <ion-button expand="full" @click="addCriterion">
             Añadir Criterio
           </ion-button>
         </ion-item>
+        <ion-item>
+          <ion-button expand="full" @click="openImportModal">
+            Importar desde JSON
+          </ion-button>
+        </ion-item>
       </ion-list>
+      <import-criteria-modal
+        :is-open="isImportModalOpen"
+        @close="closeImportModal"
+        @import="handleImport"
+      ></import-criteria-modal>
     </ion-content>
   </ion-page>
 </template>
@@ -64,6 +77,7 @@ import axios from "axios";
 import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { tokenHeader, usuarioGet } from "../globalService";
+import ImportCriteriaModal from "../components/ImportCriteriaModal.vue";
 
 import {
   onIonViewWillEnter,
@@ -80,6 +94,8 @@ import {
   IonButton,
   IonButtons,
   alertController,
+  IonReorderGroup,
+  IonReorder,
 } from "@ionic/vue";
 
 import { arrowBackOutline, checkmarkOutline } from "ionicons/icons";
@@ -98,6 +114,9 @@ export default {
     IonIcon,
     IonButton,
     IonButtons,
+    ImportCriteriaModal,
+    IonReorderGroup,
+    IonReorder,
   },
   setup() {
     const mroute = useRoute();
@@ -112,6 +131,7 @@ export default {
     });
     const usuario = ref(null);
     const activityDetails = ref(null);
+    const isImportModalOpen = ref(false);
 
     const backUrl = `/actividades/${activityId}`;
 
@@ -121,6 +141,25 @@ export default {
         score: 10,
         activityId: parseInt(activityId, 10),
         instituteId: usuario.value.institute.id,
+      });
+    };
+
+    const openImportModal = () => {
+      isImportModalOpen.value = true;
+    };
+
+    const closeImportModal = () => {
+      isImportModalOpen.value = false;
+    };
+
+    const handleImport = (importedCriteria) => {
+      importedCriteria.forEach((criterion) => {
+        criteriaForms.value.push({
+          description: criterion.description,
+          score: criterion.score,
+          activityId: parseInt(activityId, 10),
+          instituteId: usuario.value.institute.id,
+        });
       });
     };
 
@@ -169,6 +208,12 @@ export default {
       }
     };
 
+    const handleReorder = (event) => {
+      const item = criteriaForms.value.splice(event.detail.from, 1)[0];
+      criteriaForms.value.splice(event.detail.to, 0, item);
+      event.detail.complete();
+    };
+
     onIonViewWillEnter(async () => {
       usuario.value = usuarioGet();
       tokenHeader();
@@ -211,7 +256,6 @@ export default {
 
     const saveCriteria = async () => {
       error.value.estatus = 0; // Reset error
-      const promises = [];
 
       for (const criterion of criteriaForms.value) {
         if (!criterion.description || criterion.score === null) {
@@ -229,28 +273,26 @@ export default {
           instituteId: usuario.value.institute.id,
         };
 
-        if (criterion.id) {
-          // Update existing criterion
-          promises.push(
-            axios.patch(`/criteria/${criterion.id}`, payload, tokenHeader())
-          );
-        } else {
-          // Create new criterion
-          promises.push(axios.post("/criteria", payload, tokenHeader()));
+        try {
+          if (criterion.id) {
+            // Update existing criterion
+            await axios.patch(`/criteria/${criterion.id}`, payload, tokenHeader());
+          } else {
+            // Create new criterion
+            await axios.post("/criteria", payload, tokenHeader());
+          }
+        } catch (err) {
+          console.error("Error saving criteria:", err);
+          error.value.estatus = 1;
+          error.value.data =
+            "Error al guardar los criterios. Por favor, intente de nuevo.";
+          error.value.color = "danger";
+          return; // Stop on first error
         }
       }
 
-      try {
-        await Promise.all(promises);
-        router.push(`/actividades/${activityId}`);
-        localStorage.setItem("error", "Criterios guardados exitosamente.");
-      } catch (err) {
-        console.error("Error saving criteria:", err);
-        error.value.estatus = 1;
-        error.value.data =
-          "Error al guardar los criterios. Por favor, intente de nuevo.";
-        error.value.color = "danger";
-      }
+      router.push(`/actividades/${activityId}`);
+      localStorage.setItem("error", "Criterios guardados exitosamente.");
     };
 
     return {
@@ -262,6 +304,11 @@ export default {
       saveCriteria,
       arrowBackOutline,
       checkmarkOutline,
+      isImportModalOpen,
+      openImportModal,
+      closeImportModal,
+      handleImport,
+      handleReorder,
     };
   },
 };
@@ -270,3 +317,5 @@ export default {
 <style scoped>
 /* Add any specific styles for this page here */
 </style>
+
+

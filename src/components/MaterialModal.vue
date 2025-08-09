@@ -8,6 +8,7 @@
       </ion-buttons>
       <ion-title class="ion-text-center">{{ material.title }}</ion-title>
       <ion-buttons slot="end">
+        <ion-button @click="toggleFont()">Aa</ion-button>
         <ion-button @click="dismissModal()">Cerrar</ion-button>
       </ion-buttons>
     </ion-toolbar>
@@ -110,12 +111,18 @@ export default defineComponent({
       );
     };
 
+    const toggleFont = () => {
+      const modal = document.querySelector('ion-modal');
+      modal.classList.toggle('font-caligrafia');
+    };
+
     return {
       dismissModal,
       openInNewTab,
       MaterialType,
       isAdminOrProfessor,
       editMaterial,
+      toggleFont,
     };
   },
 });

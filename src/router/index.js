@@ -80,6 +80,15 @@ const routes = [
         },
       },
       {
+        path: 'admin/imprimir-lista-estudiantes',
+        name: 'PrintableStudentList',
+        component: () => import('@/views/PrintableStudentList.vue'),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: '/inicio' });
+        },
+      },
+      {
         path: "admin/grupos/:cursoId/:selectedYear",
         component: () => import("@/views/GruposPage.vue"),
         beforeEnter: (to, from, next) => {
