@@ -148,7 +148,37 @@
         >
           Registrar notas <ion-icon :icon="fileTrayFullOutline"></ion-icon>
         </ion-button>
+        <input type="file" ref="fileInput" @change="onFileSelected" style="display: none" accept=".xlsx, .xls"/>
+        <ion-button
+          expand="full"
+          fill="outline"
+          shape="round"
+          color="primary"
+          class="ion-align-self-center"
+          @click="triggerFileUpload"
+        >
+          Importar Excel <ion-icon :icon="cloudUploadOutline"></ion-icon>
+        </ion-button>
       </ion-buttons>
+
+      <!-- Modal for number of questions -->
+      <ion-modal :is-open="isQuestionsModalOpen" @didDismiss="isQuestionsModalOpen = false">
+        <ion-header>
+          <ion-toolbar>
+            <ion-title>Número de Preguntas a Evaluar</ion-title>
+            <ion-buttons slot="end">
+              <ion-button @click="isQuestionsModalOpen = false">Cancelar</ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding">
+          <ion-item>
+            <ion-label position="stacked">Número de preguntas</ion-label>
+            <ion-input type="number" v-model="numPreguntasAEvaluar"></ion-input>
+          </ion-item>
+          <ion-button expand="block" @click="processAndRegisterGrades">Aceptar</ion-button>
+        </ion-content>
+      </ion-modal>
 
       <!-- Toasts -->
       <ion-toast
@@ -172,9 +202,10 @@
 <script>
 import axios from "axios";
 import { adminOprofesor, numeroOrdinal } from "../globalService";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { usuarioGet, tokenHeader } from "../globalService";
 import { useRoute } from "vue-router";
+import * as XLSX from 'xlsx';
 
 import {
   arrowBackOutline,
@@ -190,6 +221,7 @@ import {
   fileTrayFullOutline,
   checkmarkCircleOutline,
   closeCircleOutline,
+  cloudUploadOutline,
 } from "ionicons/icons";
 
 import {
@@ -211,6 +243,9 @@ import {
   IonAccordion,
   IonSpinner,
   IonToast,
+  alertController,
+  IonModal,
+  IonInput
 } from "@ionic/vue";
 
 export default {
@@ -232,6 +267,8 @@ export default {
     IonAccordion,
     IonSpinner,
     IonToast,
+    IonModal,
+    IonInput
   },
   setup() {
     const usuario = ref();
@@ -253,6 +290,13 @@ export default {
       { group: { name: "Cargando", id: 0 }, points: "Cargando" },
     ]);
 
+    const totalPreguntas = computed(() => {
+      if (cuestionario.value && cuestionario.value.questions) {
+        return cuestionario.value.questions.length;
+      }
+      return 0;
+    });
+
     const isSuccessToastOpen = ref(false);
     const setSuccessToastOpen = (val) => (isSuccessToastOpen.value = val);
     const isErrorToastOpen = ref(false);
@@ -260,6 +304,168 @@ export default {
     const setErrorToastOpen = (val, message = "") => {
       isErrorToastOpen.value = val;
       errorMessage.value = message;
+    };
+
+    const fileInput = ref(null);
+    const isQuestionsModalOpen = ref(false);
+    const numPreguntasAEvaluar = ref(0);
+    const selectedFile = ref(null);
+
+    const triggerFileUpload = () => {
+      fileInput.value.click();
+    };
+
+    const onFileSelected = (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      selectedFile.value = file;
+      numPreguntasAEvaluar.value = totalPreguntas.value;
+      isQuestionsModalOpen.value = true;
+      event.target.value = '';
+    };
+
+    const showSuccessAlert = async (dataToLog) => {
+        console.log("--- DATOS LISTOS PARA REGISTRAR ---");
+        console.log(dataToLog);
+        const successAlert = await alertController.create({
+            header: 'Éxito',
+            message: 'Las notas (falsas) han sido registradas. Revisa la consola para ver los datos.',
+            buttons: ['OK']
+        });
+        await successAlert.present();
+    };
+
+    const processAndRegisterGrades = async () => {
+      isQuestionsModalOpen.value = false;
+      const file = selectedFile.value;
+      if (!file) return;
+
+      const numPreguntas = numPreguntasAEvaluar.value;
+      if (numPreguntas <= 0) {
+          setErrorToastOpen(true, "El número de preguntas a evaluar debe ser mayor que 0.");
+          return;
+      }
+
+      const reader = new FileReader();
+      const data = await new Promise((resolve, reject) => {
+        reader.onload = e => resolve(e.target.result);
+        reader.onerror = err => reject(err);
+        reader.readAsArrayBuffer(file);
+      });
+
+      const workbook = XLSX.read(new Uint8Array(data), { type: 'array' });
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: 1 });
+      
+      if (rows.length < 1) {
+          console.error("No se encontraron datos en el archivo Excel o está vacío.");
+          return;
+      }
+
+      const headers = rows[0];
+      const dataRows = rows.slice(1);
+      
+      const datosParaRegistrar = [];
+      const errores = [];
+
+      const searchStudent = async (code) => {
+          if (!code) return null;
+          try {
+              const response = await axios.get(`/users?code=${code}`);
+              if (response.data && response.data.length > 0) {
+                  return response.data[0];
+              }
+              return null;
+          } catch (error) {
+              console.error(`Error buscando estudiante con código ${code}:`, error);
+              return null;
+          }
+      };
+
+      for (const [index, rowArray] of dataRows.entries()) {
+          const rowObject = {};
+          headers.forEach((header, index) => {
+            rowObject[header] = rowArray[index];
+          });
+
+          const correctAnswers = parseFloat(rowObject['Correct Answers']);
+          const totalMarks = rowObject['Total Marks'];
+          const incorrectAnswers = rowObject['Incorrect Answers'];
+
+          const isCorrectEmpty = correctAnswers == null || isNaN(correctAnswers);
+          const isTotalEmpty = totalMarks == null || totalMarks === '';
+          const isIncorrectEmpty = incorrectAnswers == null || incorrectAnswers === '';
+          if (isCorrectEmpty && isTotalEmpty && isIncorrectEmpty) {
+              continue;
+          }
+
+          const originalRollNo = String(rowObject['Roll No'] || '');
+          const cleanedRollNo = originalRollNo.replace(/^0+/, '');
+
+          let student = null;
+          const searchAttempts = [];
+
+          const rollNoWith1 = '1' + cleanedRollNo;
+          searchAttempts.push(rollNoWith1);
+          student = await searchStudent(rollNoWith1);
+
+          if (!student) {
+              const rollNoWith10 = '10' + cleanedRollNo;
+              searchAttempts.push(rollNoWith10);
+              student = await searchStudent(rollNoWith10);
+          }
+          if (!student) {
+              searchAttempts.push(cleanedRollNo);
+              student = await searchStudent(cleanedRollNo);
+          }
+
+          if (student) {
+              const calculatedNota = (correctAnswers * 5) / numPreguntas;
+              const nota = Math.min(calculatedNota, 5); // Cap the grade at 5
+              const gradeData = {
+                  userId: student.id,
+                  gradableId: parseInt(id, 10),
+                  gradableType: "quiz",
+                  periodId: cuestionario.value.lesson.period.id,
+                  gradeType: "regular",
+                  grade: parseFloat(nota.toFixed(2)),
+                  instituteId: cuestionario.value.lesson.institute.id,
+                  studentInfo: { name: student.name, lastName: student.lastName, code: student.code }
+              };
+              datosParaRegistrar.push(gradeData);
+          } else {
+              errores.push({
+                  row: index + 2,
+                  'Roll No Original': originalRollNo,
+                  'Intentos de búsqueda': searchAttempts,
+                  'Mensaje': 'Estudiante no encontrado.'
+              });
+          }
+      }
+
+      if (errores.length > 0) {
+          const errorMessages = errores.map(e => `Fila ${e.row}: No se encontró al estudiante con Roll No ${e['Roll No Original']}`).join('<br>');
+          const confirmAlert = await alertController.create({
+              header: 'Estudiantes no encontrados',
+              message: `${errorMessages}<br><br>¿Desea registrar las notas de todas maneras?`,
+              buttons: [
+                  {
+                      text: 'No',
+                      role: 'cancel',
+                  },
+                  {
+                      text: 'Sí',
+                      handler: () => {
+                          showSuccessAlert(datosParaRegistrar);
+                      }
+                  }
+              ]
+          });
+          await confirmAlert.present();
+      } else {
+          showSuccessAlert(datosParaRegistrar);
+      }
     };
 
     const handleAccordionChange = async (e) => {
@@ -338,7 +544,6 @@ export default {
             answer.numeroPregunta = numeroOrdinal(index, answer.question.title);
             return answer;
           })
-          // order by numeroPregunta
           .sort((a, b) => a.numeroPregunta - b.numeroPregunta);
       } catch (error) {
         console.error("Error loading answers:", error);
@@ -358,7 +563,7 @@ export default {
               "Skipping response due to missing group data:",
               respuesta
             );
-            continue; // Skip to the next response
+            continue;
           }
           const response = await axios.get(
             `/groups/${respuesta.group.id}/${cuestionario.value.lesson.year}/users`
@@ -397,6 +602,7 @@ export default {
     }
 
     return {
+      totalPreguntas,
       usuario,
       lessonPoints: quizPoints,
       id,
@@ -429,6 +635,13 @@ export default {
       isErrorToastOpen,
       errorMessage,
       setErrorToastOpen,
+      fileInput,
+      triggerFileUpload,
+      cloudUploadOutline,
+      isQuestionsModalOpen,
+      numPreguntasAEvaluar,
+      onFileSelected,
+      processAndRegisterGrades,
     };
   },
 };
