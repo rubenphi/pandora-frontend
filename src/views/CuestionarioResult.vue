@@ -324,15 +324,39 @@ export default {
       event.target.value = '';
     };
 
-    const showSuccessAlert = async (dataToLog) => {
-        console.log("--- DATOS LISTOS PARA REGISTRAR ---");
-        console.log(dataToLog);
+    const registrarNotasDesdeExcel = async (grades) => {
+      const failedRegistrations = [];
+
+      for (const grade of grades) {
+        // eslint-disable-next-line no-unused-vars
+        const { studentInfo, ...gradeData } = grade;
+        try {
+          await axios.post('/grades', gradeData);
+        } catch (error) {
+          failedRegistrations.push({
+              student: studentInfo,
+              error: error.response?.data?.message || "Error desconocido"
+          });
+        }
+      }
+
+      if (failedRegistrations.length > 0) {
+        const errorList = failedRegistrations.map(f => `<li>${f.student.lastName} ${f.student.name}</li>`).join('');
+        const alert = await alertController.create({
+          header: 'Error al Registrar Notas',
+          subHeader: 'Algunas notas no se pudieron registrar.',
+          message: `Estudiantes afectados:<br><ul>${errorList}</ul>`,
+          buttons: ['OK'],
+        });
+        await alert.present();
+      } else {
         const successAlert = await alertController.create({
             header: 'Éxito',
-            message: 'Las notas (falsas) han sido registradas. Revisa la consola para ver los datos.',
+            message: 'Todas las notas han sido registradas correctamente.',
             buttons: ['OK']
         });
         await successAlert.present();
+      }
     };
 
     const processAndRegisterGrades = async () => {
@@ -448,7 +472,7 @@ export default {
           const errorMessages = errores.map(e => `Fila ${e.row}: No se encontró al estudiante con Roll No ${e['Roll No Original']}`).join('<br>');
           const confirmAlert = await alertController.create({
               header: 'Estudiantes no encontrados',
-              message: `${errorMessages}<br><br>¿Desea registrar las notas de todas maneras?`,
+              message: `${errorMessages}<br><br>¿Desea registrar las notas de todas maneras para los estudiantes que sí se encontraron?`,
               buttons: [
                   {
                       text: 'No',
@@ -457,14 +481,14 @@ export default {
                   {
                       text: 'Sí',
                       handler: () => {
-                          showSuccessAlert(datosParaRegistrar);
+                          registrarNotasDesdeExcel(datosParaRegistrar);
                       }
                   }
               ]
           });
           await confirmAlert.present();
       } else {
-          showSuccessAlert(datosParaRegistrar);
+          registrarNotasDesdeExcel(datosParaRegistrar);
       }
     };
 

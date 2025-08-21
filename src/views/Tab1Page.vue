@@ -50,7 +50,7 @@
       <ion-list>
         <ion-item>
           <ion-label>
-            <h2>Notas</h2>
+            <h2>Notas del Grupo</h2>
           </ion-label>
 
           <ion-select
@@ -66,26 +66,51 @@
             </ion-select-option>
           </ion-select>
         </ion-item>
-        <div v-for="area in notas" :key="area.id">
-          <ion-item>
-            <ion-label>
-              <h3>{{ area?.name }}</h3>
-            </ion-label>
-          </ion-item>
-          <div v-for="nota in area?.notas" :key="nota?.id">
-            <ion-item>
-              <ion-icon :icon="easelOutline" slot="start"></ion-icon>
-              <ion-label>
-                <h2>{{ nota?.gradableItem?.title }}</h2>
 
-                <p v-if="nota?.grade < 3" style="color: #bf9494">
-                  {{ nota?.grade }}
-                </p>
-                <p v-else>{{ nota?.grade }}</p>
-              </ion-label>
+        <!-- Accordion for each group member -->
+        <ion-accordion-group>
+          <ion-accordion
+            v-for="member in groupMembersWithGrades"
+            :key="member.userId"
+          >
+            <ion-item slot="header">
+              <ion-label>{{ member.userName }}</ion-label>
+              <ion-chip
+                slot="end"
+                :color="member.promedioGeneral < 3.5 ? 'danger' : 'primary'"
+              >
+                {{ member.promedioGeneral }}
+              </ion-chip>
             </ion-item>
-          </div>
-        </div>
+            <div class="ion-padding" slot="content">
+              <ion-list>
+                <div v-for="area in member.areas" :key="area.id">
+                  <ion-item>
+                    <ion-label>
+                      <h3>{{ area?.name }}</h3>
+                    </ion-label>
+                  </ion-item>
+                  <div v-for="nota in area?.notas" :key="nota?.id">
+                    <ion-item>
+                      <ion-icon :icon="easelOutline" slot="start"></ion-icon>
+                      <ion-label>
+                        <h2>{{ nota?.gradableItem?.title || nota.title }}</h2>
+                        <p
+                          v-if="nota.grade && nota.grade < 3.5"
+                          style="color: #bf9494"
+                        >
+                          {{ nota.grade }}
+                        </p>
+                        <p v-else-if="nota.grade">{{ nota.grade }}</p>
+                        <p v-else>Pendiente</p>
+                      </ion-label>
+                    </ion-item>
+                  </div>
+                </div>
+              </ion-list>
+            </div>
+          </ion-accordion>
+        </ion-accordion-group>
       </ion-list>
 
       <ion-modal
@@ -172,6 +197,9 @@ import {
   IonInput,
   IonLabel,
   IonList,
+  IonAccordion,
+  IonAccordionGroup,
+  IonChip,
 } from "@ionic/vue";
 
 export default {
@@ -195,6 +223,9 @@ export default {
     IonInput,
     IonLabel,
     IonList,
+    IonAccordion,
+    IonAccordionGroup,
+    IonChip,
   },
 
   setup() {
@@ -210,7 +241,7 @@ export default {
     const code = ref();
 
     const grupoUsuario = ref();
-    const notas = ref([]);
+    const groupMembersWithGrades = ref([]);
 
     const grupos = ref([]);
 
@@ -228,12 +259,26 @@ export default {
 
       axios.post(`/users/${usuario.value.id}/groups`, data).then(() => {
         modal.value.$el.dismiss(data, "confirm");
-        //refresh page
         location.reload();
       });
     };
 
+    const calcularPromedio = (liveGradableItems, studentGrades) => {
+      if (liveGradableItems.length === 0) {
+        return 0;
+      }
+      const sumaTotal = studentGrades.reduce(
+        (acc, nota) => acc + nota.grade,
+        0
+      );
+      const promedio = sumaTotal / liveGradableItems.length;
+      return promedio.toFixed(2);
+    };
+
     onIonViewWillEnter(async () => {
+      periodoSelected.value = localStorage.getItem("periodoSelected")
+        ? parseInt(localStorage.getItem("periodoSelected"), 10)
+        : null;
       year.value = Number.isNaN(parseInt(localStorage.getItem("year"), 10))
         ? selectedYear()
         : parseInt(localStorage.getItem("year"), 10);
@@ -253,51 +298,6 @@ export default {
       });
 
       tokenHeader();
-      const getGrades = async () => {
-        let url = `/grades?userId=${usuario.value.id}&year=${year.value}`;
-        if (periodoSelected.value) {
-          url += `&periodId=${periodoSelected.value}`;
-        }
-        await axios.get(url).then((response) => {
-          const notasByArea = response.data.reduce((acc, nota) => {
-            delete nota.area;
-
-            nota.grade = nota.grade.toFixed(1);
-            const area = nota.gradableItem.lesson.area;
-            const areaIndex = acc.findIndex((a) => a.id === area.id);
-            if (areaIndex === -1) {
-              acc.push({
-                name: area.name,
-                id: area.id,
-                notas: [nota],
-              });
-            } else {
-              acc[areaIndex].notas.push(nota);
-            }
-            return acc;
-          }, []);
-
-          //ordenar notas por fecha las más antigua primero
-
-          notas.value = notasByArea.map((area) => {
-            return {
-              ...area,
-              notas: area.notas.sort((a, b) => {
-                return (
-                  new Date(a.gradableItem.lesson.date) -
-                  new Date(b.gradableItem.lesson.date)
-                );
-              }),
-            };
-          });
-        });
-      };
-
-      watch(periodoSelected, () => {
-        getGrades();
-      });
-
-      getGrades();
 
       await axios.get(`/users/${usuario.value.id}/groups`).then((response) => {
         grupoUsuario.value =
@@ -310,6 +310,97 @@ export default {
           .then((response) => {
             miembros.value = response.data;
           });
+      }
+
+      const getGradesForGroup = async () => {
+        if (
+          !actualCurso.value?.course?.id ||
+          !periodoSelected.value ||
+          miembros.value.length === 0
+        ) {
+          groupMembersWithGrades.value = [];
+          return;
+        }
+
+        const allGradesUrl = `/grades?courseId=${actualCurso.value.course.id}&periodId=${periodoSelected.value}&year=${year.value}`;
+        const allGradesResponse = await axios.get(allGradesUrl);
+        const allGrades = allGradesResponse.data;
+
+        const liveGradableItemsMap = new Map();
+        allGrades.forEach((grade) => {
+          liveGradableItemsMap.set(grade.gradableItem.id, grade.gradableItem);
+        });
+        const liveGradableItems = Array.from(liveGradableItemsMap.values());
+
+        const processedMembers = miembros.value.map((miembro) => {
+          const memberId = miembro.user.id;
+          const memberName = `${miembro.user.name} ${miembro.user.lastName}`;
+
+          const studentGrades = allGrades
+            .filter((grade) => grade.user.id === memberId)
+            .map((n) => ({
+              ...n,
+              grade: parseFloat(n.grade.toFixed(1)),
+            }));
+
+          const promedioGeneral = calcularPromedio(
+            liveGradableItems,
+            studentGrades
+          );
+
+          const areas = liveGradableItems.reduce((acc, actividad) => {
+            const notaExistente = studentGrades.find(
+              (n) => n.gradableItem.id === actividad.id
+            );
+
+            const itemParaMostrar = {
+              id: actividad.id,
+              title: actividad.title,
+              gradableItem: actividad,
+              grade: notaExistente ? notaExistente.grade : null,
+            };
+
+            const area = actividad.lesson.area;
+            const areaIndex = acc.findIndex((a) => a.id === area.id);
+
+            if (areaIndex === -1) {
+              acc.push({
+                name: area.name,
+                id: area.id,
+                notas: [itemParaMostrar],
+              });
+            } else {
+              acc[areaIndex].notas.push(itemParaMostrar);
+            }
+            return acc;
+          }, []);
+
+          const sortedAreas = areas.map((area) => ({
+            ...area,
+            notas: area.notas.sort(
+              (a, b) =>
+                new Date(a.gradableItem.lesson.date) -
+                new Date(b.gradableItem.lesson.date)
+            ),
+          }));
+
+          return {
+            userId: memberId,
+            userName: memberName,
+            promedioGeneral: promedioGeneral,
+            areas: sortedAreas,
+          };
+        });
+
+        groupMembersWithGrades.value = processedMembers;
+      };
+
+      watch(periodoSelected, getGradesForGroup);
+
+      if (!periodoSelected.value && periodos.value?.length > 0) {
+        periodoSelected.value = periodos.value[0].id;
+      } else {
+        await getGradesForGroup();
       }
 
       await axios
@@ -341,7 +432,7 @@ export default {
       swapHorizontalOutline,
       cancel,
       confirm,
-      notas,
+      groupMembersWithGrades,
       easelOutline,
       periodos,
       periodoSelected,

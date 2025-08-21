@@ -256,6 +256,67 @@ export async function QuizSinNotas(cursoId, usuario) {
   return leccionesConRespuestas;
 }
 
+export async function ActivitiesSinNotas(cursoId, usuario) {
+  let activities = [];
+  let notas = [];
+
+  try {
+    const response = await axios.get(
+      `/activities?courseId=${cursoId}&year=${selectedYear()}&instituteId=${
+        usuario.value.institute.id
+      }`,
+      tokenHeader()
+    );
+    activities = response.data;
+  } catch (error) {
+    console.error("Error al cargar las actividades:", error);
+  }
+
+  try {
+    const response = await axios.get(
+      `/grades?courseId=${cursoId}&periodId=${selectedPeriod()}&year=${selectedYear()}&instituteId=${
+        usuario.value.institute.id
+      }`,
+      tokenHeader()
+    );
+    notas = response.data;
+  } catch (error) {
+    console.error("Error al cargar las notas:", error);
+  }
+
+  // Paso 1: Obtener los IDs de las lecciones que sí tienen notas
+  const idsConNotas = new Set(notas.map((nota) => nota.gradableItem.id));
+
+  // Paso 2: Filtrar las lecciones que no tienen nota
+  const activitiesSinNotas = activities.filter(
+    (gradableItem) => !idsConNotas.has(gradableItem.id)
+  );
+
+  // Paso 3: Filtrar las lecciones sin nota pero que sí tienen revisiones
+  const leccionesConRevisiones = [];
+
+  for (const gradableItem of activitiesSinNotas) {
+    try {
+      const response = await axios.get(
+        `/student-criterion-scores?activityId=${gradableItem.id}`,
+        tokenHeader()
+      );
+
+      // Solo agregar si hay al menos una respuesta
+      if (Array.isArray(response.data) && response.data.length > 0) {
+        leccionesConRevisiones.push(gradableItem);
+      }
+    } catch (error) {
+      console.error(
+        `Error al obtener respuestas para la lección ${gradableItem.id}:`,
+        error
+      );
+    }
+  }
+
+  return leccionesConRevisiones;
+}
+
 export function adminOdirectivo() {
   tokenHeader();
   if (

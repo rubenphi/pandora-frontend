@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Análisis de Lecciones</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+      .input-section {
+        flex: 1;
+        min-width: 300px;
+      }
+      table {
+        border-collapse: collapse;
+        margin: 20px 0;
+        width: 100%;
+      }
+      th,
+      td {
+        border: 1px solid black;
+        padding: 8px;
+        text-align: center;
+        white-space: nowrap;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+      .nombre-col {
+        text-align: left;
+      }
+      .categoria-hacer {
+        background-color: #e6d4f0;
+        color: #000;
+      }
+      .categoria-saber {
+        background-color: #d4e6f0;
+        color: #000;
+      }
+      .categoria-ser {
+        background-color: #d4f0d4;
+        color: #000;
+      }
+      .promedio-hacer {
+        background-color: #9966cc;
+        color: white;
+        font-weight: bold;
+      }
+      .promedio-saber {
+        background-color: #4682b4;
+        color: white;
+        font-weight: bold;
+      }
+      .promedio-ser {
+        background-color: #2e8b57;
+        color: white;
+        font-weight: bold;
+      }
+      .nota-final {
+        background-color: #333333;
+        color: white;
+        font-weight: bold;
+      }
+      .estudiante-retirado {
+        background-color: #d3d3d3 !important;
+        color: #666 !important;
+      }
+      .estudiante-retirado .promedio-hacer,
+      .estudiante-retirado .promedio-saber,
+      .estudiante-retirado .promedio-ser,
+      .estudiante-retirado .nota-final {
+        background-color: #999 !important;
+        color: #fff !important;
+      }
+      select,
+      button {
+        margin: 5px;
+        padding: 8px 12px;
+        cursor: pointer;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+      }
+      button {
+        background-color: #4caf50;
+        color: white;
+        border: none;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      textarea {
+        width: 100%;
+        height: 150px;
+        margin-bottom: 10px;
+      }
+      .filters {
+        margin: 15px 0;
+      }
+      .table-container {
+        overflow-x: auto;
+      }
+      .resumen-container {
+        margin-top: 30px;
+      }
+      .editable {
+        background-color: #2e8b57;
+        cursor: pointer;
+      }
+      input.nota-input {
+        width: 40px;
+        text-align: center;
+      }
+      .alerta {
+        background-color: #ffdddd;
+        color: #ff0000;
+        font-weight: bold;
+      }
+      .llenadoAutomatico {
+        background-color: #f0efd4;
+        color: #000;
+      }
+      .tabla-carta {
+        width: 100%;
+        max-width: 750px;
+        border-collapse: collapse;
+        font-size: 12px;
+        margin: 0 auto;
+      }
+      .tabla-carta th,
+      .tabla-carta td {
+        border: 1px solid #000;
+        padding: 4px 8px;
+        text-align: left;
+      }
+      @media print {
+        .tabla-carta {
+          width: 100%;
+          max-width: 100%;
+          font-size: 10pt;
+          page-break-inside: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Resumen de Actividades</h2>
+
+    <div class="container">
+      <div class="input-section">
+        <h3>Selección de Curso</h3>
+        <select id="year-select" onchange="cargarCursos()"></select>
+        <select id="course-select" onchange="cargarAreas()"></select>
+        <select id="period-select"></select>
+        <select id="area-select"></select>
+      </div>
+      <div class="input-section">
+        <h3>Cargar lista desde colegiosonline.com</h3>
+        <label for="grado-select">Seleccione el grado:</label>
+        <select id="grado-select">
+          <option value="0401">CUARTO - FRANCISCO JOSE DE CALDAS</option>
+          <option value="0501" selected>
+            QUINTO - FRANCISCO JOSE DE CALDAS
+          </option>
+          <option value="0601">SEXTO 1 - FRANCISCO JOSE DE CALDAS</option>
+          <option value="0701">SÉPTIMO 1 - FRANCISCO JOSE DE CALDAS</option>
+          <option value="0814">OCTAVO 2 - FRANCISCO JOSE DE CALDAS</option>
+        </select>
+        <br /><br />
+
+        <label for="cookie-input">Cookie PHPSESSID (y otras si aplica):</label>
+        <input
+          type="text"
+          id="cookie-input"
+          placeholder="Ej: PHPSESSID=xxxx; __cf_bm=yyyy"
+          style="width: 100%"
+        />
+        <br /><br />
+
+        <button onclick="cargarListaAlumnos()">Cargar Lista</button>
+      </div>
+    </div>
+
+    <div>
+      <button onclick="procesarDatos()">Procesar Datos</button>
+      <input
+        type="checkbox"
+        id="preliminar-checkbox"
+        onchange="procesarDatos()"
+      />
+      <label for="preliminar-checkbox">Reporte Preliminar</label>
+      <div class="filters">
+        <button onclick="filtrarPromedio(3.5, false)">Promedio &lt; 3.5</button>
+        <button onclick="filtrarPromedio(4.0, true)">Promedio ≥ 4.0</button>
+        <button onclick="mostrarTodos()">Mostrar Todos</button>
+        <button onclick="asignarSerCinco()">Asignar 5.0 al SER</button>
+        <button onclick="copiarTabla()">📋 Copiar Tabla</button>
+        <button onclick="filtrarResumenes()">Filtrar Resúmenes</button>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table id="tabla-principal">
+        <thead id="tabla-encabezado"></thead>
+        <tbody id="tabla-resultados"></tbody>
+      </table>
+    </div>
+
+    <div
+      class="resumen-container"
+      id="resumen-bajo-rendimiento"
+      style="display: none"
+    >
+      <h3 id="grado-seleccionado">Grado:</h3>
+      <h3>Estudiantes con Promedio Inferior a 3.5</h3>
+      <div class="table-container">
+        <p id="texto-bajo-rendimiento"></p>
+        <table id="tabla-bajo-rendimiento" class="tabla-carta">
+          <thead>
+            <tr>
+              <th class="nombre-col">Nombre Completo</th>
+              <th>Promedio</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-resumen-resultados"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div
+      class="resumen-container"
+      id="resumen-alto-rendimiento"
+      style="display: none"
+    >
+      <h3>Estudiantes con Promedio Superior a 4.0</h3>
+      <div class="table-container">
+        <p id="texto-alto-rendimiento"></p>
+        <table id="tabla-alto-rendimiento" class="tabla-carta">
+          <thead>
+            <tr>
+              <th class="nombre-col">Nombre Completo</th>
+              <th>Promedio</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-resumen-alto-rendimiento"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      let usuarios = {};
+      let estudiantesList = [];
+      let totalGradableItems = 0;
+      let todosLosResultados = [];
+      let gradableItems = [];
+      let idAutoevaluacion = null;
+      let IdCoevaluacion = null;
+      let cursos = [];
+
+      function tokenHeader() {
+        axios.defaults.headers.common["Authorization"] =
+          localStorage.getItem("token");
+      }
+
+      function usuarioGet() {
+        return JSON.parse(localStorage.getItem("usuario"));
+      }
+
+      function basedeURL() {
+        var puerto = "3000";
+        return (
+          window.location.protocol +
+          "//" +
+          window.location.host.split(":")[0] +
+          ":" +
+          puerto +
+          "/"
+        );
+      }
+
+      window.onload = async function () {
+        axios.defaults.baseURL = basedeURL();
+        tokenHeader();
+        await cargarAnios();
+        await cargarPeriodos();
+        await cargarCursos();
+        await cargarAreas();
+      };
+
+      async function cargarAnios() {
+        const yearSelect = document.getElementById("year-select");
+        const currentYear = new Date().getFullYear();
+        for (let i = currentYear; i >= 2020; i--) {
+          const option = document.createElement("option");
+          option.value = i;
+          option.textContent = i;
+          yearSelect.appendChild(option);
+        }
+        const selectedYear = localStorage.getItem("year");
+        yearSelect.value = selectedYear
+          ? JSON.parse(selectedYear)
+          : currentYear;
+      }
+
+      async function cargarPeriodos() {
+        const periodSelect = document.getElementById("period-select");
+        const periodos = JSON.parse(localStorage.getItem("periodos")).sort(
+          (a, b) => a.name.localeCompare(b.name)
+        );
+        periodos.forEach((periodo) => {
+          const option = document.createElement("option");
+          option.value = periodo.id;
+          option.textContent = periodo.name;
+          periodSelect.appendChild(option);
+        });
+        const selectedPeriod = localStorage.getItem("periodoSelected");
+        periodSelect.value = selectedPeriod ? JSON.parse(selectedPeriod) : "1";
+      }
+
+      async function cargarCursos() {
+        const year = document.getElementById("year-select").value;
+        const usuario = usuarioGet();
+        const courseSelect = document.getElementById("course-select");
+        courseSelect.innerHTML = ""; // Limpiar opciones anteriores
+
+        try {
+          const response = await axios.get(
+            `/users/${usuario.id}/courses?year=${year}`
+          );
+          cursos = response.data;
+          cursos.forEach((curso) => {
+            const option = document.createElement("option");
+            option.value = curso.course.id;
+            option.textContent = curso.course.name;
+            courseSelect.appendChild(option);
+          });
+
+          const cursoSeleccionado = document.getElementById("course-select");
+        } catch (error) {
+          console.error("Error al cargar los cursos:", error);
+          alert("No se pudieron cargar los cursos.");
+        }
+      }
+
+      async function cargarAreas() {
+        const courseId = document.getElementById("course-select").value;
+
+        const usuario = usuarioGet();
+        const areaSelect = document.getElementById("area-select");
+        areaSelect.innerHTML = ""; // Limpiar opciones anteriores
+
+        const cursoSeleccionado = cursos.find(
+          (curso) => curso.course.id == courseId
+        );
+
+        document.getElementById("grado-seleccionado").textContent = `Grado: ${
+          cursoSeleccionado ? cursoSeleccionado.course.name : "No encontrado"
+        }`;
+        if (!cursoSeleccionado) {
+          console.error("Curso no encontrado para el ID:", courseId);
+          return;
+        }
+        const areas = cursoSeleccionado.course.areas || [];
+
+        areas.forEach((area) => {
+          const option = document.createElement("option");
+          option.value = area.id;
+          option.textContent = area.name;
+          areaSelect.appendChild(option);
+        });
+      }
+
+      async function procesarDatos(estudiantes) {
+        const year = document.getElementById("year-select").value;
+        const courseId = document.getElementById("course-select").value;
+        const periodId = document.getElementById("period-select").value;
+        const areaId = document.getElementById("area-select").value;
+        const usuario = usuarioGet();
+
+        if (!courseId || !periodId) {
+          alert("Por favor, seleccione un grado y un período.");
+          return;
+        }
+
+        let datos;
+        try {
+          const responseNotas = await axios.get(
+            `/grades?year=${year}&courseId=${courseId}&areaId=${areaId}&periodId=${periodId}&instituteId=${usuario.institute.id}`
+          );
+          datos = responseNotas.data;
+        } catch (error) {
+          console.error("Error al obtener los datos de la API:", error);
+          alert("Error al obtener las notas. Revise la consola.");
+          return;
+        }
+
+        estudiantesList = estudiantes.data;
+
+        gradableItems = [];
+        const gradableItemsMap = new Map();
+
+        datos.forEach((d) => {
+          const gradableItemId = d.gradableItem.id;
+          const gradableItemTitle =
+            d.gradableItem.title || `Actividad ${gradableItemId}`;
+          const lessonTopic = d.gradableItem.lesson.topic;
+
+          if (!gradableItemsMap.has(gradableItemId)) {
+            gradableItemsMap.set(gradableItemId, {
+              id: gradableItemId,
+              title: gradableItemTitle,
+              lessonTopic: lessonTopic,
+            });
+          }
+        });
+
+        gradableItems = Array.from(gradableItemsMap.values()).sort(
+          (a, b) => a.id - b.id
+        );
+        totalGradableItems = gradableItems.length;
+
+        idAutoevaluacion =
+          gradableItems.filter((item) => item.title === "Autoevaluación")[0]
+            ?.id || null;
+        IdCoevaluacion =
+          gradableItems.filter((item) => item.title === "Coevaluación")[0]
+            ?.id || null;
+
+        actualizarEncabezados();
+
+        usuarios = {};
+
+        datos.forEach((d) => {
+          const userId = d.user.id;
+          const userCode = d.user.code;
+          const gradableItemId = d.gradableItem.id;
+          const grade = d.grade;
+
+          if (!usuarios[userId]) {
+            usuarios[userId] = {
+              nombre: d.user.name,
+              apellido: d.user.lastName,
+              codigo: userCode,
+              notasHacer: {},
+              notasSaber: {},
+              notaSer: 5.0,
+              coevaluacionAutomatica: false,
+              autoevaluacionAutomatica: false,
+              total: 0,
+            };
+          }
+
+          usuarios[userId].notasHacer[gradableItemId] = grade;
+          usuarios[userId].notasSaber[gradableItemId] = grade;
+        });
+
+        function promedioSinIds(notas, idsExcluir = []) {
+          const clavesValidas = Object.keys(notas).filter(
+            (id) => !idsExcluir.includes(parseInt(id))
+          );
+
+          if (clavesValidas.length === 0) return 0;
+
+          const suma = clavesValidas.reduce(
+            (acc, id) => acc + (notas[id] ?? 0),
+            0
+          );
+          return suma / clavesValidas.length;
+        }
+
+        const idsEspeciales = [];
+        if (idAutoevaluacion != null) idsEspeciales.push(idAutoevaluacion);
+        if (IdCoevaluacion != null) idsEspeciales.push(IdCoevaluacion);
+
+        if (idAutoevaluacion != null) {
+          Object.values(usuarios).forEach((usuario) => {
+            const faltaHacer =
+              usuario.notasHacer[idAutoevaluacion] === undefined;
+            const faltaSaber =
+              usuario.notasSaber[idAutoevaluacion] === undefined;
+
+            if (faltaHacer || faltaSaber) {
+              const promHacer = promedioSinIds(
+                usuario.notasHacer,
+                idsEspeciales
+              );
+              const promSaber = promedioSinIds(
+                usuario.notasSaber,
+                idsEspeciales
+              );
+
+              if (faltaHacer) usuario.notasHacer[idAutoevaluacion] = promHacer;
+              if (faltaSaber) usuario.notasSaber[idAutoevaluacion] = promSaber;
+              usuario.autoevaluacionAutomatica = true;
+            }
+          });
+        }
+
+        if (IdCoevaluacion != null) {
+          Object.values(usuarios).forEach((usuario) => {
+            const faltaHacer = usuario.notasHacer[IdCoevaluacion] === undefined;
+            const faltaSaber = usuario.notasSaber[IdCoevaluacion] === undefined;
+
+            if (faltaHacer || faltaSaber) {
+              const promHacer = promedioSinIds(
+                usuario.notasHacer,
+                idsEspeciales
+              );
+              const promSaber = promedioSinIds(
+                usuario.notasSaber,
+                idsEspeciales
+              );
+
+              if (faltaHacer) usuario.notasHacer[IdCoevaluacion] = promHacer;
+              if (faltaSaber) usuario.notasSaber[IdCoevaluacion] = promSaber;
+              usuario.coevaluacionAutomatica = true;
+            }
+          });
+        }
+
+        generarResultadosOrdenados();
+        document.getElementById("resumen-bajo-rendimiento").style.display =
+          "none";
+        document.getElementById("resumen-alto-rendimiento").style.display =
+          "none";
+      }
+
+      function actualizarEncabezados() {
+        const esPreliminar = document.getElementById(
+          "preliminar-checkbox"
+        ).checked;
+        const thead = document.getElementById("tabla-encabezado");
+        thead.innerHTML = "";
+
+        const filaCategoria = document.createElement("tr");
+        filaCategoria.innerHTML = `
+          <th rowspan="2" class="nombre-col">Apellidos</th>
+          <th rowspan="2" class="nombre-col">Nombre</th>
+          <th rowspan="2">Documento</th>
+        `;
+
+        gradableItems.forEach(() => {
+          filaCategoria.innerHTML += `<th class="categoria-hacer">Hacer</th>`;
+        });
+
+        gradableItems.forEach(() => {
+          filaCategoria.innerHTML += `<th class="categoria-saber">Saber</th>`;
+        });
+
+        filaCategoria.innerHTML += `
+          <th class="promedio-hacer">Hacer</th>
+          <th class="promedio-saber">Saber</th>
+          ${esPreliminar ? "" : '<th class="promedio-ser">Ser</th>'}
+          <th class="nota-final">Nota Final</th>
+        `;
+
+        thead.appendChild(filaCategoria);
+
+        const filaActividades = document.createElement("tr");
+
+        gradableItems.forEach((item) => {
+          filaActividades.innerHTML += `<th class="categoria-hacer">${item.title} - ${item.lessonTopic}</th>`;
+        });
+
+        gradableItems.forEach((item) => {
+          filaActividades.innerHTML += `<th class="categoria-saber">${item.title} - ${item.lessonTopic}</th>`;
+        });
+
+        filaActividades.innerHTML += `
+          <th class="promedio-hacer">Promedio</th>
+          <th class="promedio-saber">Promedio</th>
+          ${esPreliminar ? "" : '<th class="promedio-ser">Promedio</th>'}
+          <th class="nota-final">Nota Final</th>
+        `;
+
+        thead.appendChild(filaActividades);
+      }
+
+      function generarResultadosOrdenados() {
+        const esPreliminar = document.getElementById(
+          "preliminar-checkbox"
+        ).checked;
+
+        const resultadosUsuarios = Object.values(usuarios).map((usuario) => {
+          const notasHacer = gradableItems.map((item) =>
+            usuario.notasHacer[item.id] !== undefined
+              ? usuario.notasHacer[item.id]
+              : 0
+          );
+
+          const notasSaber = gradableItems.map((item) =>
+            usuario.notasSaber[item.id] !== undefined
+              ? usuario.notasSaber[item.id]
+              : 0
+          );
+
+          const notasHacerValidas = notasHacer.filter((nota) => nota > 0);
+          const notasSaberValidas = notasSaber.filter((nota) => nota > 0);
+
+          const promedioHacer =
+            notasHacerValidas.length > 0
+              ? notasHacerValidas.reduce((a, b) => a + b, 0) /
+                totalGradableItems
+              : 0;
+
+          const promedioSaber =
+            notasSaberValidas.length > 0
+              ? notasSaberValidas.reduce((a, b) => a + b, 0) /
+                totalGradableItems
+              : 0;
+
+          const promedioSer = usuario.notaSer || 5.0;
+
+          let promedio;
+          if (esPreliminar) {
+            promedio = (promedioHacer + promedioSaber) / 2;
+          } else {
+            promedio = (promedioHacer + promedioSaber + promedioSer) / 3;
+          }
+
+          return {
+            nombre: usuario.nombre,
+            apellido: usuario.apellido,
+            codigo: usuario.codigo,
+            notasHacer: notasHacer,
+            notasSaber: notasSaber,
+            notasHacerOriginales: usuario.notasHacer,
+            notasSaberOriginales: usuario.notasSaber,
+            promedioHacer: promedioHacer,
+            promedioSaber: promedioSaber,
+            promedioSer: promedioSer,
+            promedio: promedio,
+            autoevaluacionAutomatica: usuario.autoevaluacionAutomatica,
+            coevaluacionAutomatica: usuario.coevaluacionAutomatica,
+          };
+        });
+
+        const resultadosOrdenados = [];
+
+        estudiantesList.forEach((estudiante) => {
+          const diEstudiante = estudiante.di.replace(/,/g, "").trim();
+          const calificacion = resultadosUsuarios.find((u) => {
+            const codigoUsuario = String(u.codigo).replace(/,/g, "").trim();
+            return codigoUsuario === diEstudiante;
+          });
+
+          if (calificacion) {
+            resultadosOrdenados.push({
+              apellidos: estudiante.apellidos,
+              nombre: estudiante.nombre,
+              documento: estudiante.di,
+              retirado: estudiante.retirado === "1",
+              notasHacer: calificacion.notasHacer,
+              notasSaber: calificacion.notasSaber,
+              notasHacerOriginales: calificacion.notasHacerOriginales,
+              notasSaberOriginales: calificacion.notasSaberOriginales,
+              promedioHacer: calificacion.promedioHacer,
+              promedioSaber: calificacion.promedioSaber,
+              promedioSer: calificacion.promedioSer,
+              promedio: calificacion.promedio,
+              autoevaluacionAutomatica: calificacion.autoevaluacionAutomatica,
+              coevaluacionAutomatica: calificacion.coevaluacionAutomatica,
+            });
+          } else {
+            const notasVacias = gradableItems.map(() => 0);
+            resultadosOrdenados.push({
+              apellidos: estudiante.apellidos,
+              nombre: estudiante.nombre,
+              documento: estudiante.di,
+              retirado: estudiante.retirado === "1",
+              notasHacer: notasVacias,
+              notasSaber: notasVacias,
+              notasHacerOriginales: {},
+              notasSaberOriginales: {},
+              promedioHacer: 0,
+              promedioSaber: 0,
+              promedioSer: 5.0,
+              promedio: 5.0 / 3,
+              autoevaluacionAutomatica: false,
+              coevaluacionAutomatica: false,
+            });
+          }
+        });
+
+        todosLosResultados = resultadosOrdenados;
+        mostrarResultados(resultadosOrdenados);
+      }
+
+      function mostrarResultados(listaUsuarios) {
+        const esPreliminar = document.getElementById(
+          "preliminar-checkbox"
+        ).checked;
+        const tabla = document.getElementById("tabla-resultados");
+        tabla.innerHTML = "";
+
+        listaUsuarios.forEach((usuario, idx) => {
+          let filaCeldas = `
+            <td class="nombre-col">${usuario.apellidos}</td>
+            <td class="nombre-col">${usuario.nombre}</td>
+            <td>${usuario.documento}</td>
+          `;
+
+          gradableItems.forEach((item, index) => {
+            const nota =
+              usuario.notasHacerOriginales[item.id] !== undefined
+                ? usuario.notasHacerOriginales[item.id]
+                : "-";
+            let cssClass = nota === "-" ? "alerta" : "";
+            if (
+              usuario.autoevaluacionAutomatica &&
+              item.id === idAutoevaluacion
+            ) {
+              cssClass += " llenadoAutomatico";
+            }
+            if (usuario.coevaluacionAutomatica && item.id === IdCoevaluacion) {
+              cssClass += " llenadoAutomatico";
+            }
+
+            filaCeldas += `<td class="${cssClass}">${
+              nota !== "-" ? nota.toFixed(1) : "-"
+            }</td>`;
+          });
+
+          gradableItems.forEach((item, index) => {
+            const nota =
+              usuario.notasSaberOriginales[item.id] !== undefined
+                ? usuario.notasSaberOriginales[item.id]
+                : "-";
+            const cssClass = nota === "-" ? "alerta" : "";
+            filaCeldas += `<td class="${cssClass}">${
+              nota !== "-" ? nota.toFixed(1) : "-"
+            }</td>`;
+          });
+
+          let notaFinal;
+          if (esPreliminar) {
+            notaFinal =
+              ((usuario.promedioHacer || 0) + (usuario.promedioSaber || 0)) / 2;
+          } else {
+            notaFinal =
+              ((usuario.promedioHacer || 0) +
+                (usuario.promedioSaber || 0) +
+                (usuario.promedioSer || 5.0)) /
+              3;
+          }
+
+          filaCeldas += `
+            <td class="promedio-hacer">${usuario.promedioHacer.toFixed(1)}</td>
+            <td class="promedio-saber">${usuario.promedioSaber.toFixed(1)}</td>
+            ${
+              esPreliminar
+                ? ""
+                : `<td class="promedio-ser editable" id="ser-${idx}" onclick="editarNotaSer(${idx})">${usuario.promedioSer.toFixed(
+                    1
+                  )}</td>`
+            }
+            <td class="nota-final">${notaFinal.toFixed(1)}</td>
+          `;
+
+          const claseFilaRetirado = usuario.retirado
+            ? "estudiante-retirado"
+            : "";
+          const fila = `<tr id="fila-${idx}" class="${claseFilaRetirado}">${filaCeldas}</tr>`;
+          tabla.innerHTML += fila;
+        });
+      }
+
+      function editarNotaSer(index) {
+        const celda = document.getElementById(`ser-${index}`);
+        if (celda.querySelector("input")) return;
+
+        const valorActual = todosLosResultados[index].promedioSer;
+        celda.innerHTML = `<input type="number" class="nota-input" value="${valorActual}" min="0" max="5" step="0.1" onblur="guardarNotaSer(${index}, this.value)" onkeypress="if(event.key === 'Enter') this.blur()">`;
+        celda.querySelector("input").focus();
+      }
+
+      function guardarNotaSer(index, valor) {
+        const esPreliminar = document.getElementById(
+          "preliminar-checkbox"
+        ).checked;
+        valor = Math.min(5, Math.max(0, parseFloat(valor) || 0));
+        todosLosResultados[index].promedioSer = valor;
+        if (esPreliminar) {
+          todosLosResultados[index].promedio =
+            (todosLosResultados[index].promedioHacer +
+              todosLosResultados[index].promedioSaber) /
+            2;
+        } else {
+          todosLosResultados[index].promedio =
+            (todosLosResultados[index].promedioHacer +
+              todosLosResultados[index].promedioSaber +
+              valor) /
+            3;
+        }
+        document.getElementById(`ser-${index}`).innerHTML = valor.toFixed(1);
+        const fila = document.getElementById(`fila-${index}`);
+        const celdaNotaFinal = fila.querySelector(".nota-final");
+        celdaNotaFinal.textContent =
+          todosLosResultados[index].promedio.toFixed(1);
+      }
+
+      function asignarSerCinco() {
+        todosLosResultados.forEach((usuario, idx) => {
+          usuario.promedioSer = 5.0;
+          usuario.promedio =
+            (usuario.promedioHacer + usuario.promedioSaber + 5.0) / 3;
+        });
+        mostrarResultados(todosLosResultados);
+      }
+
+      function filtrarPromedio(valor, esMayor) {
+        const estudiantesNoRetirados = todosLosResultados.filter(
+          (usuario) => !usuario.retirado
+        );
+        const filtrados = estudiantesNoRetirados.filter((usuario) => {
+          return esMayor ? usuario.promedio >= valor : usuario.promedio < valor;
+        });
+        mostrarResultados(filtrados);
+
+        if (!esMayor && valor === 3.5) {
+          mostrarResumenBajoRendimiento(filtrados);
+        } else {
+          document.getElementById("resumen-bajo-rendimiento").style.display =
+            "none";
+        }
+      }
+
+      function filtrarResumenes() {
+        const estudiantesNoRetirados = todosLosResultados.filter(
+          (usuario) => !usuario.retirado
+        );
+        const bajoRendimiento = estudiantesNoRetirados.filter(
+          (usuario) => usuario.promedio < 3.5
+        );
+        const altoRendimiento = estudiantesNoRetirados.filter(
+          (usuario) => usuario.promedio >= 4.0
+        );
+        mostrarResumenBajoRendimiento(bajoRendimiento);
+        mostrarResumenAltoRendimiento(altoRendimiento);
+      }
+
+      function mostrarResumenBajoRendimiento(estudiantes) {
+        const textoResumen = document.getElementById("texto-bajo-rendimiento");
+        textoResumen.innerHTML =
+          estudiantes.length === 1
+            ? "Se ha encontrado un estudiante con promedio inferior a 3.5"
+            : `Se han encontrado ${estudiantes.length} estudiantes con promedio inferior a 3.5 en la plataforma`;
+
+        const tablaResumen = document.getElementById(
+          "tabla-resumen-resultados"
+        );
+        const contenedorResumen = document.getElementById(
+          "resumen-bajo-rendimiento"
+        );
+
+        contenedorResumen.style.display = "block";
+        tablaResumen.innerHTML = "";
+
+        estudiantes.forEach((estudiante) => {
+          const nombreCompleto = `${estudiante.apellidos}, ${estudiante.nombre}`;
+          const promedio = estudiante.promedio.toFixed(1);
+
+          const fila = `
+            <tr>
+              <td class="nombre-col">${nombreCompleto}</td>
+              <td>${promedio}</td>
+            </tr>
+          `;
+          tablaResumen.innerHTML += fila;
+        });
+      }
+
+      function mostrarResumenAltoRendimiento(estudiantes) {
+        const textoResumen = document.getElementById("texto-alto-rendimiento");
+        textoResumen.innerHTML =
+          estudiantes.length === 1
+            ? "Se ha encontrado un estudiante con promedio superior a 4.0"
+            : `Se han encontrado ${estudiantes.length} estudiantes con promedio superior a 4.0`;
+
+        const tablaResumen = document.getElementById(
+          "tabla-resumen-alto-rendimiento"
+        );
+        const contenedorResumen = document.getElementById(
+          "resumen-alto-rendimiento"
+        );
+
+        contenedorResumen.style.display = "block";
+        tablaResumen.innerHTML = "";
+
+        estudiantes.forEach((estudiante) => {
+          const nombreCompleto = `${estudiante.apellidos}, ${estudiante.nombre}`;
+          const promedio = estudiante.promedio.toFixed(1);
+
+          const fila = `
+            <tr>
+              <td class="nombre-col">${nombreCompleto}</td>
+              <td>${promedio}</td>
+            </tr>
+          `;
+          tablaResumen.innerHTML += fila;
+        });
+      }
+
+      function mostrarTodos() {
+        mostrarResultados(todosLosResultados);
+        document.getElementById("resumen-bajo-rendimiento").style.display =
+          "none";
+        document.getElementById("resumen-alto-rendimiento").style.display =
+          "none";
+      }
+
+      function copiarTabla() {
+        const tempDiv = document.createElement("div");
+        tempDiv.style.position = "fixed";
+        tempDiv.style.left = "-9999px";
+
+        const tablaClon = document
+          .getElementById("tabla-principal")
+          .cloneNode(true);
+
+        Array.from(tablaClon.querySelectorAll("th, td")).forEach((celda) => {
+          const estilos = window.getComputedStyle(celda);
+          celda.style.backgroundColor = estilos.backgroundColor;
+          celda.style.color = estilos.color;
+          celda.style.border = estilos.border;
+          celda.style.fontWeight = estilos.fontWeight;
+        });
+
+        tempDiv.appendChild(tablaClon);
+        document.body.appendChild(tempDiv);
+
+        const rango = document.createRange();
+        rango.selectNode(tablaClon);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(rango);
+
+        try {
+          document.execCommand("copy");
+          alert("¡Tabla copiada al portapapeles! ✔️");
+        } catch (err) {
+          alert("Error al copiar. Usa Ctrl+C ✂️");
+        } finally {
+          document.body.removeChild(tempDiv);
+          window.getSelection().removeAllRanges();
+        }
+      }
+
+      async function cargarListaAlumnos() {
+        const gradoId = document.getElementById("grado-select").value;
+        const cookieStr = document.getElementById("cookie-input").value.trim();
+
+        if (!cookieStr) {
+          alert("Por favor, ingresa la cookie PHPSESSID (y otras si aplica)");
+          return;
+        }
+
+        try {
+          const res = await fetch(
+            `http://localhost:3000/alumnos?id=${gradoId}&cookie=${encodeURIComponent(
+              cookieStr
+            )}`
+          );
+          if (!res.ok) throw new Error("Error HTTP " + res.status);
+
+          const data = await res.json();
+
+          // Aquí pasamos directamente a la lógica de procesarDatos
+          procesarDatos(data);
+        } catch (err) {
+          console.error("Error al cargar lista:", err);
+          alert("No se pudo cargar la lista, revisa consola (F12).");
+        }
+      }
+    </script>
+  </body>
+</html>

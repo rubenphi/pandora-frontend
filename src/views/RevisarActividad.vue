@@ -21,6 +21,7 @@
           v-for="student in students"
           :key="student.id"
           @ionChange="handleAccordionChange($event, student)"
+          :class="{ 'no-group-student': !student.hasGroup }"
         >
           <IonItem slot="header">
             <IonLabel>{{ student.lastName + " " + student.name }}</IonLabel>
@@ -274,9 +275,20 @@ export default {
           `/courses/${courseId}/users?year=${year}`,
           tokenHeader()
         );
-        students.value = response.data
+        const allStudents = response.data
           .filter((user) => user.rol === "student")
           .map((user) => user.user);
+
+        const usersNoGroupResponse = await axios.get(
+          `/courses/${courseId}/usersNoGroup?year=${year}`,
+          tokenHeader()
+        );
+        const usersWithoutGroupIds = new Set(usersNoGroupResponse.data.map(u => u.user.id));
+
+        students.value = allStudents.map(student => ({
+          ...student,
+          hasGroup: !usersWithoutGroupIds.has(student.id)
+        }));
 
         // Initialize evaluation for all students
         students.value.forEach((student) => {
@@ -462,7 +474,6 @@ export default {
           );
         }
       }
-      alert("Notas registradas exitosamente!");
     };
 
     const presentConfirmAlert = async () => {
@@ -589,5 +600,10 @@ export default {
 
 .small-range {
   width: 70%; /* Ajusta este valor para controlar el ancho del rango */
+}
+
+.no-group-student {
+  opacity: 0.6;
+  font-style: italic;
 }
 </style>

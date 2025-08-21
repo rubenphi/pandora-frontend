@@ -28,12 +28,7 @@
             <ion-card-header>
               <ion-card-subtitle>{{ cursoSelected.name }}</ion-card-subtitle>
 
-              <ion-card-title
-                v-if="leccionesSinNotasIds.includes(leccion.id)"
-                style="color: orange"
-                >{{ leccion.topic }}</ion-card-title
-              >
-              <ion-card-title v-else>{{ leccion.topic }}</ion-card-title>
+              <ion-card-title>{{ leccion.topic }}</ion-card-title>
             </ion-card-header>
 
             <ion-card-content>
@@ -57,11 +52,17 @@
         <ion-button
           fill="clear"
           @click="toggleSection(leccion.id, 'cuestionarios')"
+          :class="{
+            sinNota: leccionesConCuestionariosPendientes.includes(leccion.id),
+          }"
           >Cuestionarios</ion-button
         >
         <ion-button
           fill="clear"
           @click="toggleSection(leccion.id, 'actividades')"
+          :class="{
+            sinNota: leccionesConActividadesPendientes.includes(leccion.id),
+          }"
           >Actividad</ion-button
         >
 
@@ -174,6 +175,7 @@ import {
   usuarioGet,
   adminOprofesor,
   QuizSinNotas,
+  ActivitiesSinNotas,  // Import the new function
   basedeURL,
 } from "../globalService";
 import { useRoute } from "vue-router";
@@ -252,7 +254,8 @@ export default {
     const usuario = ref();
     const adminOProfesor = ref();
     const lecciones = ref([]);
-    const leccionesSinNotasIds = ref([]);
+    const leccionesConCuestionariosPendientes = ref([]);
+    const leccionesConActividadesPendientes = ref([]);
     const materialsList = ref([]);
     const cuestionariosList = ref([]);
     const actvitiesList = ref([]);
@@ -310,9 +313,16 @@ export default {
       adminOProfesor.value = adminOprofesor();
       usuario.value = usuarioGet();
 
-      leccionesSinNotasIds.value = (await QuizSinNotas(curso, usuario)).map(
+      const quizzesSinNotas = await QuizSinNotas(curso, usuario);
+      leccionesConCuestionariosPendientes.value = quizzesSinNotas.map(
         (quiz) => quiz.lesson.id
       );
+
+      const activitiesSinNotas = await ActivitiesSinNotas(curso, usuario);
+      leccionesConActividadesPendientes.value = activitiesSinNotas.map(
+        (activity) => activity.lesson.id
+      );
+
       tokenHeader();
       if (curso != cursosUsuario.value[0].id && !adminOprofesor()) {
         router.push("/lecciones/" + cursosUsuario.value[0].id + "/" + area);
@@ -432,7 +442,8 @@ export default {
       arrowBackOutline,
       usuario,
       lecciones,
-      leccionesSinNotasIds,
+      leccionesConCuestionariosPendientes,
+      leccionesConActividadesPendientes,
       year,
       openedLessonId,
       openedSection,
