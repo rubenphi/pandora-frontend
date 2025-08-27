@@ -121,6 +121,10 @@ const routes = [
         },
       },
       {
+        path: "ver/revision/:id",
+        component: () => import("@/views/VerRevision.vue"),
+      },
+      {
         path: "cuestionario/importar/:id",
         component: () => import("@/views/ImportacionPregunta.vue"),
       },

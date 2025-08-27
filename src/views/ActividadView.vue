@@ -84,7 +84,6 @@
 
       <ion-fab
         class="centered-fab"
-        v-if="admin"
         vertical="bottom"
         horizontal="center"
         slot="fixed"
@@ -92,10 +91,14 @@
         <ion-button
           class="pill-button"
           color="medium"
-          :router-link="`/revisar/actividad/${actividad.id}`"
+          :router-link="
+            admin
+              ? `/revisar/actividad/${actividad.id}`
+              : `/ver/revision/${actividad.id}`
+          "
         >
           <ion-icon :icon="eyeOutline" slot="start"></ion-icon>
-          Revisar Actividad
+          {{ admin ? "Revisar Actividad" : "Ver revisión" }}
         </ion-button>
       </ion-fab>
     </ion-content>

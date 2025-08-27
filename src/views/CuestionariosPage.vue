@@ -3,6 +3,19 @@
     <ion-header>
       <ion-toolbar>
         <ion-title>Selecciona el curso</ion-title>
+        <ion-buttons slot="end">
+          <ion-item>
+            <ion-select v-model="selectedYear" interface="popover">
+              <ion-select-option
+                v-for="year in availableYears"
+                :key="year"
+                :value="year"
+              >
+                {{ year }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -22,7 +35,7 @@
 </template>
 
 <script>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { tokenHeader, usuarioGet } from "../globalService";
 
 import { peopleCircleOutline } from "ionicons/icons";
@@ -38,6 +51,9 @@ import {
   IonToolbar,
   IonTitle,
   IonContent,
+  IonButtons,
+  IonSelect,
+  IonSelectOption,
 } from "@ionic/vue";
 
 export default {
@@ -51,6 +67,9 @@ export default {
     IonContent,
     IonPage,
     IonIcon,
+    IonButtons,
+    IonSelect,
+    IonSelectOption,
   },
   methods: {
     courseSelected: function (course) {
@@ -59,22 +78,41 @@ export default {
   },
   setup() {
     const usuario = ref();
-
     const cursos = ref([]);
+    const selectedYear = ref();
+    const availableYears = ref([]);
+    const allUserCursos = ref([]);
+
+    const filterCoursesByYear = (year) => {
+      cursos.value = allUserCursos.value
+        .filter((curso) => curso.year == year)
+        .sort((a, b) => a.name.localeCompare(b.name));
+    };
+
     onIonViewWillEnter(async () => {
       usuario.value = usuarioGet();
-
       tokenHeader();
-      //delete items with same id
-      cursos.value = JSON.parse(localStorage.getItem("cursosUsuario")).filter(
-        (item, index, self) => self.findIndex((t) => t.id === item.id) === index
-      );
+
+      allUserCursos.value =
+        JSON.parse(localStorage.getItem("cursosUsuario")) || [];
+      selectedYear.value = JSON.parse(localStorage.getItem("year"));
+
+      const years = allUserCursos.value.map((c) => c.year);
+      availableYears.value = [...new Set(years)].sort((a, b) => b - a);
+
+      filterCoursesByYear(selectedYear.value);
+    });
+
+    watch(selectedYear, (newYear) => {
+      filterCoursesByYear(newYear);
     });
 
     return {
       peopleCircleOutline,
       usuario,
       cursos,
+      selectedYear,
+      availableYears,
     };
   },
 };

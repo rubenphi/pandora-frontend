@@ -35,8 +35,13 @@
             :class="{ 'no-group-student': !estudiante.hasGroup }"
           >
             <ion-item slot="header">
-              <ion-label>{{ estudiante.lastName + " " + estudiante.name }}</ion-label>
-              <ion-chip slot="end" :color="estudiante.promedio < 3.5 ? 'danger' : 'primary'">
+              <ion-label>{{
+                estudiante.lastName + " " + estudiante.name
+              }}</ion-label>
+              <ion-chip
+                slot="end"
+                :color="estudiante.promedio < 3.5 ? 'danger' : 'primary'"
+              >
                 {{ estudiante.promedio }}
               </ion-chip>
             </ion-item>
@@ -64,7 +69,10 @@
                         <ion-label>
                           <h2>{{ nota.gradableItem?.title }}</h2>
                           <p>Lección: {{ nota.gradableItem?.lesson?.topic }}</p>
-                          <p v-if="nota.grade && nota.grade < 3.5" style="color: #bf9494">
+                          <p
+                            v-if="nota.grade && nota.grade < 3.5"
+                            style="color: #bf9494"
+                          >
                             {{ nota.grade }}
                           </p>
                           <p v-else-if="nota.grade">{{ nota.grade }}</p>
@@ -72,7 +80,10 @@
                         </ion-label>
                       </ion-item>
                       <ion-item-options side="end">
-                        <ion-item-option @click="editarNota(nota, estudiante.id)" color="primary">
+                        <ion-item-option
+                          @click="editarNota(nota, estudiante.id)"
+                          color="primary"
+                        >
                           <ion-icon
                             :icon="pencilOutline"
                             slot="icon-only"
@@ -93,7 +104,9 @@
     <ion-modal :is-open="mostrarModal" @didDismiss="cerrarModal">
       <ion-header>
         <ion-toolbar>
-          <ion-title>{{ modoEdicion ? "Editar Nota" : "Añadir Nota" }}</ion-title>
+          <ion-title>{{
+            modoEdicion ? "Editar Nota" : "Añadir Nota"
+          }}</ion-title>
           <ion-buttons slot="end">
             <ion-button @click="cerrarModal">Cerrar</ion-button>
           </ion-buttons>
@@ -113,7 +126,9 @@
                 :key="lesson.id"
                 :value="lesson.id"
               >
-                {{ lesson.topic }} ({{ new Date(lesson.date).toLocaleDateString() }})
+                {{ lesson.topic }} ({{
+                  new Date(lesson.date).toLocaleDateString()
+                }})
               </ion-select-option>
             </ion-select>
           </ion-item>
@@ -134,21 +149,33 @@
           </ion-item>
 
           <ion-item v-if="gradableTypeSelected">
-            <ion-label position="stacked">{{ gradableTypeSelected === 'quiz' ? 'Quiz' : 'Actividad' }}</ion-label>
+            <ion-label position="stacked">{{
+              gradableTypeSelected === "quiz" ? "Quiz" : "Actividad"
+            }}</ion-label>
             <ion-select
               v-model="notaForm.gradableId"
               placeholder="Seleccione el ítem calificable"
             >
               <ion-select-option
-                v-for="item in gradableTypeSelected === 'quiz' ? quizzes : activities"
+                v-for="item in gradableTypeSelected === 'quiz'
+                  ? quizzes
+                  : activities"
                 :key="item.id"
                 :value="item.id"
               >
                 {{ item.title }}
               </ion-select-option>
             </ion-select>
-            <p v-if="(gradableTypeSelected === 'quiz' && quizzes.length === 0) || (gradableTypeSelected === 'activity' && activities.length === 0)" style="color: gray; font-size: 0.8em; margin-top: 5px">
-              No hay {{ gradableTypeSelected === 'quiz' ? 'quizzes' : 'actividades' }} disponibles para esta lección.
+            <p
+              v-if="
+                (gradableTypeSelected === 'quiz' && quizzes.length === 0) ||
+                (gradableTypeSelected === 'activity' && activities.length === 0)
+              "
+              style="color: gray; font-size: 0.8em; margin-top: 5px"
+            >
+              No hay
+              {{ gradableTypeSelected === "quiz" ? "quizzes" : "actividades" }}
+              disponibles para esta lección.
             </p>
           </ion-item>
           <ion-item>
@@ -263,12 +290,19 @@ export default {
 
     const calcularPromedio = (liveGradableItems, studentGrades) => {
       if (liveGradableItems.length === 0) return (0).toFixed(2);
-      const sumaTotal = studentGrades.reduce((acc, nota) => acc + nota.grade, 0);
+      const sumaTotal = studentGrades.reduce(
+        (acc, nota) => acc + nota.grade,
+        0
+      );
       const promedio = sumaTotal / liveGradableItems.length;
       return promedio.toFixed(2);
     };
 
-    const processStudentGrades = (allGrades, studentList, usersWithoutGroupIds) => {
+    const processStudentGrades = (
+      allGrades,
+      studentList,
+      usersWithoutGroupIds
+    ) => {
       const liveGradableItemsMap = new Map();
       allGrades.forEach((grade) => {
         liveGradableItemsMap.set(grade.gradableItem.id, grade.gradableItem);
@@ -291,6 +325,7 @@ export default {
             id: notaExistente ? notaExistente.id : `pending-${actividad.id}`,
             gradableItem: actividad,
             grade: notaExistente ? notaExistente.grade : null,
+            gradableType: actividad.type,
           };
 
           const area = actividad.lesson.area;
@@ -328,7 +363,10 @@ export default {
 
     const getNotas = async () => {
       if (!periodoSelected.value) return;
-      localStorage.setItem("periodoSelected", JSON.stringify(periodoSelected.value));
+      localStorage.setItem(
+        "periodoSelected",
+        JSON.stringify(periodoSelected.value)
+      );
 
       try {
         const allGradesResponse = await axios.get(
@@ -338,7 +376,10 @@ export default {
         const allGrades = allGradesResponse.data;
 
         const studentList = (
-          await axios.get(`/courses/${cursoId}/users?year=${year}`, tokenHeader())
+          await axios.get(
+            `/courses/${cursoId}/users?year=${year}`,
+            tokenHeader()
+          )
         ).data
           .filter((estudiante) => estudiante.rol === "student")
           .map((estudiante) => estudiante.user);
@@ -347,9 +388,19 @@ export default {
           `/courses/${cursoId}/usersNoGroup?year=${year}`,
           tokenHeader()
         );
-        const usersWithoutGroupIds = new Set(usersNoGroupResponse.data.map(u => u.user.id));
+        const usersWithoutGroupIds = new Set(
+          usersNoGroupResponse.data.map((u) => u.user.id)
+        );
 
-        usuariosEstudiantes.value = processStudentGrades(allGrades, studentList, usersWithoutGroupIds);
+        usuariosEstudiantes.value = processStudentGrades(
+          allGrades,
+          studentList,
+          usersWithoutGroupIds
+        ).sort((a, b) => {
+          const lastNameA = a.lastName || "";
+          const lastNameB = b.lastName || "";
+          return lastNameA.localeCompare(lastNameB);
+        });
       } catch (error) {
         console.error("Error fetching grades:", error);
       }
@@ -359,7 +410,9 @@ export default {
       usuario.value = usuarioGet();
       periodos.value = periodosGet();
       const storedPeriod = localStorage.getItem("periodoSelected");
-      periodoSelected.value = storedPeriod ? JSON.parse(storedPeriod) : (periodos.value[0]?.id || null);
+      periodoSelected.value = storedPeriod
+        ? JSON.parse(storedPeriod)
+        : periodos.value[0]?.id || null;
       await getNotas();
     });
 
@@ -395,11 +448,17 @@ export default {
         periodId: periodoSelected.value,
         grade: parseFloat(nota.grade),
         instituteId: usuario.value.institute.id,
-        id: nota.id,
+
         exist: true,
       };
+      if (!nota.id.toString().startsWith("pending-")) {
+        notaForm.value.id = nota.id;
+      }
       await cargarLessons();
-      await cargarGradableItemsForLesson(nota.gradableItem.lesson.id, nota.gradableItem.type);
+      await cargarGradableItemsForLesson(
+        nota.gradableItem.lesson.id,
+        nota.gradableItem.type
+      );
       mostrarModal.value = true;
     };
 
@@ -417,9 +476,12 @@ export default {
 
     const cargarGradableItemsForLesson = async (lessonId, type) => {
       try {
-        const endpoint = type === 'quiz' ? 'quizzes' : 'activities';
-        const response = await axios.get(`/${endpoint}?lessonId=${lessonId}`, tokenHeader());
-        if (type === 'quiz') {
+        const endpoint = type === "quiz" ? "quizzes" : "activities";
+        const response = await axios.get(
+          `/${endpoint}?lessonId=${lessonId}`,
+          tokenHeader()
+        );
+        if (type === "quiz") {
           quizzes.value = response.data;
           activities.value = [];
         } else {
@@ -433,14 +495,20 @@ export default {
 
     const onLessonSelected = async () => {
       if (notaForm.value.lessonId && gradableTypeSelected.value) {
-        await cargarGradableItemsForLesson(notaForm.value.lessonId, gradableTypeSelected.value);
+        await cargarGradableItemsForLesson(
+          notaForm.value.lessonId,
+          gradableTypeSelected.value
+        );
       }
     };
 
     const onGradableTypeSelected = async () => {
       notaForm.value.gradableType = gradableTypeSelected.value;
       if (notaForm.value.lessonId) {
-        await cargarGradableItemsForLesson(notaForm.value.lessonId, gradableTypeSelected.value);
+        await cargarGradableItemsForLesson(
+          notaForm.value.lessonId,
+          gradableTypeSelected.value
+        );
       }
     };
 
@@ -458,15 +526,25 @@ export default {
 
       try {
         const payload = {
-            userId: notaForm.value.userId,
-            gradableId: notaForm.value.gradableId,
-            gradableType: notaForm.value.gradableType,
-            periodId: notaForm.value.periodId,
-            grade: parseFloat(notaForm.value.grade),
-            instituteId: notaForm.value.instituteId,
+          userId: notaForm.value.userId,
+          gradableId: notaForm.value.gradableId,
+          gradableType: notaForm.value.gradableType,
+          periodId: notaForm.value.periodId,
+          grade: parseFloat(notaForm.value.grade),
+          instituteId: notaForm.value.instituteId,
         };
-        if (modoEdicion.value) {
-          await axios.patch(`/grades/${notaForm.value.id}`, { ...payload, exist: true }, tokenHeader());
+        if (modoEdicion.value && notaForm.value.id) {
+          await axios.patch(
+            `/grades/${notaForm.value.id}`,
+            { ...payload, exist: true },
+            tokenHeader()
+          );
+        } else if (modoEdicion.value && !notaForm.value.id) {
+          await axios.post(
+            "/grades",
+            { ...payload, exist: true },
+            tokenHeader()
+          );
         } else {
           await axios.post("/grades", payload, tokenHeader());
         }

@@ -494,7 +494,39 @@ export default {
           tokenHeader()
         );
 
-        usersCourse.value = response.data.map((usuario) => usuario.user);
+        const users = response.data.map((usuario) => usuario.user);
+
+        const roleOrder = {
+          admin: 0,
+          director: 1,
+          coordinator: 2,
+          teacher: 3,
+          student: 4,
+          user: 4,
+        };
+
+        users.sort((a, b) => {
+          const roleA = a.rol || "user";
+          const roleB = b.rol || "user";
+          const orderA = roleOrder[roleA] ?? 99;
+          const orderB = roleOrder[roleB] ?? 99;
+
+          if (orderA !== orderB) {
+            return orderA - orderB;
+          }
+
+          const lastNameA = a.lastName || "";
+          const lastNameB = b.lastName || "";
+          if (lastNameA !== lastNameB) {
+            return lastNameA.localeCompare(lastNameB);
+          }
+
+          const nameA = a.name || "";
+          const nameB = b.name || "";
+          return nameA.localeCompare(nameB);
+        });
+
+        usersCourse.value = users;
         loading.value = false;
       }
     };

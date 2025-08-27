@@ -35,6 +35,34 @@
             >
           </IonItem>
           <div class="ion-padding" slot="content">
+            <ion-grid>
+              <ion-row>
+                <ion-col>
+                  <ion-button
+                    expand="block"
+                    @click="markAllAs(student, 2)"
+                    color="success"
+                    >Cumple</ion-button
+                  >
+                </ion-col>
+                <ion-col>
+                  <ion-button
+                    expand="block"
+                    @click="markAllAs(student, 1)"
+                    color="warning"
+                    >Parcialmente</ion-button
+                  >
+                </ion-col>
+                <ion-col>
+                  <ion-button
+                    expand="block"
+                    @click="markAllAs(student, 0)"
+                    color="danger"
+                    >No Cumple</ion-button
+                  >
+                </ion-col>
+              </ion-row>
+            </ion-grid>
             <ion-button
               expand="block"
               @click="saveEvaluation(student)"
@@ -285,10 +313,21 @@ export default {
         );
         const usersWithoutGroupIds = new Set(usersNoGroupResponse.data.map(u => u.user.id));
 
-        students.value = allStudents.map(student => ({
-          ...student,
-          hasGroup: !usersWithoutGroupIds.has(student.id)
-        }));
+        students.value = allStudents
+          .map(student => ({
+            ...student,
+            hasGroup: !usersWithoutGroupIds.has(student.id)
+          }))
+          .sort((a, b) => {
+            const lastNameA = a.lastName || '';
+            const lastNameB = b.lastName || '';
+            if (lastNameA !== lastNameB) {
+              return lastNameA.localeCompare(lastNameB);
+            }
+            const nameA = a.name || '';
+            const nameB = b.name || '';
+            return nameA.localeCompare(nameB);
+          });
 
         // Initialize evaluation for all students
         students.value.forEach((student) => {
@@ -547,6 +586,15 @@ export default {
       await fetchActivityDetails();
     });
 
+    const markAllAs = (student, value) => {
+      if (evaluation.value[student.id]) {
+        for (const criterionId in evaluation.value[student.id]) {
+          evaluation.value[student.id][criterionId].value = value;
+        }
+        updateGrade(student);
+      }
+    };
+
     return {
       activityId,
       students,
@@ -567,6 +615,7 @@ export default {
       setErrorToastOpen,
       studentGrades,
       updateGrade,
+      markAllAs,
     };
   },
 };

@@ -1,0 +1,86 @@
+Plan para la funcionalidad de revisión por pares
+
+**1. Modificaciones en el Backend (pandora-nest)**
+
+*   **1.1. Modificar la entidad `Invitation`:**
+    *   Añadir una columna `type` (de tipo `enum` o `string`) para especificar el tipo de permiso que otorga la invitación (p. ej., `PEER_REVIEW`, `DISABLE_RANDOM_OPTIONS`, etc.).
+
+*   **1.2. Crear la entidad `InvitationTarget`:**
+    *   `id`: (Clave primaria)
+    *   `invitationCodeId`: (Clave foránea a `Invitation`)
+    *   `targetType`: (de tipo `enum` o `string`, p. ej., `'activity'`, `'group'`, `'quiz'`)
+    *   `targetId`: (El ID de la entidad de destino)
+
+*   **1.3. Crear la entidad `UserPermission`:**
+    *   `id`: (Clave primaria)
+    *   `userId`: (El ID del usuario que ha canjeado el código)
+    *   `permissionType`: (El tipo de permiso concedido)
+    *   `expiresAt`: (La fecha de caducidad del permiso)
+    *   `grantedByCodeId`: (El ID del código de invitación que ha concedido este permiso)
+
+*   **1.4. Crear la entidad `UserPermissionTarget`:**
+    *   `id`: (Clave primaria)
+    *   `userPermissionId`: (Clave foránea a `UserPermission`)
+    *   `targetType`: (de tipo `enum` o `string`)
+    *   `targetId`: (El ID de la entidad de destino)
+
+*   **1.5. Modificar el servicio `InvitationsService`:**
+    *   Actualizar el método `create` para que acepte una lista de `targets` y los guarde en la tabla `InvitationTarget`.
+    *   Crear un nuevo método `redeem(code, user)` que:
+        *   Valide el código de invitación.
+        *   Cree una nueva entrada en la tabla `UserPermission` con los datos correspondientes.
+        *   Copie los `targets` de la invitación a la tabla `UserPermissionTarget`.
+        *   Disminuya el contador `usesLeft` de la invitación.
+
+*   **1.6. Crear un nuevo servicio `PermissionService`:**
+    *   Crear un método `hasPermission(user, permissionType, targets)` que:
+        *   Compruebe si el usuario tiene el permiso especificado en la tabla `UserPermission`.
+        *   Compruebe si los `targets` del permiso coinciden con los `targets` especificados.
+
+*   **1.7. Crear un `PermissionGuard`:**
+    *   Crear un guard que utilice el `PermissionService` para proteger las rutas y los endpoints que requieran permisos específicos.
+
+**2. Modificaciones en el Frontend (pandora-frontend)**
+
+*   **2.1. Modificar la página `AutorizacionesPage.vue`:**
+    *   Añadir un `ion-select` para que el administrador pueda seleccionar el tipo de permiso que otorgará la invitación.
+    *   Añadir campos de entrada dinámicos para que el administrador pueda especificar los `targets` de la invitación (p. ej., `activityId`, `groupId`, etc.).
+
+*   **2.2. Crear una nueva página `CanjearCodigo.vue`:**
+    *   Crear una página donde los usuarios puedan introducir un código de invitación para canjearlo.
+    *   Esta página llamará al nuevo endpoint `redeem` en el backend.
+
+*   **2.3. Modificar la página `ActividadView.vue`:**
+    *   Añadir un botón "Revisión por pares" que solo sea visible si el usuario tiene el permiso `PEER_REVIEW` para la actividad y el grupo correspondientes.
+    *   Este botón llevará al usuario a una versión de solo lectura de la página `RevisarActividad.vue` donde podrá ver el trabajo del otro grupo y calificarlo.
+
+*   **2.4. Modificar el servicio `globalService.js`:**
+    *   Añadir una función `hasPermission(permissionType, targets)` que llame al `PermissionService` en el backend para comprobar si el usuario tiene el permiso especificado.
+
+**3. Flujo de Trabajo de Revisión por Pares**
+
+*   **3.1. El profesor genera un código:**
+    *   El profesor va a la página `AutorizacionesPage.vue`.
+    *   Selecciona el tipo de permiso "Revisión por pares".
+    *   Introduce el `activityId` y el `groupId` del grupo que será revisado.
+    *   Genera el código de invitación.
+
+*   **3.2. El profesor comparte el código:**
+    *   El profesor comparte el código con el grupo que realizará la revisión.
+
+*   **3.3. Un estudiante canjea el código:**
+    *   Un estudiante del grupo revisor va a la página `CanjearCodigo.vue`.
+    *   Introduce el código de invitación y lo canjea.
+
+*   **3.4. El estudiante obtiene el permiso:**
+    *   El backend crea una nueva entrada en la tabla `UserPermission` para el estudiante con el permiso `PEER_REVIEW` y los `targets` correspondientes.
+
+*   **3.5. El estudiante ve el botón "Revisión por pares":**
+    *   El estudiante va a la página `ActividadView.vue` de la actividad.
+    *   El frontend llama a la función `hasPermission` para comprobar si el estudiante tiene el permiso `PEER_REVIEW` para esa actividad y el grupo que se va a revisar.
+    *   Si el usuario tiene el permiso, se muestra el botón "Revisión por pares".
+
+*   **3.6. El estudiante realiza la revisión por pares:**
+    *   El estudiante hace clic en el botón "Revisión por pares".
+    *   Se le redirige a una versión de solo lectura de la página `RevisarActividad.vue` donde puede ver el trabajo del otro grupo y calificarlo.
+    *   Cuando el estudiante envía la revisión, el backend utiliza el `PermissionGuard` para comprobar si el estudiante tiene el permiso `PEER_REVIEW` antes de guardar la revisión.

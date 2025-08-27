@@ -197,6 +197,7 @@ export default {
       try {
         if (activityId) {
           // Update existing activity
+          delete activityForm.value.id;
           await axios.patch(
             `/activities/${activityId}`,
             activityForm.value,

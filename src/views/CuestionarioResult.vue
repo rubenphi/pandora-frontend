@@ -148,7 +148,13 @@
         >
           Registrar notas <ion-icon :icon="fileTrayFullOutline"></ion-icon>
         </ion-button>
-        <input type="file" ref="fileInput" @change="onFileSelected" style="display: none" accept=".xlsx, .xls"/>
+        <input
+          type="file"
+          ref="fileInput"
+          @change="onFileSelected"
+          style="display: none"
+          accept=".xlsx, .xls"
+        />
         <ion-button
           expand="full"
           fill="outline"
@@ -162,12 +168,17 @@
       </ion-buttons>
 
       <!-- Modal for number of questions -->
-      <ion-modal :is-open="isQuestionsModalOpen" @didDismiss="isQuestionsModalOpen = false">
+      <ion-modal
+        :is-open="isQuestionsModalOpen"
+        @didDismiss="isQuestionsModalOpen = false"
+      >
         <ion-header>
           <ion-toolbar>
             <ion-title>Número de Preguntas a Evaluar</ion-title>
             <ion-buttons slot="end">
-              <ion-button @click="isQuestionsModalOpen = false">Cancelar</ion-button>
+              <ion-button @click="isQuestionsModalOpen = false"
+                >Cancelar</ion-button
+              >
             </ion-buttons>
           </ion-toolbar>
         </ion-header>
@@ -176,7 +187,13 @@
             <ion-label position="stacked">Número de preguntas</ion-label>
             <ion-input type="number" v-model="numPreguntasAEvaluar"></ion-input>
           </ion-item>
-          <ion-button expand="block" @click="processAndRegisterGrades">Aceptar</ion-button>
+          <ion-item>
+            <ion-label>Registrar solo si la nota es mayor</ion-label>
+            <ion-checkbox v-model="registrarNotaMayor"></ion-checkbox>
+          </ion-item>
+          <ion-button expand="block" @click="processAndRegisterGrades"
+            >Aceptar</ion-button
+          >
         </ion-content>
       </ion-modal>
 
@@ -205,7 +222,7 @@ import { adminOprofesor, numeroOrdinal } from "../globalService";
 import { ref, computed } from "vue";
 import { usuarioGet, tokenHeader } from "../globalService";
 import { useRoute } from "vue-router";
-import * as XLSX from 'xlsx';
+import * as XLSX from "xlsx";
 
 import {
   arrowBackOutline,
@@ -245,7 +262,8 @@ import {
   IonToast,
   alertController,
   IonModal,
-  IonInput
+  IonInput,
+  IonCheckbox,
 } from "@ionic/vue";
 
 export default {
@@ -268,7 +286,8 @@ export default {
     IonSpinner,
     IonToast,
     IonModal,
-    IonInput
+    IonInput,
+    IonCheckbox,
   },
   setup() {
     const usuario = ref();
@@ -310,6 +329,7 @@ export default {
     const isQuestionsModalOpen = ref(false);
     const numPreguntasAEvaluar = ref(0);
     const selectedFile = ref(null);
+    const registrarNotaMayor = ref(false);
 
     const triggerFileUpload = () => {
       fileInput.value.click();
@@ -321,39 +341,41 @@ export default {
       selectedFile.value = file;
       numPreguntasAEvaluar.value = totalPreguntas.value;
       isQuestionsModalOpen.value = true;
-      event.target.value = '';
+      event.target.value = "";
     };
 
-    const registrarNotasDesdeExcel = async (grades) => {
+    const registrarNotasDesdeExcel = async (grades, registrarMayor) => {
       const failedRegistrations = [];
 
       for (const grade of grades) {
         // eslint-disable-next-line no-unused-vars
         const { studentInfo, ...gradeData } = grade;
         try {
-          await axios.post('/grades', gradeData);
+          await axios.post("/grades", { ...gradeData, registrarMayor });
         } catch (error) {
           failedRegistrations.push({
-              student: studentInfo,
-              error: error.response?.data?.message || "Error desconocido"
+            student: studentInfo,
+            error: error.response?.data?.message || "Error desconocido",
           });
         }
       }
 
       if (failedRegistrations.length > 0) {
-        const errorList = failedRegistrations.map(f => `<li>${f.student.lastName} ${f.student.name}</li>`).join('');
+        const errorList = failedRegistrations
+          .map((f) => `<li>${f.student.lastName} ${f.student.name}</li>`)
+          .join("");
         const alert = await alertController.create({
-          header: 'Error al Registrar Notas',
-          subHeader: 'Algunas notas no se pudieron registrar.',
+          header: "Error al Registrar Notas",
+          subHeader: "Algunas notas no se pudieron registrar.",
           message: `Estudiantes afectados:<br><ul>${errorList}</ul>`,
-          buttons: ['OK'],
+          buttons: ["OK"],
         });
         await alert.present();
       } else {
         const successAlert = await alertController.create({
-            header: 'Éxito',
-            message: 'Todas las notas han sido registradas correctamente.',
-            buttons: ['OK']
+          header: "Éxito",
+          message: "Todas las notas han sido registradas correctamente.",
+          buttons: ["OK"],
         });
         await successAlert.present();
       }
@@ -362,133 +384,169 @@ export default {
     const processAndRegisterGrades = async () => {
       isQuestionsModalOpen.value = false;
       const file = selectedFile.value;
-      if (!file) return;
+      if (!file) {
+        return;
+      }
 
       const numPreguntas = numPreguntasAEvaluar.value;
       if (numPreguntas <= 0) {
-          setErrorToastOpen(true, "El número de preguntas a evaluar debe ser mayor que 0.");
-          return;
+        setErrorToastOpen(
+          true,
+          "El número de preguntas a evaluar debe ser mayor que 0."
+        );
+        return;
       }
 
       const reader = new FileReader();
       const data = await new Promise((resolve, reject) => {
-        reader.onload = e => resolve(e.target.result);
-        reader.onerror = err => reject(err);
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = (err) => reject(err);
         reader.readAsArrayBuffer(file);
       });
 
-      const workbook = XLSX.read(new Uint8Array(data), { type: 'array' });
+      const workbook = XLSX.read(new Uint8Array(data), { type: "array" });
       const firstSheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[firstSheetName];
-      const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: 1 });
-      
+
+      // 🔹 Leer valor de la celda A1
+      const cellA1 = worksheet["A1"] ? worksheet["A1"].v : null;
+
+      // 🔹 Decidir desde qué fila arrancar (0 = primera fila, 1 = segunda fila)
+      let startRow = 0;
+      if (cellA1 === 0 || cellA1 === "0") {
+        startRow = 1; // Encabezados en fila 2
+      } else if (cellA1 === "Exam") {
+        startRow = 0; // Encabezados en fila 1
+      }
+
+      const rows = XLSX.utils.sheet_to_json(worksheet, {
+        header: 1,
+        range: startRow,
+      });
+
       if (rows.length < 1) {
-          console.error("No se encontraron datos en el archivo Excel o está vacío.");
-          return;
+        console.error(
+          "No se encontraron datos en el archivo Excel o está vacío."
+        );
+        return;
       }
 
       const headers = rows[0];
       const dataRows = rows.slice(1);
-      
+
       const datosParaRegistrar = [];
       const errores = [];
 
       const searchStudent = async (code) => {
-          if (!code) return null;
-          try {
-              const response = await axios.get(`/users?code=${code}`);
-              if (response.data && response.data.length > 0) {
-                  return response.data[0];
-              }
-              return null;
-          } catch (error) {
-              console.error(`Error buscando estudiante con código ${code}:`, error);
-              return null;
+        if (!code) return null;
+        try {
+          const response = await axios.get(`/users?code=${code}`);
+          if (response.data && response.data.length > 0) {
+            return response.data[0];
           }
+          return null;
+        } catch (error) {
+          console.error(`Error buscando estudiante con código ${code}:`, error);
+          return null;
+        }
       };
 
       for (const [index, rowArray] of dataRows.entries()) {
-          const rowObject = {};
-          headers.forEach((header, index) => {
-            rowObject[header] = rowArray[index];
+        const rowObject = {};
+        headers.forEach((header, index) => {
+          rowObject[header] = rowArray[index];
+        });
+
+        const correctAnswers = parseFloat(rowObject["Correct Answers"]);
+
+        const totalMarks = rowObject["Total Marks"];
+        const incorrectAnswers = rowObject["Incorrect Answers"];
+
+        const isCorrectEmpty = correctAnswers == null || isNaN(correctAnswers);
+        const isTotalEmpty = totalMarks == null || totalMarks === "";
+        const isIncorrectEmpty =
+          incorrectAnswers == null || incorrectAnswers === "";
+        if (isCorrectEmpty && isTotalEmpty && isIncorrectEmpty) {
+          continue;
+        }
+
+        const originalRollNo = String(rowObject["Roll No"] || "");
+        const cleanedRollNo = originalRollNo.replace(/^0+/, "");
+
+        let student = null;
+        const searchAttempts = [];
+
+        const rollNoWith1 = "1" + cleanedRollNo;
+        searchAttempts.push(rollNoWith1);
+        student = await searchStudent(rollNoWith1);
+
+        if (!student) {
+          const rollNoWith10 = "10" + cleanedRollNo;
+          searchAttempts.push(rollNoWith10);
+          student = await searchStudent(rollNoWith10);
+        }
+        if (!student) {
+          searchAttempts.push(cleanedRollNo);
+          student = await searchStudent(cleanedRollNo);
+        }
+
+        if (student) {
+          const calculatedNota = (correctAnswers * 5) / numPreguntas;
+          const nota = Math.min(calculatedNota, 5); // Capar nota en 5
+          const gradeData = {
+            userId: student.id,
+            gradableId: parseInt(id, 10),
+            gradableType: "quiz",
+            periodId: cuestionario.value.lesson.period.id,
+            gradeType: "regular",
+            grade: parseFloat(nota.toFixed(2)),
+            instituteId: cuestionario.value.lesson.institute.id,
+            studentInfo: {
+              name: student.name,
+              lastName: student.lastName,
+              code: student.code,
+            },
+          };
+          datosParaRegistrar.push(gradeData);
+        } else {
+          errores.push({
+            row: index + 2 + startRow, // Ajustar fila según origen
+            "Roll No Original": originalRollNo,
+            "Intentos de búsqueda": searchAttempts,
+            Mensaje: "Estudiante no encontrado.",
           });
-
-          const correctAnswers = parseFloat(rowObject['Correct Answers']);
-          const totalMarks = rowObject['Total Marks'];
-          const incorrectAnswers = rowObject['Incorrect Answers'];
-
-          const isCorrectEmpty = correctAnswers == null || isNaN(correctAnswers);
-          const isTotalEmpty = totalMarks == null || totalMarks === '';
-          const isIncorrectEmpty = incorrectAnswers == null || incorrectAnswers === '';
-          if (isCorrectEmpty && isTotalEmpty && isIncorrectEmpty) {
-              continue;
-          }
-
-          const originalRollNo = String(rowObject['Roll No'] || '');
-          const cleanedRollNo = originalRollNo.replace(/^0+/, '');
-
-          let student = null;
-          const searchAttempts = [];
-
-          const rollNoWith1 = '1' + cleanedRollNo;
-          searchAttempts.push(rollNoWith1);
-          student = await searchStudent(rollNoWith1);
-
-          if (!student) {
-              const rollNoWith10 = '10' + cleanedRollNo;
-              searchAttempts.push(rollNoWith10);
-              student = await searchStudent(rollNoWith10);
-          }
-          if (!student) {
-              searchAttempts.push(cleanedRollNo);
-              student = await searchStudent(cleanedRollNo);
-          }
-
-          if (student) {
-              const calculatedNota = (correctAnswers * 5) / numPreguntas;
-              const nota = Math.min(calculatedNota, 5); // Cap the grade at 5
-              const gradeData = {
-                  userId: student.id,
-                  gradableId: parseInt(id, 10),
-                  gradableType: "quiz",
-                  periodId: cuestionario.value.lesson.period.id,
-                  gradeType: "regular",
-                  grade: parseFloat(nota.toFixed(2)),
-                  instituteId: cuestionario.value.lesson.institute.id,
-                  studentInfo: { name: student.name, lastName: student.lastName, code: student.code }
-              };
-              datosParaRegistrar.push(gradeData);
-          } else {
-              errores.push({
-                  row: index + 2,
-                  'Roll No Original': originalRollNo,
-                  'Intentos de búsqueda': searchAttempts,
-                  'Mensaje': 'Estudiante no encontrado.'
-              });
-          }
+        }
       }
 
       if (errores.length > 0) {
-          const errorMessages = errores.map(e => `Fila ${e.row}: No se encontró al estudiante con Roll No ${e['Roll No Original']}`).join('<br>');
-          const confirmAlert = await alertController.create({
-              header: 'Estudiantes no encontrados',
-              message: `${errorMessages}<br><br>¿Desea registrar las notas de todas maneras para los estudiantes que sí se encontraron?`,
-              buttons: [
-                  {
-                      text: 'No',
-                      role: 'cancel',
-                  },
-                  {
-                      text: 'Sí',
-                      handler: () => {
-                          registrarNotasDesdeExcel(datosParaRegistrar);
-                      }
-                  }
-              ]
-          });
-          await confirmAlert.present();
+        const errorMessages = errores
+          .map(
+            (e) =>
+              `Fila ${e.row}: No se encontró al estudiante con Roll No ${e["Roll No Original"]}`
+          )
+          .join("<br>");
+        const confirmAlert = await alertController.create({
+          header: "Estudiantes no encontrados",
+          message: `${errorMessages}<br><br>¿Desea registrar las notas de todas maneras para los estudiantes que sí se encontraron?`,
+          buttons: [
+            {
+              text: "No",
+              role: "cancel",
+            },
+            {
+              text: "Sí",
+              handler: () => {
+                registrarNotasDesdeExcel(
+                  datosParaRegistrar,
+                  registrarNotaMayor.value
+                );
+              },
+            },
+          ],
+        });
+        await confirmAlert.present();
       } else {
-          registrarNotasDesdeExcel(datosParaRegistrar);
+        registrarNotasDesdeExcel(datosParaRegistrar, registrarNotaMayor.value);
       }
     };
 
@@ -666,6 +724,7 @@ export default {
       numPreguntasAEvaluar,
       onFileSelected,
       processAndRegisterGrades,
+      registrarNotaMayor,
     };
   },
 };

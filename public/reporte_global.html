@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reporte Global por Área</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 20px; }
+      .container { display: flex; flex-wrap: wrap; gap: 20px; }
+      .input-section { flex: 1; min-width: 300px; border: 1px solid #ccc; padding: 15px; border-radius: 8px; background-color: #f9f9f9; }
+      table { border-collapse: collapse; margin: 20px 0; width: 100%; }
+      th, td { border: 1px solid black; padding: 8px; text-align: center; white-space: nowrap; }
+      th { background-color: #f2f2f2; }
+      .nombre-col { text-align: left; }
+      .categoria-hacer { background-color: #e6d4f0; color: #000; }
+      .categoria-saber { background-color: #d4e6f0; color: #000; }
+      .categoria-ser { background-color: #d4f0d4; color: #000; }
+      .promedio-hacer { background-color: #9966cc; color: white; font-weight: bold; }
+      .promedio-saber { background-color: #4682b4; color: white; font-weight: bold; }
+      .promedio-ser { background-color: #2e8b57; color: white; font-weight: bold; }
+      .nota-final { background-color: #333333; color: white; font-weight: bold; }
+      select, button { margin: 5px; padding: 8px 12px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; }
+      button { background-color: #4caf50; color: white; border: none; }
+      button:hover { background-color: #45a049; }
+      button:disabled { background-color: #ccc; cursor: not-allowed; }
+      .table-container { overflow-x: auto; }
+      .reporte-curso, #consolidated-report-container { margin-top: 30px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+      .fila-estudiante:hover { background-color: #f0f8ff; cursor: pointer; }
+      #mapping-modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
+      .modal-content { background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 700px; border-radius: 8px; }
+      #carta-container { margin-top: 30px; padding: 20px; border: 2px solid #000; background-color: #f9f9f9; }
+      @media print { 
+          body * { visibility: hidden; } 
+          #carta-content, #carta-content * { visibility: visible; } 
+          #carta-content { position: absolute; left: 0; top: 0; width: 100%; } 
+          .no-imprimir { display: none; }
+      }
+    </style>
+</head>
+<body>
+    <h2>Reporte Global por Área</h2>
+
+    <div class="container">
+        <div class="input-section">
+            <h3>1. Parámetros del Reporte</h3>
+            <select id="year-select" onchange="cargarCursosYAreas()"></select>
+            <select id="period-select"></select>
+            <select id="area-select"></select>
+            <br><br>
+            <label for="preliminar-checkbox">Reporte Preliminar</label>
+            <input type="checkbox" id="preliminar-checkbox" />
+        </div>
+        <div class="input-section">
+            <h3>2. Autenticación y Configuración</h3>
+            <label for="cookie-input">Cookie de colegiosonline.com:</label>
+            <input type="text" id="cookie-input" placeholder="Pegue aquí la cookie de acceso" style="width: 100%" />
+            <p id="cookie-error" style="color: red; margin-top: 5px;"></p>
+            <button id="config-button" onclick="openMappingUI()">Configurar Correspondencia de Cursos</button>
+        </div>
+    </div>
+
+    <div>
+        <button id="generate-report-button" onclick="procesarReporteGlobal()" disabled>Generar Reporte por Área</button>
+        <p id="report-status" style="color: #888; margin-top: 5px;"></p>
+    </div>
+
+    <div id="reportes-container"></div>
+
+    <div id="global-filters" style="display: none; margin-top: 30px; padding: 15px; background-color: #eef; border-radius: 8px;">
+        <h3>Reportes Consolidados</h3>
+        <button onclick="generarReporteConsolidado(3.5, false)">Alumnos con Promedio &lt; 3.5</button>
+        <button onclick="generarReporteConsolidado(4.0, true)">Alumnos con Promedio ≥ 4.0</button>
+    </div>
+
+    <div id="consolidated-report-container"></div>
+
+    <div id="carta-container" style="display: none;">
+        <h3>Carta a Padres de Familia</h3>
+        <div class="no-imprimir"><button onclick="imprimirCarta()">Imprimir</button><button onclick="cerrarCarta()">Cerrar</button></div>
+        <div id="carta-content" style="margin-top: 20px;"></div>
+    </div>
+
+    <div id="mapping-modal">
+        <div class="modal-content">
+            <h2>Configurar Correspondencia de Cursos</h2>
+            <p>Relacione cada curso de su plataforma interna con el grado correspondiente de la plataforma externa (colegiosonline.com).</p>
+            <div id="mapping-table-container"></div>
+            <button onclick="saveMapping()">Guardar Configuración</button>
+            <button onclick="closeMappingUI()">Cerrar</button>
+        </div>
+    </div>
+
+    <script>
+        let cursos = [];
+        let datosDeReportes = {};
+        const COOKIE_STORAGE_KEY = "externalApiCookie";
+        const MAPPING_STORAGE_KEY = "courseIdMapping";
+        const EXTERNAL_GRADOS = {
+            "0401": "CUARTO - FRANCISCO JOSE DE CALDAS",
+            "0501": "QUINTO - FRANCISCO JOSE DE CALDAS",
+            "0601": "SEXTO 1 - FRANCISCO JOSE DE CALDAS",
+            "0701": "SÉPTIMO 1 - FRANCISCO JOSE DE CALDAS",
+            "0814": "OCTAVO 2 - FRANCISCO JOSE DE CALDAS"
+        };
+
+        window.onload = async function () {
+            axios.defaults.baseURL = basedeURL();
+            axios.defaults.headers.common["Authorization"] = localStorage.getItem("token");
+            await cargarAnios();
+            await cargarPeriodos();
+            await cargarCursosYAreas();
+            checkInitialState();
+        };
+
+        function checkInitialState() {
+            const savedCookie = localStorage.getItem(COOKIE_STORAGE_KEY);
+            const savedMapping = localStorage.getItem(MAPPING_STORAGE_KEY);
+            const cookieInput = document.getElementById("cookie-input");
+            const generateButton = document.getElementById("generate-report-button");
+            const reportStatus = document.getElementById("report-status");
+
+            if (savedCookie) {
+                cookieInput.value = savedCookie;
+                cookieInput.readOnly = true;
+            }
+
+            if (savedMapping) {
+                generateButton.disabled = false;
+                reportStatus.textContent = "Listo para generar reportes.";
+            } else {
+                generateButton.disabled = true;
+                reportStatus.textContent = "Requiere configuración. Por favor, establezca la correspondencia de cursos.";
+            }
+        }
+
+        function basedeURL() { return window.location.protocol + "//" + window.location.host.split(":")[0] + ":3000/"; }
+
+        async function cargarAnios() {
+            const yearSelect = document.getElementById("year-select");
+            const currentYear = new Date().getFullYear();
+            for (let i = currentYear; i >= 2020; i--) yearSelect.add(new Option(i, i));
+            yearSelect.value = localStorage.getItem("year") || currentYear;
+        }
+
+        async function cargarPeriodos() {
+            const periodSelect = document.getElementById("period-select");
+            const periodos = JSON.parse(localStorage.getItem("periodos")).sort((a, b) => a.name.localeCompare(b.name));
+            periodos.forEach(p => periodSelect.add(new Option(p.name, p.id)));
+            periodSelect.value = localStorage.getItem("periodoSelected") || "1";
+        }
+
+        async function cargarCursosYAreas() {
+            const year = document.getElementById("year-select").value;
+            const usuario = JSON.parse(localStorage.getItem("usuario"));
+            try {
+                const response = await axios.get(`/users/${usuario.id}/courses?year=${year}`);
+                cursos = response.data;
+                const areaSelect = document.getElementById("area-select");
+                areaSelect.innerHTML = "";
+                const areasUnicas = new Map();
+                cursos.forEach(c => (c.course.areas || []).forEach(a => areasUnicas.set(a.id, a.name)));
+                areasUnicas.forEach((name, id) => areaSelect.add(new Option(name, id)));
+            } catch (error) { console.error("Error al cargar cursos y áreas:", error); }
+        }
+
+        function openMappingUI() {
+            const container = document.getElementById('mapping-table-container');
+            const savedMapping = JSON.parse(localStorage.getItem(MAPPING_STORAGE_KEY) || '{}');
+            let tableHTML = '<table><thead><tr><th>Curso de mi Plataforma</th><th>Grado de Plataforma Externa</th></tr></thead><tbody>';
+            cursos.forEach(curso => {
+                const cursoId = curso.course.id;
+                const cursoName = curso.course.name;
+                tableHTML += `<tr><td>${cursoName}</td><td><select id="mapping-select-${cursoId}"><option value="">-- No relacionar --</option>`;
+                for (const [gradoId, gradoName] of Object.entries(EXTERNAL_GRADOS)) {
+                    tableHTML += `<option value="${gradoId}" ${savedMapping[cursoId] === gradoId ? 'selected' : ''}>${gradoName}</option>`;
+                }
+                tableHTML += '</select></td></tr>';
+            });
+            container.innerHTML = tableHTML + '</tbody></table>';
+            document.getElementById('mapping-modal').style.display = 'block';
+        }
+
+        function closeMappingUI() { document.getElementById('mapping-modal').style.display = 'none'; }
+
+        function saveMapping() {
+            const newMapping = {};
+            cursos.forEach(curso => {
+                const select = document.getElementById(`mapping-select-${curso.course.id}`);
+                if (select.value) newMapping[curso.course.id] = select.value;
+            });
+            localStorage.setItem(MAPPING_STORAGE_KEY, JSON.stringify(newMapping));
+            alert('Configuración guardada con éxito.');
+            closeMappingUI();
+            checkInitialState();
+        }
+
+        async function procesarReporteGlobal() {
+            const reportesContainer = document.getElementById('reportes-container');
+            const globalFilters = document.getElementById('global-filters');
+            reportesContainer.innerHTML = '<h3>Generando reportes...</h3>';
+            globalFilters.style.display = 'none';
+            document.getElementById('consolidated-report-container').innerHTML = "";
+            datosDeReportes = {};
+
+            const year = document.getElementById("year-select").value;
+            const periodId = document.getElementById("period-select").value;
+            const areaId = document.getElementById("area-select").value;
+            const usuario = JSON.parse(localStorage.getItem("usuario"));
+            const mapping = JSON.parse(localStorage.getItem(MAPPING_STORAGE_KEY) || '{}');
+            const cursosDelArea = cursos.filter(c => (c.course.areas || []).some(a => a.id == areaId));
+            
+            if (cursosDelArea.length === 0) {
+                reportesContainer.innerHTML = '<h3>No se encontraron cursos para el área seleccionada.</h3>';
+                return;
+            }
+            
+            reportesContainer.innerHTML = '';
+
+            for (const curso of cursosDelArea) {
+                const courseId = curso.course.id;
+                const areaName = (curso.course.areas.find(a => a.id == areaId) || {}).name;
+                const gradoId = mapping[courseId];
+                const reporteDiv = document.createElement('div');
+                reporteDiv.className = 'reporte-curso';
+                reporteDiv.id = `reporte-curso-${courseId}`;
+                reportesContainer.appendChild(reporteDiv);
+
+                if (!gradoId) {
+                    reporteDiv.innerHTML = `<h4>Reporte para: ${curso.course.name} - ${areaName} (Omitido)</h4><p>Este curso no tiene un grado externo relacionado.</p>`;
+                    continue;
+                }
+                reporteDiv.innerHTML = `<h3>Generando reporte para: ${curso.course.name} - ${areaName}...</h3>`;
+                try {
+                    const reporteData = await fetchAndProcessCourseData(curso, areaId, periodId, year, usuario, gradoId);
+                    datosDeReportes[courseId] = { ...reporteData, courseName: curso.course.name, areaName: areaName };
+                    generarBloqueDeReporte(curso, datosDeReportes[courseId]);
+                } catch (error) {
+                    reporteDiv.innerHTML = `<h3>Error al generar reporte para: ${curso.course.name}. ${error.message}</h3>`;
+                }
+            }
+            globalFilters.style.display = 'block';
+        }
+
+        async function fetchAndProcessCourseData(curso, areaId, periodId, year, usuario, gradoId) {
+            const courseId = curso.course.id;
+            const cookieStr = document.getElementById("cookie-input").value.trim();
+            if (!cookieStr) throw new Error("La cookie de acceso es requerida.");
+            
+            const [notasResponse, alumnosResponse] = await Promise.all([
+                axios.get(`/grades?year=${year}&courseId=${courseId}&areaId=${areaId}&periodId=${periodId}&instituteId=${usuario.institute.id}`),
+                fetch(`${basedeURL()}alumnos?id=${gradoId}&cookie=${encodeURIComponent(cookieStr)}`)
+            ]);
+
+            if (!alumnosResponse.ok) {
+                 if (alumnosResponse.status === 401 || alumnosResponse.status === 403) {
+                    localStorage.removeItem(COOKIE_STORAGE_KEY);
+                    document.getElementById("cookie-input").readOnly = false;
+                    document.getElementById("cookie-error").textContent = "La cookie expiró o es inválida. Ingresa una nueva.";
+                 }
+                 throw new Error(`Error al cargar lista de alumnos (HTTP ${alumnosResponse.status})`);
+            }
+            
+            localStorage.setItem(COOKIE_STORAGE_KEY, cookieStr);
+            document.getElementById("cookie-input").readOnly = true;
+            document.getElementById("cookie-error").textContent = "";
+
+            const datos = notasResponse.data;
+            const estudiantesList = (await alumnosResponse.json()).data;
+            const gradableItems = Array.from(new Map(datos.map(d => [d.gradableItem.id, { id: d.gradableItem.id, title: d.gradableItem.title, lessonTopic: d.gradableItem.lesson.topic }])).values()).sort((a, b) => a.id - b.id);
+            const usuarios = {};
+            datos.forEach(d => {
+                if (!usuarios[d.user.id]) usuarios[d.user.id] = { nombre: d.user.name, apellido: d.user.lastName, codigo: d.user.code, notasHacer: {}, notasSaber: {}, notaSer: 5.0 };
+                usuarios[d.user.id].notasHacer[d.gradableItem.id] = d.grade;
+                usuarios[d.user.id].notasSaber[d.gradableItem.id] = d.grade;
+            });
+
+            const esPreliminar = document.getElementById("preliminar-checkbox").checked;
+            const resultadosFinales = estudiantesList.map(estudiante => {
+                const diEstudiante = estudiante.di.replace(/,/g, "").trim();
+                const calificacion = Object.values(usuarios).find(u => String(u.codigo).replace(/,/g, "").trim() === diEstudiante);
+
+                if (calificacion) {
+                    const totalItems = gradableItems.length || 1;
+
+                    // Lógica de cálculo extraída de promedio.html para asegurar consistencia
+                    const notasHacer = gradableItems.map(item => calificacion.notasHacer[item.id] !== undefined ? calificacion.notasHacer[item.id] : 0);
+                    const notasSaber = gradableItems.map(item => calificacion.notasSaber[item.id] !== undefined ? calificacion.notasSaber[item.id] : 0);
+                    const notasHacerValidas = notasHacer.filter(nota => nota > 0);
+                    const notasSaberValidas = notasSaber.filter(nota => nota > 0);
+
+                    const promHacer = notasHacerValidas.length > 0 ? notasHacerValidas.reduce((a, b) => a + b, 0) / totalItems : 0;
+                    const promSaber = notasSaberValidas.length > 0 ? notasSaberValidas.reduce((a, b) => a + b, 0) / totalItems : 0;
+                    const promSer = calificacion.notaSer || 5.0;
+                    const prom = esPreliminar ? (promHacer + promSaber) / 2 : (promHacer + promSaber + promSer) / 3;
+
+                    return { ...estudiante, ...calificacion, promedioHacer: promHacer, promedioSaber: promSaber, promedioSer: promSer, promedio: prom };
+                }
+                return { ...estudiante, retirado: estudiante.retirado === "1", promedio: 0, promedioHacer: 0, promedioSaber: 0, promedioSer: 5.0, notasHacer: {}, notasSaber: {} };
+            });
+            return { todosLosResultados: resultadosFinales, gradableItems };
+        }
+
+        function generarBloqueDeReporte(curso, reporteData) {
+            const courseId = curso.course.id;
+            const reporteDiv = document.getElementById(`reporte-curso-${courseId}`);
+            reporteDiv.innerHTML = `
+                <h2>${reporteData.courseName} - ${reporteData.areaName}</h2>
+                <div class="table-container">
+                    <table id="tabla-principal-${courseId}">
+                        <thead id="tabla-encabezado-${courseId}"></thead>
+                        <tbody id="tabla-resultados-${courseId}"></tbody>
+                    </table>
+                </div>`;
+            actualizarEncabezados(courseId, reporteData.gradableItems);
+            mostrarResultados(courseId, reporteData.todosLosResultados, reporteData.gradableItems);
+        }
+
+        function actualizarEncabezados(courseId, gradableItems) {
+            const esPreliminar = document.getElementById("preliminar-checkbox").checked;
+            const thead = document.getElementById(`tabla-encabezado-${courseId}`);
+            let filaCatHTML = `<th rowspan="2" class="nombre-col">Apellidos</th><th rowspan="2" class="nombre-col">Nombre</th><th rowspan="2">Documento</th>`;
+            gradableItems.forEach(() => filaCatHTML += `<th class="categoria-hacer">Hacer</th>`);
+            gradableItems.forEach(() => filaCatHTML += `<th class="categoria-saber">Saber</th>`);
+            filaCatHTML += `<th class="promedio-hacer">Hacer</th><th class="promedio-saber">Saber</th>${esPreliminar ? "" : '<th class="promedio-ser">Ser</th>'}<th class="nota-final">Nota Final</th>`;
+            let filaActHTML = ``;
+            gradableItems.forEach(item => filaActHTML += `<th class="categoria-hacer">${item.title}</th>`);
+            gradableItems.forEach(item => filaActHTML += `<th class="categoria-saber">${item.title}</th>`);
+            filaActHTML += `<th class="promedio-hacer">Promedio</th><th class="promedio-saber">Promedio</th>${esPreliminar ? "" : '<th class="promedio-ser">Promedio</th>'}<th class="nota-final">Nota Final</th>`;
+            thead.innerHTML = `<tr>${filaCatHTML}</tr><tr>${filaActHTML}</tr>`;
+        }
+
+        function mostrarResultados(courseId, listaUsuarios, gradableItems) {
+            const tabla = document.getElementById(`tabla-resultados-${courseId}`);
+            tabla.innerHTML = "";
+            listaUsuarios.forEach((usuario, idx) => {
+                let filaCeldas = `<td class="nombre-col">${usuario.apellidos}</td><td class="nombre-col">${usuario.nombre}</td><td>${usuario.di}</td>`;
+                gradableItems.forEach(item => {
+                    const nota = (usuario.notasHacer && usuario.notasHacer[item.id] !== undefined) ? usuario.notasHacer[item.id].toFixed(1) : "-";
+                    filaCeldas += `<td class="categoria-hacer">${nota}</td>`;
+                });
+                gradableItems.forEach(item => {
+                    const nota = (usuario.notasSaber && usuario.notasSaber[item.id] !== undefined) ? usuario.notasSaber[item.id].toFixed(1) : "-";
+                    filaCeldas += `<td class="categoria-saber">${nota}</td>`;
+                });
+                const promSer = usuario.promedioSer || 5.0;
+                filaCeldas += `<td class="promedio-hacer">${usuario.promedioHacer.toFixed(1)}</td><td class="promedio-saber">${usuario.promedioSaber.toFixed(1)}</td>${document.getElementById("preliminar-checkbox").checked ? "" : `<td class="promedio-ser">${promSer.toFixed(1)}</td>`}<td class="nota-final">${usuario.promedio.toFixed(1)}</td>`;
+                const fila = document.createElement('tr');
+                fila.className = `fila-estudiante ${usuario.retirado ? 'estudiante-retirado' : ''}`;
+                fila.onclick = () => mostrarCarta(courseId, idx);
+                fila.innerHTML = filaCeldas;
+                tabla.appendChild(fila);
+            });
+        }
+
+        function generarReporteConsolidado(valor, esMayor) {
+            const container = document.getElementById('consolidated-report-container');
+            const titulo = `Reporte Consolidado: Estudiantes con Promedio ${esMayor ? '≥' : '<'} ${valor}`;
+            let contentHTML = `<h2>${titulo}</h2>`;
+            let hayEstudiantes = false;
+
+            for (const courseId in datosDeReportes) {
+                const reporte = datosDeReportes[courseId];
+                const estudiantesFiltrados = reporte.todosLosResultados.filter(u => !u.retirado && (esMayor ? u.promedio >= valor : u.promedio < valor));
+                if (estudiantesFiltrados.length > 0) {
+                    hayEstudiantes = true;
+                    contentHTML += `<h3>${reporte.courseName} - ${reporte.areaName}</h3>`;
+                    contentHTML += '<table><thead><tr><th class="nombre-col">Nombre Completo</th><th>Promedio</th></tr></thead><tbody>';
+                    estudiantesFiltrados.forEach(estudiante => {
+                        contentHTML += `<tr><td class="nombre-col">${estudiante.apellidos}, ${estudiante.nombre}</td><td>${estudiante.promedio.toFixed(1)}</td></tr>`;
+                    });
+                    contentHTML += '</tbody></table>';
+                }
+            }
+
+            if (!hayEstudiantes) {
+                contentHTML += '<p>No se encontraron estudiantes que cumplan con este criterio.</p>';
+            }
+            container.innerHTML = contentHTML;
+            container.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function mostrarCarta(courseId, index) {
+            const estudiante = datosDeReportes[courseId].todosLosResultados[index];
+            const cartaContainer = document.getElementById('carta-container');
+            const cartaContent = document.getElementById('carta-content');
+            const esPreliminar = document.getElementById("preliminar-checkbox").checked;
+            const fecha = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+            cartaContent.innerHTML = `
+                <p>${fecha}</p>
+                <p>Apreciados Padres de Familia de <strong>${estudiante.nombre} ${estudiante.apellidos}</strong>,</p>
+                <p>Resumen del desempeño de su hijo(a):</p>
+                <table class="tabla-carta">
+                    <thead><tr><th>Componente</th><th>Nota</th></tr></thead>
+                    <tbody>
+                        <tr><td>Promedio del Hacer</td><td>${estudiante.promedioHacer.toFixed(1)}</td></tr>
+                        <tr><td>Promedio del Saber</td><td>${estudiante.promedioSaber.toFixed(1)}</td></tr>
+                        ${!esPreliminar ? `<tr><td>Promedio del Ser</td><td>${estudiante.promedioSer.toFixed(1)}</td></tr>` : ''}
+                        <tr><td style="font-weight: bold;">Nota Final</td><td style="font-weight: bold;">${estudiante.promedio.toFixed(1)}</td></tr>
+                    </tbody>
+                </table>
+                <p>Atentamente,</p><br><p>_________________________</p><p>Docente</p>
+            `;
+            cartaContainer.style.display = 'block';
+            cartaContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function cerrarCarta() { document.getElementById('carta-container').style.display = 'none'; }
+        function imprimirCarta() { window.print(); }
+
+    </script>
+</body>
+</html>

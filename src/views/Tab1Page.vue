@@ -293,9 +293,7 @@ export default {
         await axios.get(`/users/${usuario.value.id}/courses`)
       ).data;
 
-      actualCurso.value = cursosUsuario.value.find((curso) => {
-        return curso.year == year.value;
-      });
+      actualCurso.value = cursosUsuario.value.find((curso) => curso.active);
 
       tokenHeader();
 

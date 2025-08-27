@@ -158,7 +158,7 @@
 <script>
 import { ref } from "vue";
 import axios from "axios";
-import { selectedYear, tokenHeader, usuarioGet } from "../globalService";
+import { tokenHeader, usuarioGet } from "../globalService";
 import {
   IonPage,
   IonHeader,
@@ -248,26 +248,25 @@ export default {
                     name: assignacion.course.name,
                     id: assignacion.course.id,
                     year: assignacion.year,
+                    active: assignacion.active,
                   }));
                   localStorage.setItem(
                     "cursosUsuario",
                     JSON.stringify(cursosUsuario)
                   );
-                  //si no hay un curso con el year igual a selectedYear() ,  localstorage year se convertira en el ultimo year de cursosUsuario
+                  const currentYear = new Date().getFullYear();
+                  const coursesForCurrentYear = cursosUsuario.filter(c => c.year == currentYear);
 
-                  if (
-                    cursosUsuario.length > 0 &&
-                    !cursosUsuario.find((c) => c.year == selectedYear())
-                  ) {
-                    const year = cursosUsuario.sort(
-                      (a, b) => b.year - a.year
-                    )[0].year;
-                    localStorage.setItem("year", JSON.stringify(year));
+                  if (coursesForCurrentYear.length > 0) {
+                    // If there are courses for the current year, use the current year.
+                    localStorage.setItem("year", JSON.stringify(currentYear));
+                  } else if (cursosUsuario.length > 0) {
+                    // Otherwise, use the most recent year from the user's courses.
+                    const latestYear = cursosUsuario.sort((a, b) => b.year - a.year)[0].year;
+                    localStorage.setItem("year", JSON.stringify(latestYear));
                   } else {
-                    localStorage.setItem(
-                      "year",
-                      JSON.stringify(selectedYear())
-                    );
+                    // If no courses at all, default to the current year.
+                    localStorage.setItem("year", JSON.stringify(currentYear));
                   }
                 });
 
