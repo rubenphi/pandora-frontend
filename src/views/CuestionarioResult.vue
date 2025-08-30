@@ -104,19 +104,19 @@
                         answer.question.title
                       }}</strong
                     >
+                    <ion-icon
+                      :icon="
+                        answer.option.correct
+                          ? checkmarkCircleOutline
+                          : closeCircleOutline
+                      "
+                      :color="answer.option.correct ? 'success' : 'danger'"
+                    ></ion-icon>
                     <p>
                       <strong>Respuesta seleccionada:</strong>
                       {{
                         answer.option.identifier + ")" + answer.option.sentence
                       }}
-                      <ion-icon
-                        :icon="
-                          answer.option.correct
-                            ? checkmarkCircleOutline
-                            : closeCircleOutline
-                        "
-                        :color="answer.option.correct ? 'success' : 'danger'"
-                      ></ion-icon>
                     </p>
                     <p>
                       <strong>Puntos obtenidos:</strong> {{ answer.points }}

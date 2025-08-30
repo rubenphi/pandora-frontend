@@ -298,7 +298,7 @@ export async function ActivitiesSinNotas(cursoId, usuario) {
   for (const gradableItem of activitiesSinNotas) {
     try {
       const response = await axios.get(
-        `/student-criterion-scores?activityId=${gradableItem.id}`,
+        `/student-criterion-scores/getAll?activityId=${gradableItem.id}`,
         tokenHeader()
       );
 

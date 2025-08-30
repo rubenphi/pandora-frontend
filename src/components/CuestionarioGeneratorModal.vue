@@ -144,22 +144,24 @@ export default defineComponent({
         }. ${processedSentence}</strong><br>`;
 
         if (type === "variable") {
-          question.options.forEach((opt) => {
-            let processedOptionSentence = opt.sentence;
-            if (
-              processedOptionSentence.trim().startsWith("<p>") &&
-              processedOptionSentence.trim().endsWith("</p>")
-            ) {
-              processedOptionSentence = processedOptionSentence
-                .trim()
-                .slice(3, -4);
-            }
-            processedOptionSentence = processedOptionSentence.replace(
-              /^<h([1-6])>(.*?)<\/h\1>/i,
-              "<strong>$2</strong>"
-            );
-            htmlOutput += `&nbsp;&nbsp;&nbsp;${opt.identifier}. ${processedOptionSentence}<br>`;
-          });
+          question.options
+            .sort((a, b) => a.identifier.localeCompare(b.identifier))
+            .forEach((opt) => {
+              let processedOptionSentence = opt.sentence;
+              if (
+                processedOptionSentence.trim().startsWith("<p>") &&
+                processedOptionSentence.trim().endsWith("</p>")
+              ) {
+                processedOptionSentence = processedOptionSentence
+                  .trim()
+                  .slice(3, -4);
+              }
+              processedOptionSentence = processedOptionSentence.replace(
+                /^<h([1-6])>(.*?)<\/h\1>/i,
+                "<strong>$2</strong>"
+              );
+              htmlOutput += `&nbsp;&nbsp;&nbsp;${opt.identifier}. ${processedOptionSentence}<br>`;
+            });
         }
 
         if (type === "answers") {
@@ -238,10 +240,10 @@ export default defineComponent({
       printWindow.document.write("</body></html>");
       printWindow.document.close();
       printWindow.focus();
-      printWindow.onload = function () {
+      /*  printWindow.onload = function () {
         printWindow.print();
         printWindow.close();
-      };
+      }; */
     };
 
     watch(

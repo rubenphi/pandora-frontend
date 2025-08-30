@@ -7,12 +7,7 @@
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
-        <ion-title>Revisar Actividad</ion-title>
-        <ion-buttons slot="end">
-          <ion-button @click="presentConfirmAlert()">
-            Registrar Notas
-          </ion-button>
-        </ion-buttons>
+        <ion-title>Ver mi revisión</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -135,69 +130,72 @@
 </template>
 
 <script>
-import { ref } from "vue";
-import { useRoute } from "vue-router";
+import { ref, onMounted } from "vue";
 import axios from "axios";
 import { tokenHeader, usuarioGet } from "../globalService";
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonTitle,
+  IonButtons,
+  IonButton,
+  IonPage,
+  IonIcon,
   IonContent,
   IonList,
   IonItem,
   IonLabel,
-  IonButton,
-  IonButtons,
-  onIonViewWillEnter,
   IonAccordionGroup,
   IonAccordion,
   IonRange,
   IonGrid,
   IonRow,
   IonCol,
-  alertController,
-  IonIcon,
   IonToast,
   IonNote,
 } from "@ionic/vue";
+import { useRoute } from "vue-router";
 import { arrowBackOutline } from "ionicons/icons";
 
 export default {
+  name: "EvaluarPares",
+
   components: {
-    IonPage,
     IonHeader,
     IonToolbar,
     IonTitle,
+    IonIcon,
+    IonButtons,
+    IonPage,
     IonContent,
     IonList,
     IonItem,
     IonLabel,
     IonButton,
-    IonButtons,
     IonAccordionGroup,
     IonAccordion,
     IonRange,
     IonGrid,
     IonRow,
     IonCol,
-    IonIcon,
     IonToast,
     IonNote,
   },
   setup() {
     const mroute = useRoute();
-    const activityId = mroute.params.id;
+
+    const grupoUsuario = ref(null);
+
+    const activityId = ref(mroute.params.id);
+
     const usuario = ref(null);
-    const periodId = ref(null);
-    const instituteId = ref(null);
+    const userPermissions = ref([]);
 
     const students = ref([]);
     const criteria = ref([]);
-    const evaluation = ref({}); // { studentId: { criterionId: 'value' } }
+    const evaluation = ref({});
     const studentGrades = ref({});
-    const currentlyOpenStudentId = ref(null); // Track the currently open student accordion
+    const currentlyOpenStudentId = ref(null);
     const isSaving = ref(false);
 
     const isSuccessToastOpen = ref(false);
@@ -209,42 +207,107 @@ export default {
       errorMessage.value = message;
     };
 
-    // Fetch user data on component setup
     usuario.value = usuarioGet();
 
     const fetchActivityDetails = async () => {
       try {
         const response = await axios.get(
-          `/activities/${activityId}`,
+          `/activities/${activityId.value}`,
           tokenHeader()
         );
-
         const courseId = response.data.lesson.course.id;
-        const year = response.data.lesson.year; // Get the year from the lesson
-        periodId.value = response.data.lesson.period.id;
-        instituteId.value = response.data.institute.id;
+        const year = response.data.lesson.year;
 
-        await fetchCriteria(activityId); // Fetch criteria first
-
-        await fetchStudents(courseId, year);
-
-        await fetchStudentCriterionScores(activityId);
+        await fetchCriteria();
+        await fetchStudentPermissions(courseId, year);
+        await fetchStudentCriterionScores();
       } catch (error) {
         console.error("Error in fetchActivityDetails:", error.message || error);
       }
     };
 
-    const fetchStudentCriterionScores = async (activityId) => {
+    const fetchStudentPermissions = async (courseId, year) => {
+      try {
+        /*   const permisosIndividuales = await axios.get(
+          `/student-criterion-scores/permissions?reviserId=${usuario.value.id}&activityId=${activityId.value}`,
+          tokenHeader()
+        ); */
+        const permisosGrupales = await axios.get(
+          `/student-criterion-scores/permissions?reviserId=${grupoUsuario.value.id}&activityId=${activityId.value}`,
+          tokenHeader()
+        );
+        /*     userPermissions.value = permisosIndividuales.data; */
+
+        userPermissions.value.push(...permisosGrupales.data);
+        await fetchStudentsToReview(courseId, year);
+      } catch (error) {
+        console.error("Error fetching student permissions:", error);
+      }
+    };
+
+    const fetchStudentsToReview = async (courseId, year) => {
+      const studentSet = new Map();
+      for (const permission of userPermissions.value) {
+        if (permission.revisedType === "User") {
+          const userResponse = await axios.get(
+            `/users/${permission.revisedId}`,
+            tokenHeader()
+          );
+          if (userResponse.data)
+            studentSet.set(userResponse.data.id, userResponse.data);
+        } else if (permission.revisedType === "Group") {
+          const groupUsersResponse = await axios.get(
+            `/groups/${permission.revisedId}/${year}/users`,
+            tokenHeader()
+          );
+          groupUsersResponse.data.forEach((u) =>
+            studentSet.set(u.user.id, u.user)
+          );
+        }
+      }
+      const allStudents = Array.from(studentSet.values());
+      const usersNoGroupResponse = await axios.get(
+        `/courses/${courseId}/usersNoGroup?year=${year}`,
+        tokenHeader()
+      );
+      const usersWithoutGroupIds = new Set(
+        usersNoGroupResponse.data.map((u) => u.user.id)
+      );
+      students.value = allStudents.map((student) => ({
+        ...student,
+        hasGroup: !usersWithoutGroupIds.has(student.id),
+      }));
+      initializeEvaluation();
+    };
+
+    const initializeEvaluation = () => {
+      students.value.forEach((student) => {
+        studentGrades.value[student.id] = null;
+        if (!evaluation.value[student.id]) {
+          evaluation.value[student.id] = {};
+          criteria.value.forEach((criterion) => {
+            evaluation.value[student.id][criterion.id] = {
+              value: null,
+              id: null,
+            };
+          });
+        }
+      });
+    };
+
+    const fetchStudentCriterionScores = async () => {
       try {
         const response = await axios.get(
-          `/student-criterion-scores/getAll?activityId=${activityId}`,
+          `/student-criterion-scores/getAll?activityId=${activityId.value}`,
           tokenHeader()
         );
         const fetchedScores = response.data;
 
-        // Populate evaluation with fetched scores
         fetchedScores.forEach((score) => {
-          if (evaluation.value[score.student.id]) {
+          if (
+            evaluation.value[score.student.id] &&
+            evaluation.value[score.student.id][score.criterion.id]
+          ) {
             evaluation.value[score.student.id][score.criterion.id] = {
               value: score.score,
               id: score.id,
@@ -265,7 +328,6 @@ export default {
 
       for (const criterionId in evaluation.value[student.id]) {
         const evaluationEntry = evaluation.value[student.id][criterionId];
-        // Treat null values as 0 for the purpose of final grade calculation
         const value =
           evaluationEntry.value === null ? 0 : evaluationEntry.value;
         const criterion = criteria.value.find((c) => c.id == criterionId);
@@ -275,70 +337,14 @@ export default {
           totalScore += value;
         }
       }
-      // Normalize the score to a 0-5 scale, assuming maxPossibleScore is the total possible points for all criteria
-      // If maxPossibleScore is 0 (no criteria or all criteria have 0 score), return 0 to avoid division by zero
-      if (maxPossibleScore === 0) {
-        return 0;
-      }
+      if (maxPossibleScore === 0) return 0;
       return (totalScore / maxPossibleScore) * 5;
     };
 
-    const fetchStudents = async (courseId, year) => {
+    const fetchCriteria = async () => {
       try {
         const response = await axios.get(
-          `/courses/${courseId}/users?year=${year}`,
-          tokenHeader()
-        );
-        const allStudents = response.data
-          .filter((user) => user.rol === "student")
-          .map((user) => user.user);
-
-        const usersNoGroupResponse = await axios.get(
-          `/courses/${courseId}/usersNoGroup?year=${year}`,
-          tokenHeader()
-        );
-        const usersWithoutGroupIds = new Set(
-          usersNoGroupResponse.data.map((u) => u.user.id)
-        );
-
-        students.value = allStudents
-          .map((student) => ({
-            ...student,
-            hasGroup: !usersWithoutGroupIds.has(student.id),
-          }))
-          .sort((a, b) => {
-            const lastNameA = a.lastName || "";
-            const lastNameB = b.lastName || "";
-            if (lastNameA !== lastNameB) {
-              return lastNameA.localeCompare(lastNameB);
-            }
-            const nameA = a.name || "";
-            const nameB = b.name || "";
-            return nameA.localeCompare(nameB);
-          });
-
-        // Initialize evaluation for all students
-        students.value.forEach((student) => {
-          studentGrades.value[student.id] = null;
-          if (!evaluation.value[student.id]) {
-            evaluation.value[student.id] = {};
-            criteria.value.forEach((criterion) => {
-              evaluation.value[student.id][criterion.id] = {
-                value: null,
-                id: null,
-              }; // Initialize with null for not evaluated and no ID
-            });
-          }
-        });
-      } catch (error) {
-        console.error("Error in fetchStudents:", error.message || error);
-      }
-    };
-
-    const fetchCriteria = async (activityId) => {
-      try {
-        const response = await axios.get(
-          `/criteria?activityId=${activityId}`,
+          `/criteria?activityId=${activityId.value}`,
           tokenHeader()
         );
         criteria.value = response.data.sort((a, b) => a.id - b.id);
@@ -349,11 +355,10 @@ export default {
 
     const handleAccordionChange = (event, student) => {
       if (event.detail.checked) {
-        // Check if the accordion is being opened
         currentlyOpenStudentId.value = student.id;
         updateGrade(student);
       } else {
-        currentlyOpenStudentId.value = null; // Accordion is closed
+        currentlyOpenStudentId.value = null;
       }
     };
 
@@ -370,40 +375,47 @@ export default {
           const scoreId = evaluationEntry.id;
 
           if (value !== null) {
-            // Only include evaluated criteria
             const score = value;
 
             const payload = {
               studentId: student.id,
               criterionId: parseInt(criterionId),
               score: score,
-              instituteId: usuario.value.institute.id, // Get instituteId from the logged-in user
-              activityId: parseInt(activityId),
+              instituteId: usuario.value.institute.id,
+              activityId: parseInt(activityId.value),
             };
 
+            const permission = userPermissions.value.find((p) => {
+              if (p.revisedType === "User") return p.revisedId === student.id;
+              if (p.revisedType === "Group") {
+                return true; // Simplified, backend will validate membership
+              }
+              return false;
+            });
+            if (permission) {
+              payload.permissionId = permission.id;
+            } else {
+              throw new Error("No permission to evaluate this student.");
+            }
+
             if (scoreId) {
-              // Update existing score
               await axios.patch(
                 `/student-criterion-scores/update/${scoreId}`,
                 payload,
                 tokenHeader()
               );
             } else {
-              // Create new score
               const response = await axios.post(
                 `/student-criterion-scores/create`,
                 payload,
                 tokenHeader()
               );
-
-              // Update the evaluation ref with the new ID
               evaluation.value[student.id][criterionId].id = response.data.id;
             }
           }
         }
         setSuccessToastOpen(true);
-        // After saving, re-fetch scores to ensure UI is up-to-date
-        await fetchStudentCriterionScores(activityId);
+        await fetchStudentCriterionScores();
       } catch (error) {
         const message =
           error.response?.data?.message || "Error al guardar la evaluación";
@@ -413,146 +425,11 @@ export default {
       }
     };
 
-    const registerAllGrades = async () => {
-      for (const student of students.value) {
-        // Phase 1: Ensure all individual criterion scores are persisted (defaulting null to 0)
-        for (const criterion of criteria.value) {
-          const evaluationEntry = evaluation.value[student.id][criterion.id];
-          let valueToSave = evaluationEntry.value;
-
-          // If the value is null (not explicitly evaluated), default to 0 (No Cumple)
-          if (valueToSave === null) {
-            valueToSave = 0;
-          }
-
-          const score = valueToSave;
-
-          const payload = {
-            studentId: student.id,
-            criterionId: criterion.id,
-            score: score,
-            instituteId: usuario.value.institute.id,
-            activityId: parseInt(activityId),
-          };
-
-          try {
-            if (evaluationEntry.id) {
-              // Update existing score
-              await axios.patch(
-                `/student-criterion-scores/update/${evaluationEntry.id}`,
-                payload,
-                tokenHeader()
-              );
-            } else {
-              // Create new score
-              const response = await axios.post(
-                `/student-criterion-scores/create`,
-                payload,
-                tokenHeader()
-              );
-              // Update the evaluation ref with the new ID
-              evaluation.value[student.id][criterion.id].id = response.data.id;
-            }
-          } catch (error) {
-            console.error(
-              `Error saving criterion score for student ${student.name}, criterion ${criterion.description}:`,
-              error
-            );
-          }
-        }
-
-        // Phase 2: Calculate and register the overall activity grade
-        const finalGrade = calculateFinalGrade(student);
-
-        const payloadFinalGrade = {
-          userId: student.id,
-          gradableId: parseInt(activityId),
-          gradableType: "activity",
-          periodId: periodId.value,
-          gradeType: "regular",
-          grade: parseFloat(finalGrade.toFixed(2)),
-          instituteId: instituteId.value,
-        };
-
-        try {
-          await axios.post("/grades", payloadFinalGrade, tokenHeader());
-        } catch (error) {
-          console.error(
-            `Error registrando nota final para ${student.name}:`,
-            error
-          );
-        }
-      }
-    };
-
-    const presentConfirmAlert = async () => {
-      const studentsWithMissing = getStudentsWithMissingCriteria();
-      let message =
-        "¿Estás seguro de que deseas registrar las notas para todos los estudiantes? Esta acción no se puede deshacer.";
-
-      if (studentsWithMissing.length > 0) {
-        message +=
-          "<br><br><b>¡Advertencia!</b> Los siguientes estudiantes tienen criterios sin evaluar. Sus notas se registrarán con 0 en esos criterios:<br>";
-        message += "<ul>";
-        studentsWithMissing.forEach((studentName) => {
-          message += `<li>${studentName}</li>`;
-        });
-        message += "</ul>";
-      }
-
-      const alert = await alertController.create({
-        header: "Confirmar Registro",
-        message: message,
-        buttons: [
-          {
-            text: "Cancelar",
-            role: "cancel",
-            cssClass: "secondary",
-            handler: () => {},
-          },
-          {
-            text: "Registrar",
-            handler: async () => {
-              await registerAllGrades();
-              presentSuccessAlert();
-            },
-          },
-        ],
+    onMounted(async () => {
+      await axios.get(`/users/${usuario.value.id}/groups`).then((response) => {
+        grupoUsuario.value =
+          response.data.filter((g) => g.active)[0]?.group ?? null;
       });
-      await alert.present();
-    };
-
-    const presentSuccessAlert = async () => {
-      const alert = await alertController.create({
-        header: "Registro Exitoso",
-        message:
-          "Las notas se han registrado exitosamente para todos los estudiantes.",
-        buttons: ["OK"],
-      });
-      await alert.present();
-    };
-
-    const getStudentsWithMissingCriteria = () => {
-      const studentsWithMissing = [];
-      students.value.forEach((student) => {
-        let hasMissing = false;
-        criteria.value.forEach((criterion) => {
-          if (
-            evaluation.value[student.id] &&
-            evaluation.value[student.id][criterion.id] &&
-            evaluation.value[student.id][criterion.id].value === null
-          ) {
-            hasMissing = true;
-          }
-        });
-        if (hasMissing) {
-          studentsWithMissing.push(student.name + " " + student.lastName);
-        }
-      });
-      return studentsWithMissing;
-    };
-
-    onIonViewWillEnter(async () => {
       await fetchActivityDetails();
     });
 
@@ -576,16 +453,13 @@ export default {
 
     return {
       activityId,
+      arrowBackOutline,
       students,
       criteria,
       evaluation,
-      arrowBackOutline,
       saveEvaluation,
       handleAccordionChange,
       currentlyOpenStudentId,
-      fetchStudentCriterionScores,
-      registerAllGrades,
-      presentConfirmAlert,
       isSaving,
       isSuccessToastOpen,
       setSuccessToastOpen,

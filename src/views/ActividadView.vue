@@ -82,24 +82,34 @@
       <!-- Espacio para el botón flotante -->
       <div style="height: 80px"></div>
 
-      <ion-fab
-        class="centered-fab"
-        vertical="bottom"
-        horizontal="center"
-        slot="fixed"
-      >
-        <ion-button
-          class="pill-button"
-          color="medium"
-          :router-link="
-            admin
-              ? `/revisar/actividad/${actividad.id}`
-              : `/ver/revision/${actividad.id}`
-          "
-        >
-          <ion-icon :icon="eyeOutline" slot="start"></ion-icon>
-          {{ admin ? "Revisar Actividad" : "Ver revisión" }}
-        </ion-button>
+      <ion-fab slot="fixed" vertical="bottom" horizontal="center">
+        <ion-fab-button color="light" size="small">
+          <ion-icon :icon="arrowUp"></ion-icon>
+        </ion-fab-button>
+        <ion-fab-list side="top" activated="false">
+          <ion-fab-button
+            v-if="(actividad.id != 0 && tienePermiso) || admin"
+            :router-link="
+              admin
+                ? `/revisar/actividad/${actividad.id}`
+                : `/actividad/${actividad.id}/evaluar-pares`
+            "
+          >
+            <ion-icon :icon="checkboxOutline"></ion-icon>
+          </ion-fab-button>
+          <ion-fab-button
+            v-if="admin"
+            :router-link="`/revisar/actividad/${actividad.id}/permisos`"
+          >
+            <ion-icon :icon="key"></ion-icon>
+          </ion-fab-button>
+          <ion-fab-button
+            v-if="!admin"
+            :router-link="`/ver/revision/${actividad.id}`"
+          >
+            <ion-icon :icon="eyeOutline"></ion-icon>
+          </ion-fab-button>
+        </ion-fab-list>
       </ion-fab>
     </ion-content>
   </ion-page>
@@ -108,13 +118,19 @@
 <script>
 import axios from "axios";
 import { ref } from "vue";
-import { tokenHeader, adminOprofesor } from "../globalService";
+import { tokenHeader, adminOprofesor, usuarioGet } from "../globalService";
 
 import {
   arrowBackOutline,
   createOutline,
   addOutline,
+  document,
+  colorPalette,
+  globe,
+  arrowUp,
   eyeOutline,
+  checkboxOutline,
+  key,
 } from "ionicons/icons";
 import {
   IonLabel,
@@ -135,6 +151,8 @@ import {
   onIonViewWillEnter,
   IonCardSubtitle,
   IonFab,
+  IonFabButton,
+  IonFabList,
 } from "@ionic/vue";
 
 import { useRoute } from "vue-router";
@@ -158,9 +176,14 @@ export default {
     IonItem,
     IonLabel,
     IonFab,
+    IonFabButton,
+    IonFabList,
   },
   setup() {
     const admin = adminOprofesor();
+    const userPermissions = ref([]);
+    const tienePermiso = ref(false);
+    const usuario = ref(null);
     const mroute = useRoute();
     const { id } = mroute.params; // This 'id' will be activityId
 
@@ -196,6 +219,7 @@ export default {
 
     onIonViewWillEnter(async () => {
       tokenHeader();
+      usuario.value = usuarioGet();
 
       // Only fetch activity details if not already loaded or if ID changes
       if (actividad.value.id != id || actividad.value.id === 0) {
@@ -204,16 +228,39 @@ export default {
 
       // Always fetch criteria to ensure they are up-to-date
       await fetchCriteria();
+      await fetchStudentPermissions();
     });
+
+    const fetchStudentPermissions = async () => {
+      try {
+        const response = await axios.get(
+          `/student-criterion-scores/permissions?reviserId=${usuario.value.id}&activityId=${actividad.value.id}`,
+          tokenHeader()
+        );
+        userPermissions.value = response.data;
+        tienePermiso.value = userPermissions.value.length > 0;
+      } catch (error) {
+        console.error("Error fetching student permissions:", error);
+      }
+    };
 
     return {
       admin,
       actividad,
+      fetchStudentPermissions,
+      userPermissions,
+      tienePermiso,
       criteriaList,
       arrowBackOutline,
       createOutline,
       addOutline,
+      arrowUp,
+      document,
+      colorPalette,
+      globe,
       eyeOutline,
+      checkboxOutline,
+      key,
     };
   },
 };

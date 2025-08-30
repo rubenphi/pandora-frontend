@@ -80,12 +80,12 @@ const routes = [
         },
       },
       {
-        path: 'admin/imprimir-lista-estudiantes',
-        name: 'PrintableStudentList',
-        component: () => import('@/views/PrintableStudentList.vue'),
+        path: "admin/imprimir-lista-estudiantes",
+        name: "PrintableStudentList",
+        component: () => import("@/views/PrintableStudentList.vue"),
         beforeEnter: (to, from, next) => {
           if (adminOprofesor()) next();
-          else next({ path: '/inicio' });
+          else next({ path: "/inicio" });
         },
       },
       {
@@ -112,6 +112,11 @@ const routes = [
         path: "actividades/:id",
         component: () => import("@/views/ActividadView.vue"),
       },
+
+      {
+        path: "actividad/:id/evaluar-pares",
+        component: () => import("@/views/EvaluarPares.vue"),
+      },
       {
         path: "revisar/actividad/:id",
         component: () => import("@/views/RevisarActividad.vue"),
@@ -124,6 +129,15 @@ const routes = [
         path: "ver/revision/:id",
         component: () => import("@/views/VerRevision.vue"),
       },
+      {
+        path: "revisar/actividad/:id/permisos",
+        component: () => import("@/views/ConfiguracionPermisos.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+
       {
         path: "cuestionario/importar/:id",
         component: () => import("@/views/ImportacionPregunta.vue"),

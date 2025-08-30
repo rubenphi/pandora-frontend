@@ -7,8 +7,7 @@
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
-        <ion-title>Revisar Actividad</ion-title>
-        
+        <ion-title>Ver mi revisión</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -30,7 +29,6 @@
             >
           </IonItem>
           <div class="ion-padding" slot="content">
-            
             <ion-list>
               <template v-for="criterion in criteria" :key="criterion.id">
                 <ion-item>
@@ -49,10 +47,12 @@
                           updateGrade(student)
                       "
                       min="0"
-                      max="2"
-                      step="1"
+                      :max="criterion.score"
+                      step="0.5"
                       snaps="true"
                       ticks="true"
+                      pin="true"
+                      :pin-formatter="(value) => value.toFixed(1)"
                       class="small-range"
                       disabled="true"
                     >
@@ -60,7 +60,6 @@
                   </div>
                 </ion-item>
               </template>
-              
             </ion-list>
           </div>
         </ion-accordion>
@@ -154,7 +153,7 @@ export default {
     const fetchStudentCriterionScores = async (activityId) => {
       try {
         const response = await axios.get(
-          `/student-criterion-scores?activityId=${activityId}`,
+          `/student-criterion-scores/getAll?activityId=${activityId}`,
           tokenHeader()
         );
         const fetchedScores = response.data;
@@ -162,17 +161,8 @@ export default {
         // Populate evaluation with fetched scores
         fetchedScores.forEach((score) => {
           if (evaluation.value[score.student.id]) {
-            // Convert string value back to number for ion-range
-            let numericValue = null;
-            if (score.score === 0) {
-              numericValue = 0; // No Cumple
-            } else if (score.score === score.criterion.score / 2) {
-              numericValue = 1; // Cumple Parcialmente
-            } else if (score.score === score.criterion.score) {
-              numericValue = 2; // Cumple
-            }
             evaluation.value[score.student.id][score.criterion.id] = {
-              value: numericValue,
+              value: score.score,
               id: score.id,
             };
           }
@@ -198,13 +188,7 @@ export default {
 
         if (criterion) {
           maxPossibleScore += criterion.score;
-          if (value === 0) {
-            totalScore += 0; // No Cumple
-          } else if (value === 1) {
-            totalScore += criterion.score / 2; // Cumple Parcialmente
-          } else if (value === 2) {
-            totalScore += criterion.score; // Cumple
-          }
+          totalScore += value;
         }
       }
       // Normalize the score to a 0-5 scale, assuming maxPossibleScore is the total possible points for all criteria
