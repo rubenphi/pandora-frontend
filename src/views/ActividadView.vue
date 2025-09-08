@@ -180,11 +180,13 @@ export default {
     IonFabList,
   },
   setup() {
+    const mroute = useRoute();
     const admin = adminOprofesor();
     const userPermissions = ref([]);
+    const grupoUsuario = ref(null);
     const tienePermiso = ref(false);
     const usuario = ref(null);
-    const mroute = useRoute();
+
     const { id } = mroute.params; // This 'id' will be activityId
 
     const actividad = ref({
@@ -219,7 +221,12 @@ export default {
 
     onIonViewWillEnter(async () => {
       tokenHeader();
+
       usuario.value = usuarioGet();
+      await axios.get(`/users/${usuario.value.id}/groups`).then((response) => {
+        grupoUsuario.value =
+          response.data.filter((g) => g.active)[0]?.group ?? null;
+      });
 
       // Only fetch activity details if not already loaded or if ID changes
       if (actividad.value.id != id || actividad.value.id === 0) {
@@ -233,12 +240,20 @@ export default {
 
     const fetchStudentPermissions = async () => {
       try {
-        const response = await axios.get(
-          `/student-criterion-scores/permissions?reviserId=${usuario.value.id}&activityId=${actividad.value.id}`,
-          tokenHeader()
-        );
-        userPermissions.value = response.data;
-        tienePermiso.value = userPermissions.value.length > 0;
+        if (!admin) {
+          const response = await axios.get(
+            `/student-criterion-scores/permissions?reviserId=${usuario.value.id}&activityId=${actividad.value.id}`,
+            tokenHeader()
+          );
+          const permisosGrupales = await axios.get(
+            `/student-criterion-scores/permissions?reviserId=${grupoUsuario.value.id}&activityId=${actividad.value.id}`,
+            tokenHeader()
+          );
+          userPermissions.value = response.data;
+
+          userPermissions.value.push(...permisosGrupales.data);
+          tienePermiso.value = userPermissions.value.length > 0;
+        }
       } catch (error) {
         console.error("Error fetching student permissions:", error);
       }
@@ -246,6 +261,8 @@ export default {
 
     return {
       admin,
+      usuario,
+      grupoUsuario,
       actividad,
       fetchStudentPermissions,
       userPermissions,

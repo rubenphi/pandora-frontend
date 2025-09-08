@@ -30,6 +30,15 @@
               </ion-buttons>
             </IonItem>
             <div class="ion-padding" slot="content">
+              <ion-button
+                v-if="grupo?.id !== 0"
+                expand="block"
+                @click="openAddStudentModal(grupo.id)"
+                class="ion-margin-bottom"
+              >
+                <ion-icon slot="start" :icon="addOutline"></ion-icon>
+                Agregar Estudiante
+              </ion-button>
               <IonList>
                 <IonItem
                   v-for="miembro in groupSelectedMembers"
@@ -105,6 +114,44 @@
                 :value="grupoEnLista.id"
               >
                 {{ grupoEnLista.name }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-content>
+      </ion-modal>
+
+      <!-- Modal para agregar estudiante a grupo -->
+      <ion-modal
+        :is-open="isAddStudentModalOpen"
+        @didDismiss="closeAddStudentModal"
+        ref="addStudentModal"
+      >
+        <ion-header>
+          <ion-toolbar>
+            <ion-buttons slot="start">
+              <ion-button @click="cancelAddStudent()">Cancelar</ion-button>
+            </ion-buttons>
+            <ion-title style="text-align: center">Agregar Estudiante</ion-title>
+            <ion-buttons slot="end">
+              <ion-button :strong="true" @click="confirmAddStudent()"
+                >Agregar</ion-button
+              >
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding">
+          <ion-item>
+            <ion-select
+              label="Seleccione el estudiante"
+              v-model="studentToAddId"
+              placeholder="Seleccione un estudiante"
+            >
+              <ion-select-option
+                v-for="student in allStudents"
+                :key="student.id"
+                :value="student.id"
+              >
+                {{ student.name }} {{ student.lastName }}
               </ion-select-option>
             </ion-select>
           </ion-item>
@@ -276,6 +323,11 @@ export default {
     const modal = ref();
     const createGroupModal = ref();
     const editGroupModal = ref();
+    const addStudentModal = ref();
+    const allStudents = ref([]);
+    const isAddStudentModalOpen = ref(false);
+    const studentToAddId = ref(null);
+    const targetGroupId = ref(null);
     const curso = ref();
     const { cursoId, selectedYear } = mroute.params;
     const grupos = ref([]);
@@ -328,6 +380,46 @@ export default {
         location.reload();
       });
       closeModal();
+    };
+
+    // Funciones para modal de agregar estudiante
+    const openAddStudentModal = (groupId) => {
+      targetGroupId.value = groupId;
+      studentToAddId.value = null; // Reset selection
+      isAddStudentModalOpen.value = true;
+    };
+
+    const closeAddStudentModal = () => {
+      isAddStudentModalOpen.value = false;
+    };
+
+    const cancelAddStudent = () => {
+      addStudentModal.value.$el.dismiss(null, "cancel");
+    };
+
+    const confirmAddStudent = async () => {
+      if (!studentToAddId.value || !targetGroupId.value) {
+        alert("Por favor seleccione un estudiante.");
+        return;
+      }
+      let data = {
+        groupId: targetGroupId.value,
+        userId: studentToAddId.value,
+        code: "admin",
+        year: parseInt(selectedYear, 10),
+        active: true,
+      };
+
+      try {
+        await axios.post(`/users/${studentToAddId.value}/groups`, data, {
+          headers: tokenHeader(),
+        });
+        await getMembers(targetGroupId.value);
+        addStudentModal.value.$el.dismiss(data, "confirm");
+      } catch (error) {
+        console.error("Error adding student to group:", error);
+        alert("Error al agregar el estudiante al grupo.");
+      }
     };
 
     // Funciones para modal de creación de grupo
@@ -540,6 +632,20 @@ export default {
       }
     };
 
+    const getAllStudentsInCourse = async () => {
+      try {
+        const response = await axios.get(
+          `/courses/${cursoId}/users?year=${selectedYear}`,
+          { headers: tokenHeader() }
+        );
+        allStudents.value = response.data
+          .filter((u) => u.rol === "student")
+          .map((u) => u.user);
+      } catch (error) {
+        console.error("Error fetching all students:", error);
+      }
+    };
+
     const removeMember = async (groupId, miembroId) => {
       try {
         await axios.patch(
@@ -617,11 +723,12 @@ export default {
       isModalOpen.value = false;
     };
 
-    onIonViewWillEnter(async () => {
+        onIonViewWillEnter(async () => {
       curso.value = (
         await axios.get(`/courses/${cursoId}`, { headers: tokenHeader() })
       ).data;
       usuario.value = usuarioGet();
+      await getAllStudentsInCourse();
       const llamado = (
         await axios.get(`/courses/${cursoId}/groups`, {
           headers: tokenHeader(),
@@ -658,6 +765,7 @@ export default {
       addCircleOutline,
       createOutline,
       groupSelectedMembers,
+      allStudents,
       peopleCircleOutline,
       personCircleOutline,
       personRemoveOutline,
@@ -665,13 +773,17 @@ export default {
       modal,
       createGroupModal,
       editGroupModal,
+      addStudentModal,
       cancel,
       confirm,
       isModalOpen,
       isCreateGroupModalOpen,
       isEditGroupModalOpen,
+      isAddStudentModalOpen,
       grupoId,
       userId,
+      studentToAddId,
+      targetGroupId,
       newGroupName,
       editGroupName,
       currentEditingGroup,
@@ -685,6 +797,10 @@ export default {
       closeEditGroupModal,
       cancelEditGroup,
       confirmEditGroup,
+      openAddStudentModal,
+      closeAddStudentModal,
+      cancelAddStudent,
+      confirmAddStudent,
     };
   },
 };

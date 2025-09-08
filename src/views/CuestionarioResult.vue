@@ -114,9 +114,7 @@
                     ></ion-icon>
                     <p>
                       <strong>Respuesta seleccionada:</strong>
-                      {{
-                        answer.option.identifier + ")" + answer.option.sentence
-                      }}
+                      {{ answer.option.sentence }}
                     </p>
                     <p>
                       <strong>Puntos obtenidos:</strong> {{ answer.points }}
@@ -589,22 +587,43 @@ export default {
         quizPoints.value = response.data.points;
       });
 
+      await axios.get(`/quizzes/${id}/results`);
       await axios
         .get(`/quizzes/${id}/results`)
         .then((response) => {
           respuestas.value = response.data.map((e) => {
             e.points = parseFloat(e.points);
-            if (cuestionario.value.topic == "Refuerzo") {
+
+            // Normalizamos:
+            // - pasamos a minúsculas
+            // - quitamos espacios al inicio y final
+            // - reducimos múltiples espacios a uno solo
+            let topic = (cuestionario.value.topic || "")
+              .toLowerCase()
+              .trim()
+              .replace(/\s+/g, " ");
+
+            // Regex para detectar actividades de refuerzo
+            const regexRefuerzo = /^refuerzo\s*(#|nº?|n)?\s*\d*$/i;
+            const regexActividadRefuerzo =
+              /^actividades?\s+de\s+refuerzo\s*(#|nº?|n)?\s*\d*$/i;
+
+            // Verificamos si es refuerzo
+            const esRefuerzo =
+              regexRefuerzo.test(topic) || regexActividadRefuerzo.test(topic);
+
+            if (esRefuerzo) {
               e.nota = e.points != 0 ? (e.points * 5) / quizPoints.value : 0;
-              e.nota = e.nota < 0 ? 0 : e.nota;
             } else {
               e.nota =
                 e.points != 0 ? (e.points * 5) / response.data[0].points : 0;
-              e.nota = e.nota < 0 ? 0 : e.nota;
             }
+
+            e.nota = e.nota < 0 ? 0 : e.nota;
             return e;
           });
         })
+
         .then(() => {
           respuestaMAyor.value = respuestas.value.sort(
             (a, b) => b.points - a.points

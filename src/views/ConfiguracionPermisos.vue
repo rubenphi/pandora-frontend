@@ -24,20 +24,21 @@
       <div v-if="selectedTab === 'grupos'">
         <ion-list>
           <ion-list-header>
-            <ion-label>Grupo a ser revisado</ion-label>
             <ion-label>Grupo revisor</ion-label>
+            <ion-label>Grupo a ser revisado</ion-label>
           </ion-list-header>
+          <ion-button expand="block" @click="assignAllSelfEvaluation" class="ion-margin">Asignar Autoevaluación a Todos</ion-button>
           <ion-item v-for="group in groups" :key="group.id">
             <ion-label>{{ group.name }}</ion-label>
             <ion-select
               v-model="groupPermissions[group.id]"
-              placeholder="Seleccionar grupo"
+              placeholder="Seleccionar revisado"
             >
               <ion-select-option :value="group.id"
                 >{{ group.name }} (Autoevaluación)</ion-select-option
               >
               <ion-select-option
-                v-for="reviserGroup in availableReviserGroups.filter(
+                v-for="reviserGroup in getAvailableReviserGroups(group.id).filter(
                   (g) => g.id !== group.id
                 )"
                 :key="reviserGroup.id"
@@ -52,9 +53,10 @@
       <div v-if="selectedTab === 'individuales'">
         <ion-list>
           <ion-list-header>
-            <ion-label>Estudiante a ser revisado</ion-label>
-            <ion-label>Estudiante revisor</ion-label>
-          </ion-list-header>
+          <ion-label>Estudiante revisor</ion-label>
+          <ion-label>Estudiante a ser revisado</ion-label>
+        </ion-list-header>
+        <ion-button expand="block" @click="assignAllSelfEvaluation" class="ion-margin">Asignar Autoevaluación a Todos</ion-button>
           <ion-item
             v-for="student in students"
             :key="student.id"
@@ -66,15 +68,16 @@
             >
             <ion-select
               v-model="individualPermissions[student.id]"
-              placeholder="Seleccionar revisor"
+              placeholder="¿a quién revisa?"
               :disabled="!student.hasGroup"
             >
+              <ion-select-option :value="null">Ninguno</ion-select-option>
               <ion-select-option :value="student.id"
                 >{{ student.name }}
                 {{ student.lastName }} (Autoevaluación)</ion-select-option
               >
               <ion-select-option
-                v-for="reviserStudent in availableReviserStudents.filter(
+                v-for="reviserStudent in getAvailableReviserStudents(student.id).filter(
                   (s) => s.id !== student.id
                 )"
                 :key="reviserStudent.id"
@@ -86,15 +89,30 @@
           </ion-item>
         </ion-list>
       </div>
-      <ion-button
-        expand="full"
-        @click="savePermissions"
-        class="ion-margin"
-        :disabled="isLoading"
-      >
-        <ion-spinner v-if="isLoading" name="crescent"></ion-spinner>
-        <span v-else>Guardar Permisos</span>
-      </ion-button>
+      <ion-grid>
+        <ion-row>
+          <ion-col>
+            <ion-button
+              expand="full"
+              color="danger"
+              @click="removeAllPermissions"
+              :disabled="isLoading"
+            >
+              Quitar Todos
+            </ion-button>
+          </ion-col>
+          <ion-col>
+            <ion-button
+              expand="full"
+              @click="savePermissions"
+              :disabled="isLoading"
+            >
+              <ion-spinner v-if="isLoading" name="crescent"></ion-spinner>
+              <span v-else>Guardar Permisos</span>
+            </ion-button>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
 
       <!-- Toasts -->
       <ion-toast
@@ -116,7 +134,7 @@
 </template>
 
 <script>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import axios from "axios";
 import { tokenHeader } from "../globalService";
@@ -139,6 +157,9 @@ import {
   IonListHeader,
   IonSpinner,
   IonToast,
+  IonGrid,
+  IonRow,
+  IonCol,
 } from "@ionic/vue";
 import { arrowBackOutline } from "ionicons/icons";
 
@@ -162,6 +183,9 @@ export default {
     IonListHeader,
     IonSpinner,
     IonToast,
+    IonGrid,
+    IonRow,
+    IonCol,
   },
   setup() {
     const route = useRoute();
@@ -173,6 +197,7 @@ export default {
     const students = ref([]);
     const groupPermissions = ref({});
     const individualPermissions = ref({});
+    const initialPermissions = ref([]);
     const isLoading = ref(false);
 
     const isSuccessToastOpen = ref(false);
@@ -184,19 +209,21 @@ export default {
       errorMessage.value = message;
     };
 
-    const availableReviserGroups = computed(() => {
-      const selectedReviserIds = new Set(Object.values(groupPermissions.value));
-      return groups.value.filter((g) => !selectedReviserIds.has(g.id));
-    });
+    const getAvailableReviserGroups = (currentGroupId) => {
+      const otherSelectedIds = Object.entries(groupPermissions.value)
+        .filter(([key]) => key !== String(currentGroupId))
+        .map(([, value]) => value);
+      return groups.value.filter((g) => !otherSelectedIds.includes(g.id));
+    };
 
-    const availableReviserStudents = computed(() => {
-      const selectedReviserIds = new Set(
-        Object.values(individualPermissions.value)
-      );
+    const getAvailableReviserStudents = (currentStudentId) => {
+      const otherSelectedIds = Object.entries(individualPermissions.value)
+        .filter(([key]) => key !== String(currentStudentId))
+        .map(([, value]) => value);
       return students.value.filter(
-        (s) => s.hasGroup && !selectedReviserIds.has(s.id)
+        (s) => s.hasGroup && !otherSelectedIds.includes(s.id)
       );
-    });
+    };
 
     const fetchActivityDetails = async () => {
       try {
@@ -208,6 +235,7 @@ export default {
         year.value = response.data.lesson.year;
         await fetchGroups();
         await fetchStudents();
+        await fetchExistingPermissions();
       } catch (error) {
         console.error("Error fetching activity details:", error);
         setErrorToastOpen(
@@ -271,59 +299,105 @@ export default {
       }
     };
 
+    const fetchExistingPermissions = async () => {
+      if (!activityId.value) return;
+      try {
+        const response = await axios.get(
+          `/student-criterion-scores/permissions?activityId=${activityId.value}&expired=false`,
+          tokenHeader()
+        );
+        initialPermissions.value = response.data; // Store initial state
+        initialPermissions.value.forEach(p => {
+          if (p.reviserType === 'Group') {
+            groupPermissions.value[p.reviserId] = p.revisedId;
+          } else if (p.reviserType === 'User') {
+            individualPermissions.value[p.reviserId] = p.revisedId;
+          }
+        });
+      } catch (error) {
+        console.error("Error fetching existing permissions:", error);
+      }
+    };
+
+    const removeAllPermissions = () => {
+      if (selectedTab.value === 'grupos') {
+        for (const key in groupPermissions.value) {
+          groupPermissions.value[key] = null;
+        }
+      } else if (selectedTab.value === 'individuales') {
+        for (const key in individualPermissions.value) {
+          individualPermissions.value[key] = null;
+        }
+      }
+    };
+
+    const assignAllSelfEvaluation = () => {
+      if (selectedTab.value === 'grupos') {
+        for (const group of groups.value) {
+          groupPermissions.value[group.id] = group.id;
+        }
+      } else if (selectedTab.value === 'individuales') {
+        for (const student of students.value) {
+          if (student.hasGroup) { // Only assign to students who have a group, as per UI logic
+            individualPermissions.value[student.id] = student.id;
+          }
+        }
+      }
+    }
+
     const savePermissions = async () => {
       isLoading.value = true;
       try {
-        // 1. Delete old permissions for this activity
-        await axios.delete(
-          `/student-criterion-scores/permissions?activityId=${activityId.value}`,
-          tokenHeader()
-        );
-
-        // 2. Prepare new permissions
-        const permissionsToCreate = [];
+        const permissionsPayload = [];
         const currentActivityId = parseInt(activityId.value);
 
-        // Group permissions
-        for (const revisedId in groupPermissions.value) {
-          const reviserId = groupPermissions.value[revisedId];
-          if (reviserId) {
-            permissionsToCreate.push({
+        // Collect group permissions from UI
+        for (const reviserId in groupPermissions.value) {
+          const revisedId = groupPermissions.value[reviserId];
+          if (revisedId) {
+            permissionsPayload.push({
               reviserId: parseInt(reviserId),
               reviserType: "Group",
               revisedId: parseInt(revisedId),
               revisedType: "Group",
               activityId: currentActivityId,
-              expired: false,
             });
           }
         }
 
-        // Individual permissions
-        for (const revisedId in individualPermissions.value) {
-          const reviserId = individualPermissions.value[revisedId];
-          if (reviserId) {
-            permissionsToCreate.push({
+        // Collect individual permissions from UI
+        for (const reviserId in individualPermissions.value) {
+          const revisedId = individualPermissions.value[reviserId];
+          if (revisedId) {
+            permissionsPayload.push({
               reviserId: parseInt(reviserId),
               reviserType: "User",
               revisedId: parseInt(revisedId),
               revisedType: "User",
               activityId: currentActivityId,
-              expired: false,
             });
           }
         }
 
-        // 3. Save new permissions
-        if (permissionsToCreate.length > 0) {
+        if (permissionsPayload.length > 0) {
+          // If there are permissions to set, use the bulk endpoint.
           await axios.post(
             "/student-criterion-scores/permissions/bulk",
-            permissionsToCreate,
+            permissionsPayload,
             tokenHeader()
           );
+        } else {
+          // If the payload is empty, it means we need to expire all existing permissions.
+          const permissionsToExpire = initialPermissions.value.filter(p => !p.expired);
+          const promises = permissionsToExpire.map(p => 
+            axios.patch(`/student-criterion-scores/permissions/${p.id}`, { expired: true }, tokenHeader())
+          );
+          await Promise.all(promises);
         }
 
         setSuccessToastOpen(true);
+        // After saving, it's good practice to refresh the state from the server
+        await fetchExistingPermissions(); 
       } catch (error) {
         console.error("Error saving permissions:", error);
         const message =
@@ -347,8 +421,8 @@ export default {
       students,
       groupPermissions,
       individualPermissions,
-      availableReviserGroups,
-      availableReviserStudents,
+      getAvailableReviserGroups,
+      getAvailableReviserStudents,
       savePermissions,
       isLoading,
       isSuccessToastOpen,
@@ -356,6 +430,8 @@ export default {
       isErrorToastOpen,
       errorMessage,
       setErrorToastOpen,
+      removeAllPermissions,
+      assignAllSelfEvaluation,
     };
   },
 };

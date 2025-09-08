@@ -228,15 +228,15 @@ export default {
 
     const fetchStudentPermissions = async (courseId, year) => {
       try {
-        /*   const permisosIndividuales = await axios.get(
+        const permisosIndividuales = await axios.get(
           `/student-criterion-scores/permissions?reviserId=${usuario.value.id}&activityId=${activityId.value}`,
           tokenHeader()
-        ); */
+        );
         const permisosGrupales = await axios.get(
           `/student-criterion-scores/permissions?reviserId=${grupoUsuario.value.id}&activityId=${activityId.value}`,
           tokenHeader()
         );
-        /*     userPermissions.value = permisosIndividuales.data; */
+        userPermissions.value = permisosIndividuales.data;
 
         userPermissions.value.push(...permisosGrupales.data);
         await fetchStudentsToReview(courseId, year);
@@ -246,26 +246,36 @@ export default {
     };
 
     const fetchStudentsToReview = async (courseId, year) => {
-      const studentSet = new Map();
+      const allStudents = [];
+
       for (const permission of userPermissions.value) {
         if (permission.revisedType === "User") {
           const userResponse = await axios.get(
             `/users/${permission.revisedId}`,
             tokenHeader()
           );
-          if (userResponse.data)
-            studentSet.set(userResponse.data.id, userResponse.data);
+          if (userResponse.data) {
+            const isAlreadyAdded = allStudents.some(student => student.id === userResponse.data.id);
+            if (!isAlreadyAdded) {
+              allStudents.push(userResponse.data);
+            }
+          }
         } else if (permission.revisedType === "Group") {
           const groupUsersResponse = await axios.get(
             `/groups/${permission.revisedId}/${year}/users`,
             tokenHeader()
           );
-          groupUsersResponse.data.forEach((u) =>
-            studentSet.set(u.user.id, u.user)
-          );
+          groupUsersResponse.data.forEach((u) => {
+            if (u.user) {
+              const isAlreadyAdded = allStudents.some(student => student.id === u.user.id);
+              if (!isAlreadyAdded) {
+                allStudents.push(u.user);
+              }
+            }
+          });
         }
       }
-      const allStudents = Array.from(studentSet.values());
+
       const usersNoGroupResponse = await axios.get(
         `/courses/${courseId}/usersNoGroup?year=${year}`,
         tokenHeader()
@@ -439,9 +449,9 @@ export default {
           const criterion = criteria.value.find((c) => c.id == criterionId);
           if (criterion) {
             let score = 0;
-            if (valueType === 'mid') {
+            if (valueType === "mid") {
               score = criterion.score / 2;
-            } else if (valueType === 'max') {
+            } else if (valueType === "max") {
               score = criterion.score;
             }
             evaluation.value[student.id][criterionId].value = score;
