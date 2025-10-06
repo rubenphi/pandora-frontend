@@ -663,29 +663,33 @@
             return { ...usuario, notasHacer, notasSaber, notasHacerOriginales: usuario.notasHacer, notasSaberOriginales: usuario.notasSaber, promedioHacer, promedioSaber, promedioSer, promedio, tieneNotasReales };
         });
 
-        let listaOficial = [];
-        let fantasmas = [];
+        let listaFinal = [];
 
         estudiantesList.forEach((estudiante) => {
           const diEstudiante = estudiante.di.replace(/,/g, "").trim();
           const calificacion = resultadosUsuarios.find(u => String(u.codigo).replace(/,/g, "").trim() === diEstudiante);
 
-          listaOficial.push({
+          let data = {
             apellidos: estudiante.apellidos,
             nombre: estudiante.nombre,
             documento: estudiante.di,
             retirado: estudiante.retirado === "1",
             isGhost: false,
-            numero: estudiante.numero,
             ...(calificacion || { promedio: 0, promedioHacer: 0, promedioSaber: 0, promedioSer: 5.0, notasHacerOriginales: {}, notasSaberOriginales: {}, tieneNotasReales: false })
-          });
+          };
+
+          if (data.retirado && data.tieneNotasReales) {
+            data.isGhost = true;
+          }
+
+          listaFinal.push(data);
         });
 
         resultadosUsuarios.forEach(usuarioConNota => {
           if (!usuarioConNota.tieneNotasReales) return;
-          const yaEstaEnLista = listaOficial.some(e => String(e.documento).replace(/,/g, "").trim() === String(usuarioConNota.codigo).replace(/,/g, "").trim());
+          const yaEstaEnLista = listaFinal.some(e => String(e.documento).replace(/,/g, "").trim() === String(usuarioConNota.codigo).replace(/,/g, "").trim());
           if (!yaEstaEnLista) {
-            fantasmas.push({
+            listaFinal.push({
               apellidos: usuarioConNota.apellido,
               nombre: usuarioConNota.nombre,
               documento: usuarioConNota.codigo,
@@ -696,10 +700,10 @@
           }
         });
 
-        listaOficial.sort((a, b) => a.numero - b.numero);
-        fantasmas.sort((a, b) => a.apellidos.localeCompare(b.apellidos));
-
-        const listaFinal = [...listaOficial, ...fantasmas];
+        listaFinal.sort((a, b) => {
+            if (a.isGhost !== b.isGhost) return a.isGhost - b.isGhost;
+            return a.apellidos.localeCompare(b.apellidos);
+        });
 
         todosLosResultados = listaFinal;
         mostrarResultados(todosLosResultados);
@@ -715,11 +719,7 @@
           if (usuario.isGhost) {
             claseFila += " fila-fantasma";
           } else if (usuario.retirado) {
-            if (usuario.tieneNotasReales) {
-              claseFila += " fila-fantasma";
-            } else {
-              claseFila += " estudiante-retirado";
-            }
+            claseFila += " estudiante-retirado";
           }
 
           let filaCeldas = `

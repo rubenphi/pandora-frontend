@@ -89,6 +89,15 @@ const routes = [
         },
       },
       {
+        path: "admin/imprimir-hojas-estudiantes",
+        name: "PrintableStudentSheet",
+        component: () => import("@/views/PrintableStudentSheet.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
         path: "admin/grupos/:cursoId/:selectedYear",
         component: () => import("@/views/GruposPage.vue"),
         beforeEnter: (to, from, next) => {

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Overlay OMR 9x10</title>
+    <style>
+      /* Contenedor de la imagen (tamaño fijo) */
+      .image-wrapper {
+        position: relative;
+        width: 3907px; /* ancho fijo de la imagen */
+        height: 3954px; /* alto fijo de la imagen */
+        border: 1px solid #ccc;
+        user-select: none;
+      }
+
+      .image-wrapper img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* Capa que contendrá la rejilla (posición absoluta sobre la imagen) */
+      .grid-overlay {
+        position: absolute;
+        /* left, top, width, height se fijarán desde JS o inline style */
+        display: grid;
+        grid-template-columns: repeat(9, 1fr);
+        grid-template-rows: repeat(10, 1fr);
+        pointer-events: auto; /* para poder hacer clic en celdas */
+      }
+
+      /* Celdas de la matriz */
+      .grid-cell {
+        width: 100%;
+        height: 100%;
+
+        box-sizing: border-box;
+        background: transparent; /* por defecto transparente */
+        border: 0px solid rgba(0, 0, 0, 0.08); /* opcional: ver límites */
+      }
+
+      /* Estado negro */
+      .grid-cell.filled {
+        background: black;
+      }
+
+      /* Si no quieres bordes, ajusta border a 0 */
+      /* Para efecto visual temporal, puedes aplicar opacidad */
+      .grid-overlay.dimmed .grid-cell.filled {
+        opacity: 0.9;
+      }
+
+      /* Evita que el overlay interfiera con selección de texto/drag de la imagen */
+      .grid-overlay,
+      .grid-overlay {
+        display: grid;
+        grid-template-columns: repeat(9, 1fr);
+        grid-template-rows: repeat(10, 1fr);
+        gap: 20px; /* aquí defines el "padding" entre celdas */
+      }
+
+      .image-container {
+        position: relative;
+        display: inline-block;
+      }
+
+      .base-image {
+        display: block;
+      }
+
+      .text-box {
+        position: absolute;
+        background: transparent; /* sin fondo */
+        border: none; /* sin borde */
+        color: black;
+        white-space: nowrap; /* no hacer saltos de línea */
+        overflow: hidden; /* oculta lo que se desborde */
+        text-overflow: clip; /* simplemente recorta */
+      }
+
+      .digit-box {
+        position: absolute;
+        background: transparent;
+        border: none;
+        color: black;
+        text-align: center;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Ejemplo: matriz 9×10 sobre imagen</h1>
+
+    <div class="image-wrapper" id="imageWrapper">
+      <div id="digit-layer"></div>
+      <div id="text-layer"></div>
+      <img src="hoja50.jpg" alt="Hoja OMR" id="baseImage" />
+      <!-- La overlay se creará por JS y se posicionará según coordenadas -->
+    </div>
+
+    <script>
+      /*
+  CONFIG - Cambia estos valores a la zona exacta (píxeles) dentro de la imagen
+  AREA_LEFT: distancia desde el borde izquierdo del contenedor en px
+  AREA_TOP: distancia desde el borde superior del contenedor en px
+  AREA_WIDTH: ancho del área donde va la matriz en px
+  AREA_HEIGHT: alto del área donde va la matriz en px 
+  Esquina superior izquierda(548, 926)
+  Esquina inferior derecha(1378, 1848)
+*/
+      const AREA_LEFT = 560; // px
+      const AREA_TOP = 930; // px
+      const AREA_WIDTH = 825; // px
+      const AREA_HEIGHT = 918; // px
+
+      const COLS = 9;
+      const ROWS = 10;
+
+      /* Crea la overlay y la rejilla */
+      function createGridOverlay() {
+        const wrapper = document.getElementById("imageWrapper");
+
+        const overlay = document.createElement("div");
+        overlay.className = "grid-overlay";
+        // Posición absoluta con coordenadas
+        overlay.style.left = AREA_LEFT + "px";
+        overlay.style.top = AREA_TOP + "px";
+        overlay.style.width = AREA_WIDTH + "px";
+        overlay.style.height = AREA_HEIGHT + "px";
+        // Aseguramos que el overlay esté encima
+        overlay.style.zIndex = 50;
+
+        // Crear celdas
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            const cell = document.createElement("div");
+            cell.className = "grid-cell";
+            cell.dataset.row = r;
+            cell.dataset.col = c;
+            // Permitir alternar con clic (útil para pruebas)
+            cell.addEventListener("click", (e) => {
+              cell.classList.toggle("filled");
+            });
+            overlay.appendChild(cell);
+          }
+        }
+
+        wrapper.appendChild(overlay);
+        return overlay;
+      }
+
+      /* Recibe una matriz 2D (ROWS x COLS) con 0/1 o false/true y la aplica a la rejilla */
+      function setMatrix(overlay, matrix) {
+        if (!overlay) return;
+        const cells = overlay.querySelectorAll(".grid-cell");
+        // Validación simple
+        if (!Array.isArray(matrix) || matrix.length !== ROWS) {
+          console.warn(
+            "Matriz inválida: debe ser un array con " + ROWS + " filas."
+          );
+          return;
+        }
+        cells.forEach((cell) => {
+          const r = parseInt(cell.dataset.row, 10);
+          const c = parseInt(cell.dataset.col, 10);
+          const val = matrix[r] && matrix[r][c] ? matrix[r][c] : 0;
+          if (val === 1 || val === true) {
+            cell.classList.add("filled");
+          } else {
+            cell.classList.remove("filled");
+          }
+        });
+      }
+
+      /* Devuelve la matriz actual (array de 0/1) */
+      function getMatrix(overlay) {
+        const matrix = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+        const cells = overlay.querySelectorAll(".grid-cell");
+        cells.forEach((cell) => {
+          const r = parseInt(cell.dataset.row, 10);
+          const c = parseInt(cell.dataset.col, 10);
+          if (cell.classList.contains("filled")) matrix[r][c] = 1;
+        });
+        return matrix;
+      }
+
+      /* Ejemplo de uso */
+      const overlay = createGridOverlay();
+
+      // Ejemplo: definir algunos valores programáticamente
+      let ejemplo = [];
+      for (let r = 0; r < ROWS; r++) {
+        ejemplo[r] = [];
+        for (let c = 0; c < COLS; c++) {
+          ejemplo[r][c] = 0; // por defecto transparente
+        }
+      }
+      // llenar algunas celdas para ejemplo:
+
+      // Para obtener la matriz actual en cualquier momento:
+      window.obtenerMatriz = () => {
+        const m = getMatrix(overlay);
+        console.log(m);
+        return m;
+      };
+
+      /**
+       * Crea un cuadro de texto ajustado a dos coordenadas
+       * @param {string} str - Texto a mostrar
+       * @param {number} x1 - Coordenada izquierda
+       * @param {number} y1 - Coordenada superior
+       * @param {number} x2 - Coordenada derecha
+       * @param {number} y2 - Coordenada inferior
+       */
+      function putText(str, x1, y1, x2, y2) {
+        const textLayer = document.getElementById("text-layer");
+
+        const width = x2 - x1;
+        const height = y2 - y1;
+
+        const div = document.createElement("div");
+        div.className = "text-box";
+        div.style.left = x1 + "px";
+        div.style.top = y1 + "px";
+        div.style.width = width + "px";
+        div.style.height = height + "px";
+
+        // Fuente al 80% del alto del cuadro
+        div.style.fontSize = Math.floor(height * 0.8) + "px";
+        div.style.lineHeight = height + "px"; // centra verticalmente
+
+        div.textContent = str;
+
+        textLayer.appendChild(div);
+      }
+
+      /**
+       * Divide un área rectangular en celdas para dígitos
+       * @param {string} str - Cadena de dígitos
+       * @param {number} x1 - Izquierda
+       * @param {number} y1 - Arriba
+       * @param {number} x2 - Derecha
+       * @param {number} y2 - Abajo
+       */
+      function putDigits(str, x1, y1, x2, y2) {
+        const layer = document.getElementById("digit-layer");
+        const width = x2 - x1;
+        const height = y2 - y1;
+        const n = str.length;
+        const cellWidth = width / n;
+
+        for (let i = 0; i < n; i++) {
+          const div = document.createElement("div");
+          div.className = "digit-box";
+          div.style.left = x1 + i * cellWidth + "px";
+          div.style.top = y1 + "px";
+          div.style.width = cellWidth + "px";
+          div.style.height = height + "px";
+          div.style.fontSize = Math.floor(height * 0.8) + "px";
+          div.style.lineHeight = height + "px"; // centra verticalmente
+          div.textContent = str[i];
+          layer.appendChild(div);
+        }
+      }
+
+      /**
+       * Convierte un número en una matriz 10x9 según las reglas
+       * @param {number|string} input - Número o string
+       * @returns {{adjusted: string, matrix: number[][]}}
+       */
+      function numberToMatrix(input) {
+        // Convertir a string y quedarnos con solo dígitos
+        let str = String(input).replace(/\D/g, "");
+
+        // Ajustar a exactamente 9 dígitos
+        if (str.length > 9) {
+          str = str.slice(-9); // cortar de la izquierda
+        } else if (str.length < 9) {
+          str = str.padStart(9, "0"); // completar con ceros a la izquierda
+        }
+
+        // Crear matriz 10x9 llena de ceros
+        const matrix = Array.from({ length: 10 }, () => Array(9).fill(0));
+
+        // Rellenar posiciones
+        for (let col = 0; col < 9; col++) {
+          const digit = parseInt(str[col], 10);
+          if (!isNaN(digit)) {
+            matrix[digit][col] = 1;
+          }
+        }
+
+        return { adjusted: str, matrix };
+      }
+
+      const usuarioEjemplo = {
+        id: 138,
+        year: 2025,
+        rol: "student",
+        active: true,
+        createdAt: "2025-01-14T21:57:20.918Z",
+        updatedAt: "2025-02-04T16:33:33.003Z",
+        user: {
+          id: 131,
+          name: "FABIAN ANDRES",
+          lastName: "CARDONA RAMIREZ",
+          email: "1070619037@yopmail.com",
+          code: "1070619037",
+          exist: true,
+          rol: "user",
+          createdAt: "2025-01-14T21:41:37.944Z",
+          updatedAt: "2025-01-14T21:41:37.944Z",
+        },
+      };
+
+      // Ejemplo: cuadro entre (666,145) y (3579,281)
+      putText(
+        `${usuarioEjemplo.user.lastName} ${usuarioEjemplo.user.name}`,
+        666,
+        145,
+        3579,
+        281
+      );
+      putText("Grado ejemplo", 1696, 448, 3579, 566);
+      // Ejemplo: poner "123456" dentro de la tabla (465,826) a (1386,904)
+
+      putDigits(usuarioEjemplo.user.code, 465, 826, 1386, 904);
+
+      // Ejemplo de uso:
+      const { adjusted, matrix } = numberToMatrix(usuarioEjemplo.user.code);
+      ejemplo = matrix;
+
+      setMatrix(overlay, ejemplo);
+
+      // Para aplicar otra matriz desde consola:
+      // window.setMatrix(overlay, otraMatriz);
+    </script>
+  </body>
+</html>

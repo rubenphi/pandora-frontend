@@ -23,10 +23,7 @@
               {{ year }}
             </ion-select-option>
           </ion-select>
-          <ion-button @click="presentActionSheet" color="medium">
-            <ion-icon slot="icon-only" :icon="downloadOutline"></ion-icon>
-          </ion-button>
-        </ion-item>
+          </ion-item>
         <ion-accordion-group @ionChange="captarAbierto($event)">
           <ion-accordion v-for="curso in cursosInstituto" :key="curso.id">
             <IonItem slot="header" @click="changeCourse(curso)">
@@ -36,6 +33,9 @@
               <IonLabel v-if="loading && courseSelected.id == curso.id">{{
                 curso.name + ": ⏳ Cargando usuarios"
               }}</IonLabel>
+              <ion-button @click.stop="presentActionSheet(curso)" color="medium">
+                <ion-icon slot="icon-only" :icon="downloadOutline"></ion-icon>
+              </ion-button>
             </IonItem>
             <div class="ion-padding" slot="content">
               <ion-list>
@@ -255,20 +255,26 @@ export default {
       isModalOpen.value = false;
     };
 
-    const presentActionSheet = async () => {
+    const presentActionSheet = async (curso) => {
       const actionSheet = await actionSheetController.create({
-        header: "Opciones",
+        header: "Opciones para " + curso.name,
         buttons: [
           {
             text: "Descargar CSV",
             handler: () => {
-              downloadCSV();
+              downloadCSV(curso);
             },
           },
           {
             text: "Imprimir Lista",
             handler: () => {
-              navigateToPrintableList();
+              navigateToPrintableList(curso);
+            },
+          },
+          {
+            text: "Imprimir Hojas de Respuestas",
+            handler: () => {
+              navigateToPrintableSheet(curso);
             },
           },
           {
@@ -280,8 +286,8 @@ export default {
       await actionSheet.present();
     };
 
-    const navigateToPrintableList = async () => {
-      const studentData = await preparePrintableData();
+    const navigateToPrintableList = async (curso) => {
+      const studentData = await preparePrintableData(curso);
       router.push({
         name: "PrintableStudentList",
         state: {
@@ -291,72 +297,79 @@ export default {
       });
     };
 
-    const preparePrintableData = async () => {
+    const navigateToPrintableSheet = async (curso) => {
+      const studentData = await preparePrintableData(curso);
+      router.push({
+        name: "PrintableStudentSheet",
+        state: {
+          studentData: studentData,
+          year: selectedYear.value,
+        },
+      });
+    };
+
+    const preparePrintableData = async (curso) => {
       const year = selectedYear.value;
       const coursesWithStudents = [];
 
-      for (const curso of cursosInstituto.value) {
-        if (curso.id !== 0) {
-          try {
-            const response = await axios.get(
-              `/courses/${curso.id}/users?year=${year}`,
-              tokenHeader()
-            );
-            const users = response.data.map((usuario) => usuario.user);
-            const students = users.filter(
-              (user) => user.rol === "student" || user.rol === "user"
-            );
+      if (curso.id !== 0) {
+        try {
+          const response = await axios.get(
+            `/courses/${curso.id}/users?year=${year}`,
+            tokenHeader()
+          );
+          const users = response.data.map((usuario) => usuario.user);
+          const students = users.filter(
+            (user) => user.rol === "student" || user.rol === "user"
+          );
 
-            if (students.length > 0) {
-              coursesWithStudents.push({
-                id: curso.id,
-                name: curso.name,
-                students: students,
-              });
-            }
-          } catch (error) {
-            console.error(
-              `Error fetching users for course ${curso.name}:`,
-              error
-            );
+          if (students.length > 0) {
+            coursesWithStudents.push({
+              id: curso.id,
+              name: curso.name,
+              students: students,
+            });
           }
+        } catch (error) {
+          console.error(
+            `Error fetching users for course ${curso.name}:`,
+            error
+          );
         }
       }
       return coursesWithStudents;
     };
 
-    const downloadCSV = async () => {
+    const downloadCSV = async (curso) => {
       let csvContent = '"ROLLNO","NAME","CLASS","EMAILID","PHONENO"\r\n';
       const year = selectedYear.value;
 
-      for (const curso of cursosInstituto.value) {
-        if (curso.id !== 0) {
-          // Skip "Sin Curso"
-          try {
-            const response = await axios.get(
-              `/courses/${curso.id}/users?year=${year}`,
-              tokenHeader()
-            );
-            const users = response.data.map((usuario) => usuario.user);
+      if (curso.id !== 0) {
+        // Skip "Sin Curso"
+        try {
+          const response = await axios.get(
+            `/courses/${curso.id}/users?year=${year}`,
+            tokenHeader()
+          );
+          const users = response.data.map((usuario) => usuario.user);
 
-            users.forEach((user) => {
-              if (user.rol === "student" || user.rol === "user") {
-                const rollNo = user.code ? user.code.substring(1) : "";
-                const name = `${user.lastName} ${user.name}`;
-                const className = `${curso.name}-${year}`;
-                const email = user.email || "";
-                const phoneNo = ""; // As per the comment, this is empty
+          users.forEach((user) => {
+            if (user.rol === "student" || user.rol === "user") {
+              const rollNo = user.code ? user.code.substring(1) : "";
+              const name = `${user.lastName} ${user.name}`;
+              const className = `${curso.name}-${year}`;
+              const email = user.email || "";
+              const phoneNo = ""; // As per the comment, this is empty
 
-                const row = `"${rollNo}","${name}","${className}","${email}","${phoneNo}"`;
-                csvContent += row + "\r\n";
-              }
-            });
-          } catch (error) {
-            console.error(
-              `Error fetching users for course ${curso.name}:`,
-              error
-            );
-          }
+              const row = `"${rollNo}","${name}","${className}","${email}","${phoneNo}"`;
+              csvContent += row + "\r\n";
+            }
+          });
+        } catch (error) {
+          console.error(
+            `Error fetching users for course ${curso.name}:`,
+            error
+          );
         }
       }
 
@@ -366,7 +379,7 @@ export default {
       if (link.download !== undefined) {
         const url = URL.createObjectURL(blob);
         link.setAttribute("href", url);
-        link.setAttribute("download", `estudiantes_${year}.csv`);
+        link.setAttribute("download", `estudiantes_${curso.name}_${year}.csv`);
         link.style.visibility = "hidden";
         document.body.appendChild(link);
         link.click();
