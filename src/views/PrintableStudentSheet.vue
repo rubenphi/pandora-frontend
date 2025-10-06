@@ -103,11 +103,11 @@ export default {
           formattedCode = formattedCode.padStart(9, "0");
         }
 
-        // Verificar que tenemos exactamente 9 dígitos
         if (formattedCode.length !== 9) {
           formattedCode = formattedCode.padStart(9, "0");
         }
 
+        // Crear matriz de 10 filas × 9 columnas
         const matrix = Array.from({ length: 10 }, () => Array(9).fill(0));
         for (let col = 0; col < 9; col++) {
           const digit = parseInt(formattedCode[col], 10);
@@ -126,53 +126,53 @@ export default {
         }
 
         // Generar dígitos usando el código ORIGINAL (sin formatear)
-        const x1 = 465;
-        const x2 = 1386;
+        const x1 = 177;
+        const x2 = 1089;
         const totalWidth = x2 - x1;
         const codeToDisplay = String(originalCode);
         const digitWidth = totalWidth / codeToDisplay.length;
         let digitsHTML = "";
         for (let i = 0; i < codeToDisplay.length; i++) {
           digitsHTML += `
-            <div style="position: absolute; left: ${
-              x1 + i * digitWidth
-            }px; top: 826px; 
-                 width: ${digitWidth}px; height: 78px; font-size: 62px; line-height: 78px;
-                 text-align: center; color: black; font-family: Arial, sans-serif;">
-              ${codeToDisplay[i]}
-            </div>
-          `;
+        <div style="position: absolute; left: ${
+          x1 + i * digitWidth
+        }px; top: 687px; 
+             width: ${digitWidth}px; height: 95px; font-size: 76px; line-height: 95px;
+             text-align: center; color: black; font-family: Arial, sans-serif;">
+          ${codeToDisplay[i]}
+        </div>
+      `;
         }
 
         return `
-          <div class="image-wrapper">
-            <img src="/hoja50.jpg" alt="Hoja OMR" style="display: block; width: 100%; height: 100%; object-fit: cover;" />
-            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;">
-              <div style="position: absolute; left: 666px; top: 145px; width: 2913px; height: 136px;
-                   font-size: 109px; line-height: 136px; color: black; font-family: Arial, sans-serif;
-                   white-space: nowrap; overflow: hidden;">
-                ${lastName} ${name}
-              </div>
-              ${
-                course
-                  ? `
-                <div style="position: absolute; left: 1696px; top: 448px; width: 1883px; height: 118px;
-                     font-size: 94px; line-height: 118px; color: black; font-family: Arial, sans-serif;
-                     white-space: nowrap; overflow: hidden;">
-                  ${course}
-                </div>
-              `
-                  : ""
-              }
-              ${digitsHTML}
-            </div>
-            <div style="position: absolute; left: 560px; top: 930px; width: 825px; height: 918px;
-                 display: grid; grid-template-columns: repeat(9, 1fr); grid-template-rows: repeat(10, 1fr);
-                 gap: 20px; z-index: 50; pointer-events: none;">
-              ${cellsHTML}
-            </div>
+      <div class="image-wrapper">
+        <img src="/hoja50.jpg" alt="Hoja OMR" style="display: block; width: 100%; height: 100%; object-fit: cover;" />
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;">
+          <div style="position: absolute; left: 366px; top: 20px; width: 2834px; height: 114px;
+               font-size: 91px; line-height: 114px; color: black; font-family: Arial, sans-serif;
+               white-space: nowrap; overflow: hidden;">
+            ${lastName} ${name}
           </div>
-        `;
+          ${
+            course
+              ? `
+            <div style="position: absolute; left: 1396px; top: 295px; width: 1883px; height: 161px;
+                 font-size: 118px; line-height: 161px; color: black; font-family: Arial, sans-serif;
+                 white-space: nowrap; overflow: hidden;">
+              ${course}
+            </div>
+          `
+              : ""
+          }
+          ${digitsHTML}
+        </div>
+        <div style="position: absolute; left: 266px; top: 796px; width: 825px; height: 918px;
+             display: grid; grid-template-columns: repeat(9, 1fr); grid-template-rows: repeat(10, 1fr);
+             gap: 20px; z-index: 50; pointer-events: none;">
+          ${cellsHTML}
+        </div>
+      </div>
+    `;
       };
 
       // Generar páginas
@@ -183,94 +183,97 @@ export default {
 
         pageStudents.forEach((student) => {
           sheetsHTML += `
-            <div class="grid-item">
-              ${generateSheetCode(student)}
-            </div>
-          `;
+        <div class="grid-item">
+          ${generateSheetCode(student)}
+        </div>
+      `;
         });
 
         pagesHTML += `
-          <div class="print-page">
-            <div class="grid-container">
-              ${sheetsHTML}
-            </div>
-          </div>
-        `;
+      <div class="print-page">
+        <div class="grid-container">
+          ${sheetsHTML}
+        </div>
+      </div>
+    `;
       }
 
       return `
-        <!DOCTYPE html>
-        <html lang="es">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Hojas de Respuesta</title>
-          <style>
-            * {
-              margin: 0;
-              padding: 0;
-              box-sizing: border-box;
-            }
-            
-            body {
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
-            }
-            
-            @page {
-              size: legal;
-              margin: 0;
-            }
-            
-            .print-page {
-              page-break-after: always;
-              width: 216mm;
-              height: 330mm;
-              overflow: hidden;
-              position: relative;
-            }
-            
-            .print-page:last-child {
-              page-break-after: auto;
-            }
-            
-            .grid-container {
-              display: grid;
-              grid-template-columns: repeat(2, 1fr);
-              grid-template-rows: repeat(3, 1fr);
-              width: 100%;
-              height: 100%;
-            }
-            
-            .grid-item {
-              position: relative;
-              overflow: hidden;
-              width: 100%;
-              height: 100%;
-            }
-            
-            .image-wrapper {
-              position: relative;
-              width: 3907px;
-              height: 3954px;
-              user-select: none;
-              transform: scale(0.1044);
-              transform-origin: top left;
-            }
-            
-            @media print {
-              body {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          ${pagesHTML}
-        </body>
-        </html>
-      `;
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Hojas de Respuesta</title>
+      <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        
+        body {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        
+        @page {
+          size: legal;
+          margin: 0;
+        }
+        
+        .print-page {
+          page-break-after: always;
+          width: 216mm;
+          height: 330mm;
+          overflow: hidden;
+          position: relative;
+        }
+        
+        .print-page:last-child {
+          page-break-after: auto;
+        }
+        
+        .grid-container {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          grid-template-rows: repeat(3, 1fr);
+          width: 100%;
+          height: 100%;
+        }
+        
+        .grid-item {
+          position: relative;
+          overflow: hidden;
+          width: 100%;
+          height: 100%;
+        }
+        
+       .image-wrapper {
+  position: relative;
+  width: 3313px;
+  height: 3520px;
+  user-select: none;
+  transform: scale(0.1044);
+  transform-origin: top left;
+  transform-box: fill-box;  /* <-- importante */
+  overflow: hidden;
+}
+
+        
+        @media print {
+          body {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      ${pagesHTML}
+    </body>
+    </html>
+  `;
     };
 
     const printSheets = () => {

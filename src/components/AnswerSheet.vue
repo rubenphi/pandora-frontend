@@ -37,8 +37,8 @@ export default {
     const textLayerId = `text-layer-${props.student.id}`;
     const gridOverlayId = `grid-overlay-${props.student.id}`;
 
-    const AREA_LEFT = 560;
-    const AREA_TOP = 930;
+    const AREA_LEFT = 266;
+    const AREA_TOP = 796;
     const AREA_WIDTH = 825;
     const AREA_HEIGHT = 918;
     const COLS = 9;
@@ -139,6 +139,7 @@ export default {
     };
 
     const putDigits = (str, x1, y1, x2, y2) => {
+      str.length < 9 && (str = str.padStart(10, "0"));
       const layer = document.getElementById(digitLayerId);
       if (!layer) return;
 
@@ -209,15 +210,15 @@ export default {
         if (digitLayer) digitLayer.innerHTML = "";
 
         if (student.name && student.lastName) {
-          putText(`${student.lastName} ${student.name}`, 666, 145, 3579, 281);
+          putText(`${student.lastName} ${student.name}`, 366, 20, 3200, 134);
         }
 
         if (props.courseName) {
-          putText(props.courseName, 1696, 448, 3579, 566);
+          putText(props.courseName, 1396, 295, 3279, 456);
         }
 
         if (student.code) {
-          putDigits(student.code, 465, 826, 1386, 904);
+          putDigits(student.code, 177, 687, 1089, 782);
           const { matrix } = numberToMatrix(student.code);
           setMatrix(overlay, matrix);
         }
@@ -249,8 +250,8 @@ export default {
 
 .image-wrapper {
   position: relative;
-  width: 3907px;
-  height: 3954px;
+  width: 3313px;
+  height: 3520px;
   user-select: none;
 }
 
