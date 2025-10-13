@@ -7,7 +7,7 @@
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
-        <ion-title>Ver mi revisión</ion-title>
+        <ion-title>Ver Revisión</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -255,7 +255,9 @@ export default {
             tokenHeader()
           );
           if (userResponse.data) {
-            const isAlreadyAdded = allStudents.some(student => student.id === userResponse.data.id);
+            const isAlreadyAdded = allStudents.some(
+              (student) => student.id === userResponse.data.id
+            );
             if (!isAlreadyAdded) {
               allStudents.push(userResponse.data);
             }
@@ -267,7 +269,9 @@ export default {
           );
           groupUsersResponse.data.forEach((u) => {
             if (u.user) {
-              const isAlreadyAdded = allStudents.some(student => student.id === u.user.id);
+              const isAlreadyAdded = allStudents.some(
+                (student) => student.id === u.user.id
+              );
               if (!isAlreadyAdded) {
                 allStudents.push(u.user);
               }
