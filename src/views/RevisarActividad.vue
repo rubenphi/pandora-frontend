@@ -8,6 +8,15 @@
           </ion-button>
         </ion-buttons>
         <ion-title>Revisar Actividad</ion-title>
+        <ion-buttons slot="primary">
+          <ion-item>
+            <ion-label>Sel. Todos</ion-label>
+            <ion-checkbox
+              :checked="areAllSelected"
+              @ionChange="toggleSelectAll"
+            ></ion-checkbox>
+          </ion-item>
+        </ion-buttons>
         <ion-buttons slot="end">
           <ion-button @click="presentConfirmAlert()">
             Registrar Notas
@@ -24,6 +33,14 @@
           :class="{ 'no-group-student': !student.hasGroup }"
         >
           <IonItem slot="header">
+            <ion-checkbox
+              slot="start"
+              :checked="selectedStudents.has(student.id)"
+              @ionChange="
+                handleStudentSelection(student.id, $event.detail.checked)
+              "
+              @click.stop
+            ></ion-checkbox>
             <IonLabel>{{ student.lastName + " " + student.name }}</IonLabel>
             <IonNote slot="end"
               >Nota:
@@ -65,7 +82,7 @@
             </ion-grid>
             <ion-button
               expand="block"
-              @click="saveEvaluation(student)"
+              @click="saveSingleEvaluation(student)"
               :disabled="isSaving"
               >Guardar</ion-button
             >
@@ -103,7 +120,7 @@
                   <ion-row class="button-row">
                     <ion-col size="auto">
                       <ion-button
-                        @click="saveEvaluation(student)"
+                        @click="saveSingleEvaluation(student)"
                         :disabled="isSaving"
                         >Guardar</ion-button
                       >
@@ -130,12 +147,89 @@
         color="danger"
         @didDismiss="setErrorToastOpen(false)"
       ></ion-toast>
+
+      <!-- FAB for Bulk Evaluation -->
+      <ion-fab
+        vertical="bottom"
+        horizontal="end"
+        slot="fixed"
+        v-if="selectedStudents.size > 0"
+      >
+        <ion-fab-button @click="openBulkEvaluationModal">
+          Evaluar
+        </ion-fab-button>
+      </ion-fab>
+
+      <!-- Bulk Evaluation Modal -->
+      <ion-modal
+        :is-open="isBulkModalOpen"
+        @didDismiss="closeBulkEvaluationModal"
+        :initial-breakpoint="0.75"
+        :breakpoints="[0, 0.75, 1]"
+      >
+        <ion-header>
+          <ion-toolbar>
+            <ion-title>Evaluación Grupal</ion-title>
+            <ion-buttons slot="end">
+              <ion-button @click="closeBulkEvaluationModal">Cerrar</ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding">
+          <p>
+            Asigne una puntuación a cada criterio. Se aplicará a los
+            {{ selectedStudents.size }} estudiantes seleccionados.
+          </p>
+          <ion-list>
+            <template v-for="criterion in criteria" :key="criterion.id">
+              <ion-item>
+                <ion-label>{{ criterion.description }}</ion-label>
+                <div class="range-wrapper">
+                  <div class="range-labels">
+                    <span class="range-label">0</span>
+                    <span class="range-label">{{ criterion.score }}</span>
+                  </div>
+                  <ion-range
+                    :value="bulkEvaluationTemplate[criterion.id]"
+                    @ionChange="
+                      bulkEvaluationTemplate[criterion.id] = $event.detail.value
+                    "
+                    min="0"
+                    :max="criterion.score"
+                    step="0.5"
+                    snaps="true"
+                    ticks="true"
+                    pin="true"
+                    :pin-formatter="(value) => value.toFixed(1)"
+                    class="small-range"
+                  >
+                  </ion-range>
+                </div>
+              </ion-item>
+            </template>
+          </ion-list>
+          <ion-grid>
+            <ion-row>
+              <ion-col>
+                <ion-button @click="closeBulkEvaluationModal" color="light" expand="block">
+                  Cancelar
+                </ion-button>
+              </ion-col>
+              <ion-col>
+                <ion-button @click="applyAndSaveChanges" expand="block">
+                  Aplicar y Guardar
+                </ion-button>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </ion-content>
+      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
 
 <script>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useRoute } from "vue-router";
 import axios from "axios";
 import { tokenHeader, usuarioGet } from "../globalService";
@@ -161,6 +255,10 @@ import {
   IonIcon,
   IonToast,
   IonNote,
+  IonCheckbox,
+  IonFab,
+  IonFabButton,
+  IonModal,
 } from "@ionic/vue";
 import { arrowBackOutline } from "ionicons/icons";
 
@@ -185,6 +283,10 @@ export default {
     IonIcon,
     IonToast,
     IonNote,
+    IonCheckbox,
+    IonFab,
+    IonFabButton,
+    IonModal,
   },
   setup() {
     const mroute = useRoute();
@@ -199,6 +301,9 @@ export default {
     const studentGrades = ref({});
     const currentlyOpenStudentId = ref(null); // Track the currently open student accordion
     const isSaving = ref(false);
+    const selectedStudents = ref(new Set());
+    const isBulkModalOpen = ref(false);
+    const bulkEvaluationTemplate = ref({});
 
     const isSuccessToastOpen = ref(false);
     const setSuccessToastOpen = (val) => (isSuccessToastOpen.value = val);
@@ -362,7 +467,9 @@ export default {
     };
 
     const saveEvaluation = async (student) => {
-      isSaving.value = true;
+      // This function is now designed to not open the success toast,
+      // as it will be controlled by the bulk save function.
+      // It will still show errors individually.
       try {
         for (const criterionId in evaluation.value[student.id]) {
           const evaluationEntry = evaluation.value[student.id][criterionId];
@@ -370,44 +477,50 @@ export default {
           const scoreId = evaluationEntry.id;
 
           if (value !== null) {
-            // Only include evaluated criteria
             const score = value;
-
             const payload = {
               studentId: student.id,
               criterionId: parseInt(criterionId),
               score: score,
-              instituteId: usuario.value.institute.id, // Get instituteId from the logged-in user
+              instituteId: usuario.value.institute.id,
               activityId: parseInt(activityId),
             };
 
             if (scoreId) {
-              // Update existing score
               await axios.patch(
                 `/student-criterion-scores/update/${scoreId}`,
                 payload,
                 tokenHeader()
               );
             } else {
-              // Create new score
               const response = await axios.post(
                 `/student-criterion-scores/create`,
                 payload,
                 tokenHeader()
               );
-
-              // Update the evaluation ref with the new ID
               evaluation.value[student.id][criterionId].id = response.data.id;
             }
           }
         }
-        setSuccessToastOpen(true);
-        // After saving, re-fetch scores to ensure UI is up-to-date
-        await fetchStudentCriterionScores(activityId);
       } catch (error) {
         const message =
-          error.response?.data?.message || "Error al guardar la evaluación";
+          error.response?.data?.message ||
+          `Error guardando evaluación para ${student.name}`;
         setErrorToastOpen(true, message);
+        // Throw error to stop Promise.all in saveBulkEvaluations
+        throw new Error(message);
+      }
+    };
+
+    const saveSingleEvaluation = async (student) => {
+      isSaving.value = true;
+      try {
+        await saveEvaluation(student); // The core logic
+        setSuccessToastOpen(true);
+        await fetchStudentCriterionScores(activityId); // Refetch to get new IDs
+      } catch (error) {
+        // error toast is handled by saveEvaluation
+        console.error(`Fallo al guardar la evaluacion para ${student.name}`);
       } finally {
         isSaving.value = false;
       }
@@ -562,9 +675,9 @@ export default {
           const criterion = criteria.value.find((c) => c.id == criterionId);
           if (criterion) {
             let score = 0;
-            if (valueType === 'mid') {
+            if (valueType === "mid") {
               score = criterion.score / 2;
-            } else if (valueType === 'max') {
+            } else if (valueType === "max") {
               score = criterion.score;
             }
             evaluation.value[student.id][criterionId].value = score;
@@ -574,6 +687,87 @@ export default {
       }
     };
 
+    const handleStudentSelection = (studentId, isChecked) => {
+      if (isChecked) {
+        selectedStudents.value.add(studentId);
+      } else {
+        selectedStudents.value.delete(studentId);
+      }
+    };
+
+    const areAllSelected = computed(() => {
+      return (
+        students.value.length > 0 &&
+        selectedStudents.value.size === students.value.length
+      );
+    });
+
+    const toggleSelectAll = () => {
+      if (areAllSelected.value) {
+        selectedStudents.value.clear();
+      } else {
+        students.value.forEach((student) =>
+          selectedStudents.value.add(student.id)
+        );
+      }
+    };
+
+    const openBulkEvaluationModal = () => {
+      // Initialize template with 0
+      criteria.value.forEach((c) => {
+        bulkEvaluationTemplate.value[c.id] = 0;
+      });
+      isBulkModalOpen.value = true;
+    };
+
+    const closeBulkEvaluationModal = () => {
+      isBulkModalOpen.value = false;
+    };
+
+    const applyBulkEvaluation = () => {
+      const studentObjects = students.value.filter((s) =>
+        selectedStudents.value.has(s.id)
+      );
+
+      studentObjects.forEach((student) => {
+        for (const criterionId in bulkEvaluationTemplate.value) {
+          if (
+            evaluation.value[student.id] &&
+            evaluation.value[student.id][criterionId]
+          ) {
+            evaluation.value[student.id][criterionId].value =
+              bulkEvaluationTemplate.value[criterionId];
+          }
+        }
+        updateGrade(student); // Recalculate grade after applying
+      });
+    };
+
+    const saveBulkEvaluations = async () => {
+      const studentObjects = students.value.filter((s) =>
+        selectedStudents.value.has(s.id)
+      );
+      isSaving.value = true;
+      try {
+        await Promise.all(
+          studentObjects.map((student) => saveEvaluation(student))
+        );
+        setSuccessToastOpen(true); // Show success toast only after all are saved
+        await fetchStudentCriterionScores(activityId); // Re-fetch scores to update IDs
+      } catch (error) {
+        // Error toast is already handled in saveEvaluation
+        console.error("Una o más guardados fallaron.", error);
+      } finally {
+        isSaving.value = false;
+      }
+    };
+
+    const applyAndSaveChanges = async () => {
+      applyBulkEvaluation();
+      closeBulkEvaluationModal();
+      await saveBulkEvaluations();
+    };
+
     return {
       activityId,
       students,
@@ -581,6 +775,7 @@ export default {
       evaluation,
       arrowBackOutline,
       saveEvaluation,
+      saveSingleEvaluation,
       handleAccordionChange,
       currentlyOpenStudentId,
       fetchStudentCriterionScores,
@@ -596,6 +791,15 @@ export default {
       updateGrade,
       markAllAs,
       usuario,
+      selectedStudents,
+      handleStudentSelection,
+      areAllSelected,
+      toggleSelectAll,
+      isBulkModalOpen,
+      bulkEvaluationTemplate,
+      openBulkEvaluationModal,
+      closeBulkEvaluationModal,
+      applyAndSaveChanges,
     };
   },
 };

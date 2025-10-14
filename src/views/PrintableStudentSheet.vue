@@ -48,6 +48,8 @@ import {
 import { printOutline } from "ionicons/icons";
 import { onMounted, ref, computed } from "vue";
 import AnswerSheet from "@/components/AnswerSheet.vue";
+import axios from "axios";
+import { tokenHeader } from "@/globalService";
 
 export default {
   components: {
@@ -78,10 +80,40 @@ export default {
 
     const courseName = computed(() => studentData.value[0]?.name);
 
-    onMounted(() => {
+    onMounted(async () => {
       if (window.history.state.studentData) {
-        studentData.value = window.history.state.studentData;
+        const rawStudentData = window.history.state.studentData;
+        const courseId = rawStudentData[0]?.id;
+        const students = rawStudentData[0]?.students || [];
         year.value = window.history.state.year;
+
+        if (courseId && students.length > 0) {
+          try {
+            const usersNoGroupResponse = await axios.get(
+              `/courses/${courseId}/usersNoGroup?year=${year.value}`,
+              tokenHeader()
+            );
+            const usersWithoutGroupIds = new Set(
+              usersNoGroupResponse.data.map((u) => u.user.id)
+            );
+
+            const studentsWithGroup = students.filter(
+              (student) => !usersWithoutGroupIds.has(student.id)
+            );
+
+            studentData.value = [
+              {
+                ...rawStudentData[0],
+                students: studentsWithGroup,
+              },
+            ];
+          } catch (error) {
+            console.error("Error filtering students by group:", error);
+            studentData.value = rawStudentData;
+          }
+        } else {
+          studentData.value = rawStudentData;
+        }
       }
     });
 

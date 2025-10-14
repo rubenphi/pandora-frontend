@@ -348,56 +348,81 @@ export default {
     const savePermissions = async () => {
       isLoading.value = true;
       try {
-        const permissionsPayload = [];
+        const promises = [];
         const currentActivityId = parseInt(activityId.value);
 
-        // Collect group permissions from UI
-        for (const reviserId in groupPermissions.value) {
-          const revisedId = groupPermissions.value[reviserId];
-          if (revisedId) {
-            permissionsPayload.push({
-              reviserId: parseInt(reviserId),
-              reviserType: "Group",
-              revisedId: parseInt(revisedId),
-              revisedType: "Group",
-              activityId: currentActivityId,
-            });
-          }
-        }
+        // Helper to process both group and individual permissions
+        const processPermissions = (permissionsMap, reviserType, revisedType) => {
+          for (const reviserId in permissionsMap) {
+            const initialPermission = initialPermissions.value.find(
+              (p) => p.reviserId == reviserId && p.reviserType === reviserType
+            );
+            const newRevisedId = permissionsMap[reviserId];
 
-        // Collect individual permissions from UI
-        for (const reviserId in individualPermissions.value) {
-          const revisedId = individualPermissions.value[reviserId];
-          if (revisedId) {
-            permissionsPayload.push({
-              reviserId: parseInt(reviserId),
-              reviserType: "User",
-              revisedId: parseInt(revisedId),
-              revisedType: "User",
-              activityId: currentActivityId,
-            });
+            if (initialPermission && !newRevisedId) {
+              // DELETE -> Expire the old permission
+              promises.push(
+                axios.patch(
+                  `/student-criterion-scores/permissions/${initialPermission.id}`,
+                  { expired: true },
+                  tokenHeader()
+                )
+              );
+            } else if (
+              initialPermission &&
+              newRevisedId !== initialPermission.revisedId
+            ) {
+              // UPDATE -> Expire the old and create a new one
+              // 1. Expire old
+              promises.push(
+                axios.patch(
+                  `/student-criterion-scores/permissions/${initialPermission.id}`,
+                  { expired: true },
+                  tokenHeader()
+                )
+              );
+              // 2. Create new
+              promises.push(
+                axios.post(
+                  `/student-criterion-scores/permissions`,
+                  {
+                    reviserId: parseInt(reviserId),
+                    reviserType: reviserType,
+                    revisedId: newRevisedId,
+                    revisedType: revisedType,
+                    activityId: currentActivityId,
+                    expired: false,
+                  },
+                  tokenHeader()
+                )
+              );
+            } else if (!initialPermission && newRevisedId) {
+              // CREATE
+              promises.push(
+                axios.post(
+                  `/student-criterion-scores/permissions`,
+                  {
+                    reviserId: parseInt(reviserId),
+                    reviserType: reviserType,
+                    revisedId: newRevisedId,
+                    revisedType: revisedType,
+                    activityId: currentActivityId,
+                    expired: false,
+                  },
+                  tokenHeader()
+                )
+              );
+            }
           }
-        }
+        };
 
-        if (permissionsPayload.length > 0) {
-          // If there are permissions to set, use the bulk endpoint.
-          await axios.post(
-            "/student-criterion-scores/permissions/bulk",
-            permissionsPayload,
-            tokenHeader()
-          );
-        } else {
-          // If the payload is empty, it means we need to expire all existing permissions.
-          const permissionsToExpire = initialPermissions.value.filter(p => !p.expired);
-          const promises = permissionsToExpire.map(p => 
-            axios.patch(`/student-criterion-scores/permissions/${p.id}`, { expired: true }, tokenHeader())
-          );
-          await Promise.all(promises);
-        }
+        processPermissions(groupPermissions.value, "Group", "Group");
+        processPermissions(individualPermissions.value, "User", "User");
+
+        await Promise.all(promises);
 
         setSuccessToastOpen(true);
-        // After saving, it's good practice to refresh the state from the server
-        await fetchExistingPermissions(); 
+        await fetchExistingPermissions(); // Refresh state from server
       } catch (error) {
         console.error("Error saving permissions:", error);
         const message =
