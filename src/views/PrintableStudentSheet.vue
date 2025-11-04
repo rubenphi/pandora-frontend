@@ -152,7 +152,7 @@ export default {
         let cellsHTML = "";
         for (let r = 0; r < 10; r++) {
           for (let c = 0; c < 9; c++) {
-            const filled = matrix[r][c] === 1 ? "background: black;" : "";
+            const filled = matrix[r][c] === 1 ? "background: black; border-radius: 50%;" : "";
             cellsHTML += `<div class="grid-cell" style="width: 100%; height: 100%; box-sizing: border-box; ${filled}"></div>`;
           }
         }

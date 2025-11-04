@@ -27,7 +27,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="student in course.students" :key="student.id">
+              <tr v-for="student in course.students" :key="student.id" :class="{ 'no-group': !isStudentInGroup(student) }">
                 <td>
                   <span class="underlined-digit">{{ student.code.substring(0, 1) }}</span>{{ student.code.substring(1) }}
                 </td>
@@ -56,6 +56,8 @@ import {
 } from '@ionic/vue';
 import { printOutline } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
+import axios from 'axios';
+import { tokenHeader } from '@/globalService';
 
 export default {
   components: {
@@ -72,13 +74,36 @@ export default {
   setup() {
     const studentData = ref([]);
     const year = ref(null);
+    const usersWithoutGroupIds = ref(new Set());
 
-    onMounted(() => {
+    onMounted(async () => {
       if (window.history.state.studentData) {
         studentData.value = window.history.state.studentData;
         year.value = window.history.state.year;
+
+        if (studentData.value.length > 0) {
+          try {
+            for (const course of studentData.value) {
+              const courseId = course.id;
+              const usersNoGroupResponse = await axios.get(
+                `/courses/${courseId}/usersNoGroup?year=${year.value}`,
+                tokenHeader()
+              );
+              const noGroupIds = usersNoGroupResponse.data.map((u) => u.user.id);
+              for (const id of noGroupIds) {
+                usersWithoutGroupIds.value.add(id);
+              }
+            }
+          } catch (error) {
+            console.error("Error fetching users without group:", error);
+          }
+        }
       }
     });
+
+    const isStudentInGroup = (student) => {
+      return !usersWithoutGroupIds.value.has(student.id);
+    };
 
     const printList = () => {
       const printContent = document.getElementById('printable-content');
@@ -119,6 +144,10 @@ export default {
               .underlined-digit {
                 text-decoration: underline;
               }
+              .no-group {
+                color: grey;
+                font-style: italic;
+              }
               h1, h2 {
                 text-align: center;
               }
@@ -146,6 +175,7 @@ export default {
       year,
       printList,
       printOutline,
+      isStudentInGroup,
     };
   },
 };
@@ -166,5 +196,9 @@ export default {
 }
 .underlined-digit {
   text-decoration: underline;
+}
+.no-group {
+  color: grey;
+  font-style: italic;
 }
 </style>

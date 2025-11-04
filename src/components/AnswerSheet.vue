@@ -100,9 +100,11 @@ export default {
 
         if (val === 1 || val === true) {
           cell.style.background = "black";
+          cell.style.borderRadius = "50%";
           cell.classList.add("filled");
         } else {
           cell.style.background = "transparent";
+          cell.style.borderRadius = "0";
           cell.classList.remove("filled");
         }
       });
