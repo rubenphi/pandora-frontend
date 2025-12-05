@@ -22,16 +22,16 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-        <div class="ion-padding" v-if="showReinforcementToggle">
-            <ion-segment :value="'standard'" @ionChange="segmentChanged">
-                <ion-segment-button value="standard">
-                    <ion-label>Lecciones</ion-label>
-                </ion-segment-button>
-                <ion-segment-button value="reinforcement">
-                    <ion-label>Refuerzos</ion-label>
-                </ion-segment-button>
-            </ion-segment>
-        </div>
+      <div class="ion-padding" v-if="showReinforcementToggle">
+        <ion-segment :value="'standard'" @ionChange="segmentChanged">
+          <ion-segment-button value="standard">
+            <ion-label>Lecciones</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="reinforcement">
+            <ion-label>Refuerzos</ion-label>
+          </ion-segment-button>
+        </ion-segment>
+      </div>
       <ion-card v-for="leccion in lecciones" :key="leccion.id">
         <ion-item lines="none">
           <div>
@@ -123,7 +123,7 @@
             <ion-label>No hay cuestionarios</ion-label>
           </ion-item>
           <ion-item
-            @click="lessonSelected(cuestionario)"
+            @click="quizSelected(cuestionario)"
             v-else
             v-for="cuestionario in cuestionariosList"
             :key="cuestionario.id"
@@ -221,7 +221,7 @@ import {
   IonItem,
   IonLabel,
   IonSegment,
-  IonSegmentButton
+  IonSegmentButton,
 } from "@ionic/vue";
 import { modalController } from "@ionic/vue";
 
@@ -244,12 +244,7 @@ export default {
     IonItem,
     IonLabel,
     IonSegment,
-    IonSegmentButton
-  },
-  methods: {
-    lessonSelected: function (cuestionario) {
-      localStorage.setItem("lessonSelected", JSON.stringify(cuestionario));
-    },
+    IonSegmentButton,
   },
   setup() {
     const mroute = useRoute();
@@ -325,9 +320,9 @@ export default {
     const showReinforcementToggle = ref(false);
 
     const segmentChanged = (ev) => {
-        if (ev.detail.value === 'reinforcement') {
-             router.push(`/refuerzos/${curso}/${area}/${periodo}/${year}`);
-        }
+      if (ev.detail.value === "reinforcement") {
+        router.push(`/refuerzos/${curso}/${area}/${periodo}/${year}`);
+      }
     };
 
     onIonViewWillEnter(async () => {
@@ -338,23 +333,23 @@ export default {
 
       // Check for Reinforcement access
       if (adminOProfesor.value) {
-          showReinforcementToggle.value = true;
+        showReinforcementToggle.value = true;
       } else {
-          try {
-              const res = await axios.get('/reinforcement/count', {
-                  params: {
-                      studentId: usuario.value.id,
-                      courseId: curso,
-                      areaId: area,
-                      periodId: periodo,
-                      year: year
-                  }
-              });
-              showReinforcementToggle.value = res.data > 0;
-          } catch (e) {
-              console.error(e);
-              showReinforcementToggle.value = false;
-          }
+        try {
+          const res = await axios.get("/reinforcement/count", {
+            params: {
+              studentId: usuario.value.id,
+              courseId: curso,
+              areaId: area,
+              periodId: periodo,
+              year: year,
+            },
+          });
+          showReinforcementToggle.value = res.data > 0;
+        } catch (e) {
+          console.error(e);
+          showReinforcementToggle.value = false;
+        }
       }
 
       if (adminOProfesor.value) {
@@ -492,6 +487,10 @@ export default {
         });
     };
 
+    const quizSelected = (cuestionario) => {
+      localStorage.setItem("quizSelected", JSON.stringify(cuestionario));
+    };
+
     return {
       basedeURL,
       materialesConsulta,
@@ -521,7 +520,8 @@ export default {
       MaterialType,
       openMaterial,
       showReinforcementToggle,
-      segmentChanged
+      segmentChanged,
+      quizSelected,
     };
   },
 };

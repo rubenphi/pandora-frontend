@@ -19,9 +19,9 @@
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
-        <ion-title size="large" class="ion-text-center">{{
-          cuestionario.fecha
-        }}</ion-title>
+        <ion-title size="large" class="ion-text-center">
+          {{ cuestionario.fecha }}
+        </ion-title>
         <ion-buttons v-if="!admin" slot="end" class="ion-margin-end">
           <ion-button
             v-if="cuestionario.id != 0"
@@ -199,7 +199,6 @@ import axios from "axios";
 import { ref } from "vue";
 import { tokenHeader, adminOprofesor, numeroOrdinal } from "../globalService";
 
-
 import {
   lockClosedOutline,
   lockOpenOutline,
@@ -234,7 +233,7 @@ import {
   alertController,
 } from "@ionic/vue";
 
-import CuestionarioGeneratorModal from '../components/CuestionarioGeneratorModal.vue';
+import CuestionarioGeneratorModal from "../components/CuestionarioGeneratorModal.vue";
 
 import { useRoute } from "vue-router";
 import router from "../router";
@@ -297,7 +296,7 @@ export default {
     ]);
     const tipoImportacionUrl = ref("");
 
-    let cuestionario = ref(JSON.parse(localStorage.getItem("lessonSelected")));
+    let cuestionario = ref(JSON.parse(localStorage.getItem("quizSelected")));
 
     onIonViewDidEnter(async () => {
       periodoSelected.value = JSON.parse(
@@ -310,6 +309,7 @@ export default {
         await axios.get(`/quizzes/${id}`).then((response) => {
           cuestionario.value = {
             ...response.data,
+
             id: response.data.id,
             topic: response.data.title,
             //order by title with ordinal number
@@ -334,7 +334,7 @@ export default {
             );
           }
           localStorage.setItem(
-            "lessonSelected",
+            "quizSelected",
             JSON.stringify(cuestionario.value)
           );
 

@@ -26,6 +26,17 @@
             <ion-label position="stacked">Título</ion-label>
             <ion-input v-model="cuestionario.title" type="text"></ion-input>
           </ion-item>
+
+          <ion-item>
+            <ion-select
+              label="Tipo de Cuestionario"
+              v-model="cuestionario.quizType"
+              placeholder="Seleccione uno"
+            >
+              <ion-select-option value="group">Grupal</ion-select-option>
+              <ion-select-option value="individual">Individual</ion-select-option>
+            </ion-select>
+          </ion-item>
           <ion-item
             class="ion-text-center"
             v-if="cuestionario.id && cuestionario.exist == true"
@@ -71,6 +82,8 @@ import {
   IonIcon,
   IonButton,
   IonButtons,
+  IonSelect,
+  IonSelectOption,
 } from "@ionic/vue";
 
 export default {
@@ -87,6 +100,8 @@ export default {
     IonItem,
     IonLabel,
     IonInput,
+    IonSelect,
+    IonSelectOption,
   },
   setup() {
     const mroute = useRoute();
@@ -167,7 +182,7 @@ export default {
         cuestionario.value = {
           id: null,
           title: "",
-          quizType: "group",
+          quizType: lessonDetails.value?.type === 'reinforcement' ? 'individual' : 'group',
           lessonId: parseInt(lessonId, 10),
           instituteId: usuario.value.institute.id,
           exist: true,

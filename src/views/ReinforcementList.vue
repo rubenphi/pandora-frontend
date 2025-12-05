@@ -73,6 +73,7 @@
             v-for="cuestionario in cuestionariosList"
             :key="cuestionario.id"
             :href="'/cuestionario/' + cuestionario.id"
+            @click="quizSelected(cuestionario)"
           >
             <ion-label>{{ cuestionario.name }}</ion-label>
           </ion-item>
@@ -256,11 +257,16 @@ export default {
           cuestionariosList.value = response.data.map((c) => ({
              id: c.id,
              name: c.title,
+             lesson: c.lesson, 
           }));
         })
         .finally(() => {
           isLoadingCuestionarios.value = false;
         });
+    };
+
+    const quizSelected = (cuestionario) => {
+      localStorage.setItem("quizSelected", JSON.stringify(cuestionario));
     };
 
     const actividadesConsulta = async (lessonId) => {
@@ -310,6 +316,7 @@ export default {
       isLoadingActivities,
       showReinforcementToggle,
       segmentChanged,
+      quizSelected,
     };
   },
 };

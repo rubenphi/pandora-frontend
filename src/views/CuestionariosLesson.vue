@@ -28,7 +28,7 @@
       <ion-card
         v-for="cuestionario in cuestionarios"
         :key="cuestionario.id"
-        v-on:click="lessonSelected(cuestionario)"
+        v-on:click="quizSelected(cuestionario)"
       >
         <ion-card-header>
           <ion-card-subtitle>{{ cursoSelected.name }}</ion-card-subtitle>
@@ -80,8 +80,8 @@ export default {
     IonIcon,
   },
   methods: {
-    lessonSelected: function (cuestionario) {
-      localStorage.setItem("lessonSelected", JSON.stringify(cuestionario));
+    quizSelected: function (cuestionario) {
+      localStorage.setItem("quizSelected", JSON.stringify(cuestionario));
     },
   },
   setup() {

@@ -301,7 +301,7 @@ export default {
       points: 0,
     });
     const cuestionario = ref(
-      JSON.parse(localStorage.getItem("lessonSelected"))
+      JSON.parse(localStorage.getItem("quizSelected"))
     );
     const respuestas = ref([
       { group: { name: "Cargando", id: 0 }, points: "Cargando" },

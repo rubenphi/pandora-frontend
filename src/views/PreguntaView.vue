@@ -115,7 +115,7 @@
       </ion-card>
 
       <ion-buttons
-        v-if="!admin && grupoUsuario?.id"
+        v-if="!admin && (grupoUsuario?.id || question.quiz?.quizType === 'individual')"
         class="ion-justify-content-center ion-padding-top ion-padding-bottom"
       >
         <ion-button
@@ -132,7 +132,7 @@
         </ion-button>
       </ion-buttons>
 
-      <div v-if="!admin && !grupoUsuario?.id">
+      <div v-if="!admin && !grupoUsuario?.id && question.quiz?.quizType !== 'individual'">
         <ion-card>
           <ion-card-header>
             <ion-card-title class="ion-text-center">
@@ -387,7 +387,9 @@ export default {
           error.value.data = "Debe seleccionar una opción.";
         } else {
           respuesta.value.questionId = question.value.id;
-          respuesta.value.groupId = grupoUsuario.value?.id;
+          if (question.value.quiz?.quizType !== 'individual') {
+               respuesta.value.groupId = grupoUsuario.value?.id;
+          }
           respuesta.value.quizId = question.value.quiz?.id;
           respuesta.value.exist = true;
           respuesta.value.instituteId = usuarioGet().institute.id;
