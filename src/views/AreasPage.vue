@@ -12,17 +12,7 @@
         </ion-toolbar>
       </ion-header>
       
-      <div class="ion-padding">
-        <ion-segment v-model="viewMode">
-            <ion-segment-button value="standard">
-                <ion-label>Lecciones</ion-label>
-            </ion-segment-button>
-             <ion-segment-button value="reinforcement">
-                <ion-label>Refuerzos</ion-label>
-            </ion-segment-button>
-        </ion-segment>
-      </div>
-
+      
       <ion-list>
         <ion-item>
           <ion-label slot="start" v-if="!adminOProfesor"
@@ -103,8 +93,6 @@ import {
   IonSelect,
   IonSelectOption,
   IonToast,
-  IonSegment,
-  IonSegmentButton,
 } from "@ionic/vue";
 export default {
   components: {
@@ -120,8 +108,6 @@ export default {
     IonSelect,
     IonSelectOption,
     IonToast,
-    IonSegment,
-    IonSegmentButton,
   },
   setup() {
     const mroute = useRoute();
@@ -143,7 +129,6 @@ export default {
 
     const years = ref([]);
     const yearSelected = ref();
-    const viewMode = ref('standard');
 
     onIonViewWillEnter(async () => {
       adminOProfesor.value = adminOprofesor();
@@ -193,15 +178,9 @@ export default {
           presentToast();
           return;
         }
-        if (viewMode.value === 'reinforcement') {
-           router.push(
-            `/refuerzos/${id}/${areaId}/${periodoSelected.value}/${yearSelected.value}`
-          );
-        } else {
-           router.push(
+        router.push(
             `/lecciones/${id}/${areaId}/${periodoSelected.value}/${yearSelected.value}`
-          );
-        }
+        );
       },
       usuario,
       adminOProfesor,
@@ -216,7 +195,6 @@ export default {
       presentToast,
       years,
       yearSelected,
-      viewMode,
     };
   },
 };

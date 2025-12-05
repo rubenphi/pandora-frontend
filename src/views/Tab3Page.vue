@@ -22,6 +22,16 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
+        <div class="ion-padding" v-if="showReinforcementToggle">
+            <ion-segment :value="'standard'" @ionChange="segmentChanged">
+                <ion-segment-button value="standard">
+                    <ion-label>Lecciones</ion-label>
+                </ion-segment-button>
+                <ion-segment-button value="reinforcement">
+                    <ion-label>Refuerzos</ion-label>
+                </ion-segment-button>
+            </ion-segment>
+        </div>
       <ion-card v-for="leccion in lecciones" :key="leccion.id">
         <ion-item lines="none">
           <div>
@@ -210,6 +220,8 @@ import {
   IonList,
   IonItem,
   IonLabel,
+  IonSegment,
+  IonSegmentButton
 } from "@ionic/vue";
 import { modalController } from "@ionic/vue";
 
@@ -231,6 +243,8 @@ export default {
     IonList,
     IonItem,
     IonLabel,
+    IonSegment,
+    IonSegmentButton
   },
   methods: {
     lessonSelected: function (cuestionario) {
@@ -308,11 +322,40 @@ export default {
       }
     };
 
+    const showReinforcementToggle = ref(false);
+
+    const segmentChanged = (ev) => {
+        if (ev.detail.value === 'reinforcement') {
+             router.push(`/refuerzos/${curso}/${area}/${periodo}/${year}`);
+        }
+    };
+
     onIonViewWillEnter(async () => {
       adminOProfesor.value = adminOprofesor();
       usuario.value = usuarioGet();
 
       tokenHeader();
+
+      // Check for Reinforcement access
+      if (adminOProfesor.value) {
+          showReinforcementToggle.value = true;
+      } else {
+          try {
+              const res = await axios.get('/reinforcement/count', {
+                  params: {
+                      studentId: usuario.value.id,
+                      courseId: curso,
+                      areaId: area,
+                      periodId: periodo,
+                      year: year
+                  }
+              });
+              showReinforcementToggle.value = res.data > 0;
+          } catch (e) {
+              console.error(e);
+              showReinforcementToggle.value = false;
+          }
+      }
 
       if (adminOProfesor.value) {
         try {
@@ -477,6 +520,8 @@ export default {
       isLoadingActivities,
       MaterialType,
       openMaterial,
+      showReinforcementToggle,
+      segmentChanged
     };
   },
 };

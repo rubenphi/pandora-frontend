@@ -20,6 +20,16 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
+        <div class="ion-padding" v-if="adminOProfesor || showReinforcementToggle">
+            <ion-segment :value="'reinforcement'" @ionChange="segmentChanged">
+                <ion-segment-button value="standard">
+                    <ion-label>Lecciones</ion-label>
+                </ion-segment-button>
+                <ion-segment-button value="reinforcement">
+                    <ion-label>Refuerzos</ion-label>
+                </ion-segment-button>
+            </ion-segment>
+        </div>
       <ion-card v-for="leccion in lecciones" :key="leccion.id">
         <ion-item lines="none">
           <div>
@@ -116,6 +126,7 @@
 
 <script>
 import axios from "axios";
+import router from "../router";
 import { ref } from "vue";
 import {
   tokenHeader,
@@ -142,6 +153,8 @@ import {
   IonList,
   IonItem,
   IonLabel,
+  IonSegment,
+  IonSegmentButton
 } from "@ionic/vue";
 
 export default {
@@ -162,6 +175,8 @@ export default {
     IonList,
     IonItem,
     IonLabel,
+    IonSegment,
+    IonSegmentButton
   },
   setup() {
     const mroute = useRoute();
@@ -264,6 +279,17 @@ export default {
         });
     };
 
+    const showReinforcementToggle = ref(true); // Always true here if we are here?
+
+    // Actually, if a student navigates here manually but has no reinforcements, what happens?
+    // They see empty list. But they should see the toggle to go back to standard.
+    
+    const segmentChanged = (ev) => {
+        if (ev.detail.value === 'standard') {
+             router.push(`/lecciones/${curso}/${area}/${periodo}/${year}`);
+        }
+    };
+
     return {
       lecciones,
       cursoSelected,
@@ -282,6 +308,8 @@ export default {
       actvitiesList,
       isLoadingCuestionarios,
       isLoadingActivities,
+      showReinforcementToggle,
+      segmentChanged,
     };
   },
 };
