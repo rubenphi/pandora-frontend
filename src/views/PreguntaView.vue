@@ -258,7 +258,7 @@ export default {
     const respuesta = ref({
       optionId: "",
       questionId: "",
-      groupId: "",
+      groupId: null,
       quizId: "",
       userId: usuario?.id,
       exist: 0,
@@ -347,17 +347,26 @@ export default {
           grupoUsuario.value = response.data.filter((g) => g.active)[0]?.group;
         });
 
-      if (!admin && grupoUsuario.value?.id) {
-        await axios
-          .get(`/answers?questionId=${id}&groupId=${grupoUsuario.value.id}`)
-          .then((response) => {
-            if (response.data && response.data.length > 0) {
-              resVisible.value = 1;
-            }
-          })
-          .catch(() => {
-            // Fail silently, user is treated as not having answered.
-          });
+      if (!admin) {
+        let queryParams = `?questionId=${id}`;
+        if (question.value.quiz?.quizType === 'individual') {
+             queryParams += `&userId=${usuario?.id}`;
+        } else if (grupoUsuario.value?.id) {
+             queryParams += `&groupId=${grupoUsuario.value.id}`;
+        }
+        
+        if (question.value.quiz?.quizType === 'individual' || grupoUsuario.value?.id) {
+             await axios
+            .get(`/answers${queryParams}`)
+            .then((response) => {
+                if (response.data && response.data.length > 0) {
+                resVisible.value = 1;
+                }
+            })
+            .catch(() => {
+                // Fail silently
+            });
+        }
       }
 
       if (admin) {
@@ -389,6 +398,8 @@ export default {
           respuesta.value.questionId = question.value.id;
           if (question.value.quiz?.quizType !== 'individual') {
                respuesta.value.groupId = grupoUsuario.value?.id;
+          } else {
+               delete respuesta.value.groupId;
           }
           respuesta.value.quizId = question.value.quiz?.id;
           respuesta.value.exist = true;

@@ -57,7 +57,7 @@
             slot="start"
           ></ion-icon>
 
-          <ion-label color="medium">{{ respuesta.group.name }}</ion-label>
+          <ion-label color="medium">{{ respuesta.group ? respuesta.group.name : (respuesta.user ? respuesta.user.name + ' ' + respuesta.user.lastName : 'Desconocido') }}</ion-label>
           <ion-note slot="end">
             <ion-text
               v-if="(respuesta.points > 0) & admin || respuesta.points > 0"
@@ -73,14 +73,14 @@
             >
             <ion-text v-else color="warning"><h6>Obtienen: ?</h6></ion-text>
             <ion-text
-              v-if="admin || grupoUsuario?.id == respuesta.group.id"
+              v-if="admin || (respuesta.group && grupoUsuario?.id == respuesta.group.id) || (respuesta.user && usuario?.id == respuesta.user.id)"
               color="warning"
               ><h6>Respuesta: {{ respuesta.option.identifier }}</h6></ion-text
             >
             <ion-text v-else color="primary"><h6>Respuesta: ?</h6></ion-text>
           </ion-note>
           <ion-buttons
-            v-if="admin && groupAnswerCount[respuesta.group.id] > 1"
+            v-if="admin && respuesta.group && groupAnswerCount[respuesta.group.id] > 1"
             slot="end"
           >
             <ion-button @click="presentDeleteAlert(respuesta.id)">
@@ -193,16 +193,23 @@ export default {
 
     const ordenarPorNombre = () => {
       respuestas.value.sort((a, b) => {
-        const regex = /(\D+)(\d+)/;
-        const [, textA, numberA] = a.group.name.match(regex);
-        const [, textB, numberB] = b.group.name.match(regex);
+        if (a.user && b.user) {
+             const nameA = a.user.name + ' ' + a.user.lastName;
+             const nameB = b.user.name + ' ' + b.user.lastName;
+             return nameA.localeCompare(nameB);
+        } else if (a.group && b.group) {
+            const regex = /(\D+)(\d+)/;
+            const [, textA, numberA] = a.group.name.match(regex) || [null, a.group.name, 0];
+            const [, textB, numberB] = b.group.name.match(regex) || [null, b.group.name, 0];
 
-        const textComparison = textA.localeCompare(textB);
-        if (textComparison !== 0) {
-          return textComparison;
+            const textComparison = textA.localeCompare(textB);
+            if (textComparison !== 0) {
+            return textComparison;
+            }
+
+            return parseInt(numberA) - parseInt(numberB);
         }
-
-        return parseInt(numberA) - parseInt(numberB);
+        return 0;
       });
     };
 
@@ -211,7 +218,9 @@ export default {
     const calcularRespuestasPorGrupo = () => {
       const counts = {};
       for (const respuesta of respuestas.value) {
-        counts[respuesta.group.id] = (counts[respuesta.group.id] || 0) + 1;
+        if (respuesta.group && respuesta.group.id) {
+            counts[respuesta.group.id] = (counts[respuesta.group.id] || 0) + 1;
+        }
       }
       groupAnswerCount.value = counts;
     };

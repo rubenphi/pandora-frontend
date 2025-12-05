@@ -27,7 +27,7 @@
         <ion-accordion
           v-for="(respuesta, index) in respuestas"
           :key="index"
-          :value="respuesta.group.id"
+          :value="respuesta.group ? respuesta.group.id : respuesta.user.id"
         >
           <ion-item slot="header" lines="full" class="ion-padding-end">
             <ion-icon
@@ -48,7 +48,7 @@
               size="large"
               slot="start"
             ></ion-icon>
-            <ion-label color="medium">{{ respuesta.group.name }}</ion-label>
+            <ion-label color="medium">{{ respuesta.group ? respuesta.group.name : respuesta.user?.name + ' ' + respuesta.user?.lastName }}</ion-label>
             <ion-note slot="end">
               <ion-text v-if="index === 0" color="warning">
                 <h6>
@@ -65,7 +65,8 @@
               </ion-text>
               <ion-text
                 v-if="
-                  respuesta?.group?.id === grupoUsuario?.id ||
+                  (respuesta.group && respuesta.group.id === grupoUsuario?.id) ||
+                  (respuesta.user && respuesta.user.id === usuario?.id) ||
                   usuario?.rol == 'admin'
                 "
               >
@@ -76,7 +77,8 @@
           <div class="ion-padding" slot="content">
             <ion-list
               v-if="
-                respuesta?.group?.id === grupoUsuario?.id ||
+                (respuesta.group && respuesta.group.id === grupoUsuario?.id) ||
+                (respuesta.user && respuesta.user.id === usuario?.id) ||
                 usuario?.rol == 'admin'
               "
             >
@@ -551,23 +553,30 @@ export default {
     const handleAccordionChange = async (e) => {
       const openedAccordion = e.detail.value;
       if (openedAccordion) {
-        const groupId = parseInt(openedAccordion, 10);
-        await loadRespuestas(groupId);
+        const id = parseInt(openedAccordion, 10);
+        await loadRespuestas(id);
       }
     };
 
     const ordenarPorNombre = () => {
       respuestas.value.sort((a, b) => {
-        const regex = /(\D+)(\d+)/;
-        const [, textA, numberA] = a.group.name.match(regex);
-        const [, textB, numberB] = b.group.name.match(regex);
+        if (a.user && b.user) {
+             const nameA = a.user.name + ' ' + a.user.lastName;
+             const nameB = b.user.name + ' ' + b.user.lastName;
+             return nameA.localeCompare(nameB);
+        } else if (a.group && b.group) {
+            const regex = /(\D+)(\d+)/;
+            const [, textA, numberA] = a.group.name.match(regex) || [null, a.group.name, 0];
+            const [, textB, numberB] = b.group.name.match(regex) || [null, b.group.name, 0];
 
-        const textComparison = textA.localeCompare(textB);
-        if (textComparison !== 0) {
-          return textComparison;
+            const textComparison = textA.localeCompare(textB);
+            if (textComparison !== 0) {
+            return textComparison;
+            }
+
+            return parseInt(numberA) - parseInt(numberB);
         }
-
-        return parseInt(numberA) - parseInt(numberB);
+        return 0;
       });
     };
 
@@ -586,7 +595,7 @@ export default {
       await axios.get(`/quizzes/${id}/points`).then((response) => {
         quizPoints.value = response.data.points;
       });
-
+      
       await axios.get(`/quizzes/${id}/results`);
       await axios
         .get(`/quizzes/${id}/results`)
@@ -631,12 +640,12 @@ export default {
         });
     });
 
-    const loadRespuestas = async (groupId) => {
+    const loadRespuestas = async (targetId) => {
       loading.value = true;
 
       try {
         const answers = await getRespuestas(
-          groupId,
+          targetId,
           id,
           cuestionario.value.lesson.institute.id
         );
@@ -659,9 +668,25 @@ export default {
       }
       try {
         for (const respuesta of respuestas.value) {
+           // Scenario 1: Individual Quiz (User-based)
+           if (respuesta.user && respuesta.user.id) {
+                const data = {
+                    userId: respuesta.user.id,
+                    gradableId: parseInt(id, 10),
+                    gradableType: "quiz",
+                    periodId: cuestionario.value.lesson.period.id,
+                    gradeType: "regular",
+                    grade: respuesta.nota,
+                    instituteId: cuestionario.value.lesson.institute.id,
+                };
+                await axios.post("/grades", data);
+                continue; // Move to next response
+           }
+
+           // Scenario 2: Group Quiz (Group-based)
           if (!respuesta.group || !respuesta.group.id) {
             console.warn(
-              "Skipping response due to missing group data:",
+              "Skipping response due to missing group/user data:",
               respuesta
             );
             continue;
@@ -691,11 +716,31 @@ export default {
       }
     }
 
-    async function getRespuestas(groupId, quizId, instituteId) {
-      if (groupId == grupoUsuario.value?.id || admin) {
-        const response = await axios.get(
-          `/answers?groupId=${groupId}&quizId=${quizId}&instituteId=${instituteId}`
-        );
+    async function getRespuestas(targetId, quizId, instituteId) {
+      if (targetId == grupoUsuario.value?.id || admin || targetId == usuario.value?.id) {
+        let queryParams = `?quizId=${quizId}&instituteId=${instituteId}`;
+
+        // Check if targetId matches a user or a group
+        // If the accordion was opened by a user in individual mode, targetId is userId
+        // If group mode, targetId is groupId
+        // But getAnswers in backend needs explicit param (groupId or userId)
+        // We can infer by context: if we have a group, we use it. But here we only have ID.
+        // Solution: Try first as userId if individual quiz, or structure getRespuestas to know the type.
+        // Better: In handleAccordionChange, we know the type if we check 'respuestas'. But passing ID is simple.
+        // Let's rely on the fact that for now we can try both or differentiating?
+        // Wait, CuestionarioResult knows if it's group or user based on the list 'respuestas'.
+        // But here inside getRespuestas we lack that context easily.
+        // Simplification: In 'individual' quiz, targetId IS userId. In 'group', targetId IS groupId.
+        // We can check question.quiz.quizType from cuestionario.value.
+
+        // Actually 'cuestionario' is available in scope.
+        if (cuestionario.value.quizType === 'individual') {
+             queryParams += `&userId=${targetId}`;
+        } else {
+             queryParams += `&groupId=${targetId}`;
+        }
+
+        const response = await axios.get(`/answers${queryParams}`);
         return response.data;
       } else {
         return [];
