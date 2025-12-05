@@ -38,6 +38,18 @@ const routes = [
         path: "lecciones/:curso/:area/:periodo/:year",
         component: () => import("@/views/Tab3Page.vue"),
       },
+      {
+        path: "refuerzos/:curso/:area/:periodo/:year",
+        component: () => import("@/views/ReinforcementList.vue"),
+      },
+      {
+        path: "crear/refuerzo/:curso/:area/:year/:periodo/:id?",
+        component: () => import("@/views/CreateReinforcement.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
 
       {
         path: "admin/cuestionarios",

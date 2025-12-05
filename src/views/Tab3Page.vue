@@ -174,9 +174,8 @@ import {
   tokenHeader,
   usuarioGet,
   adminOprofesor,
-  QuizSinNotas,
-  ActivitiesSinNotas,  // Import the new function
   basedeURL,
+  selectedPeriod,
 } from "../globalService";
 import { useRoute } from "vue-router";
 import router from "../router";
@@ -313,17 +312,43 @@ export default {
       adminOProfesor.value = adminOprofesor();
       usuario.value = usuarioGet();
 
-      const quizzesSinNotas = await QuizSinNotas(curso, usuario);
-      leccionesConCuestionariosPendientes.value = quizzesSinNotas.map(
-        (quiz) => quiz.lesson.id
-      );
-
-      const activitiesSinNotas = await ActivitiesSinNotas(curso, usuario);
-      leccionesConActividadesPendientes.value = activitiesSinNotas.map(
-        (activity) => activity.lesson.id
-      );
-
       tokenHeader();
+
+      if (adminOProfesor.value) {
+        try {
+          const response = await axios.get(`/quizzes/pending-grading`, {
+            params: {
+              courseId: curso,
+              periodId: selectedPeriod(),
+              year: year,
+              instituteId: usuario.value.institute.id,
+            },
+          });
+
+          leccionesConCuestionariosPendientes.value = response.data.map(
+            (quiz) => quiz.lesson.id
+          );
+        } catch (error) {
+          console.error("Error fetching pending quizzes:", error);
+        }
+
+        try {
+          const response = await axios.get(`/activities/pending-grading`, {
+            params: {
+              courseId: curso,
+              year: year,
+              periodId: selectedPeriod(),
+              instituteId: usuario.value.institute.id,
+            },
+          });
+          leccionesConActividadesPendientes.value = response.data.map(
+            (activity) => activity.lesson.id
+          );
+        } catch (error) {
+          console.error("Error fetching pending activities:", error);
+        }
+      }
+
       if (curso != cursosUsuario.value[0].id && !adminOprofesor()) {
         router.push("/lecciones/" + cursosUsuario.value[0].id + "/" + area);
       } else {
@@ -331,8 +356,7 @@ export default {
           .get(
             `/lessons?courseId=${curso}&areaId=${area}&periodId=${periodo}${
               year ? "&year=" + year : ""
-            }&exist=true
-          `
+            }&exist=true&type=standard`
           )
           .then((response) => {
             lecciones.value = response.data

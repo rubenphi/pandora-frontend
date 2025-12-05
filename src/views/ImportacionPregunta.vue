@@ -274,20 +274,35 @@ export default {
 
     const importarSeleccionadas = async () => {
       let seleccionadas = [];
-      Object.values(questionsByQuiz.value).forEach(({ questions }) => { // Iterate over questionsByQuiz
+      Object.values(questionsByQuiz.value).forEach(({ questions }) => {
+        // Iterate over questionsByQuiz
         seleccionadas.push(...questions.filter((p) => p.selected));
       });
+
+      if (seleccionadas.length === 0) {
+        errorMessage.value = "No has seleccionado ninguna pregunta para importar.";
+        setErrorToastOpen(true);
+        return;
+      }
 
       if (modoOrden.value === "mix") {
         seleccionadas = seleccionadas.sort(() => Math.random() - 0.5);
       }
 
-      seleccionadas = seleccionadas.map((p, index) => ({
-        id: p.id,
-        title: numerosOrdinales[index] || `Pregunta ${index + 1}`,
-      }));
-
       try {
+        // Fetch existing questions to determine the starting index
+        const existingQuestionsRes = await axios.get(
+          `/quizzes/${idCuestionario}/questions`
+        );
+        const baseIndex = existingQuestionsRes.data.length;
+
+        seleccionadas = seleccionadas.map((p, index) => ({
+          id: p.id,
+          title:
+            numerosOrdinales[baseIndex + index] ||
+            `Pregunta ${baseIndex + index + 1}`,
+        }));
+
         await axios.post(`/quizzes/${idCuestionario}/import-questions-mix`, {
           toQuizId: parseInt(idCuestionario),
           questions: seleccionadas,

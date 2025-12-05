@@ -47,7 +47,7 @@
           </ion-button>
         </ion-card>
       </ion-card>
-      <ion-list>
+      <ion-list v-if="!finalPeriodo && !adminOProfesor">
         <ion-item>
           <ion-label>
             <h2>Notas del Grupo</h2>
@@ -75,12 +75,6 @@
           >
             <ion-item slot="header">
               <ion-label>{{ member.userName }}</ion-label>
-              <ion-chip
-                slot="end"
-                :color="member.promedioGeneral < 3.5 ? 'danger' : 'primary'"
-              >
-                {{ member.promedioGeneral }}
-              </ion-chip>
             </ion-item>
             <div class="ion-padding" slot="content">
               <ion-list>
@@ -89,6 +83,12 @@
                     <ion-label>
                       <h3>{{ area?.name }}</h3>
                     </ion-label>
+                    <ion-chip
+                      slot="end"
+                      :color="area.promedio < 3.5 ? 'danger' : 'primary'"
+                    >
+                      {{ area.promedio }}
+                    </ion-chip>
                   </ion-item>
                   <div v-for="nota in area?.notas" :key="nota?.id">
                     <ion-item>
@@ -112,6 +112,15 @@
           </ion-accordion>
         </ion-accordion-group>
       </ion-list>
+      <ion-card v-else>
+        <ion-card-header>
+          <ion-card-title>Acceso Restringido</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          En épocas finales del curso, el acceso al perfil de estudiante está
+          restringido.
+        </ion-card-content>
+      </ion-card>
 
       <ion-modal
         ref="modal"
@@ -171,6 +180,7 @@ import {
 import axios from "axios";
 import { ref, watch } from "vue";
 import {
+  adminOprofesor,
   periodosGet,
   selectedYear,
   tokenHeader,
@@ -230,6 +240,8 @@ export default {
 
   setup() {
     const usuario = ref();
+    const adminOProfesor = ref();
+    const finalPeriodo = ref(true);
 
     const cursosUsuario = ref([]);
     const periodos = ref();
@@ -263,19 +275,8 @@ export default {
       });
     };
 
-    const calcularPromedio = (liveGradableItems, studentGrades) => {
-      if (liveGradableItems.length === 0) {
-        return 0;
-      }
-      const sumaTotal = studentGrades.reduce(
-        (acc, nota) => acc + nota.grade,
-        0
-      );
-      const promedio = sumaTotal / liveGradableItems.length;
-      return promedio.toFixed(2);
-    };
-
     onIonViewWillEnter(async () => {
+      adminOProfesor.value = adminOprofesor();
       periodoSelected.value = localStorage.getItem("periodoSelected")
         ? parseInt(localStorage.getItem("periodoSelected"), 10)
         : null;
@@ -341,11 +342,6 @@ export default {
               grade: parseFloat(n.grade.toFixed(1)),
             }));
 
-          const promedioGeneral = calcularPromedio(
-            liveGradableItems,
-            studentGrades
-          );
-
           const areas = liveGradableItems.reduce((acc, actividad) => {
             const notaExistente = studentGrades.find(
               (n) => n.gradableItem.id === actividad.id
@@ -373,20 +369,42 @@ export default {
             return acc;
           }, []);
 
-          const sortedAreas = areas.map((area) => ({
-            ...area,
-            notas: area.notas.sort(
+          const areasConPromedioYSort = areas.map((area) => {
+            const liveGradableItemsInArea = liveGradableItems.filter(
+              (item) => item.lesson.area.id === area.id
+            );
+
+            const studentGradesInArea = studentGrades.filter(
+              (grade) => grade.gradableItem.lesson.area.id === area.id
+            );
+
+            const sumaTotalArea = studentGradesInArea.reduce(
+              (acc, nota) => acc + nota.grade,
+              0
+            );
+
+            const promedioArea =
+              liveGradableItemsInArea.length > 0
+                ? (sumaTotalArea / liveGradableItemsInArea.length).toFixed(2)
+                : (0).toFixed(2);
+
+            const notasOrdenadas = area.notas.sort(
               (a, b) =>
                 new Date(a.gradableItem.lesson.date) -
                 new Date(b.gradableItem.lesson.date)
-            ),
-          }));
+            );
+
+            return {
+              ...area,
+              promedio: promedioArea,
+              notas: notasOrdenadas,
+            };
+          });
 
           return {
             userId: memberId,
             userName: memberName,
-            promedioGeneral: promedioGeneral,
-            areas: sortedAreas,
+            areas: areasConPromedioYSort,
           };
         });
 
@@ -417,6 +435,9 @@ export default {
     return {
       cursosUsuario,
       actualCurso,
+
+      adminOProfesor,
+      finalPeriodo,
       grupoUsuario,
       grupos,
       grupo,

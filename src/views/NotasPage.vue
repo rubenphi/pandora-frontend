@@ -67,7 +67,9 @@
                       <ion-item>
                         <ion-icon :icon="easelOutline" slot="start"></ion-icon>
                         <ion-label>
-                          <h2>{{ nota.gradableItem?.title }}</h2>
+                          <h2>
+                            {{ nota.gradableItem?.title }}
+                          </h2>
                           <p>Lección: {{ nota.gradableItem?.lesson?.topic }}</p>
                           <p
                             v-if="nota.grade && nota.grade < 3.5"
@@ -113,82 +115,122 @@
         </ion-toolbar>
       </ion-header>
       <ion-content class="ion-padding">
-        <ion-list>
-          <ion-item>
-            <ion-label position="stacked">Lección</ion-label>
-            <ion-select
-              v-model="notaForm.lessonId"
-              placeholder="Seleccione la lección"
-              @ionChange="onLessonSelected"
-            >
-              <ion-select-option
-                v-for="lesson in lessons"
-                :key="lesson.id"
-                :value="lesson.id"
+        <!-- Edit Mode View -->
+        <div v-if="modoEdicion">
+          <ion-list>
+            <ion-item>
+              <ion-label position="stacked">Lección</ion-label>
+              <ion-input :value="lessonName" readonly></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label position="stacked">
+                {{
+                  notaForm.gradableType === "quiz"
+                    ? "Quiz"
+                    : "actvity"
+                    ? "Actividad"
+                    : ""
+                }}</ion-label
               >
-                {{ lesson.topic }} ({{
-                  new Date(lesson.date).toLocaleDateString()
-                }})
-              </ion-select-option>
-            </ion-select>
-          </ion-item>
+              <ion-input :value="notaForm.gradableTitle" readonly></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label position="stacked">Calificación</ion-label>
+              <ion-input
+                v-model="notaForm.grade"
+                type="number"
+                min="0"
+                max="5"
+                step="0.1"
+              ></ion-input>
+            </ion-item>
+          </ion-list>
+        </div>
 
-          <ion-item>
-            <ion-label position="stacked">Tipo de Ítem Calificable</ion-label>
-            <ion-segment
-              v-model="gradableTypeSelected"
-              @ionChange="onGradableTypeSelected"
-            >
-              <ion-segment-button value="quiz">
-                <ion-label>Quiz</ion-label>
-              </ion-segment-button>
-              <ion-segment-button value="activity">
-                <ion-label>Actividad</ion-label>
-              </ion-segment-button>
-            </ion-segment>
-          </ion-item>
-
-          <ion-item v-if="gradableTypeSelected">
-            <ion-label position="stacked">{{
-              gradableTypeSelected === "quiz" ? "Quiz" : "Actividad"
-            }}</ion-label>
-            <ion-select
-              v-model="notaForm.gradableId"
-              placeholder="Seleccione el ítem calificable"
-            >
-              <ion-select-option
-                v-for="item in gradableTypeSelected === 'quiz'
-                  ? quizzes
-                  : activities"
-                :key="item.id"
-                :value="item.id"
+        <!-- Add Mode View -->
+        <div v-else>
+          <ion-list>
+            <ion-item>
+              <ion-label position="stacked">Lección</ion-label>
+              <ion-select
+                v-model="notaForm.lessonId"
+                placeholder="Seleccione la lección"
+                @ionChange="onLessonSelected"
               >
-                {{ item.title }}
-              </ion-select-option>
-            </ion-select>
-            <p
-              v-if="
-                (gradableTypeSelected === 'quiz' && quizzes.length === 0) ||
-                (gradableTypeSelected === 'activity' && activities.length === 0)
-              "
-              style="color: gray; font-size: 0.8em; margin-top: 5px"
-            >
-              No hay
-              {{ gradableTypeSelected === "quiz" ? "quizzes" : "actividades" }}
-              disponibles para esta lección.
-            </p>
-          </ion-item>
-          <ion-item>
-            <ion-label position="stacked">Calificación</ion-label>
-            <ion-input
-              v-model="notaForm.grade"
-              type="number"
-              min="0"
-              max="5"
-              step="0.1"
-            ></ion-input>
-          </ion-item>
-        </ion-list>
+                <ion-select-option
+                  v-for="lesson in lessons"
+                  :key="lesson.id"
+                  :value="lesson.id"
+                >
+                  {{ lesson.topic }} ({{
+                    new Date(lesson.date).toLocaleDateString()
+                  }})
+                </ion-select-option>
+              </ion-select>
+            </ion-item>
+
+            <ion-item>
+              <ion-label position="stacked">Tipo de Ítem Calificable</ion-label>
+              <ion-segment
+                v-model="gradableTypeSelected"
+                @ionChange="onGradableTypeSelected"
+              >
+                <ion-segment-button value="quiz">
+                  <ion-label>Quiz</ion-label>
+                </ion-segment-button>
+                <ion-segment-button value="activity">
+                  <ion-label>Actividad</ion-label>
+                </ion-segment-button>
+              </ion-segment>
+            </ion-item>
+
+            <ion-item v-if="gradableTypeSelected">
+              <ion-label position="stacked">{{
+                gradableTypeSelected === "quiz" ? "Quiz" : "Actividad"
+              }}</ion-label>
+              <ion-select
+                v-model="notaForm.gradableId"
+                placeholder="Seleccione el ítem calificable"
+              >
+                <ion-select-option
+                  v-for="item in gradableTypeSelected === 'quiz'
+                    ? quizzes
+                    : activities"
+                  :key="item.id"
+                  :value="item.id"
+                >
+                  {{ item.title }}
+                </ion-select-option>
+              </ion-select>
+              <p
+                v-if="
+                  (gradableTypeSelected === 'quiz' && quizzes.length === 0) ||
+                  (gradableTypeSelected === 'activity' &&
+                    activities.length === 0)
+                "
+                style="color: gray; font-size: 0.8em; margin-top: 5px"
+              >
+                No hay
+                {{
+                  gradableTypeSelected === "quiz" ? "quizzes" : "actividades"
+                }}
+                disponibles para esta lección.
+              </p>
+            </ion-item>
+            <ion-item>
+              <ion-label position="stacked">Calificación</ion-label>
+              <ion-input
+                v-model="notaForm.grade"
+                type="number"
+                min="0"
+                max="5"
+                step="0.1"
+              ></ion-input>
+            </ion-item>
+          </ion-list>
+        </div>
+
+        <!-- Guardar Button (common for both modes) -->
         <div class="ion-padding">
           <ion-button expand="block" @click="guardarNota">Guardar</ion-button>
         </div>
@@ -199,7 +241,7 @@
 
 <script>
 import axios from "axios";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { alertController } from "@ionic/vue";
 import { periodosGet, tokenHeader, usuarioGet } from "../globalService";
 
@@ -280,6 +322,7 @@ export default {
       userId: null,
       lessonId: null,
       gradableId: null,
+      gradableTitle: null,
       gradableType: null,
       periodId: null,
       grade: null,
@@ -307,6 +350,7 @@ export default {
       allGrades.forEach((grade) => {
         liveGradableItemsMap.set(grade.gradableItem.id, grade.gradableItem);
       });
+
       const liveGradableItems = Array.from(liveGradableItemsMap.values());
 
       return studentList.map((estudiante) => {
@@ -324,8 +368,8 @@ export default {
           const itemParaMostrar = {
             id: notaExistente ? notaExistente.id : `pending-${actividad.id}`,
             gradableItem: actividad,
+            gradableType: notaExistente ? notaExistente.gradableType : null,
             grade: notaExistente ? notaExistente.grade : null,
-            gradableType: actividad.type,
           };
 
           const area = actividad.lesson.area;
@@ -439,13 +483,13 @@ export default {
 
     const editarNota = async (nota, estudianteId) => {
       modoEdicion.value = true;
-      gradableTypeSelected.value = nota.gradableItem.type;
       notaForm.value = {
         userId: estudianteId,
         lessonId: nota.gradableItem.lesson.id,
         gradableId: nota.gradableItem.id,
-        gradableType: nota.gradableItem.type,
+        gradableType: nota.gradableType,
         periodId: periodoSelected.value,
+        gradableTitle: nota.gradableItem.title,
         grade: parseFloat(nota.grade),
         instituteId: usuario.value.institute.id,
 
@@ -559,6 +603,26 @@ export default {
       mostrarModal.value = false;
     };
 
+    const lessonName = computed(() => {
+      if (!notaForm.value.lessonId) return "";
+      const lesson = lessons.value.find(
+        (l) => l.id === notaForm.value.lessonId
+      );
+      return lesson
+        ? `${lesson.topic} (${new Date(lesson.date).toLocaleDateString()})`
+        : "";
+    });
+
+    const gradableItemName = computed(() => {
+      if (!notaForm.value.gradableId || !gradableTypeSelected.value) return "";
+      const source =
+        gradableTypeSelected.value === "quiz"
+          ? quizzes.value
+          : activities.value;
+      const item = source.find((i) => i.id === notaForm.value.gradableId);
+      return item ? item.title : "";
+    });
+
     return {
       usuario,
       usuariosEstudiantes,
@@ -581,6 +645,8 @@ export default {
       cerrarModal,
       onLessonSelected,
       onGradableTypeSelected,
+      lessonName,
+      gradableItemName,
     };
   },
 };

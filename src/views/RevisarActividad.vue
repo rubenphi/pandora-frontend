@@ -113,6 +113,9 @@
                     >
                     </ion-range>
                   </div>
+                  <ion-note slot="end" style="min-width: 40px; text-align: center;">
+                    {{ evaluation[student.id][criterion.id].value != null ? evaluation[student.id][criterion.id].value.toFixed(1) : '-' }}
+                  </ion-note>
                 </ion-item>
               </template>
               <ion-item>

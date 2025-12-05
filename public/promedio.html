@@ -347,10 +347,8 @@
 
         if (savedCookie) {
           cookieInput.value = savedCookie;
-          cookieInput.readOnly = true;
           cookieError.textContent = "";
         } else {
-          cookieInput.readOnly = false;
           cookieError.textContent = "Se necesita una cookie de acceso.";
         }
       };
@@ -645,22 +643,49 @@
       }
 
       function generarResultadosOrdenados() {
-        const esPreliminar = document.getElementById("preliminar-checkbox").checked;
+        const esPreliminar = document.getElementById(
+          "preliminar-checkbox"
+        ).checked;
 
         const resultadosUsuarios = Object.values(usuarios).map((usuario) => {
-            const notasHacer = gradableItems.map(item => usuario.notasHacer[item.id] !== undefined ? usuario.notasHacer[item.id] : 0);
-            const notasSaber = gradableItems.map(item => usuario.notasSaber[item.id] !== undefined ? usuario.notasSaber[item.id] : 0);
-            const totalItems = gradableItems.length || 1;
+          const notasHacer = gradableItems.map((item) =>
+            usuario.notasHacer[item.id] !== undefined
+              ? usuario.notasHacer[item.id]
+              : 0
+          );
+          const notasSaber = gradableItems.map((item) =>
+            usuario.notasSaber[item.id] !== undefined
+              ? usuario.notasSaber[item.id]
+              : 0
+          );
+          const totalItems = gradableItems.length || 1;
 
-            const promedioHacer = notasHacer.reduce((a, b) => a + b, 0) / totalItems;
-            const promedioSaber = notasSaber.reduce((a, b) => a + b, 0) / totalItems;
-            const promedioSer = usuario.notaSer || 5.0;
-            let promedio = esPreliminar ? (promedioHacer + promedioSaber) / 2 : (promedioHacer + promedioSaber + promedioSer) / 3;
-            
-            const tieneNotasReales = Object.values(usuario.notasHacer).some(n => n > 0) || Object.values(usuario.notasSaber).some(n => n > 0);
+          const promedioHacer =
+            notasHacer.reduce((a, b) => a + b, 0) / totalItems;
+          const promedioSaber =
+            notasSaber.reduce((a, b) => a + b, 0) / totalItems;
+          const promedioSer = usuario.notaSer || 5.0;
+          let promedio = esPreliminar
+            ? (promedioHacer + promedioSaber) / 2
+            : (promedioHacer + promedioSaber + promedioSer) / 3;
 
-            // Se devuelven tanto los arrays de notas como los objetos originales
-            return { ...usuario, notasHacer, notasSaber, notasHacerOriginales: usuario.notasHacer, notasSaberOriginales: usuario.notasSaber, promedioHacer, promedioSaber, promedioSer, promedio, tieneNotasReales };
+          const tieneNotasReales =
+            Object.values(usuario.notasHacer).some((n) => n > 0) ||
+            Object.values(usuario.notasSaber).some((n) => n > 0);
+
+          // Se devuelven tanto los arrays de notas como los objetos originales
+          return {
+            ...usuario,
+            notasHacer,
+            notasSaber,
+            notasHacerOriginales: usuario.notasHacer,
+            notasSaberOriginales: usuario.notasSaber,
+            promedioHacer,
+            promedioSaber,
+            promedioSer,
+            promedio,
+            tieneNotasReales,
+          };
         });
 
         let listaOficial = [];
@@ -668,7 +693,9 @@
 
         estudiantesList.forEach((estudiante) => {
           const diEstudiante = estudiante.di.replace(/,/g, "").trim();
-          const calificacion = resultadosUsuarios.find(u => String(u.codigo).replace(/,/g, "").trim() === diEstudiante);
+          const calificacion = resultadosUsuarios.find(
+            (u) => String(u.codigo).replace(/,/g, "").trim() === diEstudiante
+          );
 
           listaOficial.push({
             apellidos: estudiante.apellidos,
@@ -677,21 +704,33 @@
             retirado: estudiante.retirado === "1",
             isGhost: false,
             numero: estudiante.numero,
-            ...(calificacion || { promedio: 0, promedioHacer: 0, promedioSaber: 0, promedioSer: 5.0, notasHacerOriginales: {}, notasSaberOriginales: {}, tieneNotasReales: false })
+            ...(calificacion || {
+              promedio: 0,
+              promedioHacer: 0,
+              promedioSaber: 0,
+              promedioSer: 5.0,
+              notasHacerOriginales: {},
+              notasSaberOriginales: {},
+              tieneNotasReales: false,
+            }),
           });
         });
 
-        resultadosUsuarios.forEach(usuarioConNota => {
+        resultadosUsuarios.forEach((usuarioConNota) => {
           if (!usuarioConNota.tieneNotasReales) return;
-          const yaEstaEnLista = listaOficial.some(e => String(e.documento).replace(/,/g, "").trim() === String(usuarioConNota.codigo).replace(/,/g, "").trim());
+          const yaEstaEnLista = listaOficial.some(
+            (e) =>
+              String(e.documento).replace(/,/g, "").trim() ===
+              String(usuarioConNota.codigo).replace(/,/g, "").trim()
+          );
           if (!yaEstaEnLista) {
             fantasmas.push({
               apellidos: usuarioConNota.apellido,
               nombre: usuarioConNota.nombre,
               documento: usuarioConNota.codigo,
-              retirado: false, 
+              retirado: false,
               isGhost: true,
-              ...usuarioConNota
+              ...usuarioConNota,
             });
           }
         });
@@ -706,7 +745,9 @@
       }
 
       function mostrarResultados(listaUsuarios) {
-        const esPreliminar = document.getElementById("preliminar-checkbox").checked;
+        const esPreliminar = document.getElementById(
+          "preliminar-checkbox"
+        ).checked;
         const tabla = document.getElementById("tabla-resultados");
         tabla.innerHTML = "";
 
@@ -729,12 +770,20 @@
           `;
 
           gradableItems.forEach((item) => {
-            const nota = (usuario.notasHacerOriginales && usuario.notasHacerOriginales[item.id] !== undefined) ? usuario.notasHacerOriginales[item.id].toFixed(1) : "-";
+            const nota =
+              usuario.notasHacerOriginales &&
+              usuario.notasHacerOriginales[item.id] !== undefined
+                ? usuario.notasHacerOriginales[item.id].toFixed(1)
+                : "-";
             filaCeldas += `<td>${nota}</td>`;
           });
 
           gradableItems.forEach((item) => {
-            const nota = (usuario.notasSaberOriginales && usuario.notasSaberOriginales[item.id] !== undefined) ? usuario.notasSaberOriginales[item.id].toFixed(1) : "-";
+            const nota =
+              usuario.notasSaberOriginales &&
+              usuario.notasSaberOriginales[item.id] !== undefined
+                ? usuario.notasSaberOriginales[item.id].toFixed(1)
+                : "-";
             filaCeldas += `<td>${nota}</td>`;
           });
 
@@ -746,7 +795,13 @@
           filaCeldas += `
             <td class="promedio-hacer">${promedioHacer.toFixed(1)}</td>
             <td class="promedio-saber">${promedioSaber.toFixed(1)}</td>
-            ${esPreliminar ? "" : `<td class="promedio-ser editable" id="ser-${idx}" onclick="editarNotaSer(${idx})">${promedioSer.toFixed(1)}</td>`}
+            ${
+              esPreliminar
+                ? ""
+                : `<td class="promedio-ser editable" id="ser-${idx}" onclick="editarNotaSer(${idx})">${promedioSer.toFixed(
+                    1
+                  )}</td>`
+            }
             <td class="nota-final">${notaFinal.toFixed(1)}</td>
           `;
 
@@ -808,8 +863,10 @@
         mostrarResultados(filtrados);
 
         // Ocultar ambos resúmenes por defecto
-        document.getElementById("resumen-bajo-rendimiento").style.display = "none";
-        document.getElementById("resumen-alto-rendimiento").style.display = "none";
+        document.getElementById("resumen-bajo-rendimiento").style.display =
+          "none";
+        document.getElementById("resumen-alto-rendimiento").style.display =
+          "none";
 
         if (!esMayor && valor === 3.5) {
           // Si es filtro de bajo rendimiento, mostrar ese resumen
@@ -866,8 +923,13 @@
       }
 
       function mostrarResumenAltoRendimiento(estudiantes) {
-        const courseName = document.getElementById("course-select").options[document.getElementById("course-select").selectedIndex].text;
-        document.getElementById("grado-seleccionado-alto").textContent = `Grado: ${courseName}`;
+        const courseName =
+          document.getElementById("course-select").options[
+            document.getElementById("course-select").selectedIndex
+          ].text;
+        document.getElementById(
+          "grado-seleccionado-alto"
+        ).textContent = `Grado: ${courseName}`;
 
         const textoResumen = document.getElementById("texto-alto-rendimiento");
         textoResumen.innerHTML =
@@ -965,7 +1027,7 @@
 
           if (res.status === 401 || res.status === 403) {
             localStorage.removeItem(COOKIE_STORAGE_KEY);
-            cookieInput.readOnly = false;
+
             cookieError.textContent =
               "La cookie expiró o es inválida. Ingresa una nueva.";
             cookieInput.focus();
@@ -978,7 +1040,7 @@
 
           // Si la petición es exitosa, la cookie es válida.
           localStorage.setItem(COOKIE_STORAGE_KEY, cookieStr);
-          cookieInput.readOnly = true;
+
           cookieError.textContent = ""; // Limpiar mensaje de error
 
           const data = await res.json();

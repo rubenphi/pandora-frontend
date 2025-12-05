@@ -63,7 +63,12 @@
                       style="cursor: pointer; font-size: 24px"
                       @click="openModal(usuario)"
                     ></ion-icon>
-
+                    <ion-icon
+                      :icon="trashOutline"
+                      style="cursor: pointer; font-size: 24px"
+                      color="danger"
+                      @click="deactivateUser(usuario)"
+                    ></ion-icon>
                     <ion-icon
                       :icon="createOutline"
                       style="cursor: pointer; font-size: 24px"
@@ -178,13 +183,20 @@ import {
   IonButtons,
   IonIcon,
   actionSheetController,
+  alertController, // Import alertController
 } from "@ionic/vue";
 
 import {
   swapHorizontalOutline,
   createOutline,
   downloadOutline,
+  trashOutline, // Import trashOutline
 } from "ionicons/icons";
+
+const AssignmentType = {
+  COURSE: 'COURSE',
+  GROUP: 'GROUP',
+};
 
 export default {
   components: {
@@ -483,6 +495,49 @@ export default {
       location.reload();
     };
 
+    const deactivateUser = async (user) => {
+      const alert = await alertController.create({
+        header: 'Confirmar Eliminación',
+        message: `¿Estás seguro de que quieres marcar a ${user.name} ${user.lastName} como eliminado de sus asignaciones a cursos y grupos?`,
+        buttons: [
+          {
+            text: 'Cancelar',
+            role: 'cancel',
+            cssClass: 'secondary',
+          },
+          {
+            text: 'Eliminar',
+            handler: async () => {
+              try {
+                await axios.patch(
+                  `/users/${user.id}/deactivate-assignments`,
+                  { assignmentTypes: [AssignmentType.COURSE, AssignmentType.GROUP] },
+                  tokenHeader()
+                );
+                console.log(`Usuario ${user.name} ${user.lastName} desactivado de asignaciones.`);
+                // Refresh the user list or remove the user from the current view
+                // For simplicity, I'll reload the current course's users.
+                if (courseSelected.value?.id) {
+                  getUsuarios(courseSelected.value.id, selectedYear.value);
+                } else {
+                  getUsuariosSinCurso();
+                }
+              } catch (error) {
+                console.error("Error al desactivar asignaciones del usuario:", error);
+                const errorAlert = await alertController.create({
+                  header: 'Error',
+                  message: 'Hubo un error al intentar desactivar las asignaciones del usuario.',
+                  buttons: ['OK'],
+                });
+                await errorAlert.present();
+              }
+            },
+          },
+        ],
+      });
+      await alert.present();
+    };
+
     const captarAbierto = (event) => {
       const selectedValue = event.detail.value;
       abierto.value = selectedValue !== undefined;
@@ -507,7 +562,9 @@ export default {
           tokenHeader()
         );
 
-        const users = response.data.map((usuario) => usuario.user);
+        const users = response.data
+          .filter((assignment) => assignment.active !== false)
+          .map((usuario) => usuario.user);
 
         const roleOrder = {
           admin: 0,
@@ -552,11 +609,67 @@ export default {
         name: "Sin Curso",
       };
 
-      const response = await axios.get(
+      // 1. Get users with NO assignments at all from the existing endpoint
+      const responseNoCourse = await axios.get(
         `/institutes/${usuario.value.institute.id}/usersNoCourse?year=0`,
         tokenHeader()
       );
-      usersCourse.value = response.data;
+      const usersWithNoAssignments = responseNoCourse.data;
+
+      // 2. Get all courses to find users with only inactive assignments
+      const allCourses = cursosInstituto.value.filter((c) => c.id !== 0);
+      const allAssignments = [];
+
+      // Fetch all assignments from all courses in parallel
+      const assignmentPromises = allCourses.map((course) =>
+        axios.get(
+          `/courses/${course.id}/users?year=${selectedYear.value}`,
+          tokenHeader()
+        )
+      );
+
+      try {
+        const assignmentResponses = await Promise.all(assignmentPromises);
+        assignmentResponses.forEach((response) => {
+          allAssignments.push(...response.data);
+        });
+      } catch (error) {
+        console.error("Error fetching assignments for all courses:", error);
+      }
+
+      const usersData = new Map();
+
+      allAssignments.forEach((assignment) => {
+        if (!usersData.has(assignment.user.id)) {
+          usersData.set(assignment.user.id, {
+            user: assignment.user,
+            hasActive: false,
+          });
+        }
+        if (assignment.active !== false) {
+          usersData.get(assignment.user.id).hasActive = true;
+        }
+      });
+
+      const usersWithOnlyInactiveAssignments = [];
+      usersData.forEach((data) => {
+        if (!data.hasActive) {
+          usersWithOnlyInactiveAssignments.push(data.user);
+        }
+      });
+
+      // 3. Combine the lists and remove duplicates
+      const combinedUsers = [
+        ...usersWithNoAssignments,
+        ...usersWithOnlyInactiveAssignments,
+      ];
+      const uniqueUsers = Array.from(
+        new Set(combinedUsers.map((u) => u.id))
+      ).map((id) => {
+        return combinedUsers.find((u) => u.id === id);
+      });
+
+      usersCourse.value = uniqueUsers;
       loading.value = false;
     };
 
@@ -628,10 +741,12 @@ export default {
       rolSelected,
       downloadCSV,
       presentActionSheet,
+      deactivateUser, // Expose the new method
 
       swapHorizontalOutline,
       createOutline,
       downloadOutline,
+      trashOutline, // Expose the new icon
     };
   },
 };
