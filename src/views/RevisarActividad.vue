@@ -290,6 +290,7 @@ export default {
     IonFab,
     IonFabButton,
     IonModal,
+
   },
   setup() {
     const mroute = useRoute();
@@ -317,7 +318,7 @@ export default {
       errorMessage.value = message;
     };
 
-    // Fetch user data on component setup
+    // ... existing setup
     usuario.value = usuarioGet();
 
     const fetchActivityDetails = async () => {
@@ -328,13 +329,21 @@ export default {
         );
 
         const courseId = response.data.lesson.course.id;
-        const year = response.data.lesson.year; // Get the year from the lesson
+        const year = response.data.lesson.year;
+        const lessonType = response.data.lesson.type;
+        const lessonId = response.data.lesson.id;
+        
         periodId.value = response.data.lesson.period.id;
         instituteId.value = response.data.institute.id;
 
         await fetchCriteria(activityId); // Fetch criteria first
 
-        await fetchStudents(courseId, year);
+        // Conditional student fetch based on lesson type
+        if (lessonType === 'reinforcement') {
+          await fetchReinforcementStudents(lessonId);
+        } else {
+          await fetchStudents(courseId, year);
+        }
 
         await fetchStudentCriterionScores(activityId);
       } catch (error) {
@@ -443,6 +452,65 @@ export default {
       }
     };
 
+    const fetchReinforcementStudents = async (lessonId) => {
+      try {
+        const response = await axios.get(
+          `/reinforcement/lesson/${lessonId}`,
+          tokenHeader()
+        );
+        
+        // Get the lesson to extract courseId and year for usersNoGroup check
+        const lessonResponse = await axios.get(
+          `/lessons/${lessonId}`,
+          tokenHeader()
+        );
+        const courseId = lessonResponse.data.course.id;
+        const year = lessonResponse.data.year;
+
+        // Fetch users without group to apply the hasGroup property
+        const usersNoGroupResponse = await axios.get(
+          `/courses/${courseId}/usersNoGroup?year=${year}`,
+          tokenHeader()
+        );
+        const usersWithoutGroupIds = new Set(
+          usersNoGroupResponse.data.map((u) => u.user.id)
+        );
+        
+        // response.data is array of Reinforcement objects with student relation
+        const reinforcementStudents = response.data.map(r => ({
+          ...r.student,
+          hasGroup: !usersWithoutGroupIds.has(r.student.id)
+        }));
+        
+        students.value = reinforcementStudents.sort((a, b) => {
+          const lastNameA = a.lastName || "";
+          const lastNameB = b.lastName || "";
+          if (lastNameA !== lastNameB) {
+            return lastNameA.localeCompare(lastNameB);
+          }
+          const nameA = a.name || "";
+          const nameB = b.name || "";
+          return nameA.localeCompare(nameB);
+        });
+
+        // Initialize evaluation for reinforcement students
+        students.value.forEach((student) => {
+          studentGrades.value[student.id] = null;
+          if (!evaluation.value[student.id]) {
+            evaluation.value[student.id] = {};
+            criteria.value.forEach((criterion) => {
+              evaluation.value[student.id][criterion.id] = {
+                value: null,
+                id: null,
+              };
+            });
+          }
+        });
+      } catch (error) {
+        console.error("Error in fetchReinforcementStudents:", error.message || error);
+      }
+    };
+
     const fetchCriteria = async (activityId) => {
       try {
         const response = await axios.get(
@@ -530,17 +598,14 @@ export default {
     };
 
     const registerAllGrades = async () => {
+      const allPromises = [];
+
       for (const student of students.value) {
-        // Phase 1: Ensure all individual criterion scores are persisted (defaulting null to 0)
-        for (const criterion of criteria.value) {
+        // Collect all criterion score promises for this student
+        const criterionPromises = criteria.value.map(async (criterion) => {
           const evaluationEntry = evaluation.value[student.id][criterion.id];
           let valueToSave = evaluationEntry.value;
-
-          // If the value is null (not explicitly evaluated), default to 0 (No Cumple)
-          if (valueToSave === null) {
-            valueToSave = 0;
-          }
-
+          if (valueToSave === null) { valueToSave = 0; }
           const score = valueToSave;
 
           const payload = {
@@ -553,52 +618,42 @@ export default {
 
           try {
             if (evaluationEntry.id) {
-              // Update existing score
-              await axios.patch(
-                `/student-criterion-scores/update/${evaluationEntry.id}`,
-                payload,
-                tokenHeader()
-              );
+              await axios.patch(`/student-criterion-scores/update/${evaluationEntry.id}`, payload, tokenHeader());
             } else {
-              // Create new score
-              const response = await axios.post(
-                `/student-criterion-scores/create`,
-                payload,
-                tokenHeader()
-              );
-              // Update the evaluation ref with the new ID
+              const response = await axios.post(`/student-criterion-scores/create`, payload, tokenHeader());
               evaluation.value[student.id][criterion.id].id = response.data.id;
             }
           } catch (error) {
-            console.error(
-              `Error saving criterion score for student ${student.name}, criterion ${criterion.description}:`,
-              error
-            );
+            console.error(`Error saving criterion score`, error);
           }
-        }
+        });
 
-        // Phase 2: Calculate and register the overall activity grade
-        const finalGrade = calculateFinalGrade(student);
+        // Wait for all criterion scores for this student, then register final grade
+        const studentGradePromise = Promise.all(criterionPromises).then(async () => {
+          const finalGrade = calculateFinalGrade(student);
 
-        const payloadFinalGrade = {
-          userId: student.id,
-          gradableId: parseInt(activityId),
-          gradableType: "activity",
-          periodId: periodId.value,
-          gradeType: "regular",
-          grade: parseFloat(finalGrade.toFixed(2)),
-          instituteId: instituteId.value,
-        };
+          const payloadFinalGrade = {
+            userId: student.id,
+            gradableId: parseInt(activityId),
+            gradableType: "activity",
+            periodId: periodId.value,
+            gradeType: "regular",
+            grade: parseFloat(finalGrade.toFixed(2)),
+            instituteId: instituteId.value,
+          };
 
-        try {
-          await axios.post("/grades", payloadFinalGrade, tokenHeader());
-        } catch (error) {
-          console.error(
-            `Error registrando nota final para ${student.name}:`,
-            error
-          );
-        }
+          try {
+            await axios.post("/grades", payloadFinalGrade, tokenHeader());
+          } catch (error) {
+            console.error(`Error registrando nota final para ${student.name}:`, error);
+          }
+        });
+
+        allPromises.push(studentGradePromise);
       }
+
+      // Wait for all students to complete
+      await Promise.all(allPromises);
     };
 
     const presentConfirmAlert = async () => {
@@ -841,5 +896,9 @@ export default {
 .no-group-student {
   opacity: 0.6;
   font-style: italic;
+}
+
+ion-item ion-label {
+  white-space: normal !important;
 }
 </style>

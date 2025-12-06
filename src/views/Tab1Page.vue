@@ -86,25 +86,86 @@
                     <ion-chip
                       slot="end"
                       :color="area.promedio < 3.5 ? 'danger' : 'primary'"
+                      :style="{ opacity: member.hasReinforcement ? '0.6' : '1' }"
                     >
                       {{ area.promedio }}
                     </ion-chip>
+                    <span v-if="member.hasReinforcement">
+                      /
+                      <ion-chip
+                        slot="end"
+                        :color="area.promedioReinf < 3.5 ? 'danger' : 'primary'"
+                        style="opacity: 1; font-weight: bold"
+                      >
+                        {{ area.promedioReinf }}
+                      </ion-chip>
+                    </span>
                   </ion-item>
-                  <div v-for="nota in area?.notas" :key="nota?.id">
-                    <ion-item>
-                      <ion-icon :icon="easelOutline" slot="start"></ion-icon>
+
+                  <!-- Dimensions -->
+                  <div v-for="dimension in area.dimensiones" :key="dimension.id">
+                    <ion-item-divider>
                       <ion-label>
-                        <h2>{{ nota?.gradableItem?.title || nota.title }}</h2>
-                        <p
-                          v-if="nota.grade && nota.grade < 3.5"
-                          style="color: #bf9494"
+                        {{ dimension.name }}
+                        <ion-chip
+                          size="small"
+                          :color="parseFloat(dimension.promedio) < 3.5 ? 'danger' : 'success'"
+                          :style="{ opacity: member.hasReinforcement ? '0.6' : '1' }"
                         >
-                          {{ nota.grade }}
-                        </p>
-                        <p v-else-if="nota.grade">{{ nota.grade }}</p>
-                        <p v-else>Pendiente</p>
+                          {{ dimension.promedio }}
+                        </ion-chip>
+                        <span v-if="member.hasReinforcement">
+                          /
+                          <ion-chip
+                            size="small"
+                            :color="parseFloat(dimension.promedioReinf) < 3.5 ? 'danger' : 'success'"
+                            style="opacity: 1; font-weight: bold"
+                          >
+                            {{ dimension.promedioReinf }}
+                          </ion-chip>
+                        </span>
                       </ion-label>
-                    </ion-item>
+                    </ion-item-divider>
+
+                    <!-- Regular Grades (Opaque if hasReinforcement) -->
+                    <div :style="{ opacity: member.hasReinforcement ? '0.6' : '1' }">
+                      <div v-for="nota in dimension.notas" :key="nota?.id">
+                        <ion-item>
+                          <ion-icon :icon="easelOutline" slot="start"></ion-icon>
+                          <ion-label>
+                            <h2>{{ nota?.gradableItem?.title || nota.title }}</h2>
+                            <p
+                              v-if="nota.grade && nota.grade < 3.5"
+                              style="color: #bf9494"
+                            >
+                              {{ nota.grade }}
+                            </p>
+                            <p v-else-if="nota.grade">{{ nota.grade }}</p>
+                            <p v-else>Pendiente</p>
+                          </ion-label>
+                        </ion-item>
+                      </div>
+                    </div>
+
+                    <!-- Reinforcement Grades (Normal Opacity, only if hasReinforcement) -->
+                    <div v-if="member.hasReinforcement">
+                      <div v-for="nota in dimension.notasReinf" :key="nota?.id">
+                        <ion-item>
+                          <ion-icon :icon="easelOutline" slot="start" color="tertiary"></ion-icon>
+                          <ion-label>
+                            <h2>{{ nota?.gradableItem?.title }} (Refuerzo)</h2>
+                            <p
+                              v-if="nota.grade && nota.grade < 3.5"
+                              style="color: #bf9494"
+                            >
+                              {{ nota.grade }}
+                            </p>
+                            <p v-else-if="nota.grade">{{ nota.grade }}</p>
+                            <p v-else>Pendiente</p>
+                          </ion-label>
+                        </ion-item>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </ion-list>
@@ -210,6 +271,7 @@ import {
   IonAccordion,
   IonAccordionGroup,
   IonChip,
+  IonItemDivider,
 } from "@ionic/vue";
 
 export default {
@@ -236,12 +298,13 @@ export default {
     IonAccordion,
     IonAccordionGroup,
     IonChip,
+    IonItemDivider,
   },
 
   setup() {
     const usuario = ref();
     const adminOProfesor = ref();
-    const finalPeriodo = ref(true);
+    const finalPeriodo = ref(false);
 
     const cursosUsuario = ref([]);
     const periodos = ref();
@@ -325,86 +388,271 @@ export default {
         const allGradesResponse = await axios.get(allGradesUrl);
         const allGrades = allGradesResponse.data;
 
-        const liveGradableItemsMap = new Map();
+        // Build Master List of Regular Gradable Items (excluding reinforcement)
+        const masterItemsMap = new Map();
         allGrades.forEach((grade) => {
-          liveGradableItemsMap.set(grade.gradableItem.id, grade.gradableItem);
-        });
-        const liveGradableItems = Array.from(liveGradableItemsMap.values());
-
-        const processedMembers = miembros.value.map((miembro) => {
-          const memberId = miembro.user.id;
-          const memberName = `${miembro.user.name} ${miembro.user.lastName}`;
-
-          const studentGrades = allGrades
-            .filter((grade) => grade.user.id === memberId)
-            .map((n) => ({
-              ...n,
-              grade: parseFloat(n.grade.toFixed(1)),
-            }));
-
-          const areas = liveGradableItems.reduce((acc, actividad) => {
-            const notaExistente = studentGrades.find(
-              (n) => n.gradableItem.id === actividad.id
-            );
-
-            const itemParaMostrar = {
-              id: actividad.id,
-              title: actividad.title,
-              gradableItem: actividad,
-              grade: notaExistente ? notaExistente.grade : null,
-            };
-
-            const area = actividad.lesson.area;
-            const areaIndex = acc.findIndex((a) => a.id === area.id);
-
-            if (areaIndex === -1) {
-              acc.push({
-                name: area.name,
-                id: area.id,
-                notas: [itemParaMostrar],
+          const isReinforcement =
+            grade.gradableItem?.lesson?.type === "reinforcement";
+          if (!isReinforcement && grade.gradableItem && grade.gradableItem.id) {
+            const uniqueKey = `${grade.gradableType}-${grade.gradableItem.id}`;
+            if (!masterItemsMap.has(uniqueKey)) {
+              masterItemsMap.set(uniqueKey, {
+                id: grade.gradableItem.id,
+                type: grade.gradableType,
+                item: grade.gradableItem,
+                classification: grade.classification,
               });
-            } else {
-              acc[areaIndex].notas.push(itemParaMostrar);
             }
-            return acc;
-          }, []);
+          }
+        });
 
-          const areasConPromedioYSort = areas.map((area) => {
-            const liveGradableItemsInArea = liveGradableItems.filter(
-              (item) => item.lesson.area.id === area.id
-            );
+        // Helper functions
+        const formatGrade = (grade) => {
+          if (!grade && grade !== 0) return 0;
+          return Math.floor(grade * 10) / 10;
+        };
 
-            const studentGradesInArea = studentGrades.filter(
-              (grade) => grade.gradableItem.lesson.area.id === area.id
-            );
+        const getStudentGradeForItem = (studentGrades, item) => {
+          return studentGrades.find(
+            (g) => g.gradableType === item.type && g.gradableItem.id === item.id
+          );
+        };
 
-            const sumaTotalArea = studentGradesInArea.reduce(
-              (acc, nota) => acc + nota.grade,
-              0
-            );
-
-            const promedioArea =
-              liveGradableItemsInArea.length > 0
-                ? (sumaTotalArea / liveGradableItemsInArea.length).toFixed(2)
-                : (0).toFixed(2);
-
-            const notasOrdenadas = area.notas.sort(
+        const mapToDisplayParamsWithMasterList = (
+          studentGrades,
+          masterList
+        ) => {
+          return masterList
+            .map((masterItem) => {
+              const foundGrade = getStudentGradeForItem(
+                studentGrades,
+                masterItem
+              );
+              if (foundGrade) {
+                return {
+                  id: foundGrade.id,
+                  gradableItem: foundGrade.gradableItem,
+                  gradableType: foundGrade.gradableType,
+                  classification: foundGrade.classification,
+                  grade: foundGrade.grade,
+                  isPending: false,
+                };
+              } else {
+                return {
+                  id: `pending-${masterItem.type}-${masterItem.id}`,
+                  gradableItem: masterItem.item,
+                  gradableType: masterItem.type,
+                  classification: masterItem.classification,
+                  grade: null,
+                  isPending: true,
+                };
+              }
+            })
+            .sort(
               (a, b) =>
                 new Date(a.gradableItem.lesson.date) -
                 new Date(b.gradableItem.lesson.date)
             );
+        };
+
+        const calculateAverageFromMasterList = (studentGrades, masterList) => {
+          if (masterList.length === 0) return 0;
+          let totalScore = 0;
+          masterList.forEach((masterItem) => {
+            const foundGrade = getStudentGradeForItem(
+              studentGrades,
+              masterItem
+            );
+            if (foundGrade) {
+              totalScore += foundGrade.grade;
+            }
+          });
+          return totalScore / masterList.length;
+        };
+
+        // Fetch reinforcements to identify students with reinforcement
+        const reinforcementsResponse = await axios.get(
+          `/reinforcement/by-context?courseId=${actualCurso.value.course.id}&areaId=&periodId=${periodoSelected.value}&year=${year.value}`,
+          tokenHeader()
+        );
+        const reinforcementStudents = new Set(
+          reinforcementsResponse.data.map((r) => r.student.id)
+        );
+
+        const processedMembers = miembros.value.map((miembro) => {
+          const memberId = miembro.user.id;
+          const memberName = `${miembro.user.name} ${miembro.user.lastName}`;
+          const hasReinforcement = reinforcementStudents.has(memberId);
+
+          const studentGrades = allGrades
+            .filter((grade) => grade.user.id === memberId)
+            .map((n) => ({ ...n, grade: formatGrade(n.grade) }));
+
+          // Group items by area
+          const areaMap = new Map();
+          Array.from(masterItemsMap.values()).forEach((item) => {
+            const areaId = item.item.lesson.area.id;
+            const areaName = item.item.lesson.area.name;
+            if (!areaMap.has(areaId)) {
+              areaMap.set(areaId, {
+                id: areaId,
+                name: areaName,
+                masterKnowledge: [],
+                masterExecution: [],
+                masterBehavior: [],
+              });
+            }
+            const areaData = areaMap.get(areaId);
+            if (item.classification === "knowledge")
+              areaData.masterKnowledge.push(item);
+            else if (item.classification === "execution")
+              areaData.masterExecution.push(item);
+            else if (item.classification === "behavior")
+              areaData.masterBehavior.push(item);
+          });
+
+          const areas = Array.from(areaMap.values()).map((areaData) => {
+            // --- REGULAR GRADES LOGIC ---
+            const masterKnowledgeRegular = areaData.masterKnowledge.filter(
+              (i) => i.item.lesson?.type !== "reinforcement"
+            );
+            const masterExecutionRegular = areaData.masterExecution.filter(
+              (i) => i.item.lesson?.type !== "reinforcement"
+            );
+            const masterBehaviorRegular = areaData.masterBehavior.filter(
+              (i) => i.item.lesson?.type !== "reinforcement"
+            );
+
+            const promSaberRegular = calculateAverageFromMasterList(
+              studentGrades,
+              masterKnowledgeRegular
+            );
+            const promHacerRegular = calculateAverageFromMasterList(
+              studentGrades,
+              masterExecutionRegular
+            );
+            const promSerRegular = calculateAverageFromMasterList(
+              studentGrades,
+              masterBehaviorRegular
+            );
+
+            const promedioFinalRegular =
+              (promSaberRegular + promHacerRegular + promSerRegular) / 3;
+
+            // --- REINFORCEMENT GRADES LOGIC (Only if hasReinforcement) ---
+            let promSaberReinf = 0,
+              promHacerReinf = 0,
+              promSerReinf = 0,
+              promedioFinalReinf = 0;
+
+            if (hasReinforcement) {
+              const masterKnowledgeReinf = areaData.masterKnowledge.filter(
+                (i) => i.item.lesson?.type === "reinforcement"
+              );
+              const masterExecutionReinf = areaData.masterExecution.filter(
+                (i) => i.item.lesson?.type === "reinforcement"
+              );
+              const masterBehaviorReinf = areaData.masterBehavior.filter(
+                (i) => i.item.lesson?.type === "reinforcement"
+              );
+
+              promSaberReinf = calculateAverageFromMasterList(
+                studentGrades,
+                masterKnowledgeReinf
+              );
+              promHacerReinf = calculateAverageFromMasterList(
+                studentGrades,
+                masterExecutionReinf
+              );
+              promSerReinf = calculateAverageFromMasterList(
+                studentGrades,
+                masterBehaviorReinf
+              );
+
+              promedioFinalReinf =
+                (promSaberReinf + promHacerReinf + promSerReinf) / 3;
+            }
+
+            // Build dimensions with regular/reinforcement split
+            const dimensiones = [
+              {
+                id: "knowledge",
+                name: "Saber",
+                promedio: formatGrade(promSaberRegular).toFixed(1),
+                notas: mapToDisplayParamsWithMasterList(
+                  studentGrades,
+                  masterKnowledgeRegular
+                ),
+                promedioReinf: hasReinforcement
+                  ? formatGrade(promSaberReinf).toFixed(1)
+                  : null,
+                notasReinf: hasReinforcement
+                  ? mapToDisplayParamsWithMasterList(
+                      studentGrades,
+                      areaData.masterKnowledge.filter(
+                        (i) => i.item.lesson?.type === "reinforcement"
+                      )
+                    )
+                  : [],
+              },
+              {
+                id: "execution",
+                name: "Hacer",
+                promedio: formatGrade(promHacerRegular).toFixed(1),
+                notas: mapToDisplayParamsWithMasterList(
+                  studentGrades,
+                  masterExecutionRegular
+                ),
+                promedioReinf: hasReinforcement
+                  ? formatGrade(promHacerReinf).toFixed(1)
+                  : null,
+                notasReinf: hasReinforcement
+                  ? mapToDisplayParamsWithMasterList(
+                      studentGrades,
+                      areaData.masterExecution.filter(
+                        (i) => i.item.lesson?.type === "reinforcement"
+                      )
+                    )
+                  : [],
+              },
+              {
+                id: "behavior",
+                name: "Ser",
+                promedio: formatGrade(promSerRegular).toFixed(1),
+                notas: mapToDisplayParamsWithMasterList(
+                  studentGrades,
+                  masterBehaviorRegular
+                ),
+                promedioReinf: hasReinforcement
+                  ? formatGrade(promSerReinf).toFixed(1)
+                  : null,
+                notasReinf: hasReinforcement
+                  ? mapToDisplayParamsWithMasterList(
+                      studentGrades,
+                      areaData.masterBehavior.filter(
+                        (i) => i.item.lesson?.type === "reinforcement"
+                      )
+                    )
+                  : [],
+              },
+            ];
 
             return {
-              ...area,
-              promedio: promedioArea,
-              notas: notasOrdenadas,
+              id: areaData.id,
+              name: areaData.name,
+              promedio: formatGrade(promedioFinalRegular).toFixed(1),
+              promedioReinf: hasReinforcement
+                ? formatGrade(promedioFinalReinf).toFixed(1)
+                : null,
+              dimensiones: dimensiones,
             };
           });
 
           return {
             userId: memberId,
             userName: memberName,
-            areas: areasConPromedioYSort,
+            hasReinforcement: hasReinforcement,
+            areas: areas,
           };
         });
 

@@ -22,6 +22,15 @@
         </ion-item>
 
         <ion-item>
+          <ion-label position="stacked">Clasificación (Dimensión)</ion-label>
+          <ion-select v-model="activityForm.classification" placeholder="Seleccione dimensión">
+            <ion-select-option value="knowledge">Saber (Conocimiento)</ion-select-option>
+            <ion-select-option value="execution">Hacer (Ejecución)</ion-select-option>
+            <ion-select-option value="behavior">Ser (Comportamiento)</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
           <ion-label position="stacked">Instrucciones (Opcional)</ion-label>
         </ion-item>
         <ion-item class="ion-no-padding" lines="none" v-if="editor">
@@ -92,8 +101,11 @@ import {
   IonLabel,
   IonInput,
   IonButton,
+
   IonButtons,
   IonIcon,
+  IonSelect,
+  IonSelectOption,
 } from "@ionic/vue";
 import { tokenHeader, usuarioGet } from "../globalService";
 import { arrowBackOutline } from "ionicons/icons";
@@ -116,6 +128,8 @@ export default {
     IonButtons,
     IonIcon,
     EditorContent,
+    IonSelect,
+    IonSelectOption,
   },
   setup() {
     const router = useRouter();
@@ -127,6 +141,7 @@ export default {
       id: activityId, // Initialize with activityId
       title: "",
       instructions: "",
+      classification: "execution", // Default
       lessonId: lessonId,
       instituteId: null,
     });
@@ -162,7 +177,9 @@ export default {
             tokenHeader()
           );
           activityForm.value.title = activityResponse.data.title;
+          activityForm.value.title = activityResponse.data.title;
           activityForm.value.instructions = activityResponse.data.instructions;
+          activityForm.value.classification = activityResponse.data.classification || 'execution';
           // Ensure lessonId and instituteId are correctly set from fetched data if needed
           activityForm.value.lessonId = activityResponse.data.lesson.id;
           activityForm.value.instituteId = activityResponse.data.institute.id;

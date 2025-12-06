@@ -158,31 +158,69 @@ export default {
 
           const assignedStudentIds = new Set(assignments.map(r => r.student.id));
 
-          // Calculate Averages logic
+          // Extract all students from usersData
           const allStudents = usersData
               .filter(u => u.rol === 'student')
               .map(u => u.user);
-          
-          const liveGradableItemsMap = new Map();
+
+          // Build Master List of Regular Gradable Items (excluding reinforcement)
+          const masterItemsMap = new Map();
           allGrades.forEach((grade) => {
-            if (grade.gradableItem) {
-                liveGradableItemsMap.set(grade.gradableItem.id, grade.gradableItem);
-            }
+              const isReinforcement = grade.gradableItem?.lesson?.type === 'reinforcement';
+              if (!isReinforcement && grade.gradableItem && grade.gradableItem.id) {
+                  const uniqueKey = `${grade.gradableType}-${grade.gradableItem.id}`;
+                  if (!masterItemsMap.has(uniqueKey)) {
+                      masterItemsMap.set(uniqueKey, {
+                          id: grade.gradableItem.id,
+                          type: grade.gradableType,
+                          classification: grade.classification
+                      });
+                  }
+              }
           });
-          const liveGradableItems = Array.from(liveGradableItemsMap.values());
+
+          // Split Master List by Classification
+          const masterKnowledge = Array.from(masterItemsMap.values()).filter(i => i.classification === 'knowledge');
+          const masterExecution = Array.from(masterItemsMap.values()).filter(i => i.classification === 'execution');
+          const masterBehavior = Array.from(masterItemsMap.values()).filter(i => i.classification === 'behavior');
+
+          const formatGrade = (grade) => {
+              if (!grade && grade !== 0) return 0;
+              return Math.floor(grade * 10) / 10;
+          };
+
+          const calculateAverageFromMasterList = (studentGrades, masterList) => {
+              if (masterList.length === 0) return 0;
+              let totalScore = 0;
+              masterList.forEach(masterItem => {
+                  const foundGrade = studentGrades.find(g => 
+                      g.gradableType === masterItem.type && g.gradableItem.id === masterItem.id
+                  );
+                  if (foundGrade) {
+                      totalScore += foundGrade.grade;
+                  }
+                  // If not found, adds 0 to score (pending)
+              });
+              return totalScore / masterList.length;
+          };
 
           studentList.value = allStudents.map(student => {
-              const studentGrades = allGrades.filter(g => g.user.id === student.id);
-              let average = 0;
-              if (liveGradableItems.length > 0) {
-                  const sum = studentGrades.reduce((acc, curr) => acc + Number(curr.grade), 0);
-                  average = sum / liveGradableItems.length;
-              }
+              const studentGrades = allGrades
+                  .filter(g => g.user.id === student.id)
+                  .map(n => ({ ...n, grade: formatGrade(n.grade) }));
+
+              // Calculate Averages based on Master Lists (Regular items only)
+              const promSaber = calculateAverageFromMasterList(studentGrades, masterKnowledge);
+              const promHacer = calculateAverageFromMasterList(studentGrades, masterExecution);
+              const promSer = calculateAverageFromMasterList(studentGrades, masterBehavior);
+
+              // Promedio Final: (Saber + Hacer + Ser) / 3
+              const promedioFinal = (promSaber + promHacer + promSer) / 3;
 
               return {
                   id: student.id,
                   name: student.name + ' ' + student.lastName,
-                  average: average,
+                  average: formatGrade(promedioFinal),
                   selected: isEditing.value ? assignedStudentIds.has(student.id) : false
               };
           }).sort((a, b) => a.average - b.average);
@@ -237,7 +275,7 @@ export default {
     };
     
     const getAverageColor = (avg) => {
-        if (avg < 3.0) return 'low-grade';
+        if (avg < 3.5) return 'low-grade';
         if (avg < 4.0) return 'mid-grade';
         return 'high-grade';
     };
@@ -257,6 +295,6 @@ export default {
 </script>
 <style scoped>
 .low-grade { color: red; font-weight: bold; }
-.mid-grade { color: orange; }
-.high-grade { color: green; }
+.mid-grade { color: #DAA520; font-weight: bold; }
+.high-grade { color: green; font-weight: bold; }
 </style>

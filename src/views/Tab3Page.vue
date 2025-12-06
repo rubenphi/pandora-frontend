@@ -128,8 +128,15 @@
             v-for="cuestionario in cuestionariosList"
             :key="cuestionario.id"
             :href="cuestionario.url"
+            :class="{ sinNota: cuestionariosPendientes.includes(cuestionario.id) }"
           >
             <ion-label>{{ cuestionario.name }}</ion-label>
+            <ion-icon
+              v-if="cuestionariosPendientes.includes(cuestionario.id)"
+              :icon="alertCircleOutline"
+              slot="end"
+              color="warning"
+            ></ion-icon>
           </ion-item>
           <ion-item v-if="adminOProfesor">
             <ion-button
@@ -159,8 +166,15 @@
             v-for="actividad in actvitiesList"
             :key="actividad.id"
             :href="actividad.url"
+            :class="{ sinNota: actividadesPendientes.includes(actividad.id) }"
           >
             <ion-label>{{ actividad.name }}</ion-label>
+            <ion-icon
+              v-if="actividadesPendientes.includes(actividad.id)"
+              :icon="alertCircleOutline"
+              slot="end"
+              color="warning"
+            ></ion-icon>
           </ion-item>
           <ion-item v-if="adminOProfesor">
             <ion-button
@@ -189,7 +203,7 @@ import {
 } from "../globalService";
 import { useRoute } from "vue-router";
 import router from "../router";
-import { addOutline, arrowBackOutline, createOutline } from "ionicons/icons";
+import { addOutline, arrowBackOutline, createOutline, alertCircleOutline } from "ionicons/icons";
 import MaterialModal from "../components/MaterialModal.vue";
 
 const MaterialType = {
@@ -264,6 +278,8 @@ export default {
     const lecciones = ref([]);
     const leccionesConCuestionariosPendientes = ref([]);
     const leccionesConActividadesPendientes = ref([]);
+    const cuestionariosPendientes = ref([]);
+    const actividadesPendientes = ref([]);
     const materialsList = ref([]);
     const cuestionariosList = ref([]);
     const actvitiesList = ref([]);
@@ -366,6 +382,7 @@ export default {
           leccionesConCuestionariosPendientes.value = response.data.map(
             (quiz) => quiz.lesson.id
           );
+          cuestionariosPendientes.value = response.data.map((quiz) => quiz.id);
         } catch (error) {
           console.error("Error fetching pending quizzes:", error);
         }
@@ -381,6 +398,9 @@ export default {
           });
           leccionesConActividadesPendientes.value = response.data.map(
             (activity) => activity.lesson.id
+          );
+          actividadesPendientes.value = response.data.map(
+            (activity) => activity.id
           );
         } catch (error) {
           console.error("Error fetching pending activities:", error);
@@ -522,6 +542,9 @@ export default {
       showReinforcementToggle,
       segmentChanged,
       quizSelected,
+      cuestionariosPendientes,
+      actividadesPendientes,
+      alertCircleOutline,
     };
   },
 };

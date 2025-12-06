@@ -4,6 +4,10 @@
       <ion-toolbar>
         <ion-title>Grupos - {{ curso?.name }}</ion-title>
         <ion-buttons slot="end">
+          <ion-button @click="emptyAllGroups" color="danger">
+            <ion-icon :icon="trashOutline"></ion-icon>
+            Vaciar Grupos
+          </ion-button>
           <ion-button @click="openCreateGroupModal">
             <ion-icon :icon="addCircleOutline"></ion-icon>
             Crear Grupo
@@ -295,6 +299,7 @@ import {
   personCircleOutline,
   personRemoveOutline,
   swapHorizontalOutline,
+  trashOutline,
 } from "ionicons/icons";
 
 export default {
@@ -424,13 +429,13 @@ export default {
 
     // Funciones para modal de creación de grupo
     const openCreateGroupModal = async () => {
-      if ((await QuizSinNotas(cursoId, usuario)).length > 0) {
-        mensajeAlerta.value.header = "Hay lecciones sin calificar";
+      if ((await QuizSinNotas(cursoId, usuario, true)).length > 0) {
+        mensajeAlerta.value.header = "Hay cuestionarios grupales sin calificar";
         mensajeAlerta.value.subHeader = "¿Seguro que desea crear un grupo?";
-        mensajeAlerta.value.message = `Las lecciones sin calificar son: <br> <ul> <li> ${(
-          await QuizSinNotas(cursoId, usuario)
+        mensajeAlerta.value.message = `Los cuestionarios sin calificar son: <br> <ul> <li> ${(
+          await QuizSinNotas(cursoId, usuario, true)
         )
-          .map((leccion) => leccion.topic)
+          .map((quiz) => quiz.title)
           .join("<br> </li></ul> <ul> <li>")}`;
 
         mensajeAlerta.value.buttons = [
@@ -505,12 +510,12 @@ export default {
     // Funciones para modal de edición de grupo
     const openEditGroupModal = async (grupo) => {
       if ((await QuizSinNotas(cursoId, usuario)).length > 0) {
-        mensajeAlerta.value.header = "Hay lecciones sin calificar";
+        mensajeAlerta.value.header = "Hay cuestionarios grupales sin calificar";
         mensajeAlerta.value.subHeader = "¿Seguro que desea editar un grupo?";
-        mensajeAlerta.value.message = `<strong>Las lecciones sin calificar son:  <br></strong> <ul> <li>${(
+        mensajeAlerta.value.message = `<strong>Los cuestionarios sin calificar son:  <br></strong> <ul> <li>${(
           await QuizSinNotas(cursoId, usuario)
         )
-          .map((leccion) => leccion.topic)
+          .map((quiz) => quiz.title)
           .join("<br> </li></ul> <ul> <li>")}`;
 
         mensajeAlerta.value.buttons = [
@@ -666,6 +671,58 @@ export default {
       }
     };
 
+    const emptyAllGroups = async () => {
+      const alert = await alertController.create({
+        header: "Vaciar Todos los Grupos",
+        message:
+          "¿Está seguro de que desea remover todos los estudiantes de todos los grupos? Esta acción no se puede deshacer.",
+        buttons: [
+          {
+            text: "Cancelar",
+            role: "cancel",
+          },
+          {
+            text: "Vaciar",
+            role: "destructive",
+            handler: async () => {
+              try {
+                // Get all groups except "Sin grupo" (id !== 0)
+                const groupsToEmpty = grupos.value.filter((g) => g.id !== 0);
+
+                // For each group, get members and remove them
+                for (const group of groupsToEmpty) {
+                  const response = await axios.get(
+                    `/groups/${group.id}/${selectedYear}/users`,
+                    { headers: tokenHeader() }
+                  );
+                  const members = response.data;
+
+                  // Remove each member
+                  for (const member of members) {
+                    await axios.patch(
+                      `/groups/${group.id}/users`,
+                      {
+                        userIdToRemove: member.user.id,
+                        active: false,
+                      },
+                      { headers: tokenHeader() }
+                    );
+                  }
+                }
+
+                // Reload page to show updated groups
+                location.reload();
+              } catch (error) {
+                console.error("Error emptying all groups:", error);
+                alert("Error al vaciar los grupos. Por favor intente nuevamente.");
+              }
+            },
+          },
+        ],
+      });
+      await alert.present();
+    };
+
     const presentAlert = async () => {
       const alert = await alertController.create({
         header: mensajeAlerta.value.header || "Default Header",
@@ -686,12 +743,12 @@ export default {
 
     const openModal = async (selectedUserId) => {
       if ((await QuizSinNotas(cursoId, usuario)).length > 0) {
-        mensajeAlerta.value.header = "Hay lecciones sin calificar";
+        mensajeAlerta.value.header = "Hay cuestionarios grupales sin calificar";
         mensajeAlerta.value.subHeader = "¿Seguro que desea mover a un grupo?";
-        mensajeAlerta.value.message = `<strong>Las lecciones sin calificar son:  <br></strong> <ul> <li>${(
+        mensajeAlerta.value.message = `<strong>Los cuestionarios sin calificar son:  <br></strong> <ul> <li>${(
           await QuizSinNotas(cursoId, usuario)
         )
-          .map((leccion) => leccion.topic)
+          .map((quiz) => quiz.title)
           .join("<br> </li></ul> <ul> <li>")}`;
 
         mensajeAlerta.value.buttons = [
@@ -730,14 +787,19 @@ export default {
       usuario.value = usuarioGet();
       await getAllStudentsInCourse();
       const llamado = (
-        await axios.get(`/courses/${cursoId}/groups`, {
+        await axios.get(`/courses/${cursoId}/groups?year=${selectedYear}`, {
           headers: tokenHeader(),
         })
       ).data;
 
-      gruposLista.value = [...llamado];
+      // Filter groups by selected year
+      const gruposFiltrados = llamado.filter(
+        (grupo) => grupo.year === parseInt(selectedYear, 10)
+      );
 
-      grupos.value = llamado;
+      gruposLista.value = [...gruposFiltrados];
+
+      grupos.value = gruposFiltrados;
 
       grupos.value.push({
         id: 0,
@@ -801,6 +863,8 @@ export default {
       closeAddStudentModal,
       cancelAddStudent,
       confirmAddStudent,
+      emptyAllGroups,
+      trashOutline,
     };
   },
 };

@@ -23,7 +23,7 @@
               {{ year }}
             </ion-select-option>
           </ion-select>
-          </ion-item>
+        </ion-item>
         <ion-accordion-group @ionChange="captarAbierto($event)">
           <ion-accordion v-for="curso in cursosInstituto" :key="curso.id">
             <IonItem slot="header" @click="changeCourse(curso)">
@@ -33,7 +33,10 @@
               <IonLabel v-if="loading && courseSelected.id == curso.id">{{
                 curso.name + ": ⏳ Cargando usuarios"
               }}</IonLabel>
-              <ion-button @click.stop="presentActionSheet(curso)" color="medium">
+              <ion-button
+                @click.stop="presentActionSheet(curso)"
+                color="medium"
+              >
                 <ion-icon slot="icon-only" :icon="downloadOutline"></ion-icon>
               </ion-button>
             </IonItem>
@@ -194,8 +197,8 @@ import {
 } from "ionicons/icons";
 
 const AssignmentType = {
-  COURSE: 'COURSE',
-  GROUP: 'GROUP',
+  COURSE: "COURSE",
+  GROUP: "GROUP",
 };
 
 export default {
@@ -229,7 +232,6 @@ export default {
     const selectedGroupId = ref(null);
     const selectedUser = ref(null);
     const rolSelected = ref(null);
-    const asignado = ref(false);
     const roles = ref([
       {
         titulo: "Estudiante",
@@ -400,121 +402,76 @@ export default {
     };
 
     const asignarUsuario = async () => {
-      console.log(selectedUser.value);
-
-      if (selectedCourseId.value == 0) {
-        await axios
-          .post(
+      try {
+        // Step 1: Assign to course (skip if course is 0 - "Sin Curso")
+        if (selectedCourseId.value != 0) {
+          await axios.post(
             `/courses/${selectedCourseId.value}/users`,
             [
               {
                 userId: selectedUser.value.id,
                 year: parseInt(selectedYear.value, 10),
-                rol: "student",
+                rol: rolSelected.value || "student",
               },
             ],
             {
               headers: tokenHeader(),
             }
-          )
-          .then(() => {
-            console.log("Usuario asignado al curso correctamente");
-            asignado.value = true;
-          })
-          .catch((error) => {
-            console.error("Error al asignar el usuario al curso:", error);
-          });
-      } else {
-        /* 
-        {
-  "userId": 0,
-  "year": 0,
-  "rol": "string"
-}
-  */
-        axios
-          .post(
-            `/courses/${selectedCourseId.value}/users`,
-            [
-              {
-                userId: selectedUser.value.id,
-                year: parseInt(selectedYear.value, 10),
-                rol: rolSelected.value,
-              },
-            ],
-            {
-              headers: tokenHeader(),
-            }
-          )
-          .then(() => {
-            console.log("Usuario asignado al curso correctamente");
-            asignado.value = true;
-          })
-          .catch((error) => {
-            console.error("Error al asignar el usuario al curso:", error);
-          });
-      }
+          );
+        }
 
-      if (selectedGroupId.value && asignado.value) {
-        let data = {
-          groupId: selectedGroupId.value,
-          userId: selectedUser.value.id,
-          code: "admin",
-          year: parseInt(selectedYear.value, 10),
-          active: true,
-        };
-
-        axios.post(`/users/${selectedUser.value.id}/groups`, data).then(() => {
-          location.reload();
-        });
-        closeModal();
-
-        await axios
-          .post(
+        // Step 2: Assign to group (if group is selected)
+        if (selectedGroupId.value) {
+          await axios.post(
             `/groups/${selectedGroupId.value}/users`,
             [
               {
                 userId: selectedUser.value.id,
                 periodId: 1,
+                year: parseInt(selectedYear.value, 10),
+                active: true,
               },
             ],
             {
               headers: tokenHeader(),
             }
-          )
-          .then(() => {
-            console.log("Usuario asignado al grupo correctamente");
-          })
-          .catch((error) => {
-            console.error("Error al asignar el usuario al grupo:", error);
-          });
-      }
+          );
+        }
 
-      closeModal();
-      // reload
-      location.reload();
+        // Success: close modal and reload
+        closeModal();
+        location.reload();
+      } catch (error) {
+        console.error("Error al asignar el usuario:", error);
+        // Optionally show an error alert to the user
+      }
     };
 
     const deactivateUser = async (user) => {
       const alert = await alertController.create({
-        header: 'Confirmar Eliminación',
+        header: "Confirmar Eliminación",
         message: `¿Estás seguro de que quieres marcar a ${user.name} ${user.lastName} como eliminado de sus asignaciones a cursos y grupos?`,
         buttons: [
           {
-            text: 'Cancelar',
-            role: 'cancel',
-            cssClass: 'secondary',
+            text: "Cancelar",
+            role: "cancel",
+            cssClass: "secondary",
           },
           {
-            text: 'Eliminar',
+            text: "Eliminar",
             handler: async () => {
               try {
                 await axios.patch(
                   `/users/${user.id}/deactivate-assignments`,
-                  { assignmentTypes: [AssignmentType.COURSE, AssignmentType.GROUP] },
+                  {
+                    assignmentTypes: [
+                      AssignmentType.COURSE,
+                      AssignmentType.GROUP,
+                    ],
+                  },
                   tokenHeader()
                 );
-                console.log(`Usuario ${user.name} ${user.lastName} desactivado de asignaciones.`);
+
                 // Refresh the user list or remove the user from the current view
                 // For simplicity, I'll reload the current course's users.
                 if (courseSelected.value?.id) {
@@ -523,11 +480,15 @@ export default {
                   getUsuariosSinCurso();
                 }
               } catch (error) {
-                console.error("Error al desactivar asignaciones del usuario:", error);
+                console.error(
+                  "Error al desactivar asignaciones del usuario:",
+                  error
+                );
                 const errorAlert = await alertController.create({
-                  header: 'Error',
-                  message: 'Hubo un error al intentar desactivar las asignaciones del usuario.',
-                  buttons: ['OK'],
+                  header: "Error",
+                  message:
+                    "Hubo un error al intentar desactivar las asignaciones del usuario.",
+                  buttons: ["OK"],
                 });
                 await errorAlert.present();
               }

@@ -735,4 +735,8 @@ export default {
   opacity: 0.6;
   font-style: italic;
 }
+
+ion-item ion-label {
+  white-space: normal !important;
+}
 </style>

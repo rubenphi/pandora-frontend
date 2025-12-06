@@ -222,3 +222,28 @@ export function defaultFile(name) {
   }
   return retorno;
 }
+
+export async function QuizSinNotas(cursoId, usuario, onlyGroupQuizzes = false) {
+  try {
+    tokenHeader();
+    const response = await axios.get(`/quizzes/pending-grading`, {
+      params: {
+        courseId: cursoId,
+        periodId: selectedPeriod(),
+        year: selectedYear(),
+        instituteId: usuario.value.institute.id,
+      },
+    });
+    const quizzes = response.data || [];
+    
+    // Filter only group quizzes if requested
+    if (onlyGroupQuizzes) {
+      return quizzes.filter((quiz) => quiz.quizType === "group");
+    }
+    
+    return quizzes;
+  } catch (error) {
+    console.error("Error fetching pending quizzes:", error);
+    return [];
+  }
+}
