@@ -1,7 +1,9 @@
 import { createRouter, createWebHistory } from "@ionic/vue-router";
 import TabsPage from "../views/TabsPage.vue";
+import QrScannerOnboarding from "../views/QrScannerOnboarding.vue"; // New import
 import axios from "axios";
 import { adminOprofesor } from "../globalService";
+import { Device } from '@capacitor/device'; // New import
 
 const routes = [
   {
@@ -16,6 +18,10 @@ const routes = [
   {
     path: "/register",
     component: () => import("@/views/RegistroPage.vue"),
+  },
+  {
+    path: "/onboarding-qr", // New route
+    component: QrScannerOnboarding,
   },
 
   {
@@ -324,21 +330,39 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach((to, from, next) => {
-  if (
-    to.path !== "/login" &&
-    to.path !== "/register" &&
-    localStorage.getItem("usuario") == undefined
-  )
-    next({ path: "/login" });
-  else next();
+router.beforeEach(async (to, from, next) => {
+  const info = await Device.getInfo();
+  const isNative = info.platform === 'android' || info.platform === 'ios';
+  const appLinked = localStorage.getItem('appLinked') === 'true';
+  const isLoggedIn = localStorage.getItem("usuario") != undefined;
 
-  axios.defaults.headers.common["Authorization"] =
-    localStorage.getItem("token");
-  axios.get("/auth/profile").catch((e) => {
-    localStorage.removeItem("usuario");
-    localStorage.setItem("error", e);
-  });
+  const publicPages = ['/login', '/register', '/onboarding-qr'];
+  const authRequired = !publicPages.includes(to.path);
+
+  // If on native and the app hasn't been linked (first time use),
+  // and not already on the onboarding page, redirect there.
+  if (isNative && !appLinked && to.path !== '/onboarding-qr') {
+    return next('/onboarding-qr');
+  }
+
+  // If authentication is required and the user is not logged in,
+  // redirect to the login page.
+  if (authRequired && !isLoggedIn) {
+    return next('/login');
+  }
+
+  // If the user is logged in, set the authorization header for API requests.
+  if (isLoggedIn) {
+    axios.defaults.headers.common["Authorization"] =
+      localStorage.getItem("token");
+    axios.get("/auth/profile").catch((e) => {
+      localStorage.removeItem("usuario");
+      localStorage.setItem("error", e);
+    });
+  }
+
+  // Otherwise, proceed to the requested route.
+  next();
 });
 
 export default router;
