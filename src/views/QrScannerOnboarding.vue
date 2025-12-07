@@ -57,7 +57,10 @@ import {
 } from "@ionic/vue";
 import { App } from "@capacitor/app";
 import { Device } from "@capacitor/device";
-import { BarcodeScanner } from "@capacitor-community/barcode-scanner";
+import {
+  CapacitorBarcodeScanner,
+  CapacitorBarcodeScannerTypeHint,
+} from "@capacitor/barcode-scanner";
 import { checkmarkCircleOutline } from "ionicons/icons";
 
 export default {
@@ -83,54 +86,26 @@ export default {
   methods: {
     async scanQr() {
       try {
-        // Verificar y solicitar permisos de cámara
-        const status = await BarcodeScanner.checkPermission({ force: true });
-
-        if (!status.granted) {
-          const alert = await alertController.create({
-            header: "Permiso denegado",
-            message:
-              "Es necesario otorgar permisos de cámara para escanear el QR.",
-            buttons: ["OK"],
-          });
-          await alert.present();
-          return;
-        }
-
-        // Preparar la UI para el escaneo
-        document.querySelector("body").classList.add("scanner-active");
-        document.querySelector("ion-app").style.background = "transparent";
-
-        // Hacer el fondo del WebView transparente para ver la cámara
-        BarcodeScanner.hideBackground();
-
-        // Iniciar el escaneo
-        const result = await BarcodeScanner.startScan();
-
-        // Restaurar la UI
-        document.querySelector("body").classList.remove("scanner-active");
-        document.querySelector("ion-app").style.background = "";
-        BarcodeScanner.showBackground();
+        const result = await CapacitorBarcodeScanner.scanBarcode({
+          hint: CapacitorBarcodeScannerTypeHint.QR_CODE,
+          scanInstructions: "Escanee el código QR",
+          scanButton: false,
+        });
 
         // Si el resultado tiene contenido, mostrarlo en el modal
-        if (result.hasContent) {
-          this.qrContent = result.content;
+        if (result.ScanResult) {
+          this.qrContent = result.ScanResult;
           this.isModalOpen = true;
         }
       } catch (error) {
         console.error("Error al escanear QR:", error);
 
-        // Asegurarse de restaurar el estado de la UI
-        document.querySelector("body")?.classList.remove("scanner-active");
-        if (document.querySelector("ion-app")) {
-          document.querySelector("ion-app").style.background = "";
-        }
-        BarcodeScanner.showBackground();
-
         const alert = await alertController.create({
           header: "Error",
           message:
-            "Ocurrió un error al escanear el QR. Por favor, intente nuevamente.",
+            error instanceof Error
+              ? error.message
+              : "Ocurrió un error al escanear el QR. Por favor, intente nuevamente.",
           buttons: ["OK"],
         });
         await alert.present();
@@ -151,11 +126,6 @@ export default {
         this.$router.replace("/login");
       }
     },
-  },
-  beforeUnmount() {
-    // Limpiar al desmontar el componente
-    document.body.classList.remove("scanner-active");
-    BarcodeScanner.showBackground();
   },
 };
 </script>
@@ -216,29 +186,5 @@ ion-button {
   font-family: monospace;
   font-size: 0.95em;
   max-width: 100%;
-}
-</style>
-
-<style>
-/* Estilos globales para ocultar el contenido durante el escaneo */
-body.scanner-active {
-  --background: transparent;
-  --ion-background-color: transparent;
-  background: transparent !important;
-}
-
-body.scanner-active ion-app,
-body.scanner-active ion-content {
-  --background: transparent;
-  background: transparent !important;
-}
-
-body.scanner-active .ion-page {
-  background: transparent !important;
-}
-
-/* Asegurar que el contenido esté oculto durante el escaneo */
-body.scanner-active .onboarding-container {
-  visibility: hidden;
 }
 </style>
