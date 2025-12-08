@@ -14,7 +14,6 @@
       <div id="container">
         <strong>Hola, bienvenido</strong>
         <p>
-          {{ backendURL }}
           Construí esta aplicación para trabajar en grupo de una manera más
           dinámica, espero que la clase de hoy vaya genial 😃
         </p>
@@ -35,10 +34,9 @@ import {
   IonButtons,
   onIonViewWillEnter,
 } from "@ionic/vue";
-import { basedeURL, tokenHeader } from "../globalService";
+import { tokenHeader } from "../globalService";
 import router from "../router";
 import { exitOutline } from "ionicons/icons";
-import { ref } from "vue";
 
 export default {
   components: {
@@ -52,13 +50,11 @@ export default {
     IonButtons,
   },
   setup() {
-    const backendURL = ref(basedeURL());
     onIonViewWillEnter(async () => {
       tokenHeader();
     });
 
     return {
-      backendURL,
       salir() {
         const periodoSelected = JSON.parse(
           localStorage.getItem("periodoSelected")

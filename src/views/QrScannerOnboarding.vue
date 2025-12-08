@@ -62,8 +62,7 @@ import {
   CapacitorBarcodeScannerTypeHint,
 } from "@capacitor/barcode-scanner";
 import { checkmarkCircleOutline } from "ionicons/icons";
-import axios from "axios";
-import { basedeURL } from "../globalService";
+import { setBaseUrl } from "../globalService"; // <-- Changed import
 
 export default {
   name: "QrScannerOnboarding",
@@ -94,14 +93,12 @@ export default {
           scanButton: false,
         });
 
-        // Si el resultado tiene contenido, mostrarlo en el modal
         if (result.ScanResult) {
           this.qrContent = result.ScanResult;
           this.isModalOpen = true;
         }
       } catch (error) {
         console.error("Error al escanear QR:", error);
-
         const alert = await alertController.create({
           header: "Error",
           message:
@@ -113,20 +110,15 @@ export default {
         await alert.present();
       }
     },
+    // --- vvv MODIFIED METHOD vvv ---
     async closeModal() {
       this.isModalOpen = false;
       if (this.qrContent) {
         const parts = this.qrContent.split("/");
         if (parts.length === 2 && parts[0] && parts[1]) {
-          const frontendIp = parts[0];
-          const backendIp = parts[1];
+          const backendIp = parts[1]; // We only need the backend IP
 
-          localStorage.setItem("frontend_ip", frontendIp);
-          localStorage.setItem("backend_ip", backendIp);
-          localStorage.setItem("appLinked", "true");
-
-          // Re-configure axios baseURL with the new IP
-          axios.defaults.baseURL = basedeURL();
+          setBaseUrl(backendIp); // Use the new service function
 
           // Redirect to login page
           this.$router.replace("/login");
@@ -142,13 +134,12 @@ export default {
         }
       }
     },
+    // --- ^^^ MODIFIED METHOD ^^^ ---
     async cancelAndExit() {
       const info = await Device.getInfo();
       if (info.platform !== "web") {
         App.exitApp();
       } else {
-        console.log("Running in web, cannot exit app.");
-        // Optionally, redirect to login or another page for web
         this.$router.replace("/login");
       }
     },

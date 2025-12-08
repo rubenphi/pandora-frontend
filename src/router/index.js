@@ -1,11 +1,12 @@
 import { createRouter, createWebHistory } from "@ionic/vue-router";
 import TabsPage from "../views/TabsPage.vue";
-import QrScannerOnboarding from "../views/QrScannerOnboarding.vue"; // New import
+import QrScannerOnboarding from "../views/QrScannerOnboarding.vue";
 import axios from "axios";
-import { adminOprofesor } from "../globalService";
-import { Device } from '@capacitor/device'; // New import
+import { adminOprofesor, apiState } from "../globalService"; // <-- MODIFIED
+import { Device } from '@capacitor/device';
 
 const routes = [
+  // ... (all routes remain the same)
   {
     path: "/",
     redirect: "/inicio",
@@ -292,7 +293,7 @@ const routes = [
       },
       {
         path: "materials",
-        component: () => import("@/views/MaterialsPage.vue"), // Assuming you'll create this view later
+        component: () => import("@/views/MaterialsPage.vue"), 
         beforeEnter: (to, from, next) => {
           if (adminOprofesor()) next();
           else next({ path: "/inicio" });
@@ -330,28 +331,29 @@ const router = createRouter({
   routes,
 });
 
+// --- vvv MODIFIED GUARD vvv ---
 router.beforeEach(async (to, from, next) => {
   const info = await Device.getInfo();
   const isNative = info.platform === 'android' || info.platform === 'ios';
-  const appLinked = localStorage.getItem('appLinked') === 'true';
+  
+  // Use the reactive state to check if the URL is configured
+  const isBaseUrlSet = !!apiState.baseUrl; 
   const isLoggedIn = localStorage.getItem("usuario") != undefined;
 
   const publicPages = ['/login', '/register', '/onboarding-qr'];
   const authRequired = !publicPages.includes(to.path);
 
-  // If on native and the app hasn't been linked (first time use),
-  // and not already on the onboarding page, redirect there.
-  if (isNative && !appLinked && to.path !== '/onboarding-qr') {
+  // If on native, the URL is not set, and not going to onboarding, redirect.
+  if (isNative && !isBaseUrlSet && to.path !== '/onboarding-qr') {
     return next('/onboarding-qr');
   }
 
-  // If authentication is required and the user is not logged in,
-  // redirect to the login page.
+  // If auth is required and user is not logged in, redirect to login.
   if (authRequired && !isLoggedIn) {
     return next('/login');
   }
 
-  // If the user is logged in, set the authorization header for API requests.
+  // If user is logged in, set auth header.
   if (isLoggedIn) {
     axios.defaults.headers.common["Authorization"] =
       localStorage.getItem("token");
@@ -361,8 +363,8 @@ router.beforeEach(async (to, from, next) => {
     });
   }
 
-  // Otherwise, proceed to the requested route.
   next();
 });
+// --- ^^^ MODIFIED GUARD ^^^ ---
 
 export default router;

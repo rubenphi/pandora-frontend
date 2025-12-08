@@ -225,10 +225,6 @@ export default {
               },
             })
             .then(async (response) => {
-              console.log("La Url es:", basedeURL());
-
-              console.log("La respuesta es", response);
-
               if (response.data.userLoged.accessToken == undefined) {
                 error.value.estatus = 1;
                 error.value.data = "Error al iniciar sesión";
