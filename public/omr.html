@@ -164,6 +164,14 @@
         canvas.width = width;
         canvas.height = height;
 
+        // offscreen clean canvas to store a frame without overlays
+        let cleanCanvas = document.createElement("canvas");
+        cleanCanvas.width = width;
+        cleanCanvas.height = height;
+        let cleanCtx = cleanCanvas.getContext("2d");
+        // last clean frame dataURL (updated each frame before any overlays are drawn)
+        let lastCleanDataURL = null;
+
         let src = new cv.Mat(height, width, cv.CV_8UC4);
         let gray = new cv.Mat(height, width, cv.CV_8UC1);
         let bw = new cv.Mat(height, width, cv.CV_8UC1);
@@ -429,7 +437,16 @@
         });
 
         function loop() {
+          // draw raw video to visible canvas context first
           ctx.drawImage(video, 0, 0, width, height);
+          // update clean offscreen canvas BEFORE any processing/drawing of overlays
+          try {
+            cleanCtx.drawImage(video, 0, 0, width, height);
+            lastCleanDataURL = cleanCanvas.toDataURL("image/png");
+          } catch (err) {
+            // if something fails, leave lastCleanDataURL as it was
+          }
+
           let imageData = ctx.getImageData(0, 0, width, height);
           src.data.set(imageData.data);
 
@@ -906,6 +923,10 @@
               const rows = 10,
                 cols = 10;
 
+              // visual radius for grid points on live canvas (10% larger)
+              const baseGridRadius = 3;
+              const gridPointRadius = Math.ceil(baseGridRadius * 1.1);
+
               // determine template extents (u/v in [0,1]) if available
               let umin = 0,
                 umax = 1,
@@ -978,7 +999,7 @@
                         ctx.arc(
                           Math.round(x),
                           Math.round(y),
-                          3,
+                          gridPointRadius,
                           0,
                           Math.PI * 2
                         );
@@ -1031,7 +1052,13 @@
                     // draw point
                     ctx.beginPath();
                     ctx.fillStyle = "rgba(255,220,0,0.95)";
-                    ctx.arc(Math.round(x), Math.round(y), 3, 0, Math.PI * 2);
+                    ctx.arc(
+                      Math.round(x),
+                      Math.round(y),
+                      gridPointRadius,
+                      0,
+                      Math.PI * 2
+                    );
                     ctx.fill();
                   }
                 }
@@ -1050,7 +1077,8 @@
             let finalNormals = normalMarkers.slice();
 
             // capture canvas image
-            const dataURL = canvas.toDataURL("image/png");
+            // prefer the clean frame captured before overlays
+            const dataURL = lastCleanDataURL || canvas.toDataURL("image/png");
 
             // determine rotation so the side with 3 markers becomes the top
             // Try 0/90/180/270 and pick the angle where the row with 3
@@ -1218,6 +1246,8 @@
             sctx.rotate((angle * Math.PI) / 180);
             sctx.drawImage(img, -img.width / 2, -img.height / 2);
             sctx.restore();
+            // capture clean snapshot (no overlays) for validation
+            const cleanSnapDataURL = snapCanvas.toDataURL("image/png");
 
             // rotate points and draw markers + list
             const cx0 = srcW / 2,
@@ -1233,18 +1263,11 @@
               return { x: Math.round(rx + newCx), y: Math.round(ry + newCy) };
             }
 
-            // draw normals and collect label mapping
+            // compute rotated positions and collect label mapping (do not draw overlays yet)
             const labelMap = {};
             normals.forEach((n, idx) => {
               const rp = rotatePoint(n.cx, n.cy);
               labelMap[n.label] = rp;
-              sctx.beginPath();
-              sctx.arc(rp.x, rp.y, 6, 0, Math.PI * 2);
-              sctx.fillStyle = "cyan";
-              sctx.fill();
-              sctx.fillStyle = "#fff";
-              sctx.font = "14px monospace";
-              sctx.fillText(n.label + ` (${rp.x},${rp.y})`, rp.x + 8, rp.y - 8);
               const li = document.createElement("li");
               li.textContent = `${n.label}: ${Math.round(n.cx)}, ${Math.round(
                 n.cy
@@ -1331,8 +1354,8 @@
                 );
 
                 const corrected = document.createElement("canvas");
-                corrected.width = dstW;
-                corrected.height = dstH;
+                corrected.width = dstWScaled;
+                corrected.height = dstHScaled;
                 corrected.style.maxWidth = "80vw";
                 corrected.style.display = "block";
                 const corrWrap = document.createElement("div");
@@ -1340,22 +1363,265 @@
                 corrWrap.appendChild(corrected);
                 canvasWrap.appendChild(corrWrap);
                 cv.imshow(corrected, dstMat);
+                // capture clean corrected image (no overlays)
+                const cleanCorrectedDataURL = corrected.toDataURL("image/png");
 
-                // draw small marker at corners for visual check
-                const cctx = corrected.getContext("2d");
-                cctx.fillStyle = "red";
-                cctx.beginPath();
-                cctx.arc(6, 6, 5, 0, Math.PI * 2);
-                cctx.fill();
-                cctx.beginPath();
-                cctx.arc(dstW - 6, 6, 5, 0, Math.PI * 2);
-                cctx.fill();
-                cctx.beginPath();
-                cctx.arc(6, dstH - 6, 5, 0, Math.PI * 2);
-                cctx.fill();
-                cctx.beginPath();
-                cctx.arc(dstW - 6, dstH - 6, 6, 0, Math.PI * 2);
-                cctx.fill();
+                // redraw overlays (markers and lines) on the rotated snapshot canvas WITHOUT affecting srcMat
+                try {
+                  // redraw markers and labels on snapCanvas for user (these are only visual)
+                  sctx.save();
+                  sctx.fillStyle = "cyan";
+                  sctx.strokeStyle = "#88f";
+                  sctx.lineWidth = 2;
+                  for (const key of Object.keys(labelMap)) {
+                    const p = labelMap[key];
+                    if (!p) continue;
+                    sctx.beginPath();
+                    sctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+                    sctx.fillStyle = "cyan";
+                    sctx.fill();
+                    sctx.fillStyle = "#fff";
+                    sctx.font = "14px monospace";
+                    sctx.fillText(key + ` (${p.x},${p.y})`, p.x + 8, p.y - 8);
+                  }
+                  // redraw connection lines
+                  function drawLine(a, b, color) {
+                    if (a && b) {
+                      sctx.strokeStyle = color || "#0f0";
+                      sctx.lineWidth = 2;
+                      sctx.beginPath();
+                      sctx.moveTo(a.x, a.y);
+                      sctx.lineTo(b.x, b.y);
+                      sctx.stroke();
+                    }
+                  }
+                  drawLine(labelMap["TL"], labelMap["TM"], "#88f");
+                  drawLine(labelMap["TM"], labelMap["TR"], "#88f");
+                  drawLine(labelMap["BL"], labelMap["BM"], "#88f");
+                  drawLine(labelMap["BM"], labelMap["BR"], "#88f");
+                  drawLine(labelMap["TL"], labelMap["BL"], "#8f8");
+                  drawLine(labelMap["TM"], labelMap["BM"], "#8f8");
+                  drawLine(labelMap["TR"], labelMap["BR"], "#8f8");
+                  sctx.restore();
+                  // capture overlay snapshot (with drawn markers) for toggle
+                  const overlaySnapDataURL = snapCanvas.toDataURL("image/png");
+                } catch (err) {
+                  console.warn("failed to redraw snapshot overlays", err);
+                }
+
+                // detect filled circles inside the corrected image (use dstMat which has NO overlays)
+                try {
+                  const rowsT = 10,
+                    colsT = 10;
+                  // build source grid points (in src/snapshot coordinates) inside the 4 template circles
+                  const circleKeys = ["CTL", "CTR", "CBL", "CBR"];
+                  const circlesSrc = {};
+                  if (
+                    typeof circleTemplate !== "undefined" &&
+                    circleTemplate &&
+                    circleTemplate.circles
+                  ) {
+                    for (const k of circleKeys) {
+                      const pct = circleTemplate.circles[k];
+                      if (!pct) continue;
+                      const u = (pct.percent_x || 0) / 100.0;
+                      const v = (pct.percent_y || 0) / 100.0;
+                      const x =
+                        (1 - u) * (1 - v) * labelMap["TL"].x +
+                        u * (1 - v) * labelMap["TR"].x +
+                        (1 - u) * v * labelMap["BL"].x +
+                        u * v * labelMap["BR"].x;
+                      const y =
+                        (1 - u) * (1 - v) * labelMap["TL"].y +
+                        u * (1 - v) * labelMap["TR"].y +
+                        (1 - u) * v * labelMap["BL"].y +
+                        u * v * labelMap["BR"].y;
+                      circlesSrc[k] = { x, y };
+                    }
+                  }
+
+                  // only proceed if we have the four defining circle centers in source coords
+                  if (
+                    circlesSrc.CTL &&
+                    circlesSrc.CTR &&
+                    circlesSrc.CBL &&
+                    circlesSrc.CBR
+                  ) {
+                    // create list of src points for grid
+                    const srcPtsArr = [];
+                    for (let r = 0; r < rowsT; r++) {
+                      const v = rowsT === 1 ? 0 : r / (rowsT - 1);
+                      for (let c = 0; c < colsT; c++) {
+                        const u = colsT === 1 ? 0 : c / (colsT - 1);
+                        const x =
+                          (1 - u) * (1 - v) * circlesSrc.CTL.x +
+                          u * (1 - v) * circlesSrc.CTR.x +
+                          (1 - u) * v * circlesSrc.CBL.x +
+                          u * v * circlesSrc.CBR.x;
+                        const y =
+                          (1 - u) * (1 - v) * circlesSrc.CTL.y +
+                          u * (1 - v) * circlesSrc.CTR.y +
+                          (1 - u) * v * circlesSrc.CBL.y +
+                          u * v * circlesSrc.CBR.y;
+                        srcPtsArr.push(x);
+                        srcPtsArr.push(y);
+                      }
+                    }
+
+                    // transform to corrected image coords using M
+                    const srcPts = cv.matFromArray(
+                      rowsT * colsT,
+                      1,
+                      cv.CV_32FC2,
+                      srcPtsArr
+                    );
+                    const dstPts = new cv.Mat();
+                    cv.perspectiveTransform(srcPts, dstPts, M);
+
+                    // prepare gray version of dstMat for intensity sampling
+                    const gray = new cv.Mat();
+                    cv.cvtColor(dstMat, gray, cv.COLOR_RGBA2GRAY);
+                    // optional blur to reduce noise
+                    cv.GaussianBlur(gray, gray, new cv.Size(3, 3), 0);
+
+                    const data = dstPts.data32F;
+                    const darkThresh = 100; // intensity <= this considered dark
+                    const requiredFraction = 0.8; // 80%
+                    // base visual radius used previously on canvas (small)
+                    const baseGridRadius = 3;
+                    // display radius scaled to corrected image and increased by 10%
+                    const displayRadius = Math.max(
+                      3,
+                      Math.round(baseGridRadius * (dstWScaled / dstW) * 1.1)
+                    );
+                    // use same radius for sampling neighborhood
+                    const localRadius = displayRadius;
+
+                    const detectedPoints = [];
+                    const darkCounts = [];
+                    const totalCounts = [];
+                    const fractions = [];
+                    for (let i = 0; i < data.length; i += 2) {
+                      const dx = Math.round(data[i]);
+                      const dy = Math.round(data[i + 1]);
+                      if (
+                        dx < 0 ||
+                        dy < 0 ||
+                        dx >= dstWScaled ||
+                        dy >= dstHScaled
+                      ) {
+                        detectedPoints.push(false);
+                        continue;
+                      }
+                      // sample circular neighborhood
+                      let darkCount = 0;
+                      let totalCount = 0;
+                      const r = localRadius;
+                      const r2 = r * r;
+                      const xmin = Math.max(0, dx - r);
+                      const xmax = Math.min(dstWScaled - 1, dx + r);
+                      const ymin = Math.max(0, dy - r);
+                      const ymax = Math.min(dstHScaled - 1, dy + r);
+                      for (let yy = ymin; yy <= ymax; yy++) {
+                        const rowPtr = gray.ucharPtr(yy);
+                        for (let xx = xmin; xx <= xmax; xx++) {
+                          const ddx = xx - dx;
+                          const ddy = yy - dy;
+                          if (ddx * ddx + ddy * ddy > r2) continue;
+                          totalCount++;
+                          const v = rowPtr[xx];
+                          if (v <= darkThresh) darkCount++;
+                        }
+                      }
+                      const frac = totalCount > 0 ? darkCount / totalCount : 0;
+                      detectedPoints.push(frac >= requiredFraction);
+                      darkCounts.push(darkCount);
+                      totalCounts.push(totalCount);
+                      fractions.push(frac);
+                    }
+
+                    // draw detections on corrected canvas and list coordinates
+                    const cctx = corrected.getContext("2d");
+                    // first draw all grid points in yellow with displayRadius
+                    cctx.fillStyle = "rgba(255,220,0,0.95)";
+                    for (let i = 0; i < data.length; i += 2) {
+                      const gx = Math.round(data[i]);
+                      const gy = Math.round(data[i + 1]);
+                      if (
+                        gx < 0 ||
+                        gy < 0 ||
+                        gx >= dstWScaled ||
+                        gy >= dstHScaled
+                      )
+                        continue;
+                      cctx.beginPath();
+                      cctx.arc(gx, gy, displayRadius, 0, Math.PI * 2);
+                      cctx.fill();
+                    }
+
+                    // then prepare overlay list and draw red markers for detected ones
+                    cctx.fillStyle = "rgba(255,0,0,0.95)";
+                    // Build a table 10x10 with dark/total counts and fraction for each cell
+                    const tableWrap = document.createElement("div");
+                    tableWrap.style.marginTop = "6px";
+                    tableWrap.style.color = "#fff";
+                    tableWrap.style.fontFamily = "monospace";
+                    const title = document.createElement("div");
+                    title.textContent =
+                      "Grid dark/total counts (dark/total, pct)";
+                    tableWrap.appendChild(title);
+                    const table = document.createElement("table");
+                    table.style.borderCollapse = "collapse";
+                    table.style.marginTop = "6px";
+                    table.style.background = "rgba(0,0,0,0.6)";
+                    table.style.color = "#fff";
+                    const rowsEl = rowsT;
+                    const colsEl = colsT;
+                    let idx = 0;
+                    for (let r = 0; r < rowsEl; r++) {
+                      const tr = document.createElement("tr");
+                      for (let c = 0; c < colsEl; c++) {
+                        const td = document.createElement("td");
+                        td.style.border = "1px solid rgba(255,255,255,0.1)";
+                        td.style.padding = "4px 6px";
+                        const dark = darkCounts[idx] || 0;
+                        const tot = totalCounts[idx] || 0;
+                        const pct =
+                          tot > 0 ? Math.round((dark / tot) * 100) : 0;
+                        td.textContent = `${dark}/${tot} (${pct}%)`;
+                        tr.appendChild(td);
+                        idx++;
+                      }
+                      table.appendChild(tr);
+                    }
+                    tableWrap.appendChild(table);
+                    corrWrap.appendChild(tableWrap);
+
+                    // draw red markers for detected ones and keep yellow background already drawn
+                    idx = 0;
+                    for (let r = 0; r < rowsT; r++) {
+                      for (let c = 0; c < colsT; c++) {
+                        const px = Math.round(dstPts.data32F[idx * 2]);
+                        const py = Math.round(dstPts.data32F[idx * 2 + 1]);
+                        if (detectedPoints[idx]) {
+                          cctx.beginPath();
+                          cctx.arc(px, py, displayRadius, 0, Math.PI * 2);
+                          cctx.fillStyle = "rgba(255,0,0,0.95)";
+                          cctx.fill();
+                          cctx.fillStyle = "rgba(255,0,0,0.95)";
+                        }
+                        idx++;
+                      }
+                    }
+
+                    // cleanup mats
+                    srcPts.delete();
+                    dstPts.delete();
+                    gray.delete();
+                  }
+                } catch (err) {
+                  console.warn("filled-circle detection failed", err);
+                }
 
                 // cleanup
                 srcTri.delete();
