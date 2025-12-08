@@ -1,76 +1,44 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Escáner QR Múltiple</ion-title>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content :fullscreen="true">
-      <div class="content-wrapper ion-padding">
-        <div class="info-section">
-          <h2>Códigos Escaneados: {{ scannedCodes.length }}</h2>
-          <p v-if="scannedCodes.length === 0" class="empty-message">
-            No hay códigos escaneados aún. Presione "Escanear QR" para comenzar.
-          </p>
-        </div>
+    <ion-content :fullscreen="true" class="ion-padding ion-text-center">
+      <div class="onboarding-container">
+        <h1>Debe vincular la aplicación al sistema</h1>
+        <p>Para eso debe escanear el QR generado.</p>
 
-        <ion-list>
-          <ion-item v-for="(code, index) in scannedCodes" :key="index">
-            <ion-label class="ion-text-wrap">
-              <p class="code-number">Código #{{ index + 1 }}</p>
-              <h3>{{ code }}</h3>
-            </ion-label>
-            <ion-button
-              slot="end"
-              fill="clear"
-              color="danger"
-              @click="removeCode(index)"
-            >
-              <ion-icon :icon="trashOutline"></ion-icon>
-            </ion-button>
-          </ion-item>
-        </ion-list>
+        <ion-button expand="block" @click="scanQr">Escanear QR</ion-button>
+        <ion-button
+          expand="block"
+          fill="outline"
+          color="danger"
+          @click="cancelAndExit"
+          >Cancelar</ion-button
+        >
       </div>
     </ion-content>
 
-    <ion-footer>
-      <ion-toolbar>
-        <div class="ion-padding">
-          <ion-button expand="block" @click="scanQR" :disabled="isScanning">
-            {{ isScanning ? "Escaneando..." : "Escanear QR" }}
-          </ion-button>
-          <ion-button
-            v-if="scannedCodes.length > 0"
-            expand="block"
-            fill="outline"
-            color="warning"
-            @click="clearCodes"
-            :disabled="isScanning"
-          >
-            Limpiar Todo ({{ scannedCodes.length }})
-          </ion-button>
-          <ion-button
-            expand="block"
-            fill="outline"
-            color="danger"
-            @click="cancelAndExit"
-            :disabled="isScanning"
-          >
-            Salir
-          </ion-button>
+    <!-- Modal para mostrar el resultado del QR -->
+    <ion-modal :is-open="isModalOpen" @didDismiss="closeModal">
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Resultado del QR</ion-title>
+          <ion-buttons slot="end">
+            <ion-button @click="closeModal">Cerrar</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <div class="modal-content">
+          <ion-icon
+            :icon="checkmarkCircleOutline"
+            color="success"
+            size="large"
+          ></ion-icon>
+          <h2>QR Escaneado exitosamente</h2>
+          <p class="qr-content">{{ qrContent }}</p>
+          <ion-button expand="block" @click="closeModal">Aceptar</ion-button>
         </div>
-      </ion-toolbar>
-    </ion-footer>
-
-    <!-- Toast para mostrar código recién escaneado -->
-    <ion-toast
-      :is-open="showToast"
-      :message="toastMessage"
-      :duration="2000"
-      position="top"
-      color="success"
-      @didDismiss="showToast = false"
-    ></ion-toast>
+      </ion-content>
+    </ion-modal>
   </ion-page>
 </template>
 
@@ -79,16 +47,13 @@ import {
   IonPage,
   IonContent,
   IonButton,
+  IonModal,
   IonHeader,
   IonToolbar,
   IonTitle,
-  alertController,
-  IonFooter,
-  IonList,
-  IonItem,
-  IonLabel,
+  IonButtons,
   IonIcon,
-  IonToast,
+  alertController,
 } from "@ionic/vue";
 import { App } from "@capacitor/app";
 import { Device } from "@capacitor/device";
@@ -96,144 +61,94 @@ import {
   CapacitorBarcodeScanner,
   CapacitorBarcodeScannerTypeHint,
 } from "@capacitor/barcode-scanner";
-import { trashOutline } from "ionicons/icons";
+import { checkmarkCircleOutline } from "ionicons/icons";
+import axios from "axios";
+import { basedeURL } from "../globalService";
 
 export default {
-  name: "QrScannerMultiple",
+  name: "QrScannerOnboarding",
   components: {
     IonPage,
     IonContent,
     IonButton,
+    IonModal,
     IonHeader,
     IonToolbar,
     IonTitle,
-    IonFooter,
-    IonList,
-    IonItem,
-    IonLabel,
+    IonButtons,
     IonIcon,
-    IonToast,
   },
   data() {
     return {
-      scannedCodes: [],
-      isScanning: false,
-      showToast: false,
-      toastMessage: "",
-      trashOutline,
+      isModalOpen: false,
+      qrContent: "",
+      checkmarkCircleOutline,
     };
   },
   methods: {
-    async scanQR() {
-      if (this.isScanning) return;
-
+    async scanQr() {
       try {
-        this.isScanning = true;
-
         const result = await CapacitorBarcodeScanner.scanBarcode({
           hint: CapacitorBarcodeScannerTypeHint.QR_CODE,
-          scanInstructions: "Escanee un código QR",
+          scanInstructions: "Escanee el código QR",
+          scanButton: false,
         });
 
-        this.isScanning = false;
-
+        // Si el resultado tiene contenido, mostrarlo en el modal
         if (result.ScanResult) {
-          // Verificar si el código ya existe
-          const codeExists = this.scannedCodes.includes(result.ScanResult);
-
-          if (codeExists) {
-            // Mostrar alerta de código duplicado
-            const alert = await alertController.create({
-              header: "Código Duplicado",
-              message: "Este código QR ya ha sido escaneado.",
-              buttons: [
-                {
-                  text: "OK",
-                  role: "cancel",
-                },
-                {
-                  text: "Escanear Otro",
-                  handler: () => {
-                    // Escanear otro inmediatamente
-                    setTimeout(() => this.scanQR(), 300);
-                  },
-                },
-              ],
-            });
-            await alert.present();
-          } else {
-            // Agregar el nuevo código
-            this.scannedCodes.unshift(result.ScanResult);
-
-            // Mostrar toast de éxito
-            this.toastMessage = `✓ Código #${this.scannedCodes.length} escaneado`;
-            this.showToast = true;
-
-            // Preguntar si quiere escanear otro
-            const alert = await alertController.create({
-              header: "¡Código Escaneado!",
-              message: `Total de códigos: ${this.scannedCodes.length}`,
-              buttons: [
-                {
-                  text: "Terminar",
-                  role: "cancel",
-                },
-                {
-                  text: "Escanear Otro",
-                  handler: () => {
-                    // Escanear otro inmediatamente
-                    setTimeout(() => this.scanQR(), 300);
-                  },
-                },
-              ],
-            });
-            await alert.present();
-          }
+          this.qrContent = result.ScanResult;
+          this.isModalOpen = true;
         }
       } catch (error) {
         console.error("Error al escanear QR:", error);
-        this.isScanning = false;
 
         const alert = await alertController.create({
           header: "Error",
-          message: "Ocurrió un error al escanear el QR.",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Ocurrió un error al escanear el QR. Por favor, intente nuevamente.",
           buttons: ["OK"],
         });
         await alert.present();
       }
     },
+    async closeModal() {
+      this.isModalOpen = false;
+      if (this.qrContent) {
+        const parts = this.qrContent.split("/");
+        if (parts.length === 2 && parts[0] && parts[1]) {
+          const frontendIp = parts[0];
+          const backendIp = parts[1];
 
-    removeCode(index) {
-      this.scannedCodes.splice(index, 1);
+          localStorage.setItem("frontend_ip", frontendIp);
+          localStorage.setItem("backend_ip", backendIp);
+          localStorage.setItem("appLinked", "true");
+
+          // Re-configure axios baseURL with the new IP
+          axios.defaults.baseURL = basedeURL();
+
+          // Redirect to login page
+          this.$router.replace("/login");
+        } else {
+          // Show error alert for invalid QR format
+          const alert = await alertController.create({
+            header: "Error de formato",
+            message:
+              'El formato del código QR no es válido. Debe ser "ipfrontend:puerto/ipBackend:puerto".',
+            buttons: ["OK"],
+          });
+          await alert.present();
+        }
+      }
     },
-
-    async clearCodes() {
-      const alert = await alertController.create({
-        header: "Confirmar",
-        message: `¿Desea eliminar todos los ${this.scannedCodes.length} códigos escaneados?`,
-        buttons: [
-          {
-            text: "Cancelar",
-            role: "cancel",
-          },
-          {
-            text: "Eliminar Todo",
-            role: "destructive",
-            handler: () => {
-              this.scannedCodes = [];
-            },
-          },
-        ],
-      });
-      await alert.present();
-    },
-
     async cancelAndExit() {
       const info = await Device.getInfo();
       if (info.platform !== "web") {
         App.exitApp();
       } else {
         console.log("Running in web, cannot exit app.");
+        // Optionally, redirect to login or another page for web
         this.$router.replace("/login");
       }
     },
@@ -242,48 +157,60 @@ export default {
 </script>
 
 <style scoped>
-.content-wrapper {
-  height: 100%;
+.onboarding-container {
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  max-width: 400px;
+  margin: 0 auto;
 }
 
-.info-section {
-  padding: 20px 0;
-  text-align: center;
-}
-
-.info-section h2 {
-  font-size: 1.5em;
+h1 {
+  font-size: 1.8em;
   margin-bottom: 10px;
-  color: var(--ion-color-primary);
 }
 
-.empty-message {
-  color: var(--ion-color-medium);
-  font-size: 0.95em;
-  padding: 0 20px;
+p {
+  font-size: 1.1em;
+  margin-bottom: 30px;
+  color: #666;
 }
 
-.code-number {
-  font-size: 0.85em;
-  color: var(--ion-color-medium);
-  margin-bottom: 5px;
+ion-button {
+  margin-top: 15px;
+  height: 48px;
+  font-size: 1.1em;
 }
 
-ion-list {
-  flex: 1;
-  overflow-y: auto;
+.modal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
 }
 
-ion-item h3 {
-  font-family: monospace;
-  font-size: 0.9em;
+.modal-content ion-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+}
+
+.modal-content h2 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.qr-content {
+  background-color: #f5f5f5;
+  padding: 15px;
+  border-radius: 8px;
   word-break: break-all;
-}
-
-ion-footer ion-button {
-  margin-top: 5px;
-  margin-bottom: 5px;
+  margin-bottom: 30px;
+  font-family: monospace;
+  font-size: 0.95em;
+  max-width: 100%;
 }
 </style>

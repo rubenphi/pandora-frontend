@@ -1,4 +1,23 @@
+import { Capacitor } from "@capacitor/core";
 import axios from "axios";
+
+export function basedeURL() {
+  if (Capacitor.isNativePlatform()) {
+    // On native, if the IP is not set, we cannot connect.
+    return `http://192.168.49.189:3000/`;
+  }
+
+  // Web implementation
+  var puerto = "3000";
+  return (
+    window.location.protocol +
+    "//" +
+    window.location.host.split(":")[0] +
+    ":" +
+    puerto +
+    "/"
+  );
+}
 
 export function tokenHeader() {
   axios.defaults.headers.common["Authorization"] =
@@ -161,17 +180,6 @@ export function numeroOrdinal(index, ordinal) {
     return index + 1;
   }
 }
-export function basedeURL() {
-  var puerto = "3000";
-  return (
-    window.location.protocol +
-    "//" +
-    window.location.host.split(":")[0] +
-    ":" +
-    puerto +
-    "/"
-  );
-}
 
 export function booltoInt(data) {
   if (data == true) {
@@ -194,8 +202,6 @@ export function adminOprofesor() {
     return false;
   }
 }
-
-
 
 export function adminOdirectivo() {
   tokenHeader();
@@ -235,12 +241,12 @@ export async function QuizSinNotas(cursoId, usuario, onlyGroupQuizzes = false) {
       },
     });
     const quizzes = response.data || [];
-    
+
     // Filter only group quizzes if requested
     if (onlyGroupQuizzes) {
       return quizzes.filter((quiz) => quiz.quizType === "group");
     }
-    
+
     return quizzes;
   } catch (error) {
     console.error("Error fetching pending quizzes:", error);

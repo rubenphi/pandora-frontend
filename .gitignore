@@ -30,5 +30,15 @@ npm-debug.log*
 /plugins
 /www
 /public/colabora.apk
-android/
 build/
+
+# Android specific ignores
+android/.gradle/
+android/build/
+android/local.properties
+android/.idea/
+android/*.iml
+android/app/build/outputs/
+android/capacitor-cordova-android-plugins/build/
+android/capacitor-cordova-android-plugins/src/main/assets/capacitor.config.json
+android/app/src/main/assets/public/

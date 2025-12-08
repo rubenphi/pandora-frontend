@@ -158,7 +158,7 @@
 <script>
 import { ref } from "vue";
 import axios from "axios";
-import { tokenHeader, usuarioGet } from "../globalService";
+import { basedeURL, tokenHeader, usuarioGet } from "../globalService";
 import {
   IonPage,
   IonHeader,
@@ -215,6 +215,9 @@ export default {
           error.value.estatus = 1;
           error.value.data = "Debe ingresar usuario y contraseña";
         } else {
+          // Limpiar errores previos
+          error.value.estatus = 0;
+          error.value.data = "";
           await axios
             .post("/auth/login", login.value, {
               headers: {
@@ -222,6 +225,10 @@ export default {
               },
             })
             .then(async (response) => {
+              console.log("La Url es:", basedeURL());
+
+              console.log("La respuesta es", response);
+
               if (response.data.userLoged.accessToken == undefined) {
                 error.value.estatus = 1;
                 error.value.data = "Error al iniciar sesión";
@@ -255,14 +262,18 @@ export default {
                     JSON.stringify(cursosUsuario)
                   );
                   const currentYear = new Date().getFullYear();
-                  const coursesForCurrentYear = cursosUsuario.filter(c => c.year == currentYear);
+                  const coursesForCurrentYear = cursosUsuario.filter(
+                    (c) => c.year == currentYear
+                  );
 
                   if (coursesForCurrentYear.length > 0) {
                     // If there are courses for the current year, use the current year.
                     localStorage.setItem("year", JSON.stringify(currentYear));
                   } else if (cursosUsuario.length > 0) {
                     // Otherwise, use the most recent year from the user's courses.
-                    const latestYear = cursosUsuario.sort((a, b) => b.year - a.year)[0].year;
+                    const latestYear = cursosUsuario.sort(
+                      (a, b) => b.year - a.year
+                    )[0].year;
                     localStorage.setItem("year", JSON.stringify(latestYear));
                   } else {
                     // If no courses at all, default to the current year.
@@ -281,6 +292,21 @@ export default {
                 });
 
               router.push("/inicio");
+            })
+            .catch((err) => {
+              error.value.estatus = 1;
+              if (err.message === "Network Error") {
+                const url = basedeURL();
+                error.value.data = `Error de Red. No se pudo conectar a: ${
+                  url || "(URL no configurada)"
+                }. Verifique la IP del QR y la conexión de red.`;
+              } else if (err.response) {
+                error.value.data = `Error: ${err.response.status} - Credenciales incorrectas o error del servidor.`;
+              } else {
+                error.value.data =
+                  "Ocurrió un error inesperado durante el login.";
+              }
+              console.error("Error en login:", err);
             });
         }
       },
