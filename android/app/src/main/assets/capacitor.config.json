@@ -2,5 +2,12 @@
 	"appId": "io.ionic.starter",
 	"appName": "Pandora",
 	"webDir": "dist",
-	"bundledWebRuntime": false
+	"bundledWebRuntime": false,
+	"android": {
+		"allowMixedContent": true
+	},
+	"server": {
+		"androidScheme": "http",
+		"cleartext": true
+	}
 }
