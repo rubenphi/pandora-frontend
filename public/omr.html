@@ -184,6 +184,242 @@
 
         let clahe = new cv.CLAHE(2.0, new cv.Size(8, 8));
         let captured = false;
+        let matrixTemplate = null;
+        // user-supplied circle template (percentages relative to template rectangle)
+        // values provided: percent_x and percent_y (0-100)
+        let circleTemplate = {
+          rectangle: {
+            top_left: { x: 5.597393, y: 5.0 },
+            top_right: { x: 114.357054, y: 5.0 },
+            bottom_left: { x: 5.597393, y: 74.089405 },
+            bottom_right: { x: 114.357054, y: 74.089401 },
+            width: 108.759661,
+            height: 69.089401,
+          },
+          circles: {
+            CTL: { percent_x: 8.05, percent_y: 7.9 },
+            CTR: { percent_x: 30.06, percent_y: 7.9 },
+            CBL: { percent_x: 8.05, percent_y: 42.58 },
+            CBR: { percent_x: 30.06, percent_y: 42.58 },
+          },
+        };
+        // try to fetch the SVG template with matrix definition (matrizCode.txt)
+        fetch("matrizCode.txt")
+          .then((r) => r.text())
+          .then((txt) => {
+            try {
+              // parse viewBox if present
+              let vbMatch = txt.match(
+                /viewBox\s*=\s*"([\d.\-]+)\s+([\d.\-]+)\s+([\d.\-]+)\s+([\d.\-]+)"/i
+              );
+              let vw = 1,
+                vh = 1;
+              if (vbMatch) {
+                vw = parseFloat(vbMatch[3]);
+                vh = parseFloat(vbMatch[4]);
+              } else {
+                // fallback: try width/height
+                let wMatch = txt.match(/width\s*=\s*"([\d.]+)mm"/i);
+                let hMatch = txt.match(/height\s*=\s*"([\d.]+)mm"/i);
+                if (wMatch && hMatch) {
+                  vw = parseFloat(wMatch[1]);
+                  vh = parseFloat(hMatch[1]);
+                }
+              }
+
+              const points = [];
+              const ellRe =
+                /<ellipse[^>]*cx\s*=\s*"([\d.\-]+)"[^>]*cy\s*=\s*"([\d.\-]+)"/gi;
+              let m;
+              while ((m = ellRe.exec(txt))) {
+                const cx = parseFloat(m[1]);
+                const cy = parseFloat(m[2]);
+                points.push({ u: cx / vw, v: cy / vh, cx, cy });
+              }
+
+              // parse marker groups: transform="translate(x,y)" plus inner rects
+              const groupRe =
+                /<g[^>]*transform\s*=\s*"translate\(([\d.\-]+)\s*,\s*([\d.\-]+)\)"[^>]*>([\s\S]*?)<\/g>/gi;
+              const rectRe =
+                /<rect[^>]*x\s*=\s*"([\d.\-]+)"[^>]*y\s*=\s*"([\d.\-]+)"[^>]*width\s*=\s*"([\d.\-]+)"[^>]*height\s*=\s*"([\d.\-]+)"/i;
+              const markerGroups = [];
+              while ((m = groupRe.exec(txt))) {
+                const gx = parseFloat(m[1]);
+                const gy = parseFloat(m[2]);
+                const inner = m[3];
+                const r = rectRe.exec(inner);
+                if (r) {
+                  const rx = parseFloat(r[1]);
+                  const ry = parseFloat(r[2]);
+                  const rw = parseFloat(r[3]);
+                  const rh = parseFloat(r[4]);
+                  const cx = gx + rx + rw / 2;
+                  const cy = gy + ry + rh / 2;
+                  markerGroups.push({ cx, cy, gx, gy });
+                }
+              }
+
+              let templateMarkers = null;
+              if (markerGroups.length >= 6) {
+                const sortedByY = markerGroups
+                  .slice()
+                  .sort((a, b) => a.cy - b.cy);
+                const topCandidates = sortedByY
+                  .slice(0, 3)
+                  .sort((a, b) => a.cx - b.cx);
+                const bottomCandidates = sortedByY
+                  .slice(-3)
+                  .sort((a, b) => a.cx - b.cx);
+                templateMarkers = [
+                  topCandidates[0],
+                  topCandidates[1],
+                  topCandidates[2],
+                  bottomCandidates[0],
+                  bottomCandidates[1],
+                  bottomCandidates[2],
+                ];
+              }
+
+              if (points.length > 0) {
+                let umin = Math.min(...points.map((p) => p.u));
+                let umax = Math.max(...points.map((p) => p.u));
+                let vmin = Math.min(...points.map((p) => p.v));
+                let vmax = Math.max(...points.map((p) => p.v));
+                matrixTemplate = {
+                  vw,
+                  vh,
+                  points,
+                  umin,
+                  umax,
+                  vmin,
+                  vmax,
+                  templateMarkers,
+                };
+                console.log("matrixTemplate loaded: ", matrixTemplate);
+
+                if (templateMarkers && templateMarkers.length === 6) {
+                  // compute corner weights for CTL,CTR,CBL,CBR relative to the 6 template markers
+                  function computeWeightsForPoint(px, py, markers) {
+                    const m6 = markers[5];
+                    const B = Array.from({ length: 5 }, () => [0, 0]);
+                    for (let i = 0; i < 5; i++) {
+                      B[i][0] = markers[i].cx - m6.cx;
+                      B[i][1] = markers[i].cy - m6.cy;
+                    }
+                    const y = [px - m6.cx, py - m6.cy];
+                    const BtB = Array.from({ length: 5 }, () =>
+                      Array(5).fill(0)
+                    );
+                    const BtY = Array(5).fill(0);
+                    for (let i = 0; i < 5; i++) {
+                      for (let j = 0; j < 5; j++) {
+                        BtB[i][j] += B[i][0] * B[j][0] + B[i][1] * B[j][1];
+                      }
+                      BtY[i] += B[i][0] * y[0] + B[i][1] * y[1];
+                    }
+                    const N = 5;
+                    const A = Array.from({ length: N }, (_, r) =>
+                      BtB[r].slice()
+                    );
+                    for (let r = 0; r < N; r++) A[r].push(BtY[r]);
+                    for (let i = 0; i < N; i++) {
+                      let maxRow = i;
+                      for (let k = i + 1; k < N; k++) {
+                        if (Math.abs(A[k][i]) > Math.abs(A[maxRow][i]))
+                          maxRow = k;
+                      }
+                      if (Math.abs(A[maxRow][i]) < 1e-9) continue;
+                      const tmp = A[i];
+                      A[i] = A[maxRow];
+                      A[maxRow] = tmp;
+                      const diag = A[i][i];
+                      for (let j = i; j <= N; j++) A[i][j] /= diag;
+                      for (let r = 0; r < N; r++) {
+                        if (r === i) continue;
+                        const factor = A[r][i];
+                        if (Math.abs(factor) < 1e-12) continue;
+                        for (let c = i; c <= N; c++)
+                          A[r][c] -= factor * A[i][c];
+                      }
+                    }
+                    const w5 = Array(N).fill(0);
+                    for (let i = 0; i < N; i++) w5[i] = A[i][N];
+                    const w = [];
+                    let sum5 = 0;
+                    for (let i = 0; i < 5; i++) {
+                      w.push(w5[i]);
+                      sum5 += w5[i];
+                    }
+                    w.push(1 - sum5);
+                    return w;
+                  }
+
+                  const corners = {
+                    CTL: null,
+                    CTR: null,
+                    CBL: null,
+                    CBR: null,
+                  };
+                  if (points.length >= 4) {
+                    const midU =
+                      (Math.min(...points.map((p) => p.u)) +
+                        Math.max(...points.map((p) => p.u))) /
+                      2;
+                    const left = points
+                      .filter((p) => p.u <= midU)
+                      .sort((a, b) => a.v - b.v);
+                    const right = points
+                      .filter((p) => p.u > midU)
+                      .sort((a, b) => a.v - b.v);
+                    if (left.length >= 2 && right.length >= 2) {
+                      corners.CTL = left[0];
+                      corners.CBL = left[left.length - 1];
+                      corners.CTR = right[0];
+                      corners.CBR = right[right.length - 1];
+                    } else {
+                      const minU = points.reduce((a, b) => (a.u < b.u ? a : b));
+                      const maxU = points.reduce((a, b) => (a.u > b.u ? a : b));
+                      const minV = points.reduce((a, b) => (a.v < b.v ? a : b));
+                      const maxV = points.reduce((a, b) => (a.v > b.v ? a : b));
+                      corners.CTL = minU;
+                      corners.CBR = maxU;
+                      corners.CBL = maxV;
+                      corners.CTR = minV;
+                    }
+                  }
+
+                  const cornerWeights = {};
+                  try {
+                    const markerCoords = templateMarkers.map((m) => ({
+                      cx: m.cx,
+                      cy: m.cy,
+                    }));
+                    for (const key of ["CTL", "CTR", "CBL", "CBR"]) {
+                      const cp = corners[key];
+                      if (cp) {
+                        const px = cp.u * vw;
+                        const py = cp.v * vh;
+                        cornerWeights[key] = computeWeightsForPoint(
+                          px,
+                          py,
+                          markerCoords
+                        );
+                      }
+                    }
+                    matrixTemplate.cornerWeights = cornerWeights;
+                    console.log("computed corner weights", cornerWeights);
+                  } catch (err) {
+                    console.warn("corner weight computation failed", err);
+                  }
+                }
+              }
+            } catch (err) {
+              console.warn("Failed to parse matrizCode.txt", err);
+            }
+          })
+          .catch(() => {
+            /* ignore missing template */
+          });
         let debugMode = false;
         let debugInfo = null;
 
@@ -603,6 +839,154 @@
               /* ignore debug drawing errors */
             }
           }
+
+          // Draw code matrix grid (10x10) when we have the 6 markers labeled
+          (function drawCodeMatrixIfPresent() {
+            try {
+              // need TL, TM, TR, BL, BM, BR
+              const needed = ["TL", "TM", "TR", "BL", "BM", "BR"];
+              const labelMap = {};
+              for (const nm of normalMarkers) {
+                if (nm && nm.label) labelMap[nm.label] = { x: nm.cx, y: nm.cy };
+              }
+              const hasAll = needed.every((l) => !!labelMap[l]);
+              if (!hasAll) return;
+
+              // compute corners: prefer using cornerWeights from template (relative to 6 markers)
+              const detectedOrder = ["TL", "TM", "TR", "BL", "BM", "BR"].map(
+                (l) => labelMap[l]
+              );
+
+              let TL = labelMap["TL"];
+              let TR = labelMap["TR"];
+              let BL = labelMap["BL"];
+              let BR = labelMap["BR"];
+
+              if (
+                matrixTemplate &&
+                matrixTemplate.cornerWeights &&
+                Object.keys(matrixTemplate.cornerWeights).length >= 4
+              ) {
+                function applyWeights(w) {
+                  let x = 0,
+                    y = 0;
+                  for (let i = 0; i < 6; i++) {
+                    const m = detectedOrder[i];
+                    if (!m) continue;
+                    const wi = w[i] || 0;
+                    x += wi * m.x;
+                    y += wi * m.y;
+                  }
+                  return { x, y };
+                }
+                try {
+                  const cw = matrixTemplate.cornerWeights;
+                  if (cw.CTL) TL = applyWeights(cw.CTL);
+                  if (cw.CTR) TR = applyWeights(cw.CTR);
+                  if (cw.CBL) BL = applyWeights(cw.CBL);
+                  if (cw.CBR) BR = applyWeights(cw.CBR);
+                } catch (err) {
+                  console.warn("failed to apply corner weights", err);
+                }
+              }
+
+              // draw a light polygon showing region
+              ctx.save();
+              ctx.strokeStyle = "rgba(255,255,0,0.8)";
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.moveTo(TL.x, TL.y);
+              ctx.lineTo(TR.x, TR.y);
+              ctx.lineTo(BR.x, BR.y);
+              ctx.lineTo(BL.x, BL.y);
+              ctx.closePath();
+              ctx.stroke();
+
+              // bilinear interpolation across the quad for a 10x10 grid
+              const rows = 10,
+                cols = 10;
+
+              // determine template extents (u/v in [0,1]) if available
+              let umin = 0,
+                umax = 1,
+                vmin = 0,
+                vmax = 1;
+              if (
+                matrixTemplate &&
+                matrixTemplate.points &&
+                matrixTemplate.points.length > 0
+              ) {
+                umin = matrixTemplate.umin;
+                umax = matrixTemplate.umax;
+                vmin = matrixTemplate.vmin;
+                vmax = matrixTemplate.vmax;
+              }
+
+              // If user supplied only 4 circle percents, draw those 4 points and return
+              if (
+                typeof circleTemplate !== "undefined" &&
+                circleTemplate &&
+                circleTemplate.circles
+              ) {
+                try {
+                  for (const key of Object.keys(circleTemplate.circles)) {
+                    const pct = circleTemplate.circles[key];
+                    const u = (pct.percent_x || 0) / 100.0;
+                    const v = (pct.percent_y || 0) / 100.0;
+                    const x =
+                      (1 - u) * (1 - v) * TL.x +
+                      u * (1 - v) * TR.x +
+                      (1 - u) * v * BL.x +
+                      u * v * BR.x;
+                    const y =
+                      (1 - u) * (1 - v) * TL.y +
+                      u * (1 - v) * TR.y +
+                      (1 - u) * v * BL.y +
+                      u * v * BR.y;
+                    ctx.beginPath();
+                    ctx.fillStyle = "rgba(0,255,128,0.95)";
+                    ctx.arc(Math.round(x), Math.round(y), 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = "#000";
+                    ctx.font = "14px monospace";
+                    ctx.fillText(key, Math.round(x) + 8, Math.round(y) - 8);
+                  }
+                } catch (err) {
+                  console.warn("failed drawing circleTemplate points", err);
+                }
+              } else {
+                for (let r = 0; r < rows; r++) {
+                  const v =
+                    rows === 1 ? vmin : vmin + (vmax - vmin) * (r / (rows - 1));
+                  for (let c = 0; c < cols; c++) {
+                    const u =
+                      cols === 1
+                        ? umin
+                        : umin + (umax - umin) * (c / (cols - 1));
+                    // bilinear: P(u,v) = (1-u)(1-v)*TL + u(1-v)*TR + (1-u)v*BL + u v * BR
+                    const x =
+                      (1 - u) * (1 - v) * TL.x +
+                      u * (1 - v) * TR.x +
+                      (1 - u) * v * BL.x +
+                      u * v * BR.x;
+                    const y =
+                      (1 - u) * (1 - v) * TL.y +
+                      u * (1 - v) * TR.y +
+                      (1 - u) * v * BL.y +
+                      u * v * BR.y;
+                    // draw point
+                    ctx.beginPath();
+                    ctx.fillStyle = "rgba(255,220,0,0.95)";
+                    ctx.arc(Math.round(x), Math.round(y), 3, 0, Math.PI * 2);
+                    ctx.fill();
+                  }
+                }
+              }
+              ctx.restore();
+            } catch (err) {
+              /* ignore drawing errors */
+            }
+          })();
 
           // If all 6 markers detected, capture last frame (with marks) once
           let totalDetected = markerCount;
