@@ -198,9 +198,9 @@
           },
           circles: {
             CTL: { percent_x: 8.05, percent_y: 7.9 },
-            CTR: { percent_x: 30.06, percent_y: 7.9 },
-            CBL: { percent_x: 8.05, percent_y: 42.58 },
-            CBR: { percent_x: 30.06, percent_y: 42.58 },
+            CTR: { percent_x: 31, percent_y: 7.9 },
+            CBL: { percent_x: 8.05, percent_y: 43 },
+            CBR: { percent_x: 31, percent_y: 43 },
           },
         };
         // try to fetch the SVG template with matrix definition (matrizCode.txt)
@@ -929,8 +929,12 @@
                 circleTemplate.circles
               ) {
                 try {
-                  for (const key of Object.keys(circleTemplate.circles)) {
+                  // compute the four circle corners in image coordinates
+                  const cKeys = ["CTL", "CTR", "CBL", "CBR"];
+                  const circlesPos = {};
+                  for (const key of cKeys) {
                     const pct = circleTemplate.circles[key];
+                    if (!pct) continue;
                     const u = (pct.percent_x || 0) / 100.0;
                     const v = (pct.percent_y || 0) / 100.0;
                     const x =
@@ -943,13 +947,63 @@
                       u * (1 - v) * TR.y +
                       (1 - u) * v * BL.y +
                       u * v * BR.y;
+                    circlesPos[key] = { x, y };
+                  }
+
+                  // only draw the full 10x10 grid inside the area defined by CTL,CTR,CBL,CBR
+                  if (
+                    circlesPos.CTL &&
+                    circlesPos.CTR &&
+                    circlesPos.CBL &&
+                    circlesPos.CBR
+                  ) {
+                    const rowsT = 10,
+                      colsT = 10;
+                    for (let r = 0; r < rowsT; r++) {
+                      const v = rowsT === 1 ? 0 : r / (rowsT - 1);
+                      for (let c = 0; c < colsT; c++) {
+                        const u = colsT === 1 ? 0 : c / (colsT - 1);
+                        const x =
+                          (1 - u) * (1 - v) * circlesPos.CTL.x +
+                          u * (1 - v) * circlesPos.CTR.x +
+                          (1 - u) * v * circlesPos.CBL.x +
+                          u * v * circlesPos.CBR.x;
+                        const y =
+                          (1 - u) * (1 - v) * circlesPos.CTL.y +
+                          u * (1 - v) * circlesPos.CTR.y +
+                          (1 - u) * v * circlesPos.CBL.y +
+                          u * v * circlesPos.CBR.y;
+                        ctx.beginPath();
+                        ctx.fillStyle = "rgba(255,220,0,0.95)";
+                        ctx.arc(
+                          Math.round(x),
+                          Math.round(y),
+                          3,
+                          0,
+                          Math.PI * 2
+                        );
+                        ctx.fill();
+                      }
+                    }
+                  }
+
+                  // highlight the 4 template circles on top
+                  for (const key of Object.keys(circleTemplate.circles)) {
+                    const p = circlesPos[key];
+                    if (!p) continue;
                     ctx.beginPath();
                     ctx.fillStyle = "rgba(0,255,128,0.95)";
-                    ctx.arc(Math.round(x), Math.round(y), 6, 0, Math.PI * 2);
+                    ctx.arc(
+                      Math.round(p.x),
+                      Math.round(p.y),
+                      6,
+                      0,
+                      Math.PI * 2
+                    );
                     ctx.fill();
                     ctx.fillStyle = "#000";
                     ctx.font = "14px monospace";
-                    ctx.fillText(key, Math.round(x) + 8, Math.round(y) - 8);
+                    ctx.fillText(key, Math.round(p.x) + 8, Math.round(p.y) - 8);
                   }
                 } catch (err) {
                   console.warn("failed drawing circleTemplate points", err);
