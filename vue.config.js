@@ -5,7 +5,14 @@ module.exports = {
   
   publicPath:  '/'
 ,
-    configureWebpack: {         
+    configureWebpack: {
+      resolve: {
+        fallback: {
+          "fs": false,
+          "path": false,
+          "crypto": false
+        }
+      },
       devServer: {
         allowedHosts: 'all',
         client: {

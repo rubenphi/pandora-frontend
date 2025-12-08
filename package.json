@@ -12,7 +12,6 @@
     "ionic:serve": "vue-cli-service serve"
   },
   "dependencies": {
-    "@capacitor-community/barcode-scanner": "^4.0.1",
     "@capacitor/android": "^7.4.4",
     "@capacitor/app": "^7.1.0",
     "@capacitor/barcode-scanner": "^2.2.0",
@@ -24,6 +23,7 @@
     "@ionic/cli": "^7.2.0",
     "@ionic/vue": "^6.0.0",
     "@ionic/vue-router": "^6.0.0",
+    "@techstark/opencv-js": "^4.12.0-release.1",
     "@tiptap/extension-underline": "^2.0.0-beta.22",
     "@tiptap/starter-kit": "^2.0.0-beta.171",
     "@tiptap/vue-3": "^2.0.0-beta.88",
