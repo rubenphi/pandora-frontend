@@ -171,6 +171,11 @@
         let cleanCtx = cleanCanvas.getContext("2d");
         // last clean frame dataURL (updated each frame before any overlays are drawn)
         let lastCleanDataURL = null;
+        // offscreen processed canvas (alto contraste / binaria) without overlays
+        let procCanvas = document.createElement("canvas");
+        procCanvas.width = width;
+        procCanvas.height = height;
+        let lastProcessedDataURL = null;
 
         let src = new cv.Mat(height, width, cv.CV_8UC4);
         let gray = new cv.Mat(height, width, cv.CV_8UC1);
@@ -469,6 +474,17 @@
 
           let dst = new cv.Mat();
           cv.cvtColor(bw, dst, cv.COLOR_GRAY2RGBA);
+          // render processed (high-contrast / binary -> RGBA) image to offscreen canvas
+          try {
+            cv.imshow(procCanvas, dst);
+            try {
+              lastProcessedDataURL = procCanvas.toDataURL("image/png");
+            } catch (e) {
+              // toDataURL may fail in some environments; ignore
+            }
+          } catch (e) {
+            // if cv.imshow fails for offscreen canvas, ignore and continue
+          }
 
           // Detect normal markers (outer rect with inner rect), compute centroids and label regions
           let markerCount = 0;
@@ -1076,9 +1092,11 @@
             // prepare final lists
             let finalNormals = normalMarkers.slice();
 
-            // capture canvas image
-            // prefer the clean frame captured before overlays
-            const dataURL = lastCleanDataURL || canvas.toDataURL("image/png");
+            // capture image: prefer the processed (alto contraste) frame without overlays
+            const dataURL =
+              lastProcessedDataURL ||
+              lastCleanDataURL ||
+              canvas.toDataURL("image/png");
 
             // determine rotation so the side with 3 markers becomes the top
             // Try 0/90/180/270 and pick the angle where the row with 3
@@ -1486,7 +1504,7 @@
 
                     const data = dstPts.data32F;
                     const darkThresh = 100; // intensity <= this considered dark
-                    const requiredFraction = 0.8; // 80%
+                    const requiredFraction = 0.5;
                     // base visual radius used previously on canvas (small)
                     const baseGridRadius = 3;
                     // display radius scaled to corrected image and increased by 10%
@@ -1596,6 +1614,52 @@
                     }
                     tableWrap.appendChild(table);
                     corrWrap.appendChild(tableWrap);
+
+                    // compute the 10-digit code based on detected red points
+                    try {
+                      const codeDigits = [];
+                      for (let c = 0; c < colsT; c++) {
+                        let bestRow = -1;
+                        let bestFrac = -1;
+                        for (let r = 0; r < rowsT; r++) {
+                          const i = r * colsT + c;
+                          const frac = fractions[i] || 0;
+                          if (detectedPoints[i]) {
+                            if (frac > bestFrac) {
+                              bestFrac = frac;
+                              bestRow = r;
+                            }
+                          }
+                        }
+                        // if no red point or red point is on last row (row 10), digit = 0
+                        let digit = 0;
+                        if (bestRow !== -1 && bestRow !== rowsT - 1) {
+                          digit = bestRow + 1; // rows are 0-based -> digit = rowIndex+1
+                        }
+                        codeDigits.push(digit);
+                      }
+
+                      const codeWrap = document.createElement("div");
+                      codeWrap.style.marginTop = "8px";
+                      codeWrap.style.color = "#fff";
+                      codeWrap.style.fontFamily = "monospace";
+
+                      const codeTitle = document.createElement("div");
+                      codeTitle.textContent = "Código:";
+                      codeTitle.style.fontWeight = "bold";
+                      codeTitle.style.marginBottom = "6px";
+                      codeWrap.appendChild(codeTitle);
+
+                      const codeValue = document.createElement("div");
+                      codeValue.textContent = codeDigits.join("");
+                      codeValue.style.fontSize = "20px";
+                      codeValue.style.letterSpacing = "4px";
+                      codeWrap.appendChild(codeValue);
+
+                      corrWrap.appendChild(codeWrap);
+                    } catch (err) {
+                      console.warn("failed to compute code", err);
+                    }
 
                     // draw red markers for detected ones and keep yellow background already drawn
                     idx = 0;
