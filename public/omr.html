@@ -219,10 +219,28 @@
           }
 
           const minArea = Math.max(100, width * height * 0.0005);
-          const labelsGrid = [
-            ["TL", "TM", "TR"],
-            ["BL", "BM", "BRE"],
-          ];
+
+          // Expected layout now: top row has 4 markers (TL, TM, E, TR)
+          // bottom row has 3 markers (BL, BM, BR). We'll assign each detected
+          // centroid to the nearest expected position to produce labels.
+          const topLabels = ["TL", "TM", "E", "TR"];
+          const bottomLabels = ["BL", "BM", "BR"];
+          const expectedPositions = [];
+          for (let i = 0; i < 4; i++)
+            expectedPositions.push({
+              label: topLabels[i],
+              x: ((i + 0.5) * width) / 4,
+              y: height * 0.25,
+            });
+          for (let i = 0; i < 3; i++)
+            expectedPositions.push({
+              label: bottomLabels[i],
+              x: ((i + 0.5) * width) / 3,
+              y: height * 0.75,
+            });
+
+          // keep track of assigned expected positions
+          const assigned = {};
 
           for (let i = 0; i < contours.size(); ++i) {
             let cnt = contours.get(i);
@@ -259,16 +277,42 @@
                       cy = r.y + r.height / 2;
                     }
 
-                    // map to grid label
-                    let col = Math.min(
-                      2,
-                      Math.max(0, Math.floor(cx / (width / 3)))
-                    );
-                    let row = Math.min(
-                      1,
-                      Math.max(0, Math.floor(cy / (height / 2)))
-                    );
-                    let regionLabel = labelsGrid[row][col];
+                    // find nearest expected position
+                    let best = null;
+                    let bestDist = Infinity;
+                    for (let k = 0; k < expectedPositions.length; k++) {
+                      const ep = expectedPositions[k];
+                      const dx = ep.x - cx,
+                        dy = ep.y - cy;
+                      const d = Math.hypot(dx, dy);
+                      if (d < bestDist) {
+                        bestDist = d;
+                        best = { ep, k, d };
+                      }
+                    }
+
+                    // threshold: accept if within reasonable distance (~width/6)
+                    const acceptTh = Math.max(20, Math.min(width, height) / 6);
+                    let regionLabel = null;
+                    if (best && best.d <= acceptTh) {
+                      // if already assigned, keep the closer one
+                      if (!assigned[best.k] || assigned[best.k].dist > best.d) {
+                        assigned[best.k] = { idx: i, dist: best.d };
+                        regionLabel = best.ep.label;
+                      } else {
+                        regionLabel = best.ep.label; // still label but duplicates may exist, we'll resolve later
+                      }
+                    } else {
+                      // fallback: use top/bottom row based on y
+                      regionLabel =
+                        cy < height / 2
+                          ? cx < width / 2
+                            ? "TM"
+                            : "TR"
+                          : cx < width / 2
+                          ? "BM"
+                          : "BR";
+                    }
 
                     markerCount++;
                     innerAreas.push(childArea);
@@ -331,156 +375,114 @@
                 : (sorted[mid - 1] + sorted[mid]) / 2;
           }
 
-          // Expect special inner area when linear size is 20% (80% smaller)
-          // area factor ~0.20^2 = 0.04
-          const specialAreaFactor = 0.04;
-          let expectedSpecialArea =
-            medianInnerArea > 0 ? medianInnerArea * specialAreaFactor : 0;
+          // Deduplicate markers: if multiple detected markers were assigned the
+          // same expected label (e.g., BR twice), keep only the one closest to
+          // the expected position. Also include unassigned markers that don't
+          // conflict with chosen ones.
+          (function dedupeAssignedMarkers() {
+            const expectedLabels = expectedPositions.map((e) => e.label);
+            const uniqueNormals = [];
 
-          // First try: find among normalMarkers any with innerArea close to expectedSpecialArea
+            for (let k = 0; k < expectedPositions.length; k++) {
+              const ep = expectedPositions[k];
+              const candidates = normalMarkers.filter(
+                (n) => n.label === ep.label
+              );
+              if (candidates.length === 0) continue;
+              let best = candidates[0];
+              let bestD = Math.hypot(best.cx - ep.x, best.cy - ep.y);
+              for (let i = 1; i < candidates.length; i++) {
+                const c = candidates[i];
+                const d = Math.hypot(c.cx - ep.x, c.cy - ep.y);
+                if (d < bestD) {
+                  best = c;
+                  bestD = d;
+                }
+              }
+              uniqueNormals.push(best);
+            }
+
+            // Add any other normalMarkers that weren't chosen above (different labels)
+            for (const n of normalMarkers) {
+              const exists = uniqueNormals.some(
+                (u) => u.cx === n.cx && u.cy === n.cy
+              );
+              if (!exists) {
+                // If the label is one of the expected labels but wasn't chosen,
+                // skip it; otherwise include it (fallback/labeled by y/x)
+                if (!expectedLabels.includes(n.label)) uniqueNormals.push(n);
+              }
+            }
+
+            normalMarkers = uniqueNormals;
+            // update markerCount to reflect deduped normals
+            markerCount = normalMarkers.length;
+          })();
+
+          // New special detection for layout with 7 markers:
+          // Top row: TL, TM, E, TR (4 markers). Bottom row: BL, BM, BR (3 markers).
+          // The special marker is the top marker that sits between TM and TR (label 'E')
+          // and does NOT have a counterpart directly below it. We'll detect it by label
+          // if assigned, otherwise by absence of a bottom marker under its x.
           let specialCount = 0;
           let specialsDetected = [];
-          // store special marker info when found
           let specialMarker = null;
-          if (expectedSpecialArea > 0) {
-            // widen tolerance for very small markers to avoid missing them
-            const lowerS = expectedSpecialArea * 0.4;
-            const upperS = expectedSpecialArea * 2.0;
-            for (let k = 0; k < normalMarkers.length; ++k) {
-              let nm = normalMarkers[k];
-              if (nm.innerArea >= lowerS && nm.innerArea <= upperS) {
-                specialCount++;
-                specialsDetected.push({
-                  type: "normalInner",
-                  idx: k,
-                  area: nm.innerArea,
-                });
-                specialMarker = {
-                  cx: nm.cx,
-                  cy: nm.cy,
-                  label: nm.label,
-                  from: "normal",
-                };
-                // draw special around outer in red
-                cv.drawContours(
-                  dst,
-                  contours,
-                  nm.outerIdx,
-                  new cv.Scalar(255, 0, 0, 255),
-                  3,
-                  cv.LINE_8,
-                  hierarchy,
-                  0
-                );
-                cv.putText(
-                  dst,
-                  nm.label + "*",
-                  new cv.Point(Math.round(nm.cx) - 16, Math.round(nm.cy) - 16),
-                  cv.FONT_HERSHEY_SIMPLEX,
-                  0.7,
-                  new cv.Scalar(255, 255, 255, 255),
-                  2
-                );
-                // reduce markerCount (we'll treat this as special)
-                markerCount = Math.max(0, markerCount - 1);
+
+          const topMarkers = normalMarkers.filter((n) => n.cy < height / 2);
+          const bottomMarkers = normalMarkers.filter((n) => n.cy >= height / 2);
+
+          // Prefer explicit label 'E'
+          specialMarker = normalMarkers.find((n) => n.label === "E");
+
+          // Fallback: find a top marker without bottom counterpart (x-distance)
+          if (!specialMarker && topMarkers.length >= 3) {
+            const xTol = Math.max(20, width / 10);
+            for (let t of topMarkers) {
+              const hasBelow = bottomMarkers.some(
+                (b) => Math.abs(b.cx - t.cx) < xTol
+              );
+              if (!hasBelow) {
+                specialMarker = t;
+                break;
               }
             }
           }
 
-          // Second try: if none found, attempt inverted-image detection (legacy)
-          if (specialCount === 0 && avgInnerArea > 0) {
-            let bwInv = new cv.Mat();
-            cv.bitwise_not(bw, bwInv);
-            let contoursInv = new cv.MatVector();
-            let hierInv = new cv.Mat();
-            cv.findContours(
-              bwInv,
-              contoursInv,
-              hierInv,
-              cv.RETR_EXTERNAL,
-              cv.CHAIN_APPROX_SIMPLE
+          if (specialMarker) {
+            specialCount = 1;
+            specialsDetected.push({
+              type: "identified",
+              cx: specialMarker.cx,
+              cy: specialMarker.cy,
+              label: specialMarker.label,
+            });
+            cv.drawContours(
+              dst,
+              contours,
+              specialMarker.outerIdx,
+              new cv.Scalar(255, 0, 0, 255),
+              3,
+              cv.LINE_8,
+              hierarchy,
+              0
             );
-
-            const lower = avgInnerArea * 0.5;
-            const upper = avgInnerArea * 1.6;
-            for (let j = 0; j < contoursInv.size(); ++j) {
-              let cnt = contoursInv.get(j);
-              let area = cv.contourArea(cnt);
-              if (area < 10) continue;
-              if (area >= lower && area <= upper) {
-                let peri = cv.arcLength(cnt, true);
-                let approx = new cv.Mat();
-                cv.approxPolyDP(cnt, approx, 0.02 * peri, true);
-                if (approx.rows === 4 && cv.isContourConvex(approx)) {
-                  // compute centroid of inverted contour
-                  let mInv = cv.moments(cnt);
-                  let scx = 0,
-                    scy = 0;
-                  if (mInv.m00 && mInv.m00 !== 0) {
-                    scx = mInv.m10 / mInv.m00;
-                    scy = mInv.m01 / mInv.m00;
-                  } else {
-                    let rInv = cv.boundingRect(cnt);
-                    scx = rInv.x + rInv.width / 2;
-                    scy = rInv.y + rInv.height / 2;
-                  }
-                  specialCount++;
-                  specialsDetected.push({
-                    contourIdx: j,
-                    area: area,
-                    cx: scx,
-                    cy: scy,
-                  });
-                  specialMarker = {
-                    cx: scx,
-                    cy: scy,
-                    label: null,
-                    from: "inverted",
-                  };
-                  cv.drawContours(
-                    dst,
-                    contoursInv,
-                    j,
-                    new cv.Scalar(255, 0, 0, 255),
-                    2,
-                    cv.LINE_8
-                  );
-                }
-                approx.delete();
-              }
-            }
-
-            bwInv.delete();
-            contoursInv.delete();
-            hierInv.delete();
-          }
-
-          // If still no special detected by area, promote normal marker in BRE to special (if present)
-          if (specialCount === 0) {
-            let bre = normalMarkers.find((n) => n.label === "BRE");
-            if (bre) {
-              specialCount = 1;
-              markerCount = Math.max(0, markerCount - 1);
-              cv.drawContours(
-                dst,
-                contours,
-                bre.outerIdx,
-                new cv.Scalar(255, 0, 0, 255),
-                3,
-                cv.LINE_8,
-                hierarchy,
-                0
-              );
-              cv.putText(
-                dst,
-                "BRE*",
-                new cv.Point(Math.round(bre.cx) - 16, Math.round(bre.cy) - 16),
-                cv.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                new cv.Scalar(255, 255, 255, 255),
-                2
-              );
-            }
+            cv.putText(
+              dst,
+              (specialMarker.label || "E") + "*",
+              new cv.Point(
+                Math.round(specialMarker.cx) - 16,
+                Math.round(specialMarker.cy) - 16
+              ),
+              cv.FONT_HERSHEY_SIMPLEX,
+              0.7,
+              new cv.Scalar(255, 255, 255, 255),
+              2
+            );
+            // remove from normalMarkers list
+            normalMarkers = normalMarkers.filter(
+              (n) => !(n.cx === specialMarker.cx && n.cy === specialMarker.cy)
+            );
+            markerCount = Math.max(0, markerCount - 1);
           }
 
           cv.putText(
@@ -504,9 +506,9 @@
 
           cv.imshow("canvasOutput", dst);
 
-          // If all 6 markers detected, capture last frame (with marks) once
+          // If all 7 markers detected, capture last frame (with marks) once
           let totalDetected = markerCount + specialCount;
-          if (totalDetected >= 6 && !captured) {
+          if (totalDetected >= 7 && !captured) {
             captured = true;
             // prepare final lists
             let finalNormals = normalMarkers.slice();
@@ -534,18 +536,18 @@
                 from: "inverted",
               };
             } else {
-              // fallback: promote BRE
-              let bre = normalMarkers.find((n) => n.label === "BRE");
-              if (bre) {
+              // fallback: promote BR (bottom-right fallback)
+              let br = normalMarkers.find((n) => n.label === "BR");
+              if (br) {
                 special = {
-                  cx: bre.cx,
-                  cy: bre.cy,
-                  label: "BRE",
+                  cx: br.cx,
+                  cy: br.cy,
+                  label: "BR",
                   from: "promoted",
                 };
-                // remove bre from normals
+                // remove br from normals
                 finalNormals = finalNormals.filter(
-                  (n) => !(n.cx === bre.cx && n.cy === bre.cy)
+                  (n) => !(n.cx === br.cx && n.cy === br.cy)
                 );
               }
             }
@@ -553,15 +555,42 @@
             // capture canvas image
             const dataURL = canvas.toDataURL("image/png");
 
-            // determine rotation so special moves to BRE (bottom-right)
+            // determine best rotation (0/90/180/270) so the special marker
+            // lands close to the expected 'E' position (top row, 3rd slot).
             let rot = 0;
             if (special) {
-              let dx = special.cx - width / 2;
-              let dy = special.cy - height / 2;
-              if (dx > 0 && dy > 0) rot = 0;
-              else if (dx < 0 && dy > 0) rot = 90;
-              else if (dx < 0 && dy < 0) rot = 180;
-              else if (dx > 0 && dy < 0) rot = 270;
+              const angles = [0, 90, 180, 270];
+              const cx0 = width / 2,
+                cy0 = height / 2;
+              function rotatePointForAngle(x, y, angle) {
+                const a = (angle * Math.PI) / 180;
+                // rotated canvas dims
+                const rw = angle % 180 === 0 ? width : height;
+                const rh = angle % 180 === 0 ? height : width;
+                const newCx = rw / 2,
+                  newCy = rh / 2;
+                const tx = x - cx0,
+                  ty = y - cy0;
+                const rx = tx * Math.cos(a) - ty * Math.sin(a);
+                const ry = tx * Math.sin(a) + ty * Math.cos(a);
+                return { x: Math.round(rx + newCx), y: Math.round(ry + newCy) };
+              }
+              // expected E position relative to rotated canvas
+              function expectedEForAngle(angle) {
+                const rw = angle % 180 === 0 ? width : height;
+                const rh = angle % 180 === 0 ? height : width;
+                return { x: 0.625 * rw, y: 0.25 * rh };
+              }
+              let best = { angle: 0, dist: Infinity };
+              for (let a of angles) {
+                const rp = rotatePointForAngle(special.cx, special.cy, a);
+                const ep = expectedEForAngle(a);
+                const d = Math.hypot(rp.x - ep.x, rp.y - ep.y);
+                if (d < best.dist) {
+                  best = { angle: a, dist: d };
+                }
+              }
+              rot = best.angle;
             }
 
             // show snapshot overlay
@@ -698,9 +727,11 @@
               return { x: Math.round(rx + newCx), y: Math.round(ry + newCy) };
             }
 
-            // draw normals
+            // draw normals and collect label mapping
+            const labelMap = {};
             normals.forEach((n, idx) => {
               const rp = rotatePoint(n.cx, n.cy);
+              labelMap[n.label] = rp;
               sctx.beginPath();
               sctx.arc(rp.x, rp.y, 6, 0, Math.PI * 2);
               sctx.fillStyle = "cyan";
@@ -717,6 +748,7 @@
 
             if (special) {
               const rp = rotatePoint(special.cx, special.cy);
+              labelMap[special.label || "SPECIAL"] = rp;
               sctx.beginPath();
               sctx.arc(rp.x, rp.y, 8, 0, Math.PI * 2);
               sctx.fillStyle = "red";
@@ -729,6 +761,115 @@
                 special.label || "unknown"
               }): ${Math.round(special.cx)}, ${Math.round(special.cy)}`;
               ul.appendChild(li);
+            }
+
+            // draw connection lines for visualization
+            function drawLine(a, b, color) {
+              if (a && b) {
+                sctx.strokeStyle = color || "#0f0";
+                sctx.lineWidth = 2;
+                sctx.beginPath();
+                sctx.moveTo(a.x, a.y);
+                sctx.lineTo(b.x, b.y);
+                sctx.stroke();
+              }
+            }
+            drawLine(labelMap["TL"], labelMap["TM"], "#88f");
+            drawLine(labelMap["TM"], labelMap["TR"], "#88f");
+            drawLine(labelMap["BL"], labelMap["BM"], "#88f");
+            drawLine(labelMap["BM"], labelMap["BR"], "#88f");
+            drawLine(labelMap["TL"], labelMap["BL"], "#8f8");
+            drawLine(labelMap["TM"], labelMap["BM"], "#8f8");
+            drawLine(labelMap["TR"], labelMap["BR"], "#8f8");
+
+            // If we have the four corners (TL,TR,BL,BR) perform perspective correction
+            const required = ["TL", "TR", "BL", "BR"];
+            const hasAll = required.every((l) => !!labelMap[l]);
+            if (hasAll && typeof cv !== "undefined") {
+              try {
+                function dist(a, b) {
+                  const dx = a.x - b.x,
+                    dy = a.y - b.y;
+                  return Math.hypot(dx, dy);
+                }
+                const topW = dist(labelMap["TL"], labelMap["TR"]);
+                const botW = dist(labelMap["BL"], labelMap["BR"]);
+                const leftH = dist(labelMap["TL"], labelMap["BL"]);
+                const rightH = dist(labelMap["TR"], labelMap["BR"]);
+                const dstW = Math.max(1, Math.round((topW + botW) / 2));
+                const dstH = Math.max(1, Math.round((leftH + rightH) / 2));
+
+                const srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
+                  labelMap["TL"].x,
+                  labelMap["TL"].y,
+                  labelMap["TR"].x,
+                  labelMap["TR"].y,
+                  labelMap["BL"].x,
+                  labelMap["BL"].y,
+                  labelMap["BR"].x,
+                  labelMap["BR"].y,
+                ]);
+                const dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
+                  0,
+                  0,
+                  dstW,
+                  0,
+                  0,
+                  dstH,
+                  dstW,
+                  dstH,
+                ]);
+
+                let srcMat = cv.imread(snapCanvas);
+                let M = cv.getPerspectiveTransform(srcTri, dstTri);
+                let dstMat = new cv.Mat();
+                let dsize = new cv.Size(dstW, dstH);
+                cv.warpPerspective(
+                  srcMat,
+                  dstMat,
+                  M,
+                  dsize,
+                  cv.INTER_LINEAR,
+                  cv.BORDER_CONSTANT,
+                  new cv.Scalar()
+                );
+
+                const corrected = document.createElement("canvas");
+                corrected.width = dstW;
+                corrected.height = dstH;
+                corrected.style.maxWidth = "80vw";
+                corrected.style.display = "block";
+                const corrWrap = document.createElement("div");
+                corrWrap.style.marginTop = "8px";
+                corrWrap.appendChild(corrected);
+                canvasWrap.appendChild(corrWrap);
+                cv.imshow(corrected, dstMat);
+
+                // draw small marker at corners for visual check
+                const cctx = corrected.getContext("2d");
+                cctx.fillStyle = "red";
+                cctx.beginPath();
+                cctx.arc(6, 6, 5, 0, Math.PI * 2);
+                cctx.fill();
+                cctx.beginPath();
+                cctx.arc(dstW - 6, 6, 5, 0, Math.PI * 2);
+                cctx.fill();
+                cctx.beginPath();
+                cctx.arc(6, dstH - 6, 5, 0, Math.PI * 2);
+                cctx.fill();
+                cctx.beginPath();
+                cctx.arc(dstW - 6, dstH - 6, 6, 0, Math.PI * 2);
+                cctx.fill();
+
+                // cleanup
+                srcTri.delete();
+                dstTri.delete();
+                srcMat.delete();
+                M.delete();
+                dstMat.delete();
+              } catch (err) {
+                console.error("Persp transform failed", err);
+              }
             }
           };
           img.src = dataURL;
