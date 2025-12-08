@@ -198,9 +198,9 @@
           },
           circles: {
             CTL: { percent_x: 8.05, percent_y: 7.9 },
-            CTR: { percent_x: 31, percent_y: 7.9 },
+            CTR: { percent_x: 30.5, percent_y: 7.9 },
             CBL: { percent_x: 8.05, percent_y: 43 },
-            CBR: { percent_x: 31, percent_y: 43 },
+            CBR: { percent_x: 30.5, percent_y: 43 },
           },
         };
         // try to fetch the SVG template with matrix definition (matrizCode.txt)
@@ -1289,6 +1289,10 @@
                 const rightH = dist(labelMap["TR"], labelMap["BR"]);
                 const dstW = Math.max(1, Math.round((topW + botW) / 2));
                 const dstH = Math.max(1, Math.round((leftH + rightH) / 2));
+                // upscale factor for higher-resolution corrected image
+                const scale = 2; // change to 1,2,3 as needed. Higher = larger image and more detail.
+                const dstWScaled = Math.max(1, Math.round(dstW * scale));
+                const dstHScaled = Math.max(1, Math.round(dstH * scale));
 
                 const srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
                   labelMap["TL"].x,
@@ -1300,27 +1304,28 @@
                   labelMap["BR"].x,
                   labelMap["BR"].y,
                 ]);
+                // destination uses scaled size for higher resolution
                 const dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
                   0,
                   0,
-                  dstW,
+                  dstWScaled,
                   0,
                   0,
-                  dstH,
-                  dstW,
-                  dstH,
+                  dstHScaled,
+                  dstWScaled,
+                  dstHScaled,
                 ]);
 
                 let srcMat = cv.imread(snapCanvas);
                 let M = cv.getPerspectiveTransform(srcTri, dstTri);
                 let dstMat = new cv.Mat();
-                let dsize = new cv.Size(dstW, dstH);
+                let dsize = new cv.Size(dstWScaled, dstHScaled);
                 cv.warpPerspective(
                   srcMat,
                   dstMat,
                   M,
                   dsize,
-                  cv.INTER_LINEAR,
+                  cv.INTER_CUBIC,
                   cv.BORDER_CONSTANT,
                   new cv.Scalar()
                 );
