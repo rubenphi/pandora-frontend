@@ -489,7 +489,7 @@ function drawCodeMatrix(ctx, markers) {
         ctx.beginPath();
         ctx.fillStyle =
           type === "numeric" ? "rgba(0,255,128,0.95)" : "rgba(255,200,0,0.95)";
-        ctx.arc(Math.round(x), Math.round(y), 3 * 1.1, 0, Math.PI * 2);
+        ctx.arc(Math.round(x), Math.round(y), matrixDef.radius, 0, Math.PI * 2);
         ctx.fill();
       }
     }
@@ -730,8 +730,8 @@ function extractAndDrawResults(
 
     const darkThresh = 100;
     const requiredFraction = 0.5;
-    const displayRadius = 5;
-    const localRadius = displayRadius;
+    const displayRadius = matrixDef.radius;
+    const localRadius = matrixDef.radius;
 
     const detectedPoints = [];
     const fractions = [];
