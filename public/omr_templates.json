@@ -21,7 +21,7 @@
         "CBL": { "percent_x": 8.05, "percent_y": 43 },
         "CBR": { "percent_x": 30.2, "percent_y": 43 }
       },
-      "radius": 8
+      "radius": 13
     },
     {
       "type": "question",
@@ -34,7 +34,7 @@
         "CBL": { "percent_x": 4.3, "percent_y": 89.87 },
         "CBR": { "percent_x": 22.3, "percent_y": 89.87 }
       },
-      "radius": 8
+      "radius": 13
     },
     {
       "type": "question",
@@ -47,7 +47,7 @@
         "CBL": { "percent_x": 28.8, "percent_y": 89.87 },
         "CBR": { "percent_x": 47, "percent_y": 89.87 }
       },
-      "radius": 8
+      "radius": 13
     },
     {
       "type": "question",
@@ -60,7 +60,7 @@
         "CBL": { "percent_x": 52.8, "percent_y": 89.87 },
         "CBR": { "percent_x": 71.1, "percent_y": 89.87 }
       },
-      "radius": 8
+      "radius": 13
     },
     {
       "type": "question",
@@ -73,7 +73,7 @@
         "CBL": { "percent_x": 76.59, "percent_y": 89.87 },
         "CBR": { "percent_x": 95.7, "percent_y": 89.87 }
       },
-      "radius": 8
+      "radius": 13
     }
   ]
 }

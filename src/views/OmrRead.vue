@@ -30,8 +30,8 @@
         </ion-item>
       </div>
 
-      <div v-if="isScanning">
-        <omr-scanner @scan-complete="onScanComplete"></omr-scanner>
+      <div v-show="isScanning" style="height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+        <omr-scanner ref="scannerComponent" @scan-complete="onScanComplete"></omr-scanner>
         <ion-button expand="block" color="danger" @click="stopScan">
           Cancelar Escaneo
         </ion-button>
@@ -54,7 +54,7 @@ import {
   IonLabel,
   IonItem,
 } from "@ionic/vue";
-import { ref } from "vue";
+import { ref, nextTick } from "vue";
 import OmrScanner from "@/components/OmrScanner.vue";
 
 export default {
@@ -77,11 +77,16 @@ export default {
     const isScanning = ref(false);
     const scanResults = ref("");
     const scanImageUrl = ref(null);
+    const scannerComponent = ref(null);
 
-    const startScan = () => {
+    const startScan = async () => {
       scanImageUrl.value = null;
       scanResults.value = "";
       isScanning.value = true;
+      await nextTick(); // Wait for the DOM to update after v-show
+      if (scannerComponent.value) {
+        scannerComponent.value.start();
+      }
     };
 
     const stopScan = () => {
@@ -98,6 +103,7 @@ export default {
       isScanning,
       scanResults,
       scanImageUrl,
+      scannerComponent,
       startScan,
       stopScan,
       onScanComplete,
