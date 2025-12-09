@@ -891,18 +891,7 @@ function parseMatrixCode(txt) {
         }
     }
 
-    // 2. Parse ellipses to get points
-    const points = [];
-    const ellRe = /<ellipse[^>]*cx\s*=\s*"([\d.-]+)"[^>]*cy\s*=\s*"([\d.-]+)"/gi;
-    let m;
-    while ((m = ellRe.exec(txt))) {
-        const cx = parseFloat(m[1]);
-        const cy = parseFloat(m[2]);
-        points.push({ u: cx / vw, v: cy / vh, cx, cy });
-    }
-    if (points.length === 0) return null;
-
-    // 3. Parse marker groups
+    // 2. Parse marker groups
     const groupRe = /<g[^>]*transform\s*=\s*"translate\(([\d.-]+)\s*,\s*([\d.-]+)\)"[^>]*>([\s\S]*?)<\/g>/gi;
     const rectRe = /<rect[^>]*x\s*=\s*"([\d.-]+)"[^>]*y\s*=\s*"([\d.-]+)"[^>]*width\s*=\s*"([\d.-]+)"[^>]*height\s*=\s*"([\d.-]+)"/i;
     const markerGroups = [];
@@ -926,7 +915,7 @@ function parseMatrixCode(txt) {
     }
 
     return {
-        vw, vh, points, templateMarkers,
+        vw, vh, templateMarkers,
         umin: Math.min(...points.map(p => p.u)),
         umax: Math.max(...points.map(p => p.u)),
         vmin: Math.min(...points.map(p => p.v)),
