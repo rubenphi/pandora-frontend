@@ -1,38 +1,50 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Detector OMR en Tiempo Real</title>
-    <link rel="stylesheet" href="omr.css">
-</head>
-<body>
+    <link rel="stylesheet" href="omr.css" />
+  </head>
+  <body>
     <div class="container">
-        <h1>📹 Detector OMR - Vista Binaria</h1>
-        <div id="status">Cargando OpenCV.js...</div>
+      <h1>📹 Detector OMR - Vista Binaria</h1>
+      <div id="status">Cargando OpenCV.js...</div>
 
-        <div class="controls">
-            <button id="stopBtn" class="stop" disabled style="display: none">
-                Detener
-            </button>
-            <button id="retryBtn" disabled style="display: none">Reintentar</button>
+      <div class="controls">
+        <button id="stopBtn" class="stop" disabled style="display: none">
+          Detener
+        </button>
+        <button id="retryBtn" disabled style="display: none">Reintentar</button>
+      </div>
+
+      <div class="video-and-controls-wrapper">
+        <div class="video-container">
+          <video
+            id="video"
+            autoplay
+            playsinline
+            width="640"
+            height="480"
+            style="display: none"
+          ></video>
+          <canvas id="canvasOutput" width="640" height="480"></canvas>
         </div>
 
-        <div class="video-and-controls-wrapper">
-            <div class="video-container">
-                <video id="video" autoplay playsinline width="640" height="480" style="display: none"></video>
-                <canvas id="canvasOutput" width="640" height="480"></canvas>
-            </div>
-
-            <div class="contrast-slider-container">
-                <label>Contraste:
-                    <input id="contrast" type="range" min="0" max="200" value="100" />
-                </label>
-            </div>
+        <div class="contrast-slider-container">
+          <label
+            >Contraste:
+            <input id="contrast" type="range" min="0" max="200" value="100" />
+          </label>
         </div>
+      </div>
     </div>
 
-    <script async src="https://docs.opencv.org/4.5.2/opencv.js" onload="onOpenCvReady()"></script>
+    <script
+      async
+      src="./js/@techstark/opencv-js/dist/opencv.js"
+      onload="onOpenCvReady()"
+    ></script>
     <script src="omr.js" type="module"></script>
-</body>
+  </body>
 </html>
