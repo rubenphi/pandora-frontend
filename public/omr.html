@@ -249,10 +249,10 @@
             rows: 10,
             cols: 8,
             circles: {
-              CTL: { percent_x: 27.73, percent_y: 52.77 },
-              CTR: { percent_x: 46.5, percent_y: 52.77 },
-              CBL: { percent_x: 27.73, percent_y: 89.87 },
-              CBR: { percent_x: 46.5, percent_y: 89.87 },
+              CTL: { percent_x: 28.8, percent_y: 52.77 },
+              CTR: { percent_x: 47, percent_y: 52.77 },
+              CBL: { percent_x: 28.8, percent_y: 89.87 },
+              CBR: { percent_x: 47, percent_y: 89.87 },
             },
           },
           {
@@ -1225,6 +1225,7 @@
                     circleTemplate.length > 0
                   ) {
                     const cctx = corrected.getContext("2d");
+                    const finalResults = [];
 
                     for (const matrixDef of circleTemplate) {
                       const {
@@ -1387,21 +1388,41 @@
                           }
                           codeDigits.push(digit);
                         }
-                        const codeWrap = document.createElement("div");
-                        codeWrap.style.marginTop = "8px";
-                        codeWrap.style.color = "#fff";
-                        codeWrap.style.fontFamily = "monospace";
-                        const codeTitle = document.createElement("div");
-                        codeTitle.textContent = "Código:";
-                        codeTitle.style.fontWeight = "bold";
-                        codeTitle.style.marginBottom = "6px";
-                        codeWrap.appendChild(codeTitle);
-                        const codeValue = document.createElement("div");
-                        codeValue.textContent = codeDigits.join("");
-                        codeValue.style.fontSize = "20px";
-                        codeValue.style.letterSpacing = "4px";
-                        codeWrap.appendChild(codeValue);
-                        corrWrap.appendChild(codeWrap);
+                        finalResults.push({
+                          typeOrigin: "numeric",
+                          contentType: "number",
+                          content: codeDigits.join(""),
+                        });
+                      } else if (type === "question") {
+                        const answers = [];
+                        for (let r = 0; r < rowsT; r++) {
+                          let bestCol = -1;
+                          let bestFrac = -1;
+                          for (let c = 0; c < colsT; c++) {
+                            const i = r * colsT + c;
+                            const frac = fractions[i] || 0;
+                            if (detectedPoints[i]) {
+                              if (frac > bestFrac) {
+                                bestFrac = frac;
+                                bestCol = c;
+                              }
+                            }
+                          }
+                          answers.push({
+                            question: r + 1,
+                            answer:
+                              bestCol !== -1
+                                ? String.fromCharCode(
+                                    "a".charCodeAt(0) + bestCol
+                                  )
+                                : "",
+                          });
+                        }
+                        finalResults.push({
+                          typeOrigin: "question",
+                          contentType: "array",
+                          content: answers,
+                        });
                       }
 
                       cctx.fillStyle = "rgba(255,0,0,0.95)";
@@ -1423,6 +1444,27 @@
                       dstPts.delete();
                       gray.delete();
                     }
+
+                    const resultWrap = document.createElement("div");
+                    resultWrap.style.marginTop = "8px";
+                    resultWrap.style.color = "#fff";
+                    resultWrap.style.fontFamily = "monospace";
+                    resultWrap.style.whiteSpace = "pre-wrap";
+                    resultWrap.style.wordBreak = "break-all";
+                    const resultTitle = document.createElement("div");
+                    resultTitle.textContent = "Resultados:";
+                    resultTitle.style.fontWeight = "bold";
+                    resultTitle.style.marginBottom = "6px";
+                    resultWrap.appendChild(resultTitle);
+                    const resultValue = document.createElement("div");
+                    resultValue.textContent = JSON.stringify(
+                      finalResults,
+                      null,
+                      2
+                    );
+                    resultValue.style.fontSize = "14px";
+                    resultWrap.appendChild(resultValue);
+                    corrWrap.appendChild(resultWrap);
                   }
                 } catch (err) {
                   console.error("Circle detection failed", err);
