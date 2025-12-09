@@ -14,13 +14,19 @@
         style="display: none"
       ></video>
       <canvas ref="outputCanvas" class="video-feed"></canvas>
+      <div class="controls-container">
+        <ion-item>
+          <ion-label>Contraste</ion-label>
+          <ion-range min="0" max="200" :value="contrastSliderValue" @ionChange="onContrastChange"></ion-range>
+        </ion-item>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
 import { onMounted, onUnmounted, ref, reactive, markRaw } from "vue";
-import { IonSpinner, alertController } from "@ionic/vue";
+import { IonSpinner, alertController, IonRange, IonItem, IonLabel } from "@ionic/vue";
 import cv from "@techstark/opencv-js";
 import { fetchTemplates } from "@/components/functions/omr/templateLoader.js";
 import {
@@ -48,6 +54,9 @@ export default {
   name: "OmrScanner",
   components: {
     IonSpinner,
+    IonRange,
+    IonItem,
+    IonLabel,
   },
   emits: ["scan-complete"],
   setup(_, { emit, expose }) {
@@ -56,6 +65,7 @@ export default {
     const isLoading = ref(true);
     let stream = null;
     let animationFrameId = null;
+    const contrastSliderValue = ref(100);
 
     const OMR_STATE = reactive({
       cv: null,
@@ -71,7 +81,19 @@ export default {
       clahe: null,
       circleTemplate: [],
       matrixTemplate: {},
+      contrastValue: 1.0,
     });
+
+    const onContrastChange = (event) => {
+      const value = event.detail.value;
+      contrastSliderValue.value = value;
+      OMR_STATE.contrastValue = parseFloat(value) / 100.0;
+      try {
+        localStorage.setItem("omrContrast", value);
+      } catch (e) {
+        console.warn("Could not save contrast to localStorage.");
+      }
+    };
 
     const startCamera = async () => {
       try {
@@ -146,7 +168,7 @@ export default {
             );
 
             isLoading.value = false;
-            animationFrameId = requestAnimationFrame(processingLoop);
+            // Do not start loop here, wait for start() call
           });
 
           await startCamera();
@@ -168,12 +190,13 @@ export default {
         return;
       }
 
-      const { cv, ctx, width, height, src, gray, bw, clahe } = OMR_STATE;
+      const { cv, ctx, width, height, src, gray, bw, clahe, contrastValue } = OMR_STATE;
 
       ctx.drawImage(video.value, 0, 0, width, height);
       src.data.set(ctx.getImageData(0, 0, width, height).data);
 
       cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+      cv.convertScaleAbs(gray, gray, contrastValue, 0);
       cv.GaussianBlur(gray, gray, new cv.Size(3, 3), 0);
       clahe.apply(gray, gray);
       cv.threshold(gray, bw, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
@@ -257,6 +280,18 @@ export default {
     };
 
     const start = () => {
+      // Load contrast from localStorage every time a scan starts
+      try {
+        const storedContrast = localStorage.getItem("omrContrast");
+        if (storedContrast !== null) {
+          const value = parseInt(storedContrast, 10);
+          contrastSliderValue.value = value;
+          OMR_STATE.contrastValue = parseFloat(value) / 100.0;
+        }
+      } catch (e) {
+        console.warn("Could not read contrast from localStorage.");
+      }
+
       OMR_STATE.captured = false;
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
@@ -287,6 +322,8 @@ export default {
       video,
       outputCanvas,
       isLoading,
+      contrastSliderValue,
+      onContrastChange,
     };
   },
 };
@@ -306,5 +343,8 @@ export default {
   align-items: center;
   justify-content: center;
   height: 300px;
+}
+.controls-container {
+  padding: 8px;
 }
 </style>
