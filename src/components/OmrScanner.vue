@@ -5,7 +5,7 @@
       <p>Iniciando escáner...</p>
     </div>
 
-    <div v-show="!isLoading">
+    <div v-show="!isLoading" class="scanner-content">
       <video
         ref="video"
         playsinline
@@ -15,10 +15,11 @@
       ></video>
       <canvas ref="outputCanvas" class="video-feed"></canvas>
       <div class="controls-container">
-        <ion-item>
-          <ion-label>Contraste</ion-label>
-          <ion-range min="0" max="200" :value="contrastSliderValue" @ionChange="onContrastChange"></ion-range>
-        </ion-item>
+        <ion-icon :icon="contrastOutline" class="contrast-icon"></ion-icon>
+        <ion-range min="0" max="200" :value="contrastSliderValue" @ionChange="onContrastChange" class="contrast-slider"></ion-range>
+        <ion-button v-if="isFlashSupported" @click="toggleFlash" fill="clear">
+          <ion-icon slot="icon-only" :icon="isFlashOn ? flashlight : flashlightOutline"></ion-icon>
+        </ion-button>
       </div>
     </div>
   </div>
@@ -26,7 +27,9 @@
 
 <script>
 import { onMounted, onUnmounted, ref, reactive, markRaw } from "vue";
-import { IonSpinner, alertController, IonRange, IonItem, IonLabel } from "@ionic/vue";
+import { IonSpinner, alertController, IonRange, IonButton, IonIcon } from "@ionic/vue";
+import { flashlight, flashlightOutline, contrastOutline } from "ionicons/icons";
+import { CapacitorFlash } from '@capgo/capacitor-flash';
 import cv from "@techstark/opencv-js";
 import { fetchTemplates } from "@/components/functions/omr/templateLoader.js";
 import {
@@ -55,8 +58,8 @@ export default {
   components: {
     IonSpinner,
     IonRange,
-    IonItem,
-    IonLabel,
+    IonButton,
+    IonIcon,
   },
   emits: ["scan-complete"],
   setup(_, { emit, expose }) {
@@ -66,6 +69,8 @@ export default {
     let stream = null;
     let animationFrameId = null;
     const contrastSliderValue = ref(100);
+    const isFlashSupported = ref(false);
+    const isFlashOn = ref(false);
 
     const OMR_STATE = reactive({
       cv: null,
@@ -92,6 +97,26 @@ export default {
         localStorage.setItem("omrContrast", value);
       } catch (e) {
         console.warn("Could not save contrast to localStorage.");
+      }
+    };
+
+    const checkFlashAvailability = async () => {
+      try {
+        const { value } = await CapacitorFlash.isAvailable();
+        isFlashSupported.value = value;
+      } catch(e) {
+        console.error("Error checking flash availability", e);
+        isFlashSupported.value = false;
+      }
+    };
+
+    const toggleFlash = async () => {
+      try {
+        await CapacitorFlash.toggle();
+        const { value } = await CapacitorFlash.isSwitchedOn();
+        isFlashOn.value = value;
+      } catch(e) {
+        console.error("Error toggling flash", e);
       }
     };
 
@@ -127,6 +152,8 @@ export default {
           await waitForOpenCv(cv);
           OMR_STATE.cv = cv;
           setCv(OMR_STATE.cv);
+
+          await checkFlashAvailability();
 
           const templates = await fetchTemplates();
           OMR_STATE.circleTemplate = templates.circleTemplate;
@@ -305,7 +332,16 @@ export default {
       initialize();
     });
 
-    onUnmounted(() => {
+    onUnmounted(async () => {
+      try {
+        const { value } = await CapacitorFlash.isSwitchedOn();
+        if (value) {
+          await CapacitorFlash.switchOff();
+        }
+      } catch(e) {
+        console.error("Failed to turn off flash on unmount", e);
+      }
+
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }
@@ -324,16 +360,28 @@ export default {
       isLoading,
       contrastSliderValue,
       onContrastChange,
+      isFlashSupported,
+      isFlashOn,
+      toggleFlash,
+      flashlight,
+      flashlightOutline,
+      contrastOutline,
     };
   },
 };
 </script>
 
 <style scoped>
+.scanner-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
 .video-feed {
   width: 100%;
-  max-width: 500px;
-  border: 2px solid #ccc;
+  height: auto;
+  max-height: calc(100% - 80px); /* Adjust to leave space for controls */
+  object-fit: contain;
   border-radius: 8px;
   background-color: #000;
 }
@@ -345,6 +393,16 @@ export default {
   height: 300px;
 }
 .controls-container {
-  padding: 8px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.contrast-icon {
+  transform: rotate(90deg);
+  font-size: 24px;
+}
+.contrast-slider {
+  flex-grow: 1;
 }
 </style>
