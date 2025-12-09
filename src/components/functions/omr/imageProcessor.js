@@ -43,7 +43,7 @@ export function processingLoop(OMR_STATE) {
   const {
     video,
     ctx,
-    width,
+    width, // These are the potentially swapped width/height (display dimensions)
     height,
     src,
     gray,
@@ -52,13 +52,38 @@ export function processingLoop(OMR_STATE) {
     contrastValue,
     cleanCanvas,
     procCanvas,
+    isPortrait, // New property
   } = OMR_STATE;
   const cv = getCv();
 
+  const originalVideoWidth = video.videoWidth;
+  const originalVideoHeight = video.videoHeight;
+
   // 1. Draw video to canvas and capture clean frame
-  ctx.drawImage(video, 0, 0, width, height);
+  ctx.save(); // Save the current context state
+
+  if (isPortrait) {
+    // Apply transformation for 90 degrees clockwise rotation, mapping original bottom-left to new top-left
+    ctx.setTransform(0, 1, -1, 0, originalVideoHeight, 0);
+    // Draw the video using its original dimensions
+    ctx.drawImage(video, 0, 0, originalVideoWidth, originalVideoHeight);
+  } else {
+    ctx.drawImage(video, 0, 0, width, height);
+  }
+
+  ctx.restore(); // Restore the context to its original state for subsequent operations
+
   try {
-    cleanCanvas.getContext("2d").drawImage(video, 0, 0, width, height);
+    // For cleanCanvas, we need to apply the same transformation if it's portrait
+    const cleanCtx = cleanCanvas.getContext("2d");
+    cleanCtx.save();
+    if (isPortrait) {
+      cleanCtx.setTransform(0, 1, -1, 0, originalVideoHeight, 0);
+      cleanCtx.drawImage(video, 0, 0, originalVideoWidth, originalVideoHeight);
+    } else {
+      cleanCtx.drawImage(video, 0, 0, width, height);
+    }
+    cleanCtx.restore();
     OMR_STATE.lastCleanDataURL = cleanCanvas.toDataURL("image/png");
   } catch (e) {
     /* ignore */
@@ -210,21 +235,28 @@ export function findAndLabelMarkers(
 }
 
 export function assignLabelToMarker(cx, cy, width, height) {
-  const topLabels = ["TL", "TM", "TR"];
-  const bottomLabels = ["BL", "BM", "BR"];
-  const expectedPositions = [];
-  for (let i = 0; i < 3; i++)
-    expectedPositions.push({
-      label: topLabels[i],
-      x: ((i + 0.5) * width) / 3,
-      y: height * 0.25,
-    });
-  for (let i = 0; i < 3; i++)
-    expectedPositions.push({
-      label: bottomLabels[i],
-      x: ((i + 0.5) * width) / 3,
-      y: height * 0.75,
-    });
+  // width here is originalVideoHeight, height here is originalVideoWidth (processed dimensions)
+
+  // Define the ideal positions for each label in the PROCESSED image
+  // Based on user's request:
+  // BL (Upper Left of processed image)
+  // BR (Lower Left of processed image)
+  // TL (Upper Right of processed image)
+  // TR (Lower Right of processed image)
+  // TM (Middle Right of processed image)
+  // BM (Middle Left of processed image)
+
+  const expectedPositions = [
+    // Upper Left region of processed image
+    { label: "BL", x: width * 0.25, y: height * 0.25 }, // BL
+    { label: "BM", x: width * 0.25, y: height * 0.5 },  // BM
+    { label: "BR", x: width * 0.25, y: height * 0.75 }, // BR
+
+    // Upper Right region of processed image
+    { label: "TL", x: width * 0.75, y: height * 0.25 }, // TL
+    { label: "TM", x: width * 0.75, y: height * 0.5 },  // TM
+    { label: "TR", x: width * 0.75, y: height * 0.75 }, // TR
+  ];
 
   let best = null;
   let bestDist = Infinity;
@@ -240,28 +272,32 @@ export function assignLabelToMarker(cx, cy, width, height) {
   if (best && bestDist <= acceptTh) {
     return best.label;
   }
-  // Fallback
-  const yLabel = cy < height / 2 ? "T" : "B";
-  const xLabel = cx < width / 3 ? "L" : cx < (2 * width) / 3 ? "M" : "R";
-  return yLabel + xLabel;
+  // If no close match, return a generic label or handle as an unknown marker
+  return "UNKNOWN";
 }
 
 export function deduplicateMarkers(markers, width, height) {
   const uniqueMarkers = [];
-  const labels = ["TL", "TM", "TR", "BL", "BM", "BR"];
-  const expectedPositions = [];
-  for (let i = 0; i < 3; i++)
-    expectedPositions.push({
-      label: labels[i],
-      x: ((i + 0.5) * width) / 3,
-      y: height * 0.25,
-    });
-  for (let i = 3; i < 6; i++)
-    expectedPositions.push({
-      label: labels[i],
-      x: ((i - 3 + 0.5) * width) / 3,
-      y: height * 0.75,
-    });
+  // Define the ideal positions for each label in the PROCESSED image
+  // Based on user's request:
+  // BL (Upper Left of processed image)
+  // BR (Lower Left of processed image)
+  // TL (Upper Right of processed image)
+  // TR (Lower Right of processed image)
+  // TM (Middle Right of processed image)
+  // BM (Middle Left of processed image)
+
+  const expectedPositions = [
+    // Upper Left region of processed image
+    { label: "BL", x: width * 0.25, y: height * 0.25 }, // BL
+    { label: "BM", x: width * 0.25, y: height * 0.5 },  // BM
+    { label: "BR", x: width * 0.25, y: height * 0.75 }, // BR
+
+    // Upper Right region of processed image
+    { label: "TL", x: width * 0.75, y: height * 0.25 }, // TL
+    { label: "TM", x: width * 0.75, y: height * 0.5 },  // TM
+    { label: "TR", x: width * 0.75, y: height * 0.75 }, // TR
+  ];
 
   for (const ep of expectedPositions) {
     const candidates = markers.filter((m) => m.label === ep.label);
