@@ -122,9 +122,6 @@
             >Contraste:
             <input id="contrast" type="range" min="0" max="200" value="100"
           /></label>
-          <label style="margin-top: 8px"
-            >Debug orientación: <input id="debugOri" type="checkbox"
-          /></label>
         </div>
       </div>
     </div>
@@ -512,13 +509,7 @@
           .catch(() => {
             /* ignore missing template */
           });
-        let debugMode = false;
-        let debugInfo = null;
-
-        const debugCheckbox = document.getElementById("debugOri");
-        debugCheckbox.addEventListener("change", (e) => {
-          debugMode = !!e.target.checked;
-        });
+        
 
         function loop() {
           // draw raw video to visible canvas context first
@@ -778,123 +769,9 @@
             markerCount = normalMarkers.length;
           })();
 
-          // initialize debugInfo to empty each frame
-          debugInfo = null;
+          
 
-          // Real-time orientation correction: try 0/90/180/270 rotations of the
-          // detected centroids and pick the rotation where the markers split
-          // into two rows of 3+3. Then assign labels based on that rotated layout
-          // so TL/TM/TR and BL/BM/BR are correctly assigned regardless of camera rotation.
-          (function orientAndRelabel() {
-            if (!normalMarkers || normalMarkers.length === 0) return;
-            const angles = [0, 90, 180, 270];
-            const cx0 = width / 2,
-              cy0 = height / 2;
-            function rotatePointForAngle(x, y, angle) {
-              const a = (angle * Math.PI) / 180;
-              const rw = angle % 180 === 0 ? width : height;
-              const rh = angle % 180 === 0 ? height : width;
-              const newCx = rw / 2,
-                newCy = rh / 2;
-              const tx = x - cx0,
-                ty = y - cy0;
-              const rx = tx * Math.cos(a) - ty * Math.sin(a);
-              const ry = tx * Math.sin(a) + ty * Math.cos(a);
-              return { x: rx + newCx, y: ry + newCy };
-            }
-
-            let bestAngle = null;
-            for (let a of angles) {
-              const rw = a % 180 === 0 ? width : height;
-              const rh = a % 180 === 0 ? height : width;
-              const rotated = normalMarkers.map((p) =>
-                rotatePointForAngle(p.cx, p.cy, a)
-              );
-              const topCount = rotated.filter((p) => p.y < rh / 2).length;
-              const bottomCount = rotated.length - topCount;
-              if (topCount === 3 && bottomCount === 3) {
-                bestAngle = a;
-                break;
-              }
-            }
-
-            if (bestAngle === null) {
-              // pick best angle minimizing difference from 3/3 split
-              let bestScore = Infinity;
-              for (let a of angles) {
-                const rw = a % 180 === 0 ? width : height;
-                const rh = a % 180 === 0 ? height : width;
-                const rotated = normalMarkers.map((p) =>
-                  rotatePointForAngle(p.cx, p.cy, a)
-                );
-                const topCount = rotated.filter((p) => p.y < rh / 2).length;
-                const bottomCount = rotated.length - topCount;
-                const score =
-                  Math.abs(topCount - 3) + Math.abs(bottomCount - 3);
-                if (score < bestScore) {
-                  bestScore = score;
-                  bestAngle = a;
-                }
-              }
-            }
-
-            if (bestAngle !== null) {
-              const rw = bestAngle % 180 === 0 ? width : height;
-              const rh = bestAngle % 180 === 0 ? height : width;
-              const rotatedWithIdx = normalMarkers.map((p, idx) => {
-                const r = rotatePointForAngle(p.cx, p.cy, bestAngle);
-                return { idx, x: r.x, y: r.y, orig: p };
-              });
-
-              const topRow = rotatedWithIdx
-                .filter((p) => p.y < rh / 2)
-                .sort((a, b) => a.x - b.x);
-              const bottomRow = rotatedWithIdx
-                .filter((p) => p.y >= rh / 2)
-                .sort((a, b) => a.x - b.x);
-
-              // choose which row will be considered the logical "top" (3 items)
-              let rowTop = topRow,
-                rowBottom = bottomRow;
-              if (topRow.length !== 3 && bottomRow.length === 3) {
-                rowTop = bottomRow;
-                rowBottom = topRow;
-              }
-
-              // assign labels: top -> TL,TM,TR ; bottom -> BL,BM,BR
-              const labelsTop = ["TL", "TM", "TR"];
-              const labelsBot = ["BL", "BM", "BR"];
-              rowTop = rowTop || [];
-              rowBottom = rowBottom || [];
-              for (let i = 0; i < rowTop.length && i < labelsTop.length; i++) {
-                const entry = rowTop[i];
-                normalMarkers[entry.idx].label = labelsTop[i];
-              }
-              for (
-                let i = 0;
-                i < rowBottom.length && i < labelsBot.length;
-                i++
-              ) {
-                const entry = rowBottom[i];
-                normalMarkers[entry.idx].label = labelsBot[i];
-              }
-
-              // Save debug info for overlay drawing
-              try {
-                debugInfo = {
-                  angle: bestAngle,
-                  rowTopIdxs: (rowTop || []).map((e) => e.idx),
-                  rowBottomIdxs: (rowBottom || []).map((e) => e.idx),
-                };
-              } catch (err) {
-                debugInfo = {
-                  angle: bestAngle,
-                  rowTopIdxs: [],
-                  rowBottomIdxs: [],
-                };
-              }
-            }
-          })();
+          
 
           // No special-marker workflow: we expect 6 equal markers (3 top, 3 bottom)
           cv.putText(
@@ -909,48 +786,7 @@
 
           cv.imshow("canvasOutput", dst);
 
-          // debug overlay: draw rotation info and which markers formed rowTop/rowBottom
-          if (debugMode && debugInfo) {
-            try {
-              ctx.save();
-              ctx.fillStyle = "rgba(0,0,0,0.5)";
-              ctx.fillRect(8, 72, 260, 60);
-              ctx.fillStyle = "#fff";
-              ctx.font = "14px monospace";
-              ctx.fillText(`rot: ${debugInfo.angle}°`, 12, 92);
-              ctx.fillText(
-                `rowTop indices: [${debugInfo.rowTopIdxs.join(",")}]`,
-                12,
-                112
-              );
-              ctx.fillText(
-                `rowBottom indices: [${debugInfo.rowBottomIdxs.join(",")}]`,
-                12,
-                132
-              );
-
-              // draw circles on detected centroids: blue = rowTop, orange = rowBottom
-              for (let i = 0; i < normalMarkers.length; i++) {
-                const nm = normalMarkers[i];
-                if (!nm) continue;
-                const x = Math.round(nm.cx),
-                  y = Math.round(nm.cy);
-                if (debugInfo.rowTopIdxs.includes(i))
-                  ctx.fillStyle = "rgba(0,150,255,0.9)";
-                else if (debugInfo.rowBottomIdxs.includes(i))
-                  ctx.fillStyle = "rgba(255,150,0,0.9)";
-                else ctx.fillStyle = "rgba(200,200,200,0.6)";
-                ctx.beginPath();
-                ctx.arc(x, y, 6, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = "#fff";
-                ctx.fillText(nm.label || "?", x + 8, y - 8);
-              }
-              ctx.restore();
-            } catch (err) {
-              /* ignore debug drawing errors */
-            }
-          }
+          
 
           // Draw code matrix grid (10x10) when we have the 6 markers labeled
           (function drawCodeMatrixIfPresent() {
@@ -1237,60 +1073,7 @@
               lastCleanDataURL ||
               canvas.toDataURL("image/png");
 
-            // determine rotation so the side with 3 markers becomes the top
-            // Try 0/90/180/270 and pick the angle where the row with 3
-            // markers is in the top half of the rotated image.
             let rot = 0;
-            const angles = [0, 90, 180, 270];
-            const cx0 = width / 2,
-              cy0 = height / 2;
-            function rotatePointForAngle(x, y, angle) {
-              const a = (angle * Math.PI) / 180;
-              const rw = angle % 180 === 0 ? width : height;
-              const rh = angle % 180 === 0 ? height : width;
-              const newCx = rw / 2,
-                newCy = rh / 2;
-              const tx = x - cx0,
-                ty = y - cy0;
-              const rx = tx * Math.cos(a) - ty * Math.sin(a);
-              const ry = tx * Math.sin(a) + ty * Math.cos(a);
-              return { x: rx + newCx, y: ry + newCy };
-            }
-
-            let found = null;
-            for (let a of angles) {
-              const rw = a % 180 === 0 ? width : height;
-              const rh = a % 180 === 0 ? height : width;
-              const rotated = finalNormals.map((p) => {
-                const rp = rotatePointForAngle(p.cx, p.cy, a);
-                return { x: rp.x, y: rp.y };
-              });
-              const topCount = rotated.filter((p) => p.y < rh / 2).length;
-              const bottomCount = rotated.length - topCount;
-              if (topCount === 3 && bottomCount === 3) {
-                found = a;
-                break;
-              }
-            }
-            if (found !== null) rot = found;
-            else {
-              // fallback: choose rotation minimizing distance to 3/3 partition
-              let best = { angle: 0, score: Infinity };
-              for (let a of angles) {
-                const rw = a % 180 === 0 ? width : height;
-                const rh = a % 180 === 0 ? height : width;
-                const rotated = finalNormals.map((p) => {
-                  const rp = rotatePointForAngle(p.cx, p.cy, a);
-                  return { x: rp.x, y: rp.y };
-                });
-                const topCount = rotated.filter((p) => p.y < rh / 2).length;
-                const bottomCount = rotated.length - topCount;
-                const score =
-                  Math.abs(topCount - 3) + Math.abs(bottomCount - 3);
-                if (score < best.score) best = { angle: a, score };
-              }
-              rot = best.angle;
-            }
 
             // show snapshot overlay
             createSnapshotOverlay(dataURL, rot, finalNormals, width, height);
@@ -1382,49 +1165,15 @@
 
           const img = new Image();
           img.onload = () => {
-            // prepare canvas size according to rotation
-            const angle = ((rotationDeg % 360) + 360) % 360;
-            let dw = img.width,
-              dh = img.height;
-            if (angle === 90 || angle === 270) {
-              snapCanvas.width = dh;
-              snapCanvas.height = dw;
-            } else {
-              snapCanvas.width = dw;
-              snapCanvas.height = dh;
-            }
+            snapCanvas.width = img.width;
+            snapCanvas.height = img.height;
             const sctx = snapCanvas.getContext("2d");
-            // clear
-            sctx.fillStyle = "#000";
-            sctx.fillRect(0, 0, snapCanvas.width, snapCanvas.height);
-            // transform and draw
-            sctx.save();
-            sctx.translate(snapCanvas.width / 2, snapCanvas.height / 2);
-            sctx.rotate((angle * Math.PI) / 180);
-            sctx.drawImage(img, -img.width / 2, -img.height / 2);
-            sctx.restore();
-            // capture clean snapshot (no overlays) for validation
+            sctx.drawImage(img, 0, 0);
             const cleanSnapDataURL = snapCanvas.toDataURL("image/png");
 
-            // rotate points and draw markers + list
-            const cx0 = srcW / 2,
-              cy0 = srcH / 2;
-            const newCx = snapCanvas.width / 2,
-              newCy = snapCanvas.height / 2;
-            const angleRad = (angle * Math.PI) / 180;
-            function rotatePoint(x, y) {
-              const tx = x - cx0;
-              const ty = y - cy0;
-              const rx = tx * Math.cos(angleRad) - ty * Math.sin(angleRad);
-              const ry = tx * Math.sin(angleRad) + ty * Math.cos(angleRad);
-              return { x: Math.round(rx + newCx), y: Math.round(ry + newCy) };
-            }
-
-            // compute rotated positions and collect label mapping (do not draw overlays yet)
             const labelMap = {};
-            normals.forEach((n, idx) => {
-              const rp = rotatePoint(n.cx, n.cy);
-              labelMap[n.label] = rp;
+            normals.forEach((n) => {
+              labelMap[n.label] = { x: n.cx, y: n.cy };
               const li = document.createElement("li");
               li.textContent = `${n.label}: ${Math.round(n.cx)}, ${Math.round(
                 n.cy
