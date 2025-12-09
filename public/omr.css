@@ -1,0 +1,165 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #f5f5f5;
+  overflow-x: hidden;
+}
+
+.container {
+  margin: 0 auto;
+  padding: 10px;
+}
+
+.video-and-controls-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.video-container {
+  max-width: 400px;
+  max-height: 300px;
+  margin: 0;
+  background: #000;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid #ccc;
+}
+
+#video {
+  display: none;
+}
+
+#canvasOutput {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  display: block;
+}
+
+canvas {
+  display: block;
+}
+
+.contrast-slider-container {
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 10px;
+  border-radius: 8px;
+  color: white;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.contrast-slider-container label {
+  white-space: nowrap;
+  margin-top: 10px;
+}
+
+.contrast-slider-container input[type="range"] {
+  width: 200px;
+  height: 20px;
+  -webkit-appearance: none;
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: 0.2s;
+  transition: opacity 0.2s;
+  border-radius: 5px;
+}
+
+.contrast-slider-container input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #4caf50;
+  cursor: pointer;
+}
+
+.contrast-slider-container input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #4caf50;
+  cursor: pointer;
+}
+
+/* --- Snapshot Overlay Styles --- */
+#omrSnapshotOverlay {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 9999;
+}
+
+.snapshot-panel {
+  background: #222;
+  padding: 12px;
+  border-radius: 8px;
+  color: #fff;
+  max-width: 95%;
+  max-height: 95%;
+  overflow: auto;
+}
+
+.snapshot-panel button {
+  margin-bottom: 8px;
+}
+
+.snapshot-info {
+  display: flex;
+  gap: 12px;
+}
+
+.snapshot-canvas-wrapper {
+  /* Styles for the canvas container */
+}
+
+.snapshot-canvas-wrapper canvas {
+  max-width: 80vw;
+  max-height: 80vh;
+  display: block;
+}
+
+.snapshot-list {
+  min-width: 220px;
+  font-family: monospace;
+}
+
+.snapshot-list-title {
+  margin-bottom: 8px;
+}
+
+.snapshot-result-wrapper {
+    margin-top: 8px;
+    color: #fff;
+    font-family: monospace;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.snapshot-result-title {
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+.snapshot-result-value {
+    font-size: 14px;
+}

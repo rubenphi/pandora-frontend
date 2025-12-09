@@ -1,0 +1,74 @@
+{
+  "sharedRectangle": {
+    "rectangle": {
+      "top_left": { "x": 5.597393, "y": 5.0 },
+      "top_right": { "x": 114.357054, "y": 5.0 },
+      "bottom_left": { "x": 5.597393, "y": 74.089405 },
+      "bottom_right": { "x": 114.357054, "y": 74.089401 },
+      "width": 108.759661,
+      "height": 69.089401
+    }
+  },
+  "circleTemplate": [
+    {
+      "type": "numeric",
+      "name": "code",
+      "rows": 10,
+      "cols": 10,
+      "circles": {
+        "CTL": { "percent_x": 8.05, "percent_y": 7.9 },
+        "CTR": { "percent_x": 30.2, "percent_y": 7.9 },
+        "CBL": { "percent_x": 8.05, "percent_y": 43 },
+        "CBR": { "percent_x": 30.2, "percent_y": 43 }
+      }
+    },
+    {
+      "type": "question",
+      "name": "q1",
+      "rows": 10,
+      "cols": 8,
+      "circles": {
+        "CTL": { "percent_x": 4.3, "percent_y": 52.77 },
+        "CTR": { "percent_x": 22.3, "percent_y": 52.77 },
+        "CBL": { "percent_x": 4.3, "percent_y": 89.87 },
+        "CBR": { "percent_x": 22.3, "percent_y": 89.87 }
+      }
+    },
+    {
+      "type": "question",
+      "name": "q2",
+      "rows": 10,
+      "cols": 8,
+      "circles": {
+        "CTL": { "percent_x": 28.8, "percent_y": 52.77 },
+        "CTR": { "percent_x": 47, "percent_y": 52.77 },
+        "CBL": { "percent_x": 28.8, "percent_y": 89.87 },
+        "CBR": { "percent_x": 47, "percent_y": 89.87 }
+      }
+    },
+    {
+      "type": "question",
+      "name": "q3",
+      "rows": 10,
+      "cols": 8,
+      "circles": {
+        "CTL": { "percent_x": 52.8, "percent_y": 52.77 },
+        "CTR": { "percent_x": 71.1, "percent_y": 52.77 },
+        "CBL": { "percent_x": 52.8, "percent_y": 89.87 },
+        "CBR": { "percent_x": 71.1, "percent_y": 89.87 }
+      }
+    },
+    {
+      "type": "question",
+      "name": "q4",
+      "rows": 10,
+      "cols": 8,
+      "circles": {
+        "CTL": { "percent_x": 76.59, "percent_y": 52.77 },
+        "CTR": { "percent_x": 95.7, "percent_y": 52.77 },
+        "CBL": { "percent_x": 76.59, "percent_y": 89.87 },
+        "CBR": { "percent_x": 95.7, "percent_y": 89.87 }
+      }
+    }
+  ]
+}
