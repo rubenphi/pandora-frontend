@@ -131,7 +131,6 @@
       src="https://docs.opencv.org/4.5.2/opencv.js"
       onload="onOpenCvReady()"
     ></script>
-
     <script>
       function onOpenCvReady() {
         startCamera();
@@ -150,7 +149,6 @@
           })
           .catch((err) => console.error(err));
       }
-
       function initOpenCV() {
         const video = document.getElementById("video");
         const canvas = document.getElementById("canvasOutput");
@@ -209,7 +207,7 @@
         let matrixTemplate = null;
         // user-supplied circle template (percentages relative to template rectangle)
         // values provided: percent_x and percent_y (0-100)
-        let circleTemplate = {
+        const sharedRectangle = {
           rectangle: {
             top_left: { x: 5.597393, y: 5.0 },
             top_right: { x: 114.357054, y: 5.0 },
@@ -218,72 +216,62 @@
             width: 108.759661,
             height: 69.089401,
           },
-          circles: {
-            CTL: { percent_x: 8.05, percent_y: 7.9 },
-            CTR: { percent_x: 30.2, percent_y: 7.9 },
-            CBL: { percent_x: 8.05, percent_y: 43 },
-            CBR: { percent_x: 30.2, percent_y: 43 },
-          },
-          // additional matrices (M1Questions..M4Questions) can be defined here
-          M1Questions: {
-            rectangle: {
-              top_left: { x: 5.597393, y: 5.0 },
-              top_right: { x: 114.357054, y: 5.0 },
-              bottom_left: { x: 5.597393, y: 74.089405 },
-              bottom_right: { x: 114.357054, y: 74.089405 },
-              width: 108.759661,
-              height: 69.089401,
-            },
+        };
+
+        let circleTemplate = [
+          {
+            type: "numeric",
+            name: "code",
+            rows: 10,
+            cols: 10,
             circles: {
-              CTL: { percent_x: 4.3, percent_y: 52.77 },
-              CTR: { percent_x: 22, percent_y: 52.77 },
-              CBL: { percent_x: 4.3, percent_y: 89.87 },
-              CBR: { percent_x: 22, percent_y: 89.87 },
+              CTL: { percent_x: 8.05, percent_y: 7.9 },
+              CTR: { percent_x: 30.2, percent_y: 7.9 },
+              CBL: { percent_x: 8.05, percent_y: 43 },
+              CBR: { percent_x: 30.2, percent_y: 43 },
             },
+          },
+          {
+            type: "question",
+            name: "q1",
             rows: 10,
             cols: 8,
-          },
-          M2Questions: {
-            rectangle: {
-              top_left: { x: 5.597393, y: 5.0 },
-              top_right: { x: 114.357054, y: 5.0 },
-              bottom_left: { x: 5.597393, y: 74.089405 },
-              bottom_right: { x: 114.357054, y: 74.089405 },
-              width: 108.759661,
-              height: 69.089401,
+            circles: {
+              CTL: { percent_x: 4.3, percent_y: 52.77 },
+              CTR: { percent_x: 22.3, percent_y: 52.77 },
+              CBL: { percent_x: 4.3, percent_y: 89.87 },
+              CBR: { percent_x: 22.3, percent_y: 89.87 },
             },
+          },
+          {
+            type: "question",
+            name: "q2",
+            rows: 10,
+            cols: 8,
             circles: {
               CTL: { percent_x: 27.73, percent_y: 52.77 },
-              CTR: { percent_x: 47.05, percent_y: 52.77 },
+              CTR: { percent_x: 46.5, percent_y: 52.77 },
               CBL: { percent_x: 27.73, percent_y: 89.87 },
-              CBR: { percent_x: 47.05, percent_y: 89.87 },
+              CBR: { percent_x: 46.5, percent_y: 89.87 },
             },
           },
-          M3Questions: {
-            rectangle: {
-              top_left: { x: 5.597393, y: 5.0 },
-              top_right: { x: 114.357054, y: 5.0 },
-              bottom_left: { x: 5.597393, y: 74.089405 },
-              bottom_right: { x: 114.357054, y: 74.089405 },
-              width: 108.759661,
-              height: 69.089401,
-            },
+          {
+            type: "question",
+            name: "q3",
+            rows: 10,
+            cols: 8,
             circles: {
-              CTL: { percent_x: 51.2, percent_y: 52.77 },
+              CTL: { percent_x: 52.8, percent_y: 52.77 },
               CTR: { percent_x: 71.1, percent_y: 52.77 },
-              CBL: { percent_x: 51.2, percent_y: 89.87 },
+              CBL: { percent_x: 52.8, percent_y: 89.87 },
               CBR: { percent_x: 71.1, percent_y: 89.87 },
             },
           },
-          M4Questions: {
-            rectangle: {
-              top_left: { x: 5.597393, y: 5.0 },
-              top_right: { x: 114.357054, y: 5.0 },
-              bottom_left: { x: 5.597393, y: 74.089405 },
-              bottom_right: { x: 114.357054, y: 74.089405 },
-              width: 108.759661,
-              height: 69.089401,
-            },
+          {
+            type: "question",
+            name: "q4",
+            rows: 10,
+            cols: 8,
             circles: {
               CTL: { percent_x: 76.59, percent_y: 52.77 },
               CTR: { percent_x: 95.7, percent_y: 52.77 },
@@ -291,7 +279,7 @@
               CBR: { percent_x: 95.7, percent_y: 89.87 },
             },
           },
-        };
+        ];
         // try to fetch the SVG template with matrix definition (matrizCode.txt)
         fetch("matrizCode.txt")
           .then((r) => r.text())
@@ -509,7 +497,6 @@
           .catch(() => {
             /* ignore missing template */
           });
-        
 
         function loop() {
           // draw raw video to visible canvas context first
@@ -769,10 +756,6 @@
             markerCount = normalMarkers.length;
           })();
 
-          
-
-          
-
           // No special-marker workflow: we expect 6 equal markers (3 top, 3 bottom)
           cv.putText(
             dst,
@@ -785,8 +768,6 @@
           );
 
           cv.imshow("canvasOutput", dst);
-
-          
 
           // Draw code matrix grid (10x10) when we have the 6 markers labeled
           (function drawCodeMatrixIfPresent() {
@@ -874,59 +855,60 @@
                 vmax = matrixTemplate.vmax;
               }
 
-              // If user supplied only 4 circle percents, draw those 4 points and return
-              if (
-                typeof circleTemplate !== "undefined" &&
-                circleTemplate &&
-                circleTemplate.circles
-              ) {
+              if (Array.isArray(circleTemplate) && circleTemplate.length > 0) {
                 try {
-                  // compute the four circle corners in image coordinates
-                  const cKeys = ["CTL", "CTR", "CBL", "CBR"];
-                  const circlesPos = {};
-                  for (const key of cKeys) {
-                    const pct = circleTemplate.circles[key];
-                    if (!pct) continue;
-                    const u = (pct.percent_x || 0) / 100.0;
-                    const v = (pct.percent_y || 0) / 100.0;
-                    const x =
-                      (1 - u) * (1 - v) * TL.x +
-                      u * (1 - v) * TR.x +
-                      (1 - u) * v * BL.x +
-                      u * v * BR.x;
-                    const y =
-                      (1 - u) * (1 - v) * TL.y +
-                      u * (1 - v) * TR.y +
-                      (1 - u) * v * BL.y +
-                      u * v * BR.y;
-                    circlesPos[key] = { x, y };
-                  }
+                  for (const matrixDef of circleTemplate) {
+                    const {
+                      circles,
+                      rows: rowsT,
+                      cols: colsT,
+                      type,
+                    } = matrixDef;
+                    if (!circles) continue;
 
-                  // only draw the full 10x10 grid inside the area defined by CTL,CTR,CBL,CBR
-                  if (
-                    circlesPos.CTL &&
-                    circlesPos.CTR &&
-                    circlesPos.CBL &&
-                    circlesPos.CBR
-                  ) {
-                    const rowsT = 10,
-                      colsT = 10;
+                    const mc = {};
+                    // compute the 4 circle corners for this matrix in image coords
+                    for (const key of ["CTL", "CTR", "CBL", "CBR"]) {
+                      const pct = circles[key];
+                      if (!pct) continue;
+                      const u = (pct.percent_x || 0) / 100.0;
+                      const v = (pct.percent_y || 0) / 100.0;
+                      const x =
+                        (1 - u) * (1 - v) * TL.x +
+                        u * (1 - v) * TR.x +
+                        (1 - u) * v * BL.x +
+                        u * v * BR.x;
+                      const y =
+                        (1 - u) * (1 - v) * TL.y +
+                        u * (1 - v) * TR.y +
+                        (1 - u) * v * BL.y +
+                        u * v * BR.y;
+                      mc[key] = { x, y };
+                    }
+
+                    if (!(mc.CTL && mc.CTR && mc.CBL && mc.CBR)) continue;
+
+                    // draw grid points for this matrix
                     for (let r = 0; r < rowsT; r++) {
                       const v = rowsT === 1 ? 0 : r / (rowsT - 1);
                       for (let c = 0; c < colsT; c++) {
                         const u = colsT === 1 ? 0 : c / (colsT - 1);
                         const x =
-                          (1 - u) * (1 - v) * circlesPos.CTL.x +
-                          u * (1 - v) * circlesPos.CTR.x +
-                          (1 - u) * v * circlesPos.CBL.x +
-                          u * v * circlesPos.CBR.x;
+                          (1 - u) * (1 - v) * mc.CTL.x +
+                          u * (1 - v) * mc.CTR.x +
+                          (1 - u) * v * mc.CBL.x +
+                          u * v * mc.CBR.x;
                         const y =
-                          (1 - u) * (1 - v) * circlesPos.CTL.y +
-                          u * (1 - v) * circlesPos.CTR.y +
-                          (1 - u) * v * circlesPos.CBL.y +
-                          u * v * circlesPos.CBR.y;
+                          (1 - u) * (1 - v) * mc.CTL.y +
+                          u * (1 - v) * mc.CTR.y +
+                          (1 - u) * v * mc.CBL.y +
+                          u * v * mc.CBR.y;
                         ctx.beginPath();
-                        ctx.fillStyle = "rgba(255,220,0,0.95)";
+                        // Differentiate color based on type
+                        ctx.fillStyle =
+                          type === "numeric"
+                            ? "rgba(0,255,128,0.95)"
+                            : "rgba(255,200,0,0.95)";
                         ctx.arc(
                           Math.round(x),
                           Math.round(y),
@@ -937,85 +919,6 @@
                         ctx.fill();
                       }
                     }
-                  }
-
-                  // highlight the 4 template circles on top
-                  for (const key of Object.keys(circleTemplate.circles)) {
-                    const p = circlesPos[key];
-                    if (!p) continue;
-                    ctx.beginPath();
-                    ctx.fillStyle = "rgba(0,255,128,0.95)";
-                    ctx.arc(
-                      Math.round(p.x),
-                      Math.round(p.y),
-                      6,
-                      0,
-                      Math.PI * 2
-                    );
-                    ctx.fill();
-                    ctx.fillStyle = "#000";
-                    ctx.font = "14px monospace";
-                    ctx.fillText(key, Math.round(p.x) + 8, Math.round(p.y) - 8);
-                  }
-                  // draw any additional matrices defined in circleTemplate as M*Questions
-                  try {
-                    const matrixKeys = Object.keys(circleTemplate).filter((k) =>
-                      /^M\d+Questions$/.test(k)
-                    );
-                    for (const mk of matrixKeys) {
-                      const def = circleTemplate[mk];
-                      const rowsT = def.rows || 10;
-                      const colsT = def.cols || 8;
-                      const mc = {};
-                      // compute the 4 circle corners for this matrix in image coords
-                      for (const key of ["CTL", "CTR", "CBL", "CBR"]) {
-                        const pct = def.circles && def.circles[key];
-                        if (!pct) continue;
-                        const u = (pct.percent_x || 0) / 100.0;
-                        const v = (pct.percent_y || 0) / 100.0;
-                        const x =
-                          (1 - u) * (1 - v) * TL.x +
-                          u * (1 - v) * TR.x +
-                          (1 - u) * v * BL.x +
-                          u * v * BR.x;
-                        const y =
-                          (1 - u) * (1 - v) * TL.y +
-                          u * (1 - v) * TR.y +
-                          (1 - u) * v * BL.y +
-                          u * v * BR.y;
-                        mc[key] = { x, y };
-                      }
-                      if (!(mc.CTL && mc.CTR && mc.CBL && mc.CBR)) continue;
-                      // draw grid points for this matrix
-                      for (let r = 0; r < rowsT; r++) {
-                        const v = rowsT === 1 ? 0 : r / (rowsT - 1);
-                        for (let c = 0; c < colsT; c++) {
-                          const u = colsT === 1 ? 0 : c / (colsT - 1);
-                          const x =
-                            (1 - u) * (1 - v) * mc.CTL.x +
-                            u * (1 - v) * mc.CTR.x +
-                            (1 - u) * v * mc.CBL.x +
-                            u * v * mc.CBR.x;
-                          const y =
-                            (1 - u) * (1 - v) * mc.CTL.y +
-                            u * (1 - v) * mc.CTR.y +
-                            (1 - u) * v * mc.CBL.y +
-                            u * v * mc.CBR.y;
-                          ctx.beginPath();
-                          ctx.fillStyle = "rgba(255,200,0,0.95)"; // slightly different yellow
-                          ctx.arc(
-                            Math.round(x),
-                            Math.round(y),
-                            gridPointRadius,
-                            0,
-                            Math.PI * 2
-                          );
-                          ctx.fill();
-                        }
-                      }
-                    }
-                  } catch (err) {
-                    /* ignore extra matrix drawing errors */
                   }
                 } catch (err) {
                   console.warn("failed drawing circleTemplate points", err);
@@ -1317,523 +1220,212 @@
 
                 // detect filled circles inside the corrected image (use dstMat which has NO overlays)
                 try {
-                  const rowsT = 10,
-                    colsT = 10;
-                  // build source grid points (in src/snapshot coordinates) inside the 4 template circles
-                  const circleKeys = ["CTL", "CTR", "CBL", "CBR"];
-                  const circlesSrc = {};
                   if (
-                    typeof circleTemplate !== "undefined" &&
-                    circleTemplate &&
-                    circleTemplate.circles
+                    Array.isArray(circleTemplate) &&
+                    circleTemplate.length > 0
                   ) {
-                    for (const k of circleKeys) {
-                      const pct = circleTemplate.circles[k];
-                      if (!pct) continue;
-                      const u = (pct.percent_x || 0) / 100.0;
-                      const v = (pct.percent_y || 0) / 100.0;
-                      const x =
-                        (1 - u) * (1 - v) * labelMap["TL"].x +
-                        u * (1 - v) * labelMap["TR"].x +
-                        (1 - u) * v * labelMap["BL"].x +
-                        u * v * labelMap["BR"].x;
-                      const y =
-                        (1 - u) * (1 - v) * labelMap["TL"].y +
-                        u * (1 - v) * labelMap["TR"].y +
-                        (1 - u) * v * labelMap["BL"].y +
-                        u * v * labelMap["BR"].y;
-                      circlesSrc[k] = { x, y };
-                    }
-                  }
-
-                  // only proceed if we have the four defining circle centers in source coords
-                  if (
-                    circlesSrc.CTL &&
-                    circlesSrc.CTR &&
-                    circlesSrc.CBL &&
-                    circlesSrc.CBR
-                  ) {
-                    // create list of src points for grid
-                    const srcPtsArr = [];
-                    for (let r = 0; r < rowsT; r++) {
-                      const v = rowsT === 1 ? 0 : r / (rowsT - 1);
-                      for (let c = 0; c < colsT; c++) {
-                        const u = colsT === 1 ? 0 : c / (colsT - 1);
-                        const x =
-                          (1 - u) * (1 - v) * circlesSrc.CTL.x +
-                          u * (1 - v) * circlesSrc.CTR.x +
-                          (1 - u) * v * circlesSrc.CBL.x +
-                          u * v * circlesSrc.CBR.x;
-                        const y =
-                          (1 - u) * (1 - v) * circlesSrc.CTL.y +
-                          u * (1 - v) * circlesSrc.CTR.y +
-                          (1 - u) * v * circlesSrc.CBL.y +
-                          u * v * circlesSrc.CBR.y;
-                        srcPtsArr.push(x);
-                        srcPtsArr.push(y);
-                      }
-                    }
-
-                    // transform to corrected image coords using M
-                    const srcPts = cv.matFromArray(
-                      rowsT * colsT,
-                      1,
-                      cv.CV_32FC2,
-                      srcPtsArr
-                    );
-                    const dstPts = new cv.Mat();
-                    cv.perspectiveTransform(srcPts, dstPts, M);
-
-                    // prepare gray version of dstMat for intensity sampling
-                    const gray = new cv.Mat();
-                    cv.cvtColor(dstMat, gray, cv.COLOR_RGBA2GRAY);
-                    // optional blur to reduce noise
-                    cv.GaussianBlur(gray, gray, new cv.Size(3, 3), 0);
-
-                    const data = dstPts.data32F;
-                    const darkThresh = 100; // intensity <= this considered dark
-                    const requiredFraction = 0.5;
-                    // base visual radius used previously on canvas (small)
-                    const baseGridRadius = 3;
-                    // display radius scaled to corrected image and increased by 10%
-                    const displayRadius = Math.max(
-                      3,
-                      Math.round(baseGridRadius * (dstWScaled / dstW) * 1.1)
-                    );
-                    // use same radius for sampling neighborhood
-                    const localRadius = displayRadius;
-
-                    const detectedPoints = [];
-                    const darkCounts = [];
-                    const totalCounts = [];
-                    const fractions = [];
-                    for (let i = 0; i < data.length; i += 2) {
-                      const dx = Math.round(data[i]);
-                      const dy = Math.round(data[i + 1]);
-                      if (
-                        dx < 0 ||
-                        dy < 0 ||
-                        dx >= dstWScaled ||
-                        dy >= dstHScaled
-                      ) {
-                        detectedPoints.push(false);
-                        continue;
-                      }
-                      // sample circular neighborhood
-                      let darkCount = 0;
-                      let totalCount = 0;
-                      const r = localRadius;
-                      const r2 = r * r;
-                      const xmin = Math.max(0, dx - r);
-                      const xmax = Math.min(dstWScaled - 1, dx + r);
-                      const ymin = Math.max(0, dy - r);
-                      const ymax = Math.min(dstHScaled - 1, dy + r);
-                      for (let yy = ymin; yy <= ymax; yy++) {
-                        const rowPtr = gray.ucharPtr(yy);
-                        for (let xx = xmin; xx <= xmax; xx++) {
-                          const ddx = xx - dx;
-                          const ddy = yy - dy;
-                          if (ddx * ddx + ddy * ddy > r2) continue;
-                          totalCount++;
-                          const v = rowPtr[xx];
-                          if (v <= darkThresh) darkCount++;
-                        }
-                      }
-                      const frac = totalCount > 0 ? darkCount / totalCount : 0;
-                      detectedPoints.push(frac >= requiredFraction);
-                      darkCounts.push(darkCount);
-                      totalCounts.push(totalCount);
-                      fractions.push(frac);
-                    }
-
-                    // draw detections on corrected canvas and list coordinates
                     const cctx = corrected.getContext("2d");
-                    // first draw all grid points in yellow with displayRadius
-                    cctx.fillStyle = "rgba(255,220,0,0.95)";
-                    for (let i = 0; i < data.length; i += 2) {
-                      const gx = Math.round(data[i]);
-                      const gy = Math.round(data[i + 1]);
+
+                    for (const matrixDef of circleTemplate) {
+                      const {
+                        circles,
+                        rows: rowsT,
+                        cols: colsT,
+                        type,
+                      } = matrixDef;
+                      if (!circles) continue;
+
+                      const circlesSrc = {};
+                      for (const k of ["CTL", "CTR", "CBL", "CBR"]) {
+                        const pct = circles[k];
+                        if (!pct) continue;
+                        const u = (pct.percent_x || 0) / 100.0;
+                        const v = (pct.percent_y || 0) / 100.0;
+                        const x =
+                          (1 - u) * (1 - v) * labelMap["TL"].x +
+                          u * (1 - v) * labelMap["TR"].x +
+                          (1 - u) * v * labelMap["BL"].x +
+                          u * v * labelMap["BR"].x;
+                        const y =
+                          (1 - u) * (1 - v) * labelMap["TL"].y +
+                          u * (1 - v) * labelMap["TR"].y +
+                          (1 - u) * v * labelMap["BL"].y +
+                          u * v * labelMap["BR"].y;
+                        circlesSrc[k] = { x, y };
+                      }
+
                       if (
-                        gx < 0 ||
-                        gy < 0 ||
-                        gx >= dstWScaled ||
-                        gy >= dstHScaled
+                        !(
+                          circlesSrc.CTL &&
+                          circlesSrc.CTR &&
+                          circlesSrc.CBL &&
+                          circlesSrc.CBR
+                        )
                       )
                         continue;
-                      cctx.beginPath();
-                      cctx.arc(gx, gy, displayRadius, 0, Math.PI * 2);
-                      cctx.fill();
-                    }
 
-                    // then prepare overlay list and draw red markers for detected ones
-                    cctx.fillStyle = "rgba(255,0,0,0.95)";
-                    // Build a table 10x10 with dark/total counts and fraction for each cell
-                    const tableWrap = document.createElement("div");
-                    tableWrap.style.marginTop = "6px";
-                    tableWrap.style.color = "#fff";
-                    tableWrap.style.fontFamily = "monospace";
-                    const title = document.createElement("div");
-                    title.textContent =
-                      "Grid dark/total counts (dark/total, pct)";
-                    tableWrap.appendChild(title);
-                    const table = document.createElement("table");
-                    table.style.borderCollapse = "collapse";
-                    table.style.marginTop = "6px";
-                    table.style.background = "rgba(0,0,0,0.6)";
-                    table.style.color = "#fff";
-                    const rowsEl = rowsT;
-                    const colsEl = colsT;
-                    let idx = 0;
-                    for (let r = 0; r < rowsEl; r++) {
-                      const tr = document.createElement("tr");
-                      for (let c = 0; c < colsEl; c++) {
-                        const td = document.createElement("td");
-                        td.style.border = "1px solid rgba(255,255,255,0.1)";
-                        td.style.padding = "4px 6px";
-                        const dark = darkCounts[idx] || 0;
-                        const tot = totalCounts[idx] || 0;
-                        const pct =
-                          tot > 0 ? Math.round((dark / tot) * 100) : 0;
-                        td.textContent = `${dark}/${tot} (${pct}%)`;
-                        tr.appendChild(td);
-                        idx++;
-                      }
-                      table.appendChild(tr);
-                    }
-                    tableWrap.appendChild(table);
-                    corrWrap.appendChild(tableWrap);
-
-                    // compute the 10-digit code based on detected red points
-                    try {
-                      const codeDigits = [];
-                      for (let c = 0; c < colsT; c++) {
-                        let bestRow = -1;
-                        let bestFrac = -1;
-                        for (let r = 0; r < rowsT; r++) {
-                          const i = r * colsT + c;
-                          const frac = fractions[i] || 0;
-                          if (detectedPoints[i]) {
-                            if (frac > bestFrac) {
-                              bestFrac = frac;
-                              bestRow = r;
-                            }
-                          }
+                      const srcPtsArr = [];
+                      for (let r = 0; r < rowsT; r++) {
+                        const v = rowsT === 1 ? 0 : r / (rowsT - 1);
+                        for (let c = 0; c < colsT; c++) {
+                          const u = colsT === 1 ? 0 : c / (colsT - 1);
+                          const x =
+                            (1 - u) * (1 - v) * circlesSrc.CTL.x +
+                            u * (1 - v) * circlesSrc.CTR.x +
+                            (1 - u) * v * circlesSrc.CBL.x +
+                            u * v * circlesSrc.CBR.x;
+                          const y =
+                            (1 - u) * (1 - v) * circlesSrc.CTL.y +
+                            u * (1 - v) * circlesSrc.CTR.y +
+                            (1 - u) * v * circlesSrc.CBL.y +
+                            u * v * circlesSrc.CBR.y;
+                          srcPtsArr.push(x);
+                          srcPtsArr.push(y);
                         }
-                        // if no red point or red point is on last row (row 10), digit = 0
-                        let digit = 0;
-                        if (bestRow !== -1 && bestRow !== rowsT - 1) {
-                          digit = bestRow + 1; // rows are 0-based -> digit = rowIndex+1
-                        }
-                        codeDigits.push(digit);
                       }
 
-                      const codeWrap = document.createElement("div");
-                      codeWrap.style.marginTop = "8px";
-                      codeWrap.style.color = "#fff";
-                      codeWrap.style.fontFamily = "monospace";
+                      const srcPts = cv.matFromArray(
+                        rowsT * colsT,
+                        1,
+                        cv.CV_32FC2,
+                        srcPtsArr
+                      );
+                      const dstPts = new cv.Mat();
+                      cv.perspectiveTransform(srcPts, dstPts, M);
 
-                      const codeTitle = document.createElement("div");
-                      codeTitle.textContent = "Código:";
-                      codeTitle.style.fontWeight = "bold";
-                      codeTitle.style.marginBottom = "6px";
-                      codeWrap.appendChild(codeTitle);
+                      const gray = new cv.Mat();
+                      cv.cvtColor(dstMat, gray, cv.COLOR_RGBA2GRAY);
+                      cv.GaussianBlur(gray, gray, new cv.Size(3, 3), 0);
 
-                      const codeValue = document.createElement("div");
-                      codeValue.textContent = codeDigits.join("");
-                      codeValue.style.fontSize = "20px";
-                      codeValue.style.letterSpacing = "4px";
-                      codeWrap.appendChild(codeValue);
+                      const data = dstPts.data32F;
+                      const darkThresh = 100;
+                      const requiredFraction = 0.5;
+                      const baseGridRadius = 3;
+                      const displayRadius = Math.max(
+                        3,
+                        Math.round(baseGridRadius * (dstWScaled / dstW) * 1.1)
+                      );
+                      const localRadius = displayRadius;
 
-                      corrWrap.appendChild(codeWrap);
-                    } catch (err) {
-                      console.warn("failed to compute code", err);
-                    }
-
-                    // draw red markers for detected ones and keep yellow background already drawn
-                    idx = 0;
-                    for (let r = 0; r < rowsT; r++) {
-                      for (let c = 0; c < colsT; c++) {
-                        const px = Math.round(dstPts.data32F[idx * 2]);
-                        const py = Math.round(dstPts.data32F[idx * 2 + 1]);
-                        if (detectedPoints[idx]) {
-                          cctx.beginPath();
-                          cctx.arc(px, py, displayRadius, 0, Math.PI * 2);
-                          cctx.fillStyle = "rgba(255,0,0,0.95)";
-                          cctx.fill();
-                          cctx.fillStyle = "rgba(255,0,0,0.95)";
-                        }
-                        idx++;
-                      }
-                    }
-
-                    // cleanup mats
-                    srcPts.delete();
-                    dstPts.delete();
-                    gray.delete();
-                  }
-                } catch (err) {
-                  console.warn("filled-circle detection failed", err);
-                }
-
-                // process any additional M*Questions matrices defined in circleTemplate
-                try {
-                  const matrixKeys = Object.keys(circleTemplate || {}).filter(
-                    (k) => /^M\d+Questions$/.test(k)
-                  );
-                  if (matrixKeys.length > 0) {
-                    const cctx = corrected.getContext("2d");
-                    for (const mk of matrixKeys) {
-                      try {
-                        const def = circleTemplate[mk];
-                        const rowsM = def.rows || 10;
-                        const colsM = def.cols || 8;
-                        // build source circle centers for this matrix in snapshot coords
-                        const circleKeys = ["CTL", "CTR", "CBL", "CBR"];
-                        const circlesSrcM = {};
-                        if (def && def.circles) {
-                          for (const k of circleKeys) {
-                            const pct = def.circles[k];
-                            if (!pct) continue;
-                            const u = (pct.percent_x || 0) / 100.0;
-                            const v = (pct.percent_y || 0) / 100.0;
-                            const x =
-                              (1 - u) * (1 - v) * labelMap["TL"].x +
-                              u * (1 - v) * labelMap["TR"].x +
-                              (1 - u) * v * labelMap["BL"].x +
-                              u * v * labelMap["BR"].x;
-                            const y =
-                              (1 - u) * (1 - v) * labelMap["TL"].y +
-                              u * (1 - v) * labelMap["TR"].y +
-                              (1 - u) * v * labelMap["BL"].y +
-                              u * v * labelMap["BR"].y;
-                            circlesSrcM[k] = { x, y };
-                          }
-                        }
-
+                      const detectedPoints = [];
+                      const fractions = [];
+                      for (let i = 0; i < data.length; i += 2) {
+                        const dx = Math.round(data[i]);
+                        const dy = Math.round(data[i + 1]);
                         if (
-                          !(
-                            circlesSrcM.CTL &&
-                            circlesSrcM.CTR &&
-                            circlesSrcM.CBL &&
-                            circlesSrcM.CBR
-                          )
+                          dx < 0 ||
+                          dy < 0 ||
+                          dx >= dstWScaled ||
+                          dy >= dstHScaled
+                        ) {
+                          detectedPoints.push(false);
+                          fractions.push(0);
+                          continue;
+                        }
+                        let darkCount = 0;
+                        let totalCount = 0;
+                        const r = localRadius;
+                        const r2 = r * r;
+                        const xmin = Math.max(0, dx - r);
+                        const xmax = Math.min(dstWScaled - 1, dx + r);
+                        const ymin = Math.max(0, dy - r);
+                        const ymax = Math.min(dstHScaled - 1, dy + r);
+                        for (let yy = ymin; yy <= ymax; yy++) {
+                          const rowPtr = gray.ucharPtr(yy);
+                          for (let xx = xmin; xx <= xmax; xx++) {
+                            const ddx = xx - dx;
+                            const ddy = yy - dy;
+                            if (ddx * ddx + ddy * ddy > r2) continue;
+                            totalCount++;
+                            const v = rowPtr[xx];
+                            if (v <= darkThresh) darkCount++;
+                          }
+                        }
+                        const frac =
+                          totalCount > 0 ? darkCount / totalCount : 0;
+                        detectedPoints.push(frac >= requiredFraction);
+                        fractions.push(frac);
+                      }
+
+                      cctx.fillStyle =
+                        type === "numeric"
+                          ? "rgba(0, 255, 128, 0.95)"
+                          : "rgba(255, 200, 0, 0.95)";
+                      for (let i = 0; i < data.length; i += 2) {
+                        const gx = Math.round(data[i]);
+                        const gy = Math.round(data[i + 1]);
+                        if (
+                          gx < 0 ||
+                          gy < 0 ||
+                          gx >= dstWScaled ||
+                          gy >= dstHScaled
                         )
                           continue;
+                        cctx.beginPath();
+                        cctx.arc(gx, gy, displayRadius, 0, Math.PI * 2);
+                        cctx.fill();
+                      }
 
-                        // create list of src points for this matrix
-                        const srcPtsArrM = [];
-                        for (let r = 0; r < rowsM; r++) {
-                          const v = rowsM === 1 ? 0 : r / (rowsM - 1);
-                          for (let c = 0; c < colsM; c++) {
-                            const u = colsM === 1 ? 0 : c / (colsM - 1);
-                            const x =
-                              (1 - u) * (1 - v) * circlesSrcM.CTL.x +
-                              u * (1 - v) * circlesSrcM.CTR.x +
-                              (1 - u) * v * circlesSrcM.CBL.x +
-                              u * v * circlesSrcM.CBR.x;
-                            const y =
-                              (1 - u) * (1 - v) * circlesSrcM.CTL.y +
-                              u * (1 - v) * circlesSrcM.CTR.y +
-                              (1 - u) * v * circlesSrcM.CBL.y +
-                              u * v * circlesSrcM.CBR.y;
-                            srcPtsArrM.push(x);
-                            srcPtsArrM.push(y);
-                          }
-                        }
-
-                        // transform to corrected image coords using M
-                        const srcPtsM = cv.matFromArray(
-                          rowsM * colsM,
-                          1,
-                          cv.CV_32FC2,
-                          srcPtsArrM
-                        );
-                        const dstPtsM = new cv.Mat();
-                        cv.perspectiveTransform(srcPtsM, dstPtsM, M);
-
-                        // prepare gray version of dstMat for intensity sampling
-                        const grayM = new cv.Mat();
-                        cv.cvtColor(dstMat, grayM, cv.COLOR_RGBA2GRAY);
-                        cv.GaussianBlur(grayM, grayM, new cv.Size(3, 3), 0);
-
-                        const dataM = dstPtsM.data32F;
-                        const darkThreshM = 100; // same threshold as main
-                        const requiredFractionM = 0.5; // same required fraction
-                        const baseGridRadiusM = 3;
-                        const displayRadiusM = Math.max(
-                          3,
-                          Math.round(
-                            baseGridRadiusM * (dstWScaled / dstW) * 1.1
-                          )
-                        );
-                        const localRadiusM = displayRadiusM;
-
-                        const detectedPointsM = [];
-                        const darkCountsM = [];
-                        const totalCountsM = [];
-                        const fractionsM = [];
-                        for (let i = 0; i < dataM.length; i += 2) {
-                          const dx = Math.round(dataM[i]);
-                          const dy = Math.round(dataM[i + 1]);
-                          if (
-                            dx < 0 ||
-                            dy < 0 ||
-                            dx >= dstWScaled ||
-                            dy >= dstHScaled
-                          ) {
-                            detectedPointsM.push(false);
-                            darkCountsM.push(0);
-                            totalCountsM.push(0);
-                            fractionsM.push(0);
-                            continue;
-                          }
-                          let darkCount = 0;
-                          let totalCount = 0;
-                          const r = localRadiusM;
-                          const r2 = r * r;
-                          const xmin = Math.max(0, dx - r);
-                          const xmax = Math.min(dstWScaled - 1, dx + r);
-                          const ymin = Math.max(0, dy - r);
-                          const ymax = Math.min(dstHScaled - 1, dy + r);
-                          for (let yy = ymin; yy <= ymax; yy++) {
-                            const rowPtr = grayM.ucharPtr(yy);
-                            for (let xx = xmin; xx <= xmax; xx++) {
-                              const ddx = xx - dx;
-                              const ddy = yy - dy;
-                              if (ddx * ddx + ddy * ddy > r2) continue;
-                              totalCount++;
-                              const v = rowPtr[xx];
-                              if (v <= darkThreshM) darkCount++;
-                            }
-                          }
-                          const frac =
-                            totalCount > 0 ? darkCount / totalCount : 0;
-                          detectedPointsM.push(frac >= requiredFractionM);
-                          darkCountsM.push(darkCount);
-                          totalCountsM.push(totalCount);
-                          fractionsM.push(frac);
-                        }
-
-                        // draw grid points for this matrix on corrected canvas
-                        cctx.fillStyle = "rgba(255,200,0,0.95)";
-                        for (let i = 0; i < dataM.length; i += 2) {
-                          const gx = Math.round(dataM[i]);
-                          const gy = Math.round(dataM[i + 1]);
-                          if (
-                            gx < 0 ||
-                            gy < 0 ||
-                            gx >= dstWScaled ||
-                            gy >= dstHScaled
-                          )
-                            continue;
-                          cctx.beginPath();
-                          cctx.arc(gx, gy, displayRadiusM, 0, Math.PI * 2);
-                          cctx.fill();
-                        }
-
-                        // draw red markers for detected ones
-                        cctx.fillStyle = "rgba(255,0,0,0.95)";
-                        let idxM = 0;
-                        for (let r = 0; r < rowsM; r++) {
-                          for (let c = 0; c < colsM; c++) {
-                            const px = Math.round(dstPtsM.data32F[idxM * 2]);
-                            const py = Math.round(
-                              dstPtsM.data32F[idxM * 2 + 1]
-                            );
-                            if (detectedPointsM[idxM]) {
-                              cctx.beginPath();
-                              cctx.arc(px, py, displayRadiusM, 0, Math.PI * 2);
-                              cctx.fill();
-                            }
-                            idxM++;
-                          }
-                        }
-
-                        // Build result table and code for this matrix
-                        const tableWrapM = document.createElement("div");
-                        tableWrapM.style.marginTop = "6px";
-                        tableWrapM.style.color = "#fff";
-                        tableWrapM.style.fontFamily = "monospace";
-                        const titleM = document.createElement("div");
-                        titleM.textContent = mk + " - dark/total (pct)";
-                        tableWrapM.appendChild(titleM);
-                        const tableM = document.createElement("table");
-                        tableM.style.borderCollapse = "collapse";
-                        tableM.style.marginTop = "6px";
-                        tableM.style.background = "rgba(0,0,0,0.6)";
-                        tableM.style.color = "#fff";
-                        let idx2 = 0;
-                        for (let r = 0; r < rowsM; r++) {
-                          const tr = document.createElement("tr");
-                          for (let c = 0; c < colsM; c++) {
-                            const td = document.createElement("td");
-                            td.style.border = "1px solid rgba(255,255,255,0.1)";
-                            td.style.padding = "4px 6px";
-                            const dark = darkCountsM[idx2] || 0;
-                            const tot = totalCountsM[idx2] || 0;
-                            const pct =
-                              tot > 0 ? Math.round((dark / tot) * 100) : 0;
-                            td.textContent = `${dark}/${tot} (${pct}%)`;
-                            tr.appendChild(td);
-                            idx2++;
-                          }
-                          tableM.appendChild(tr);
-                        }
-                        tableWrapM.appendChild(tableM);
-                        corrWrap.appendChild(tableWrapM);
-
-                        // compute answers per row as JSON: [{question: row(1..N), answer: 'a'..}]
-                        const answers = [];
-                        for (let r = 0; r < rowsM; r++) {
-                          let bestCol = -1;
+                      if (type === "numeric") {
+                        const codeDigits = [];
+                        for (let c = 0; c < colsT; c++) {
+                          let bestRow = -1;
                           let bestFrac = -1;
-                          for (let c = 0; c < colsM; c++) {
-                            const i = r * colsM + c;
-                            const frac = fractionsM[i] || 0;
-                            if (detectedPointsM[i]) {
+                          for (let r = 0; r < rowsT; r++) {
+                            const i = r * colsT + c;
+                            const frac = fractions[i] || 0;
+                            if (detectedPoints[i]) {
                               if (frac > bestFrac) {
                                 bestFrac = frac;
-                                bestCol = c;
+                                bestRow = r;
                               }
                             }
                           }
-                          const answer =
-                            bestCol === -1
-                              ? ""
-                              : String.fromCharCode(97 + bestCol); // 'a' + col
-                          answers.push({ question: r + 1, answer });
+                          let digit = 0;
+                          if (bestRow !== -1 && bestRow !== rowsT - 1) {
+                            digit = bestRow + 1;
+                          }
+                          codeDigits.push(digit);
                         }
-                        const codeWrapM = document.createElement("div");
-                        codeWrapM.style.marginTop = "8px";
-                        codeWrapM.style.color = "#fff";
-                        codeWrapM.style.fontFamily = "monospace";
-                        const codeTitleM = document.createElement("div");
-                        codeTitleM.textContent = mk + " Respuestas (JSON):";
-                        codeTitleM.style.fontWeight = "bold";
-                        codeTitleM.style.marginBottom = "6px";
-                        codeWrapM.appendChild(codeTitleM);
-                        const codeValueM = document.createElement("pre");
-                        codeValueM.textContent = JSON.stringify(
-                          answers,
-                          null,
-                          2
-                        );
-                        codeValueM.style.fontSize = "14px";
-                        codeValueM.style.whiteSpace = "pre-wrap";
-                        codeWrapM.appendChild(codeValueM);
-                        corrWrap.appendChild(codeWrapM);
-
-                        // cleanup mats for this matrix
-                        srcPtsM.delete();
-                        dstPtsM.delete();
-                        grayM.delete();
-                      } catch (err) {
-                        console.warn("processing matrix failed", mk, err);
+                        const codeWrap = document.createElement("div");
+                        codeWrap.style.marginTop = "8px";
+                        codeWrap.style.color = "#fff";
+                        codeWrap.style.fontFamily = "monospace";
+                        const codeTitle = document.createElement("div");
+                        codeTitle.textContent = "Código:";
+                        codeTitle.style.fontWeight = "bold";
+                        codeTitle.style.marginBottom = "6px";
+                        codeWrap.appendChild(codeTitle);
+                        const codeValue = document.createElement("div");
+                        codeValue.textContent = codeDigits.join("");
+                        codeValue.style.fontSize = "20px";
+                        codeValue.style.letterSpacing = "4px";
+                        codeWrap.appendChild(codeValue);
+                        corrWrap.appendChild(codeWrap);
                       }
+
+                      cctx.fillStyle = "rgba(255,0,0,0.95)";
+                      let idx = 0;
+                      for (let r = 0; r < rowsT; r++) {
+                        for (let c = 0; c < colsT; c++) {
+                          const px = Math.round(dstPts.data32F[idx * 2]);
+                          const py = Math.round(dstPts.data32F[idx * 2 + 1]);
+                          if (detectedPoints[idx]) {
+                            cctx.beginPath();
+                            cctx.arc(px, py, displayRadius, 0, Math.PI * 2);
+                            cctx.fill();
+                          }
+                          idx++;
+                        }
+                      }
+
+                      srcPts.delete();
+                      dstPts.delete();
+                      gray.delete();
                     }
                   }
                 } catch (err) {
-                  console.warn("extra matrix processing failed", err);
+                  console.error("Circle detection failed", err);
                 }
 
                 // cleanup
