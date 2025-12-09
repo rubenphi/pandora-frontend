@@ -182,9 +182,21 @@
         let bw = new cv.Mat(height, width, cv.CV_8UC1);
 
         const contrastInput = document.getElementById("contrast");
+        // restore last contrast value from previous session if present
+        try {
+          const stored = localStorage.getItem("omrContrast");
+          if (stored !== null) contrastInput.value = stored;
+        } catch (e) {
+          /* ignore localStorage errors */
+        }
         let contrastValue = parseFloat(contrastInput.value) / 100.0;
         contrastInput.oninput = () => {
           contrastValue = parseFloat(contrastInput.value) / 100.0;
+          try {
+            localStorage.setItem("omrContrast", contrastInput.value);
+          } catch (e) {
+            /* ignore localStorage errors */
+          }
         };
         contrastInput.addEventListener(
           "touchmove",
