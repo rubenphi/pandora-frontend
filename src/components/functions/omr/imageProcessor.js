@@ -2,6 +2,15 @@ import { getCv } from "./omrState.js";
 import { createCanvas } from "./uiSetup.js";
 import { handleCapture } from "./snapshotHandler.js";
 
+export async function restartProcessing(OMR_STATE) {
+  OMR_STATE.captured = false;
+  // Ensure video is playing
+  if (OMR_STATE.video && OMR_STATE.video.paused) {
+    await OMR_STATE.video.play();
+  }
+  processingLoop(OMR_STATE);
+}
+
 export function initOpenCV(OMR_STATE) {
   const video = OMR_STATE.video;
   const canvas = document.getElementById("canvasOutput");

@@ -8,6 +8,7 @@ export function startCamera(OMR_STATE) {
         video.onloadedmetadata = () => {
           video.play();
           OMR_STATE.video = video;
+          OMR_STATE.stream = stream; // Store the stream
           resolve();
         };
       })
@@ -16,4 +17,12 @@ export function startCamera(OMR_STATE) {
         reject(err);
       });
   });
+}
+
+export function stopCamera(OMR_STATE) {
+  if (OMR_STATE.stream) {
+    OMR_STATE.stream.getTracks().forEach(track => track.stop());
+    OMR_STATE.video.srcObject = null;
+    OMR_STATE.stream = null;
+  }
 }

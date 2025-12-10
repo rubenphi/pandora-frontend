@@ -2,7 +2,7 @@ import { getCv } from "./omrState.js";
 import {
   performPerspectiveCorrection,
   extractAndDrawResults,
-  processingLoop,
+  restartProcessing, // Import the new restartProcessing function
 } from "./imageProcessor.js";
 
 export function handleCapture(OMR_STATE, markers) {
@@ -27,9 +27,7 @@ export function createSnapshotOverlay(OMR_STATE, dataURL, markers) {
   closeBtn.textContent = "Cerrar y continuar";
   closeBtn.onclick = () => {
     overlay.remove();
-    OMR_STATE.captured = false;
-    // Assuming processingLoop is accessible globally or passed
-    processingLoop(OMR_STATE);
+    restartProcessing(OMR_STATE); // Call the new restart function
   };
 
   const info = document.createElement("div");

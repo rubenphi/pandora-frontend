@@ -1,4 +1,6 @@
-let OMR_STATE = {};
+let OMR_STATE = {
+  stream: null,
+};
 let cv;
 
 export function initializeOmrState() {

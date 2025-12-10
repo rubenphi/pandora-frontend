@@ -16,11 +16,17 @@
 
         <div v-if="scanImageUrl" class="scan-result-container">
           <h3>Imagen del Escaneo</h3>
-          <img :src="scanImageUrl" alt="Resultado del escaneo OMR" class="scan-result-image" />
+          <img
+            :src="scanImageUrl"
+            alt="Resultado del escaneo OMR"
+            class="scan-result-image"
+          />
         </div>
 
         <ion-item>
-          <ion-label position="stacked">Resultados del Escaneo (JSON)</ion-label>
+          <ion-label position="stacked"
+            >Resultados del Escaneo (JSON)</ion-label
+          >
           <ion-textarea
             v-model="scanResults"
             readonly
@@ -30,11 +36,20 @@
         </ion-item>
       </div>
 
-      <div v-show="isScanning" style="height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
-        <omr-scanner ref="scannerComponent" @scan-complete="onScanComplete"></omr-scanner>
-        <ion-button expand="block" color="danger" @click="stopScan">
-          Cancelar Escaneo
-        </ion-button>
+      <div
+        v-show="isScanning"
+        style="
+          height: 90%;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+        "
+      >
+        <omr-scanner
+          ref="scannerComponent"
+          @scan-complete="onScanComplete"
+          @scan-cancelled="onScanCancelled"
+        ></omr-scanner>
       </div>
     </ion-content>
   </ion-page>
@@ -89,13 +104,13 @@ export default {
       }
     };
 
-    const stopScan = () => {
-      isScanning.value = false;
-    };
-
     const onScanComplete = (payload) => {
       scanResults.value = JSON.stringify(payload.results, null, 2);
       scanImageUrl.value = payload.imageUrl;
+      isScanning.value = false;
+    };
+
+    const onScanCancelled = () => {
       isScanning.value = false;
     };
 
@@ -105,8 +120,8 @@ export default {
       scanImageUrl,
       scannerComponent,
       startScan,
-      stopScan,
       onScanComplete,
+      onScanCancelled,
     };
   },
 };

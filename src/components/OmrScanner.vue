@@ -16,9 +16,21 @@
       <canvas ref="outputCanvas" class="video-feed"></canvas>
       <div class="controls-container">
         <ion-icon :icon="contrastOutline" class="contrast-icon"></ion-icon>
-        <ion-range min="0" max="200" :value="contrastSliderValue" @ionChange="onContrastChange" class="contrast-slider"></ion-range>
+        <ion-range
+          min="0"
+          max="200"
+          :value="contrastSliderValue"
+          @ionChange="onContrastChange"
+          class="contrast-slider"
+        ></ion-range>
         <ion-button v-if="isFlashSupported" @click="toggleFlash" fill="clear">
-          <ion-icon slot="icon-only" :icon="isFlashOn ? flashlight : flashlightOutline"></ion-icon>
+          <ion-icon
+            slot="icon-only"
+            :icon="isFlashOn ? flashlight : flashlightOutline"
+          ></ion-icon>
+        </ion-button>
+        <ion-button @click="cancelScan" fill="clear">
+          <ion-icon slot="icon-only" :icon="closeCircleOutline"></ion-icon>
         </ion-button>
       </div>
     </div>
@@ -27,9 +39,20 @@
 
 <script>
 import { onMounted, onUnmounted, ref, reactive, markRaw } from "vue";
-import { IonSpinner, alertController, IonRange, IonButton, IonIcon } from "@ionic/vue";
-import { flashlight, flashlightOutline, contrastOutline } from "ionicons/icons";
-import { CapacitorFlash } from '@capgo/capacitor-flash';
+import {
+  IonSpinner,
+  alertController,
+  IonRange,
+  IonButton,
+  IonIcon,
+} from "@ionic/vue";
+import {
+  flashlight,
+  flashlightOutline,
+  contrastOutline,
+  closeCircleOutline,
+} from "ionicons/icons";
+import { CapacitorFlash } from "@capgo/capacitor-flash";
 import cv from "@techstark/opencv-js";
 import { fetchTemplates } from "@/components/functions/omr/templateLoader.js";
 import {
@@ -61,7 +84,7 @@ export default {
     IonButton,
     IonIcon,
   },
-  emits: ["scan-complete"],
+  emits: ["scan-complete", "scan-cancelled"],
   setup(_, { emit, expose }) {
     const video = ref(null);
     const outputCanvas = ref(null);
@@ -104,7 +127,7 @@ export default {
       try {
         const { value } = await CapacitorFlash.isAvailable();
         isFlashSupported.value = value;
-      } catch(e) {
+      } catch (e) {
         console.error("Error checking flash availability", e);
         isFlashSupported.value = false;
       }
@@ -115,7 +138,7 @@ export default {
         await CapacitorFlash.toggle();
         const { value } = await CapacitorFlash.isSwitchedOn();
         isFlashOn.value = value;
-      } catch(e) {
+      } catch (e) {
         console.error("Error toggling flash", e);
       }
     };
@@ -146,6 +169,39 @@ export default {
       }
     };
 
+    const reinitializeOMRMats = () => {
+      if (!OMR_STATE.cv || !OMR_STATE.width || !OMR_STATE.height) {
+        console.error(
+          "OpenCV or dimensions not initialized for OMR Mat reinitialization."
+        );
+        return;
+      }
+      OMR_STATE.src = markRaw(
+        new OMR_STATE.cv.Mat(
+          OMR_STATE.height,
+          OMR_STATE.width,
+          OMR_STATE.cv.CV_8UC4
+        )
+      );
+      OMR_STATE.gray = markRaw(
+        new OMR_STATE.cv.Mat(
+          OMR_STATE.height,
+          OMR_STATE.width,
+          OMR_STATE.cv.CV_8UC1
+        )
+      );
+      OMR_STATE.bw = markRaw(
+        new OMR_STATE.cv.Mat(
+          OMR_STATE.height,
+          OMR_STATE.width,
+          OMR_STATE.cv.CV_8UC1
+        )
+      );
+      OMR_STATE.clahe = markRaw(
+        new OMR_STATE.cv.CLAHE(2.0, new OMR_STATE.cv.Size(8, 8))
+      );
+    };
+
     const initialize = () => {
       setTimeout(async () => {
         try {
@@ -169,30 +225,7 @@ export default {
             OMR_STATE.canvas.width = OMR_STATE.width;
             OMR_STATE.canvas.height = OMR_STATE.height;
 
-            OMR_STATE.src = markRaw(
-              new OMR_STATE.cv.Mat(
-                OMR_STATE.height,
-                OMR_STATE.width,
-                OMR_STATE.cv.CV_8UC4
-              )
-            );
-            OMR_STATE.gray = markRaw(
-              new OMR_STATE.cv.Mat(
-                OMR_STATE.height,
-                OMR_STATE.width,
-                OMR_STATE.cv.CV_8UC1
-              )
-            );
-            OMR_STATE.bw = markRaw(
-              new OMR_STATE.cv.Mat(
-                OMR_STATE.height,
-                OMR_STATE.width,
-                OMR_STATE.cv.CV_8UC1
-              )
-            );
-            OMR_STATE.clahe = markRaw(
-              new OMR_STATE.cv.CLAHE(2.0, new OMR_STATE.cv.Size(8, 8))
-            );
+            reinitializeOMRMats(); // Call the new function here
 
             isLoading.value = false;
             // Do not start loop here, wait for start() call
@@ -212,12 +245,14 @@ export default {
         !video.value ||
         video.value.paused ||
         video.value.ended ||
-        isLoading.value
+        isLoading.value ||
+        !OMR_STATE.src // Added check for OMR_STATE.src
       ) {
         return;
       }
 
-      const { cv, ctx, width, height, src, gray, bw, clahe, contrastValue } = OMR_STATE;
+      const { cv, ctx, width, height, src, gray, bw, clahe, contrastValue } =
+        OMR_STATE;
 
       ctx.drawImage(video.value, 0, 0, width, height);
       src.data.set(ctx.getImageData(0, 0, width, height).data);
@@ -270,7 +305,8 @@ export default {
       }
     };
 
-    const handleCapture = (markers) => {
+    const handleCapture = async (markers) => {
+      // Make it async
       const { cv, bw, width, height } = OMR_STATE;
       const labelMap = {};
       markers.forEach((m) => {
@@ -302,11 +338,23 @@ export default {
       correctedMat.delete();
       matrix.delete();
 
+      // Turn off flash immediately after capture
+      try {
+        const { value } = await CapacitorFlash.isSwitchedOn();
+        if (value) {
+          await CapacitorFlash.switchOff();
+          isFlashOn.value = false; // Update reactive state
+        }
+      } catch (e) {
+        console.error("Failed to turn off flash after capture", e);
+      }
+
       // Emit an object with both results and the image URL
       emit("scan-complete", { results: finalResults, imageUrl: imageDataUrl });
     };
 
-    const start = () => {
+    const start = async () => {
+      // Make it async because video.play() returns a Promise
       // Load contrast from localStorage every time a scan starts
       try {
         const storedContrast = localStorage.getItem("omrContrast");
@@ -323,10 +371,69 @@ export default {
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }
+
+      // Re-initialize OMR Mats if they were nullified by cancelScan
+      if (!OMR_STATE.src) {
+        reinitializeOMRMats();
+      }
+
+      // Re-acquire camera stream if it was stopped
+      if (!stream) {
+        await startCamera();
+      }
+
+      // Ensure the video is playing before restarting the processing loop
+      if (video.value && video.value.paused) {
+        try {
+          await video.value.play();
+        } catch (error) {
+          console.error("Error trying to play video on restart:", error);
+          // Handle error, maybe show an alert to the user
+        }
+      }
+
       animationFrameId = requestAnimationFrame(processingLoop);
     };
 
-    expose({ start });
+    const cancelScan = async () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+        stream = null;
+      }
+      // Turn off flash if it's on
+      try {
+        const { value } = await CapacitorFlash.isSwitchedOn();
+        if (value) {
+          await CapacitorFlash.switchOff();
+          isFlashOn.value = false;
+        }
+      } catch (e) {
+        console.error("Failed to turn off flash on cancel", e);
+      }
+      if (OMR_STATE.src) {
+        OMR_STATE.src.delete();
+        OMR_STATE.src = null;
+      }
+      if (OMR_STATE.gray) {
+        OMR_STATE.gray.delete();
+        OMR_STATE.gray = null;
+      }
+      if (OMR_STATE.bw) {
+        OMR_STATE.bw.delete();
+        OMR_STATE.bw = null;
+      }
+      if (OMR_STATE.clahe) {
+        OMR_STATE.clahe.delete();
+        OMR_STATE.clahe = null;
+      }
+      emit("scan-cancelled");
+    };
+
+    expose({ start, cancelScan });
 
     onMounted(() => {
       initialize();
@@ -338,7 +445,7 @@ export default {
         if (value) {
           await CapacitorFlash.switchOff();
         }
-      } catch(e) {
+      } catch (e) {
         console.error("Failed to turn off flash on unmount", e);
       }
 
@@ -348,10 +455,23 @@ export default {
       if (stream) {
         stream.getTracks().forEach((track) => track.stop());
       }
-      OMR_STATE.src?.delete();
-      OMR_STATE.gray?.delete();
-      OMR_STATE.bw?.delete();
-      OMR_STATE.clahe?.delete();
+      // Ensure Mats are deleted only if they exist and then nullify references
+      if (OMR_STATE.src) {
+        OMR_STATE.src.delete();
+        OMR_STATE.src = null;
+      }
+      if (OMR_STATE.gray) {
+        OMR_STATE.gray.delete();
+        OMR_STATE.gray = null;
+      }
+      if (OMR_STATE.bw) {
+        OMR_STATE.bw.delete();
+        OMR_STATE.bw = null;
+      }
+      if (OMR_STATE.clahe) {
+        OMR_STATE.clahe.delete();
+        OMR_STATE.clahe = null;
+      }
     });
 
     return {
@@ -363,9 +483,11 @@ export default {
       isFlashSupported,
       isFlashOn,
       toggleFlash,
+      cancelScan,
       flashlight,
       flashlightOutline,
       contrastOutline,
+      closeCircleOutline,
     };
   },
 };
@@ -375,7 +497,7 @@ export default {
 .scanner-content {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 90%;
 }
 .video-feed {
   width: 100%;
