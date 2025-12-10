@@ -115,7 +115,7 @@ export default {
     const onContrastChange = (event) => {
       const value = event.detail.value;
       contrastSliderValue.value = value;
-      OMR_STATE.contrastValue = parseFloat(value) / 100.0;
+      OMR_STATE.contrastValue = parseFloat(value) / 50.0;
       try {
         localStorage.setItem("omrContrast", value);
       } catch (e) {
@@ -361,7 +361,7 @@ export default {
         if (storedContrast !== null) {
           const value = parseInt(storedContrast, 10);
           contrastSliderValue.value = value;
-          OMR_STATE.contrastValue = parseFloat(value) / 100.0;
+          OMR_STATE.contrastValue = parseFloat(value) / 50.0;
         }
       } catch (e) {
         console.warn("Could not read contrast from localStorage.");
