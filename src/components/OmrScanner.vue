@@ -231,7 +231,7 @@ export default {
             // Do not start loop here, wait for start() call
           });
 
-          await startCamera();
+          // await startCamera(); // MOVED TO start()
         } catch (error) {
           console.error("Error en la inicialización de OMR:", error);
           isLoading.value = false;

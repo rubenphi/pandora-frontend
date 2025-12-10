@@ -1,228 +1,239 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title size="large" class="ion-text-center"
-          >{{ cuestionario.topic }}
-        </ion-title>
-        <ion-buttons slot="start" class="ion-margin-start">
-          <ion-button v-if="id" :href="'/cuestionario/' + id">
-            <ion-icon :icon="arrowBackOutline"></ion-icon>
-          </ion-button>
-        </ion-buttons>
-        <ion-buttons slot="end" class="ion-margin-end">
-          <ion-button v-if="id" :href="'/ganadores/' + id">
-            <ion-icon :icon="refreshOutline"></ion-icon>
-          </ion-button>
-        </ion-buttons>
-        <ion-buttons slot="end" class="ion-margin-end">
-          <ion-button v-if="usuario?.rol == 'admin'" @click="ordenarPorNombre">
-            <ion-icon :icon="arrowDownCircle"></ion-icon>
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content :fullscreen="true">
-      <ion-accordion-group @ionChange="handleAccordionChange">
-        <ion-accordion
-          v-for="(respuesta, index) in respuestas"
-          :key="index"
-          :value="respuesta.group ? respuesta.group.id : respuesta.user.id"
-        >
-          <ion-item slot="header" lines="full" class="ion-padding-end">
-            <ion-icon
-              v-if="respuesta.nota == 5"
-              :icon="trophyOutline"
-              size="large"
-              slot="start"
-            ></ion-icon>
-            <ion-icon
-              v-else-if="respuesta.nota >= 3"
-              :icon="happyOutline"
-              size="large"
-              slot="start"
-            ></ion-icon>
-            <ion-icon
-              v-else
-              :icon="sadOutline"
-              size="large"
-              slot="start"
-            ></ion-icon>
-            <ion-label color="medium">{{ respuesta.group ? respuesta.group.name : respuesta.user?.name + ' ' + respuesta.user?.lastName }}</ion-label>
-            <ion-note slot="end">
-              <ion-text v-if="index === 0" color="warning">
-                <h6>
-                  <ion-icon :icon="starOutline"></ion-icon>GANADOR<ion-icon
-                    :icon="starOutline"
-                  ></ion-icon>
-                </h6>
-              </ion-text>
-              <ion-text v-if="respuesta.points > 0" color="success">
-                <h6>Total Puntos: {{ respuesta.points }}</h6>
-              </ion-text>
-              <ion-text v-else color="danger">
-                <h6>Total Puntos: {{ respuesta.points }}</h6>
-              </ion-text>
-              <ion-text
+    <div v-if="!isScanning && !isShowingScanResult">
+      <ion-header>
+        <ion-toolbar>
+          <ion-title size="large" class="ion-text-center"
+            >{{ cuestionario.topic }}
+          </ion-title>
+          <ion-buttons slot="start" class="ion-margin-start">
+            <ion-button v-if="id" :href="'/cuestionario/' + id">
+              <ion-icon :icon="arrowBackOutline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+          <ion-buttons slot="end" class="ion-margin-end">
+            <ion-button v-if="id" :href="'/ganadores/' + id">
+              <ion-icon :icon="refreshOutline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+          <ion-buttons slot="end" class="ion-margin-end">
+            <ion-button v-if="usuario?.rol == 'admin'" @click="ordenarPorNombre">
+              <ion-icon :icon="arrowDownCircle"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content :fullscreen="true">
+        <ion-accordion-group @ionChange="handleAccordionChange">
+          <ion-accordion
+            v-for="(respuesta, index) in respuestas"
+            :key="index"
+            :value="respuesta.group ? respuesta.group.id : respuesta.user.id"
+          >
+            <ion-item slot="header" lines="full" class="ion-padding-end">
+              <ion-icon
+                v-if="respuesta.nota == 5"
+                :icon="trophyOutline"
+                size="large"
+                slot="start"
+              ></ion-icon>
+              <ion-icon
+                v-else-if="respuesta.nota >= 3"
+                :icon="happyOutline"
+                size="large"
+                slot="start"
+              ></ion-icon>
+              <ion-icon
+                v-else
+                :icon="sadOutline"
+                size="large"
+                slot="start"
+              ></ion-icon>
+              <ion-label color="medium">{{ respuesta.group ? respuesta.group.name : respuesta.user?.name + ' ' + respuesta.user?.lastName }}</ion-label>
+              <ion-note slot="end">
+                <ion-text v-if="index === 0" color="warning">
+                  <h6>
+                    <ion-icon :icon="starOutline"></ion-icon>GANADOR<ion-icon
+                      :icon="starOutline"
+                    ></ion-icon>
+                  </h6>
+                </ion-text>
+                <ion-text v-if="respuesta.points > 0" color="success">
+                  <h6>Total Puntos: {{ respuesta.points }}</h6>
+                </ion-text>
+                <ion-text v-else color="danger">
+                  <h6>Total Puntos: {{ respuesta.points }}</h6>
+                </ion-text>
+                <ion-text
+                  v-if="
+                    (respuesta.group && respuesta.group.id === grupoUsuario?.id) ||
+                    (respuesta.user && respuesta.user.id === usuario?.id) ||
+                    usuario?.rol == 'admin'
+                  "
+                >
+                  Nota: {{ parseFloat(respuesta.nota).toFixed(1) }}
+                </ion-text>
+              </ion-note>
+            </ion-item>
+            <div class="ion-padding" slot="content">
+              <ion-list
                 v-if="
                   (respuesta.group && respuesta.group.id === grupoUsuario?.id) ||
                   (respuesta.user && respuesta.user.id === usuario?.id) ||
                   usuario?.rol == 'admin'
                 "
               >
-                Nota: {{ parseFloat(respuesta.nota).toFixed(1) }}
+                <ion-spinner v-if="loading" name="crescent"></ion-spinner>
+                <template v-else>
+                  <div>
+                    <strong>
+                      Tienes un total de {{ respuestaDetallada.length }} preguntas
+                      resueltas.
+                      <p
+                        v-if="respuesta.points != respuestaMAyor.points"
+                        style="color: orange"
+                      >
+                        Tienes
+                        {{ respuestaMAyor.points - respuesta.points }} puntos
+                        menos que el grupo con mejor puntaje así que tienes
+                        preguntas incorrectas o que no respondiste.
+                      </p>
+                    </strong>
+                  </div>
+                  <ion-item v-for="answer in respuestaDetallada" :key="answer.id">
+                    <ion-label>
+                      <strong
+                        >{{ answer.numeroPregunta }}.{{
+                          answer.question.title
+                        }}</strong
+                      >
+                      <ion-icon
+                        :icon="
+                          answer.option.correct
+                            ? checkmarkCircleOutline
+                            : closeCircleOutline
+                        "
+                        :color="answer.option.correct ? 'success' : 'danger'"
+                      ></ion-icon>
+                      <p>
+                        <strong>Respuesta seleccionada:</strong>
+                        {{ answer.option.sentence }}
+                      </p>
+                      <p>
+                        <strong>Puntos obtenidos:</strong> {{ answer.points }}
+                      </p>
+                    </ion-label>
+                  </ion-item>
+                </template>
+              </ion-list>
+              <ion-text v-else color="medium">
+                <p class="ion-text-center">
+                  No tienes permiso para ver estas respuestas
+                </p>
               </ion-text>
-            </ion-note>
-          </ion-item>
-          <div class="ion-padding" slot="content">
-            <ion-list
-              v-if="
-                (respuesta.group && respuesta.group.id === grupoUsuario?.id) ||
-                (respuesta.user && respuesta.user.id === usuario?.id) ||
-                usuario?.rol == 'admin'
-              "
-            >
-              <ion-spinner v-if="loading" name="crescent"></ion-spinner>
-              <template v-else>
-                <div>
-                  <strong>
-                    Tienes un total de {{ respuestaDetallada.length }} preguntas
-                    resueltas.
-                    <p
-                      v-if="respuesta.points != respuestaMAyor.points"
-                      style="color: orange"
-                    >
-                      Tienes
-                      {{ respuestaMAyor.points - respuesta.points }} puntos
-                      menos que el grupo con mejor puntaje así que tienes
-                      preguntas incorrectas o que no respondiste.
-                    </p>
-                  </strong>
-                </div>
-                <ion-item v-for="answer in respuestaDetallada" :key="answer.id">
-                  <ion-label>
-                    <strong
-                      >{{ answer.numeroPregunta }}.{{
-                        answer.question.title
-                      }}</strong
-                    >
-                    <ion-icon
-                      :icon="
-                        answer.option.correct
-                          ? checkmarkCircleOutline
-                          : closeCircleOutline
-                      "
-                      :color="answer.option.correct ? 'success' : 'danger'"
-                    ></ion-icon>
-                    <p>
-                      <strong>Respuesta seleccionada:</strong>
-                      {{ answer.option.sentence }}
-                    </p>
-                    <p>
-                      <strong>Puntos obtenidos:</strong> {{ answer.points }}
-                    </p>
-                  </ion-label>
-                </ion-item>
-              </template>
-            </ion-list>
-            <ion-text v-else color="medium">
-              <p class="ion-text-center">
-                No tienes permiso para ver estas respuestas
-              </p>
-            </ion-text>
-          </div>
-        </ion-accordion>
-      </ion-accordion-group>
+            </div>
+          </ion-accordion>
+        </ion-accordion-group>
 
-      <ion-buttons
-        v-if="admin"
-        class="ion-justify-content-center ion-padding-top ion-padding-bottom"
-      >
-        <ion-button
-          expand="full"
-          fill="outline"
-          shape="round"
-          color="medium"
-          class="ion-align-self-center"
-          @click="registrarNotas"
+        <ion-buttons
+          v-if="admin"
+          class="ion-justify-content-center ion-padding-top ion-padding-bottom"
         >
-          Registrar notas <ion-icon :icon="fileTrayFullOutline"></ion-icon>
-        </ion-button>
-        <input
-          type="file"
-          ref="fileInput"
-          @change="onFileSelected"
-          style="display: none"
-          accept=".xlsx, .xls"
-        />
-        <ion-button
-          expand="full"
-          fill="outline"
-          shape="round"
-          color="primary"
-          class="ion-align-self-center"
-          @click="triggerFileUpload"
-        >
-          Importar Excel <ion-icon :icon="cloudUploadOutline"></ion-icon>
-        </ion-button>
-      </ion-buttons>
-
-      <!-- Modal for number of questions -->
-      <ion-modal
-        :is-open="isQuestionsModalOpen"
-        @didDismiss="isQuestionsModalOpen = false"
-      >
-        <ion-header>
-          <ion-toolbar>
-            <ion-title>Número de Preguntas a Evaluar</ion-title>
-            <ion-buttons slot="end">
-              <ion-button @click="isQuestionsModalOpen = false"
-                >Cancelar</ion-button
-              >
-            </ion-buttons>
-          </ion-toolbar>
-        </ion-header>
-        <ion-content class="ion-padding">
-          <ion-item>
-            <ion-label position="stacked">Número de preguntas</ion-label>
-            <ion-input type="number" v-model="numPreguntasAEvaluar"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-label>Registrar solo si la nota es mayor</ion-label>
-            <ion-checkbox v-model="registrarNotaMayor"></ion-checkbox>
-          </ion-item>
-          <ion-button expand="block" @click="processAndRegisterGrades"
-            >Aceptar</ion-button
+          <ion-button
+            expand="full"
+            fill="outline"
+            shape="round"
+            color="medium"
+            class="ion-align-self-center"
+            @click="registrarNotas"
           >
-        </ion-content>
-      </ion-modal>
+            Registrar notas <ion-icon :icon="fileTrayFullOutline"></ion-icon>
+          </ion-button>
+          <ion-button
+            expand="full"
+            fill="outline"
+            shape="round"
+            color="primary"
+            class="ion-align-self-center"
+            @click="startScan"
+          >
+            Escanear Hoja de Respuestas <ion-icon :icon="cameraOutline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
 
-      <!-- Toasts -->
-      <ion-toast
-        :is-open="isSuccessToastOpen"
-        message="Notas registradas correctamente"
-        :duration="3000"
-        color="success"
-        @didDismiss="setSuccessToastOpen(false)"
-      ></ion-toast>
-      <ion-toast
-        :is-open="isErrorToastOpen"
-        :message="errorMessage"
-        :duration="3000"
-        color="danger"
-        @didDismiss="setErrorToastOpen(false)"
-      ></ion-toast>
-    </ion-content>
+        <!-- Toasts -->
+        <ion-toast
+          :is-open="isSuccessToastOpen"
+          message="Notas registradas correctamente"
+          :duration="3000"
+          color="success"
+          @didDismiss="setSuccessToastOpen(false)"
+        ></ion-toast>
+        <ion-toast
+          :is-open="isErrorToastOpen"
+          :message="errorMessage"
+          :duration="3000"
+          color="danger"
+          @didDismiss="setErrorToastOpen(false)"
+        ></ion-toast>
+      </ion-content>
+    </div>
+
+    <div v-else-if="isScanning" style="height: 100%">
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Escanear Respuestas</ion-title>
+          <ion-buttons slot="end">
+            <ion-button @click="cancelScan">Cancelar</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content>
+        <omr-scanner
+          ref="omrScannerRef"
+          @scan-complete="handleScanComplete"
+          @scan-cancelled="cancelScan"
+        ></omr-scanner>
+      </ion-content>
+    </div>
+
+    <div v-else-if="isShowingScanResult">
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Resultados del Escaneo</ion-title>
+          <ion-buttons slot="end">
+            <ion-button @click="isShowingScanResult = false">Cerrar</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <h2>Resultados</h2>
+        <div v-if="scannedStudent">
+          <h3>Estudiante: {{ scannedStudent.name }} {{ scannedStudent.lastName }}</h3>
+          <p>Código: {{ scannedStudent.code }}</p>
+        </div>
+        <div v-if="scanResultPayload">
+          <h4>Imagen Escaneada</h4>
+          <img :src="scanResultPayload.imageUrl" style="max-width: 100%; border: 1px solid grey;" />
+          <h4>Respuestas Detectadas</h4>
+          <pre>{{ JSON.stringify(scannedAnswers, null, 2) }}</pre>
+        </div>
+         <ion-buttons class="ion-justify-content-center ion-padding-top ion-padding-bottom">
+            <ion-button @click="startScan" color="light">Reintentar Escaneo</ion-button>
+            <ion-button @click="submitScan">Enviar Respuestas</ion-button>
+        </ion-buttons>
+      </ion-content>
+    </div>
   </ion-page>
 </template>
 
 <script>
 import axios from "axios";
 import { adminOprofesor, numeroOrdinal } from "../globalService";
-import { ref, computed } from "vue";
+import { ref, computed, nextTick } from "vue";
 import { usuarioGet, tokenHeader } from "../globalService";
 import { useRoute } from "vue-router";
-import * as XLSX from "xlsx";
+import OmrScanner from "@/components/OmrScanner.vue";
 
 import {
   arrowBackOutline,
@@ -238,7 +249,7 @@ import {
   fileTrayFullOutline,
   checkmarkCircleOutline,
   closeCircleOutline,
-  cloudUploadOutline,
+  cameraOutline,
 } from "ionicons/icons";
 
 import {
@@ -261,9 +272,6 @@ import {
   IonSpinner,
   IonToast,
   alertController,
-  IonModal,
-  IonInput,
-  IonCheckbox,
 } from "@ionic/vue";
 
 export default {
@@ -285,9 +293,7 @@ export default {
     IonAccordion,
     IonSpinner,
     IonToast,
-    IonModal,
-    IonInput,
-    IonCheckbox,
+    OmrScanner,
   },
   setup() {
     const usuario = ref();
@@ -325,229 +331,83 @@ export default {
       errorMessage.value = message;
     };
 
-    const fileInput = ref(null);
-    const isQuestionsModalOpen = ref(false);
-    const numPreguntasAEvaluar = ref(0);
-    const selectedFile = ref(null);
-    const registrarNotaMayor = ref(false);
+    const isScanning = ref(false);
+    const omrScannerRef = ref(null);
+    const isShowingScanResult = ref(false);
+    const scanResultPayload = ref(null);
+    const scannedStudent = ref(null);
+    const scannedAnswers = ref([]);
 
-    const triggerFileUpload = () => {
-      fileInput.value.click();
+    const startScan = async () => {
+      isShowingScanResult.value = false;
+      isScanning.value = true;
+      await nextTick();
+      omrScannerRef.value?.start();
     };
 
-    const onFileSelected = (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
-      selectedFile.value = file;
-      numPreguntasAEvaluar.value = totalPreguntas.value;
-      isQuestionsModalOpen.value = true;
-      event.target.value = "";
-    };
-
-    const registrarNotasDesdeExcel = async (grades, registrarMayor) => {
-      const failedRegistrations = [];
-
-      for (const grade of grades) {
-        // eslint-disable-next-line no-unused-vars
-        const { studentInfo, ...gradeData } = grade;
-        try {
-          await axios.post("/grades", { ...gradeData, registrarMayor });
-        } catch (error) {
-          failedRegistrations.push({
-            student: studentInfo,
-            error: error.response?.data?.message || "Error desconocido",
-          });
-        }
+    const cancelScan = () => {
+      if (isScanning.value) {
+        omrScannerRef.value?.cancelScan();
       }
+      isScanning.value = false;
+    };
 
-      if (failedRegistrations.length > 0) {
-        const errorList = failedRegistrations
-          .map((f) => `<li>${f.student.lastName} ${f.student.name}</li>`)
-          .join("");
+    const showStudentNotFoundAlert = async () => {
         const alert = await alertController.create({
-          header: "Error al Registrar Notas",
-          subHeader: "Algunas notas no se pudieron registrar.",
-          message: `Estudiantes afectados:<br><ul>${errorList}</ul>`,
-          buttons: ["OK"],
+            header: 'Estudiante no encontrado',
+            message: 'El código escaneado no corresponde a ningún estudiante. ¿Qué deseas hacer?',
+            buttons: [
+                {
+                    text: 'Salir',
+                    role: 'cancel',
+                },
+                {
+                    text: 'Reintentar',
+                    handler: () => {
+                        startScan();
+                    },
+                },
+            ],
         });
         await alert.present();
-      } else {
-        const successAlert = await alertController.create({
-          header: "Éxito",
-          message: "Todas las notas han sido registradas correctamente.",
-          buttons: ["OK"],
-        });
-        await successAlert.present();
+    };
+
+    const handleScanComplete = async (payload) => {
+      isScanning.value = false;
+      const numericResult = payload.results.find(r => r.typeOrigin === 'numeric');
+      const studentCode = numericResult ? numericResult.content : null;
+
+      if (!studentCode) {
+          setErrorToastOpen(true, "No se pudo detectar el código del estudiante en el escaneo.");
+          return;
+      }
+
+      try {
+        const response = await axios.get(`/users?code=${studentCode}`);
+        if (response.data && response.data.length > 0) {
+            scannedStudent.value = response.data[0];
+            scanResultPayload.value = payload;
+            
+            scannedAnswers.value = payload.results
+                .filter(r => r.typeOrigin === 'question')
+                .flatMap(block => block.content);
+
+            isShowingScanResult.value = true;
+        } else {
+            showStudentNotFoundAlert();
+        }
+      } catch (error) {
+        setErrorToastOpen(true, "Error al buscar el estudiante.");
+        console.error("Error fetching student by code:", error);
       }
     };
 
-    const processAndRegisterGrades = async () => {
-      isQuestionsModalOpen.value = false;
-      const file = selectedFile.value;
-      if (!file) {
-        return;
-      }
-
-      const numPreguntas = numPreguntasAEvaluar.value;
-      if (numPreguntas <= 0) {
-        setErrorToastOpen(
-          true,
-          "El número de preguntas a evaluar debe ser mayor que 0."
-        );
-        return;
-      }
-
-      const reader = new FileReader();
-      const data = await new Promise((resolve, reject) => {
-        reader.onload = (e) => resolve(e.target.result);
-        reader.onerror = (err) => reject(err);
-        reader.readAsArrayBuffer(file);
-      });
-
-      const workbook = XLSX.read(new Uint8Array(data), { type: "array" });
-      const firstSheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[firstSheetName];
-
-      // 🔹 Leer valor de la celda A1
-      const cellA1 = worksheet["A1"] ? worksheet["A1"].v : null;
-
-      // 🔹 Decidir desde qué fila arrancar (0 = primera fila, 1 = segunda fila)
-      let startRow = 0;
-      if (cellA1 === 0 || cellA1 === "0") {
-        startRow = 1; // Encabezados en fila 2
-      } else if (cellA1 === "Exam") {
-        startRow = 0; // Encabezados en fila 1
-      }
-
-      const rows = XLSX.utils.sheet_to_json(worksheet, {
-        header: 1,
-        range: startRow,
-      });
-
-      if (rows.length < 1) {
-        console.error(
-          "No se encontraron datos en el archivo Excel o está vacío."
-        );
-        return;
-      }
-
-      const headers = rows[0];
-      const dataRows = rows.slice(1);
-
-      const datosParaRegistrar = [];
-      const errores = [];
-
-      const searchStudent = async (code) => {
-        if (!code) return null;
-        try {
-          const response = await axios.get(`/users?code=${code}`);
-          if (response.data && response.data.length > 0) {
-            return response.data[0];
-          }
-          return null;
-        } catch (error) {
-          console.error(`Error buscando estudiante con código ${code}:`, error);
-          return null;
-        }
-      };
-
-      for (const [index, rowArray] of dataRows.entries()) {
-        const rowObject = {};
-        headers.forEach((header, index) => {
-          rowObject[header] = rowArray[index];
+    const submitScan = () => {
+        // Logic to submit the scanned answers will be implemented in the next step
+        console.log("Submitting scan...", {
+            student: scannedStudent.value,
+            answers: scannedAnswers.value
         });
-
-        const correctAnswers = parseFloat(rowObject["Correct Answers"]);
-
-        const totalMarks = rowObject["Total Marks"];
-        const incorrectAnswers = rowObject["Incorrect Answers"];
-
-        const isCorrectEmpty = correctAnswers == null || isNaN(correctAnswers);
-        const isTotalEmpty = totalMarks == null || totalMarks === "";
-        const isIncorrectEmpty =
-          incorrectAnswers == null || incorrectAnswers === "";
-        if (isCorrectEmpty && isTotalEmpty && isIncorrectEmpty) {
-          continue;
-        }
-
-        const originalRollNo = String(rowObject["Roll No"] || "");
-        const cleanedRollNo = originalRollNo.replace(/^0+/, "");
-
-        let student = null;
-        const searchAttempts = [];
-
-        const rollNoWith1 = "1" + cleanedRollNo;
-        searchAttempts.push(rollNoWith1);
-        student = await searchStudent(rollNoWith1);
-
-        if (!student) {
-          const rollNoWith10 = "10" + cleanedRollNo;
-          searchAttempts.push(rollNoWith10);
-          student = await searchStudent(rollNoWith10);
-        }
-        if (!student) {
-          searchAttempts.push(cleanedRollNo);
-          student = await searchStudent(cleanedRollNo);
-        }
-
-        if (student) {
-          const calculatedNota = (correctAnswers * 5) / numPreguntas;
-          const nota = Math.min(calculatedNota, 5); // Capar nota en 5
-          const gradeData = {
-            userId: student.id,
-            gradableId: parseInt(id, 10),
-            gradableType: "quiz",
-            periodId: cuestionario.value.lesson.period.id,
-            gradeType: "regular",
-            grade: parseFloat(nota.toFixed(2)),
-            instituteId: cuestionario.value.lesson.institute.id,
-            studentInfo: {
-              name: student.name,
-              lastName: student.lastName,
-              code: student.code,
-            },
-          };
-          datosParaRegistrar.push(gradeData);
-        } else {
-          errores.push({
-            row: index + 2 + startRow, // Ajustar fila según origen
-            "Roll No Original": originalRollNo,
-            "Intentos de búsqueda": searchAttempts,
-            Mensaje: "Estudiante no encontrado.",
-          });
-        }
-      }
-
-      if (errores.length > 0) {
-        const errorMessages = errores
-          .map(
-            (e) =>
-              `Fila ${e.row}: No se encontró al estudiante con Roll No ${e["Roll No Original"]}`
-          )
-          .join("<br>");
-        const confirmAlert = await alertController.create({
-          header: "Estudiantes no encontrados",
-          message: `${errorMessages}<br><br>¿Desea registrar las notas de todas maneras para los estudiantes que sí se encontraron?`,
-          buttons: [
-            {
-              text: "No",
-              role: "cancel",
-            },
-            {
-              text: "Sí",
-              handler: () => {
-                registrarNotasDesdeExcel(
-                  datosParaRegistrar,
-                  registrarNotaMayor.value
-                );
-              },
-            },
-          ],
-        });
-        await confirmAlert.present();
-      } else {
-        registrarNotasDesdeExcel(datosParaRegistrar, registrarNotaMayor.value);
-      }
     };
 
     const handleAccordionChange = async (e) => {
@@ -603,21 +463,15 @@ export default {
           respuestas.value = response.data.map((e) => {
             e.points = parseFloat(e.points);
 
-            // Normalizamos:
-            // - pasamos a minúsculas
-            // - quitamos espacios al inicio y final
-            // - reducimos múltiples espacios a uno solo
             let topic = (cuestionario.value.topic || "")
               .toLowerCase()
               .trim()
               .replace(/\s+/g, " ");
 
-            // Regex para detectar actividades de refuerzo
             const regexRefuerzo = /^refuerzo\s*(#|nº?|n)?\s*\d*$/i;
             const regexActividadRefuerzo =
               /^actividades?\s+de\s+refuerzo\s*(#|nº?|n)?\s*\d*$/i;
 
-            // Verificamos si es refuerzo
             const esRefuerzo =
               regexRefuerzo.test(topic) || regexActividadRefuerzo.test(topic);
 
@@ -668,7 +522,6 @@ export default {
       }
       try {
         for (const respuesta of respuestas.value) {
-           // Scenario 1: Individual Quiz (User-based)
            if (respuesta.user && respuesta.user.id) {
                 const data = {
                     userId: respuesta.user.id,
@@ -680,10 +533,9 @@ export default {
                     instituteId: cuestionario.value.lesson.institute.id,
                 };
                 await axios.post("/grades", data);
-                continue; // Move to next response
+                continue; 
            }
 
-           // Scenario 2: Group Quiz (Group-based)
           if (!respuesta.group || !respuesta.group.id) {
             console.warn(
               "Skipping response due to missing group/user data:",
@@ -720,20 +572,6 @@ export default {
       if (targetId == grupoUsuario.value?.id || admin || targetId == usuario.value?.id) {
         let queryParams = `?quizId=${quizId}&instituteId=${instituteId}`;
 
-        // Check if targetId matches a user or a group
-        // If the accordion was opened by a user in individual mode, targetId is userId
-        // If group mode, targetId is groupId
-        // But getAnswers in backend needs explicit param (groupId or userId)
-        // We can infer by context: if we have a group, we use it. But here we only have ID.
-        // Solution: Try first as userId if individual quiz, or structure getRespuestas to know the type.
-        // Better: In handleAccordionChange, we know the type if we check 'respuestas'. But passing ID is simple.
-        // Let's rely on the fact that for now we can try both or differentiating?
-        // Wait, CuestionarioResult knows if it's group or user based on the list 'respuestas'.
-        // But here inside getRespuestas we lack that context easily.
-        // Simplification: In 'individual' quiz, targetId IS userId. In 'group', targetId IS groupId.
-        // We can check question.quiz.quizType from cuestionario.value.
-
-        // Actually 'cuestionario' is available in scope.
         if (cuestionario.value.quizType === 'individual') {
              queryParams += `&userId=${targetId}`;
         } else {
@@ -781,14 +619,17 @@ export default {
       isErrorToastOpen,
       errorMessage,
       setErrorToastOpen,
-      fileInput,
-      triggerFileUpload,
-      cloudUploadOutline,
-      isQuestionsModalOpen,
-      numPreguntasAEvaluar,
-      onFileSelected,
-      processAndRegisterGrades,
-      registrarNotaMayor,
+      isScanning,
+      omrScannerRef,
+      startScan,
+      cancelScan,
+      handleScanComplete,
+      cameraOutline,
+      isShowingScanResult,
+      scanResultPayload,
+      scannedStudent,
+      scannedAnswers,
+      submitScan,
     };
   },
 };
