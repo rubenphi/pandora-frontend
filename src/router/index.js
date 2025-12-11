@@ -3,7 +3,7 @@ import TabsPage from "../views/TabsPage.vue";
 import QrScannerOnboarding from "../views/QrScannerOnboarding.vue";
 import axios from "axios";
 import { adminOprofesor, apiState } from "../globalService"; // <-- MODIFIED
-import { Device } from '@capacitor/device';
+import { Device } from "@capacitor/device";
 
 const routes = [
   // ... (all routes remain the same)
@@ -43,6 +43,10 @@ const routes = [
       },
       {
         path: "omr-read",
+        component: () => import("@/views/OmrRead.vue"),
+      },
+      {
+        path: "omr-read/:id",
         component: () => import("@/views/OmrRead.vue"),
       },
       {
@@ -297,7 +301,7 @@ const routes = [
       },
       {
         path: "materials",
-        component: () => import("@/views/MaterialsPage.vue"), 
+        component: () => import("@/views/MaterialsPage.vue"),
         beforeEnter: (to, from, next) => {
           if (adminOprofesor()) next();
           else next({ path: "/inicio" });
@@ -338,23 +342,23 @@ const router = createRouter({
 // --- vvv MODIFIED GUARD vvv ---
 router.beforeEach(async (to, from, next) => {
   const info = await Device.getInfo();
-  const isNative = info.platform === 'android' || info.platform === 'ios';
-  
+  const isNative = info.platform === "android" || info.platform === "ios";
+
   // Use the reactive state to check if the URL is configured
-  const isBaseUrlSet = !!apiState.baseUrl; 
+  const isBaseUrlSet = !!apiState.baseUrl;
   const isLoggedIn = localStorage.getItem("usuario") != undefined;
 
-  const publicPages = ['/login', '/register', '/onboarding-qr'];
+  const publicPages = ["/login", "/register", "/onboarding-qr"];
   const authRequired = !publicPages.includes(to.path);
 
   // If on native, the URL is not set, and not going to onboarding, redirect.
-  if (isNative && !isBaseUrlSet && to.path !== '/onboarding-qr') {
-    return next('/onboarding-qr');
+  if (isNative && !isBaseUrlSet && to.path !== "/onboarding-qr") {
+    return next("/onboarding-qr");
   }
 
   // If auth is required and user is not logged in, redirect to login.
   if (authRequired && !isLoggedIn) {
-    return next('/login');
+    return next("/login");
   }
 
   // If user is logged in, set auth header.
