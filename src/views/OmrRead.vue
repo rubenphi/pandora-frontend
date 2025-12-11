@@ -41,6 +41,13 @@
           <ion-label position="stacked"
             >Resultados del Escaneo (JSON)</ion-label
           >
+          <IonList>
+                      <IonItem
+                      >
+                        <IonLabel>Pregunta 1</IonLabel>
+                      </IonItem>
+
+                    </IonList>
           <ion-textarea
           v-if="scanResults ¡=''"
             v-model="scanResults"
@@ -81,6 +88,7 @@ import {
   IonButton,
   IonTextarea,
   IonLabel,
+  IonList,
   IonItem,
   onIonViewDidEnter,
   IonCard,
@@ -109,6 +117,7 @@ export default {
     IonTextarea,
     IonLabel,
     IonItem,
+    IonList,
     IonCard,
     IonCardHeader,
     IonCardTitle,
