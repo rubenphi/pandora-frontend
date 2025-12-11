@@ -147,7 +147,7 @@
             class="ion-align-self-center"
             @click="registrarNotas"
           >
-            Registrar notas <ion-icon :icon="fileTrayFullOutline"></ion-icon>
+              <ion-icon :icon="fileTrayFullOutline"></ion-icon>
           </ion-button>
           <ion-button
             expand="full"
@@ -157,7 +157,7 @@
             class="ion-align-self-center"
             :href="/omr-read/{id}"
           >
-            Escanear Hoja de Respuestas <ion-icon :icon="cameraOutline"></ion-icon>
+            <ion-icon :icon="qrCodeOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
 
@@ -204,7 +204,7 @@ import {
   fileTrayFullOutline,
   checkmarkCircleOutline,
   closeCircleOutline,
-  cameraOutline,
+  qrCodeOutline
 } from "ionicons/icons";
 
 import {
@@ -579,7 +579,7 @@ export default {
       startScan,
       cancelScan,
       handleScanComplete,
-      cameraOutline,
+      qrCodeOutline,
       isShowingScanResult,
       scanResultPayload,
       scannedStudent,
