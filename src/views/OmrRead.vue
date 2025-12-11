@@ -37,11 +37,12 @@
           />
         </div>
 
-        <ion-item>
+        <ion-item v-if="scanResults ¡=''>
           <ion-label position="stacked"
             >Resultados del Escaneo (JSON)</ion-label
           >
           <ion-textarea
+          v-if="scanResults ¡=''"
             v-model="scanResults"
             readonly
             rows="10"
