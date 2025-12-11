@@ -17,7 +17,10 @@
             </ion-button>
           </ion-buttons>
           <ion-buttons slot="end" class="ion-margin-end">
-            <ion-button v-if="usuario?.rol == 'admin'" @click="ordenarPorNombre">
+            <ion-button
+              v-if="usuario?.rol == 'admin'"
+              @click="ordenarPorNombre"
+            >
               <ion-icon :icon="arrowDownCircle"></ion-icon>
             </ion-button>
           </ion-buttons>
@@ -49,7 +52,11 @@
                 size="large"
                 slot="start"
               ></ion-icon>
-              <ion-label color="medium">{{ respuesta.group ? respuesta.group.name : respuesta.user?.name + ' ' + respuesta.user?.lastName }}</ion-label>
+              <ion-label color="medium">{{
+                respuesta.group
+                  ? respuesta.group.name
+                  : respuesta.user?.name + " " + respuesta.user?.lastName
+              }}</ion-label>
               <ion-note slot="end">
                 <ion-text v-if="index === 0" color="warning">
                   <h6>
@@ -66,7 +73,8 @@
                 </ion-text>
                 <ion-text
                   v-if="
-                    (respuesta.group && respuesta.group.id === grupoUsuario?.id) ||
+                    (respuesta.group &&
+                      respuesta.group.id === grupoUsuario?.id) ||
                     (respuesta.user && respuesta.user.id === usuario?.id) ||
                     usuario?.rol == 'admin'
                   "
@@ -78,7 +86,8 @@
             <div class="ion-padding" slot="content">
               <ion-list
                 v-if="
-                  (respuesta.group && respuesta.group.id === grupoUsuario?.id) ||
+                  (respuesta.group &&
+                    respuesta.group.id === grupoUsuario?.id) ||
                   (respuesta.user && respuesta.user.id === usuario?.id) ||
                   usuario?.rol == 'admin'
                 "
@@ -87,8 +96,8 @@
                 <template v-else>
                   <div>
                     <strong>
-                      Tienes un total de {{ respuestaDetallada.length }} preguntas
-                      resueltas.
+                      Tienes un total de
+                      {{ respuestaDetallada.length }} preguntas resueltas.
                       <p
                         v-if="respuesta.points != respuestaMAyor.points"
                         style="color: orange"
@@ -100,7 +109,10 @@
                       </p>
                     </strong>
                   </div>
-                  <ion-item v-for="answer in respuestaDetallada" :key="answer.id">
+                  <ion-item
+                    v-for="answer in respuestaDetallada"
+                    :key="answer.id"
+                  >
                     <ion-label>
                       <strong
                         >{{ answer.numeroPregunta }}.{{
@@ -147,7 +159,7 @@
             class="ion-align-self-center"
             @click="registrarNotas"
           >
-              <ion-icon :icon="fileTrayFullOutline"></ion-icon>
+            <ion-icon :icon="fileTrayFullOutline"></ion-icon>
           </ion-button>
           <ion-button
             expand="full"
@@ -155,7 +167,7 @@
             shape="round"
             color="primary"
             class="ion-align-self-center"
-            :href="/omr-read/{id}"
+            :href="'/omr-read/' + id"
           >
             <ion-icon :icon="qrCodeOutline"></ion-icon>
           </ion-button>
@@ -178,7 +190,6 @@
         ></ion-toast>
       </ion-content>
     </div>
-
   </ion-page>
 </template>
 
@@ -188,7 +199,6 @@ import { adminOprofesor, numeroOrdinal } from "../globalService";
 import { ref, computed, nextTick } from "vue";
 import { usuarioGet, tokenHeader } from "../globalService";
 import { useRoute } from "vue-router";
-import OmrScanner from "@/components/OmrScanner.vue";
 
 import {
   arrowBackOutline,
@@ -204,7 +214,7 @@ import {
   fileTrayFullOutline,
   checkmarkCircleOutline,
   closeCircleOutline,
-  qrCodeOutline
+  qrCodeOutline,
 } from "ionicons/icons";
 
 import {
@@ -248,7 +258,6 @@ export default {
     IonAccordion,
     IonSpinner,
     IonToast,
-    OmrScanner,
   },
   setup() {
     const usuario = ref();
@@ -263,9 +272,7 @@ export default {
       group: { name: "Cargando", id: 0 },
       points: 0,
     });
-    const cuestionario = ref(
-      JSON.parse(localStorage.getItem("quizSelected"))
-    );
+    const cuestionario = ref(JSON.parse(localStorage.getItem("quizSelected")));
     const respuestas = ref([
       { group: { name: "Cargando", id: 0 }, points: "Cargando" },
     ]);
@@ -308,48 +315,54 @@ export default {
     };
 
     const showStudentNotFoundAlert = async () => {
-        const alert = await alertController.create({
-            header: 'Estudiante no encontrado',
-            message: 'El código escaneado no corresponde a ningún estudiante. ¿Qué deseas hacer?',
-            buttons: [
-                {
-                    text: 'Salir',
-                    role: 'cancel',
-                },
-                {
-                    text: 'Reintentar',
-                    handler: () => {
-                        startScan();
-                    },
-                },
-            ],
-        });
-        await alert.present();
+      const alert = await alertController.create({
+        header: "Estudiante no encontrado",
+        message:
+          "El código escaneado no corresponde a ningún estudiante. ¿Qué deseas hacer?",
+        buttons: [
+          {
+            text: "Salir",
+            role: "cancel",
+          },
+          {
+            text: "Reintentar",
+            handler: () => {
+              startScan();
+            },
+          },
+        ],
+      });
+      await alert.present();
     };
 
     const handleScanComplete = async (payload) => {
       isScanning.value = false;
-      const numericResult = payload.results.find(r => r.typeOrigin === 'numeric');
+      const numericResult = payload.results.find(
+        (r) => r.typeOrigin === "numeric"
+      );
       const studentCode = numericResult ? numericResult.content : null;
 
       if (!studentCode) {
-          setErrorToastOpen(true, "No se pudo detectar el código del estudiante en el escaneo.");
-          return;
+        setErrorToastOpen(
+          true,
+          "No se pudo detectar el código del estudiante en el escaneo."
+        );
+        return;
       }
 
       try {
         const response = await axios.get(`/users?code=${studentCode}`);
         if (response.data && response.data.length > 0) {
-            scannedStudent.value = response.data[0];
-            scanResultPayload.value = payload;
-            
-            scannedAnswers.value = payload.results
-                .filter(r => r.typeOrigin === 'question')
-                .flatMap(block => block.content);
+          scannedStudent.value = response.data[0];
+          scanResultPayload.value = payload;
 
-            isShowingScanResult.value = true;
+          scannedAnswers.value = payload.results
+            .filter((r) => r.typeOrigin === "question")
+            .flatMap((block) => block.content);
+
+          isShowingScanResult.value = true;
         } else {
-            showStudentNotFoundAlert();
+          showStudentNotFoundAlert();
         }
       } catch (error) {
         setErrorToastOpen(true, "Error al buscar el estudiante.");
@@ -358,11 +371,11 @@ export default {
     };
 
     const submitScan = () => {
-        // Logic to submit the scanned answers will be implemented in the next step
-        console.log("Submitting scan...", {
-            student: scannedStudent.value,
-            answers: scannedAnswers.value
-        });
+      // Logic to submit the scanned answers will be implemented in the next step
+      console.log("Submitting scan...", {
+        student: scannedStudent.value,
+        answers: scannedAnswers.value,
+      });
     };
 
     const handleAccordionChange = async (e) => {
@@ -376,20 +389,28 @@ export default {
     const ordenarPorNombre = () => {
       respuestas.value.sort((a, b) => {
         if (a.user && b.user) {
-             const nameA = a.user.name + ' ' + a.user.lastName;
-             const nameB = b.user.name + ' ' + b.user.lastName;
-             return nameA.localeCompare(nameB);
+          const nameA = a.user.name + " " + a.user.lastName;
+          const nameB = b.user.name + " " + b.user.lastName;
+          return nameA.localeCompare(nameB);
         } else if (a.group && b.group) {
-            const regex = /(\D+)(\d+)/;
-            const [, textA, numberA] = a.group.name.match(regex) || [null, a.group.name, 0];
-            const [, textB, numberB] = b.group.name.match(regex) || [null, b.group.name, 0];
+          const regex = /(\D+)(\d+)/;
+          const [, textA, numberA] = a.group.name.match(regex) || [
+            null,
+            a.group.name,
+            0,
+          ];
+          const [, textB, numberB] = b.group.name.match(regex) || [
+            null,
+            b.group.name,
+            0,
+          ];
 
-            const textComparison = textA.localeCompare(textB);
-            if (textComparison !== 0) {
+          const textComparison = textA.localeCompare(textB);
+          if (textComparison !== 0) {
             return textComparison;
-            }
+          }
 
-            return parseInt(numberA) - parseInt(numberB);
+          return parseInt(numberA) - parseInt(numberB);
         }
         return 0;
       });
@@ -410,7 +431,7 @@ export default {
       await axios.get(`/quizzes/${id}/points`).then((response) => {
         quizPoints.value = response.data.points;
       });
-      
+
       await axios.get(`/quizzes/${id}/results`);
       await axios
         .get(`/quizzes/${id}/results`)
@@ -477,19 +498,19 @@ export default {
       }
       try {
         for (const respuesta of respuestas.value) {
-           if (respuesta.user && respuesta.user.id) {
-                const data = {
-                    userId: respuesta.user.id,
-                    gradableId: parseInt(id, 10),
-                    gradableType: "quiz",
-                    periodId: cuestionario.value.lesson.period.id,
-                    gradeType: "regular",
-                    grade: respuesta.nota,
-                    instituteId: cuestionario.value.lesson.institute.id,
-                };
-                await axios.post("/grades", data);
-                continue; 
-           }
+          if (respuesta.user && respuesta.user.id) {
+            const data = {
+              userId: respuesta.user.id,
+              gradableId: parseInt(id, 10),
+              gradableType: "quiz",
+              periodId: cuestionario.value.lesson.period.id,
+              gradeType: "regular",
+              grade: respuesta.nota,
+              instituteId: cuestionario.value.lesson.institute.id,
+            };
+            await axios.post("/grades", data);
+            continue;
+          }
 
           if (!respuesta.group || !respuesta.group.id) {
             console.warn(
@@ -524,13 +545,17 @@ export default {
     }
 
     async function getRespuestas(targetId, quizId, instituteId) {
-      if (targetId == grupoUsuario.value?.id || admin || targetId == usuario.value?.id) {
+      if (
+        targetId == grupoUsuario.value?.id ||
+        admin ||
+        targetId == usuario.value?.id
+      ) {
         let queryParams = `?quizId=${quizId}&instituteId=${instituteId}`;
 
-        if (cuestionario.value.quizType === 'individual') {
-             queryParams += `&userId=${targetId}`;
+        if (cuestionario.value.quizType === "individual") {
+          queryParams += `&userId=${targetId}`;
         } else {
-             queryParams += `&groupId=${targetId}`;
+          queryParams += `&groupId=${targetId}`;
         }
 
         const response = await axios.get(`/answers${queryParams}`);
