@@ -243,29 +243,34 @@ export function findAndLabelMarkers(
   return deduplicateMarkers(normalMarkers, width, height);
 }
 
+function getExpectedPositions(width, height) {
+  const isPortrait = width < height;
+
+  if (isPortrait) {
+    // Portrait mode: TL/TR are on the right side of the image.
+    return [
+      { label: "BL", x: width * 0.25, y: height * 0.25 },
+      { label: "BM", x: width * 0.25, y: height * 0.5 },
+      { label: "BR", x: width * 0.25, y: height * 0.75 },
+      { label: "TL", x: width * 0.75, y: height * 0.25 },
+      { label: "TM", x: width * 0.75, y: height * 0.5 },
+      { label: "TR", x: width * 0.75, y: height * 0.75 },
+    ];
+  } else {
+    // Landscape mode: TL/TR are at the top of the image.
+    return [
+      { label: "TL", x: width * 0.25, y: height * 0.25 },
+      { label: "TM", x: width * 0.5, y: height * 0.25 },
+      { label: "TR", x: width * 0.75, y: height * 0.25 },
+      { label: "BL", x: width * 0.25, y: height * 0.75 },
+      { label: "BM", x: width * 0.5, y: height * 0.75 },
+      { label: "BR", x: width * 0.75, y: height * 0.75 },
+    ];
+  }
+}
+
 export function assignLabelToMarker(cx, cy, width, height) {
-  // width here is originalVideoHeight, height here is originalVideoWidth (processed dimensions)
-
-  // Define the ideal positions for each label in the PROCESSED image
-  // Based on user's request:
-  // BL (Upper Left of processed image)
-  // BR (Lower Left of processed image)
-  // TL (Upper Right of processed image)
-  // TR (Lower Right of processed image)
-  // TM (Middle Right of processed image)
-  // BM (Middle Left of processed image)
-
-  const expectedPositions = [
-    // Upper Left region of processed image
-    { label: "BL", x: width * 0.25, y: height * 0.25 }, // BL
-    { label: "BM", x: width * 0.25, y: height * 0.5 },  // BM
-    { label: "BR", x: width * 0.25, y: height * 0.75 }, // BR
-
-    // Upper Right region of processed image
-    { label: "TL", x: width * 0.75, y: height * 0.25 }, // TL
-    { label: "TM", x: width * 0.75, y: height * 0.5 },  // TM
-    { label: "TR", x: width * 0.75, y: height * 0.75 }, // TR
-  ];
+  const expectedPositions = getExpectedPositions(width, height);
 
   let best = null;
   let bestDist = Infinity;
@@ -287,26 +292,7 @@ export function assignLabelToMarker(cx, cy, width, height) {
 
 export function deduplicateMarkers(markers, width, height) {
   const uniqueMarkers = [];
-  // Define the ideal positions for each label in the PROCESSED image
-  // Based on user's request:
-  // BL (Upper Left of processed image)
-  // BR (Lower Left of processed image)
-  // TL (Upper Right of processed image)
-  // TR (Lower Right of processed image)
-  // TM (Middle Right of processed image)
-  // BM (Middle Left of processed image)
-
-  const expectedPositions = [
-    // Upper Left region of processed image
-    { label: "BL", x: width * 0.25, y: height * 0.25 }, // BL
-    { label: "BM", x: width * 0.25, y: height * 0.5 },  // BM
-    { label: "BR", x: width * 0.25, y: height * 0.75 }, // BR
-
-    // Upper Right region of processed image
-    { label: "TL", x: width * 0.75, y: height * 0.25 }, // TL
-    { label: "TM", x: width * 0.75, y: height * 0.5 },  // TM
-    { label: "TR", x: width * 0.75, y: height * 0.75 }, // TR
-  ];
+  const expectedPositions = getExpectedPositions(width, height);
 
   for (const ep of expectedPositions) {
     const candidates = markers.filter((m) => m.label === ep.label);
