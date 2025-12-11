@@ -155,7 +155,7 @@
             shape="round"
             color="primary"
             class="ion-align-self-center"
-            @click="startScan"
+            :href="/omr-read/{id}"
           >
             Escanear Hoja de Respuestas <ion-icon :icon="cameraOutline"></ion-icon>
           </ion-button>
@@ -179,51 +179,6 @@
       </ion-content>
     </div>
 
-    <div v-else-if="isScanning" style="height: 100%">
-      <ion-header>
-        <ion-toolbar>
-          <ion-title>Escanear Respuestas</ion-title>
-          <ion-buttons slot="end">
-            <ion-button @click="cancelScan">Cancelar</ion-button>
-          </ion-buttons>
-        </ion-toolbar>
-      </ion-header>
-      <ion-content>
-        <omr-scanner
-          ref="omrScannerRef"
-          @scan-complete="handleScanComplete"
-          @scan-cancelled="cancelScan"
-        ></omr-scanner>
-      </ion-content>
-    </div>
-
-    <div v-else-if="isShowingScanResult">
-      <ion-header>
-        <ion-toolbar>
-          <ion-title>Resultados del Escaneo</ion-title>
-          <ion-buttons slot="end">
-            <ion-button @click="isShowingScanResult = false">Cerrar</ion-button>
-          </ion-buttons>
-        </ion-toolbar>
-      </ion-header>
-      <ion-content class="ion-padding">
-        <h2>Resultados</h2>
-        <div v-if="scannedStudent">
-          <h3>Estudiante: {{ scannedStudent.name }} {{ scannedStudent.lastName }}</h3>
-          <p>Código: {{ scannedStudent.code }}</p>
-        </div>
-        <div v-if="scanResultPayload">
-          <h4>Imagen Escaneada</h4>
-          <img :src="scanResultPayload.imageUrl" style="max-width: 100%; border: 1px solid grey;" />
-          <h4>Respuestas Detectadas</h4>
-          <pre>{{ JSON.stringify(scannedAnswers, null, 2) }}</pre>
-        </div>
-         <ion-buttons class="ion-justify-content-center ion-padding-top ion-padding-bottom">
-            <ion-button @click="startScan" color="light">Reintentar Escaneo</ion-button>
-            <ion-button @click="submitScan">Enviar Respuestas</ion-button>
-        </ion-buttons>
-      </ion-content>
-    </div>
   </ion-page>
 </template>
 
