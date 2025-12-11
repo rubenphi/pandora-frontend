@@ -22,8 +22,32 @@
           >
         </ion-card-header>
       </ion-card>
-      <div v-if="!isScanning">
-        <ion-button expand="block" @click="startScan"> Escanear </ion-button>
+      <div v-if="!isScanning" class="ion-padding-top">
+        <ion-grid>
+          <ion-row>
+            <ion-col>
+              <ion-button
+                expand="block"
+                @click="startScan"
+                :disabled="isSubmitting"
+              >
+                Escanear
+              </ion-button>
+            </ion-col>
+            <ion-col>
+              <ion-button
+                expand="block"
+                @click="submitAnswers"
+                :disabled="!student.id || isSubmitting"
+                color="secondary"
+              >
+                <ion-spinner v-if="isSubmitting" name="crescent"></ion-spinner>
+                <ion-icon v-else :icon="saveOutline" slot="start"></ion-icon>
+                Guardar
+              </ion-button>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
 
         <div v-if="scanImageUrl" class="scan-result-container">
           <h3>Imagen del Escaneo</h3>
@@ -42,18 +66,28 @@
               <ion-input
                 v-model="studentCodeInput"
                 placeholder="Ingrese código"
+                :disabled="isSubmitting"
               ></ion-input>
               <ion-button
                 slot="end"
                 fill="clear"
                 @click="findStudentByCode(studentCodeInput)"
+                :disabled="isSubmitting"
               >
                 <ion-icon :icon="syncOutline" slot="icon-only"></ion-icon>
               </ion-button>
             </ion-item>
-            <div v-if="student.id" class="ion-padding-top">
-              <strong>Estudiante:</strong> {{ student.name }}
-              {{ student.lastName }}
+            <div v-if="student.id" class="ion-padding-vertical">
+              <div>
+                <strong>Estudiante:</strong> {{ student.name }}
+                {{ student.lastName }}
+              </div>
+              <div
+                v-if="cuestionario.quizType === 'group' && activeGroup"
+                class="ion-padding-top"
+              >
+                <strong>Grupo Activo:</strong> {{ activeGroup.name }}
+              </div>
             </div>
           </div>
         </div>
@@ -76,17 +110,6 @@
             </ion-select>
           </IonItem>
         </IonList>
-        <ion-item>
-          <ion-label position="stacked"
-            >Resultados del Escaneo (JSON)</ion-label
-          >
-          <ion-textarea
-            v-model="scanResults"
-            readonly
-            rows="10"
-            placeholder="Los resultados del escaneo aparecerán aquí..."
-          ></ion-textarea>
-        </ion-item>
       </div>
 
       <div
@@ -117,7 +140,6 @@ import {
   IonContent,
   IonButtons,
   IonButton,
-  IonTextarea,
   IonLabel,
   IonList,
   IonItem,
@@ -131,13 +153,17 @@ import {
   IonSelectOption,
   alertController,
   IonInput,
+  IonCol,
+  IonRow,
+  IonSpinner,
+  IonGrid,
 } from "@ionic/vue";
 import { ref, nextTick } from "vue";
 import OmrScanner from "@/components/OmrScanner.vue";
 import { tokenHeader } from "../globalService";
+import { useRoute, useRouter } from "vue-router";
+import { arrowBackOutline, saveOutline, syncOutline } from "ionicons/icons";
 import axios from "axios";
-import { useRoute } from "vue-router";
-import { arrowBackOutline, syncOutline } from "ionicons/icons";
 
 export default {
   name: "OmrRead",
@@ -147,9 +173,12 @@ export default {
     IonToolbar,
     IonTitle,
     IonContent,
+    IonCol,
+    IonRow,
+    IonSpinner,
+    IonGrid,
     IonButtons,
     IonButton,
-    IonTextarea,
     IonLabel,
     IonItem,
     IonList,
@@ -165,6 +194,7 @@ export default {
   },
   setup() {
     const route = useRoute();
+    const router = useRouter();
     const quizId = route.params.id;
     const cuestionario = ref({});
     const isScanning = ref(false);
@@ -175,12 +205,15 @@ export default {
     const answersToSend = ref([]);
     const student = ref({});
     const studentCodeInput = ref("");
+    const activeGroup = ref(null);
+    const isSubmitting = ref(false);
 
     const startScan = async () => {
       scanImageUrl.value = null;
       scanResults.value = "";
       student.value = {};
       studentCodeInput.value = "";
+      activeGroup.value = null;
       isScanning.value = true;
       await nextTick(); // Wait for the DOM to update after v-show
       if (scannerComponent.value) {
@@ -191,12 +224,15 @@ export default {
     const findStudentByCode = async (code, context = "manual") => {
       if (!code) {
         student.value = {};
+        activeGroup.value = null;
         return;
       }
       try {
+        // Assuming the endpoint returns the user with its relations, including groups
         const response = await axios.get(`/users?code=${code}`);
         if (response.data.length === 0) {
           student.value = { id: null, name: "No encontrado", lastName: "" };
+          activeGroup.value = null;
 
           const alertButtons =
             context === "scan"
@@ -214,9 +250,17 @@ export default {
           await alert.present();
         } else {
           student.value = response.data[0];
+          // Find the active group
+          if (student.value.groups && student.value.groups.length > 0) {
+            const userToGroup = student.value.groups.find((g) => g.active);
+            if (userToGroup) {
+              activeGroup.value = userToGroup.group;
+            }
+          }
         }
       } catch (error) {
         student.value = { id: null, name: "No encontrado", lastName: "" };
+        activeGroup.value = null;
         const alertButtons =
           context === "scan"
             ? [
@@ -266,6 +310,7 @@ export default {
         // No student code was found in the scan
         studentCodeInput.value = "";
         student.value = {};
+        activeGroup.value = null;
         alertController
           .create({
             header: "Código no encontrado",
@@ -282,6 +327,92 @@ export default {
 
     const onScanCancelled = () => {
       isScanning.value = false;
+    };
+
+    const submitAnswers = async () => {
+      if (!student.value.id) {
+        const alert = await alertController.create({
+          header: "Error",
+          message: "Se requiere un estudiante para guardar las respuestas.",
+          buttons: ["OK"],
+        });
+        await alert.present();
+        return;
+      }
+
+      if (
+        cuestionario.value.quizType === "group" &&
+        (!activeGroup.value || !activeGroup.value.id)
+      ) {
+        const alert = await alertController.create({
+          header: "Error",
+          message:
+            "Este es un cuestionario de grupo y no se encontró un grupo activo para el estudiante.",
+          buttons: ["OK"],
+        });
+        await alert.present();
+        return;
+      }
+
+      const answersPayload = answersToSend.value
+        .filter((a) => a.selectedOption !== null)
+        .map((a) => ({
+          questionId: a.id,
+          optionId: a.selectedOption,
+        }));
+
+      if (answersPayload.length === 0) {
+        const alert = await alertController.create({
+          header: "Sin respuestas",
+          message: "No hay ninguna respuesta seleccionada para enviar.",
+          buttons: ["OK"],
+        });
+        await alert.present();
+        return;
+      }
+
+      const bulkDto = {
+        quizId: cuestionario.value.id,
+        instituteId: cuestionario.value.instituteId,
+        answers: answersPayload,
+      };
+
+      if (cuestionario.value.quizType === "group") {
+        bulkDto.groupId = activeGroup.value.id;
+        bulkDto.userId = student.value.id;
+      } else {
+        bulkDto.userId = student.value.id;
+      }
+
+      isSubmitting.value = true;
+      try {
+        await axios.post("/answers/bulk", bulkDto);
+        const alert = await alertController.create({
+          header: "Éxito",
+          message: "Las respuestas se han guardado correctamente.",
+          buttons: [
+            {
+              text: "OK",
+              handler: () => {
+                router.push(backUrl.value);
+              },
+            },
+          ],
+        });
+        await alert.present();
+      } catch (error) {
+        const message =
+          error.response?.data?.message ||
+          "Ocurrió un error al guardar las respuestas.";
+        const alert = await alertController.create({
+          header: "Error al Guardar",
+          message: message,
+          buttons: ["OK"],
+        });
+        await alert.present();
+      } finally {
+        isSubmitting.value = false;
+      }
     };
 
     onIonViewDidEnter(async () => {
@@ -327,13 +458,17 @@ export default {
       answersToSend,
       scannerComponent,
       arrowBackOutline,
+      saveOutline,
       syncOutline,
       backUrl,
       studentCodeInput,
+      activeGroup,
+      isSubmitting,
       startScan,
       onScanComplete,
       onScanCancelled,
       findStudentByCode,
+      submitAnswers,
     };
   },
 };
