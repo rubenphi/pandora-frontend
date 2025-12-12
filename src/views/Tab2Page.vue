@@ -80,17 +80,19 @@ export default {
 
     const generateQrCode = (ip, port) => {
       const canvas = document.getElementById("qr-code-canvas");
-      if (canvas) {
-        QRCode.toCanvas(
-          canvas,
-          `http://${ip}:${port}`,
-          { width: 300 },
-          function (error) {
-            if (error) console.error(error);
-          }
-        );
-      } else {
-        console.warn("Canvas element not found for QR code generation.");
+      if (!isNative.value) {
+        if (canvas) {
+          QRCode.toCanvas(
+            canvas,
+            `http://${ip}:${port}`,
+            { width: 300 },
+            function (error) {
+              if (error) console.error(error);
+            }
+          );
+        } else {
+          console.warn("Canvas element not found for QR code generation.");
+        }
       }
     };
 
@@ -114,6 +116,7 @@ export default {
 
     return {
       serverIp,
+      isNative,
       frontendPort,
       salir() {
         const periodoSelected = JSON.parse(
