@@ -581,7 +581,7 @@ export function extractAndDrawResults(
     cv.perspectiveTransform(srcPts, dstPts, matrix);
 
     const darkThresh = 100;
-    const requiredFraction = 0.5;
+    const requiredFraction = 0.5; //sensibilidad
     const displayRadius = matrixDef.radius;
     const localRadius = matrixDef.radius;
 

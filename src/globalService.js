@@ -20,7 +20,7 @@ export function initializeBaseUrl(ip) {
   let url = null;
   const storedIp = localStorage.getItem("backend_ip");
 
-  if (storedIp) {
+  if (storedIp && Capacitor.isNativePlatform()) {
     url = `http://${storedIp}`;
   } else if (!Capacitor.isNativePlatform()) {
     // Implementación para web
