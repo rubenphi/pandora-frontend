@@ -1,6 +1,7 @@
 import { reactive } from "vue";
-import { Capacitor } from "@capacitor/core";
+
 import axios from "axios";
+import { Capacitor } from "@capacitor/core";
 
 // 1. Estado reactivo para la configuración de la API
 export const apiState = reactive({
@@ -9,21 +10,18 @@ export const apiState = reactive({
 });
 
 // 2. Función para establecer y guardar la nueva IP
-export function setBaseUrl(ip) {
-  const fullUrl = `http://${ip}/`;
-  localStorage.setItem("backend_ip", ip);
-  localStorage.setItem("appLinked", "true");
-  axios.defaults.baseURL = fullUrl;
-  apiState.baseUrl = fullUrl;
-}
 
 // 3. Función para inicializar la baseURL al arrancar la app
-export function initializeBaseUrl() {
+export function initializeBaseUrl(ip) {
+  if (ip) {
+    localStorage.setItem("backend_ip", ip);
+    localStorage.setItem("appLinked", "true");
+  }
   let url = null;
   const storedIp = localStorage.getItem("backend_ip");
 
   if (storedIp) {
-    url = `http://${storedIp}/`;
+    url = `http://${storedIp}`;
   } else if (!Capacitor.isNativePlatform()) {
     // Implementación para web
     const puerto = "3000";
@@ -42,7 +40,12 @@ export function initializeBaseUrl() {
   }
   apiState.isBaseUrlInitialized = true;
 }
+export function isStrictHttpIp(str) {
+  const strictRegex =
+    /^https?:\/\/(?:(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d):(6553[0-5]|655[0-2]\d|65[0-4]\d{2}|6[0-4]\d{3}|[1-5]\d{4}|[1-9]\d{0,3})$/;
 
+  return strictRegex.test(str);
+}
 // 4. Función restaurada para compatibilidad. Devuelve la URL actual.
 export function basedeURL() {
   return apiState.baseUrl;

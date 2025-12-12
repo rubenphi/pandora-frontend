@@ -159,6 +159,7 @@
 import { ref } from "vue";
 import axios from "axios";
 import { basedeURL, tokenHeader, usuarioGet } from "../globalService";
+import { Device } from "@capacitor/device"; // Import Device
 import {
   IonPage,
   IonHeader,
@@ -175,8 +176,9 @@ import {
   IonButton,
   IonButtons,
   IonText,
+  onIonViewWillEnter, // Import onIonViewWillEnter
 } from "@ionic/vue";
-import router from "../router";
+import { useRouter } from "vue-router";
 
 export default {
   components: {
@@ -197,6 +199,8 @@ export default {
     IonText,
   },
   setup() {
+    const router = useRouter(); // Initialize router
+
     const login = ref({
       code: "",
       password: "",
@@ -204,6 +208,22 @@ export default {
     const error = ref({
       estatus: 0,
       data: "",
+    });
+
+    onIonViewWillEnter(async () => {
+      const info = await Device.getInfo();
+      if (info.platform !== "web") {
+        axios
+          .get("/auth/server-ip", { timeout: 3000 })
+          .then((response) => {
+            if (response.status != 200) {
+              router.push("/onboarding-qr");
+            }
+          })
+          .catch(() => {
+            router.push("/onboarding-qr");
+          });
+      }
     });
 
     return {
@@ -289,7 +309,7 @@ export default {
 
               router.push("/inicio");
             })
-            .catch((err) => {
+            .catch(async (err) => {
               error.value.estatus = 1;
               if (err.message === "Network Error") {
                 const url = basedeURL();
@@ -302,7 +322,6 @@ export default {
                 error.value.data =
                   "Ocurrió un error inesperado durante el login.";
               }
-              console.error("Error en login:", err);
             });
         }
       },

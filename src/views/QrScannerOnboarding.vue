@@ -62,7 +62,8 @@ import {
   CapacitorBarcodeScannerTypeHint,
 } from "@capacitor/barcode-scanner";
 import { checkmarkCircleOutline } from "ionicons/icons";
-import { setBaseUrl } from "../globalService"; // <-- Changed import
+import { initializeBaseUrl, isStrictHttpIp } from "../globalService";
+import axios from "axios"; // Import axios
 
 export default {
   name: "QrScannerOnboarding",
@@ -98,7 +99,6 @@ export default {
           this.isModalOpen = true;
         }
       } catch (error) {
-        console.error("Error al escanear QR:", error);
         const alert = await alertController.create({
           header: "Error",
           message:
@@ -114,23 +114,39 @@ export default {
     async closeModal() {
       this.isModalOpen = false;
       if (this.qrContent) {
-        const parts = this.qrContent.split("/");
-        if (parts.length === 2 && parts[0] && parts[1]) {
-          const backendIp = parts[1]; // We only need the backend IP
+        if (isStrictHttpIp(this.qrContent)) {
+          const ipAddress = this.qrContent
+            .replace("http://", "")
+            .replace("/", "")
+            .split(":")[0];
 
-          setBaseUrl(backendIp); // Use the new service function
+          const backendUrl = `${ipAddress}:3000/`;
 
-          // Redirect to login page
-          this.$router.replace("/login");
+          initializeBaseUrl(backendUrl); // Use the new service function
+
+          await axios
+            .get("/auth/server-ip", { timeout: 3000 })
+            .then(() => {
+              this.$router.replace("/login");
+            })
+            .catch(async () => {
+              const alert = await alertController.create({
+                header: "Error de conexión",
+                message:
+                  "No se pudo conectar al servidor. Asegúrese de que el dispositivo esté en la misma red que el servidor y el programa esté corriendo",
+                buttons: ["OK"],
+              });
+              await alert.present();
+            });
         } else {
-          // Show error alert for invalid QR format
           const alert = await alertController.create({
             header: "Error de formato",
             message:
-              'El formato del código QR no es válido. Debe ser "ipfrontend:puerto/ipBackend:puerto".',
+              'El formato del código QR no es válido. Debe ser una IP con formato "http://192.168.1.100:8100".',
             buttons: ["OK"],
           });
           await alert.present();
+          return;
         }
       }
     },
