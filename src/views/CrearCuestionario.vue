@@ -27,14 +27,28 @@
             <ion-input v-model="cuestionario.title" type="text"></ion-input>
           </ion-item>
 
-          <ion-item>
+          <ion-item
+            ><ion-label position="stacked">Tipo de Cuestionario</ion-label>
             <ion-select
               label="Tipo de Cuestionario"
               v-model="cuestionario.quizType"
               placeholder="Seleccione uno"
             >
               <ion-select-option value="group">Grupal</ion-select-option>
-              <ion-select-option value="individual">Individual</ion-select-option>
+              <ion-select-option value="individual"
+                >Individual</ion-select-option
+              >
+            </ion-select>
+          </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Tipo de Evaluación</ion-label>
+            <ion-select
+              label="Tipo de Evaluación"
+              v-model="cuestionario.evaluationType"
+              placeholder="Seleccione uno"
+            >
+              <ion-select-option value="absolute">Absoluta</ion-select-option>
+              <ion-select-option value="relative">Relativa</ion-select-option>
             </ion-select>
           </ion-item>
           <ion-item
@@ -107,7 +121,7 @@ export default {
     const mroute = useRoute();
     //change lessonId and id to Int
     const lessonId = parseInt(mroute.params.lessonId, 10);
-        const quizId = mroute.params.id ? parseInt(mroute.params.id, 10) : null; // 'quizId' will be quizId if editing, null if creating
+    const quizId = mroute.params.id ? parseInt(mroute.params.id, 10) : null; // 'quizId' will be quizId if editing, null if creating
 
     const cuestionario = ref({
       id: null,
@@ -116,6 +130,7 @@ export default {
       lessonId: parseInt(lessonId, 10),
       instituteId: null,
       exist: true,
+      evaluationType: "relative", // Default to relative
     });
     const error = ref({
       estatus: 0,
@@ -164,6 +179,7 @@ export default {
             lessonId: response.data.lesson.id,
             instituteId: response.data.lesson.institute.id,
             exist: response.data.exist,
+            evaluationType: response.data.evaluationType, // Include evaluationType
           };
         } catch (error) {
           console.error("Error fetching quiz details:", error);
@@ -171,10 +187,14 @@ export default {
           cuestionario.value = {
             id: null,
             title: "",
-            quizType: "group",
+            quizType:
+              lessonDetails.value?.type === "reinforcement"
+                ? "individual"
+                : "group",
             lessonId: parseInt(lessonId, 10),
             instituteId: usuario.value.institute.id,
             exist: true,
+            evaluationType: "relative", // Default for new quiz
           };
         }
       } else {
@@ -182,10 +202,14 @@ export default {
         cuestionario.value = {
           id: null,
           title: "",
-          quizType: lessonDetails.value?.type === 'reinforcement' ? 'individual' : 'group',
+          quizType:
+            lessonDetails.value?.type === "reinforcement"
+              ? "individual"
+              : "group",
           lessonId: parseInt(lessonId, 10),
           instituteId: usuario.value.institute.id,
           exist: true,
+          evaluationType: "relative", // Default for new quiz
         };
       }
     });
@@ -207,6 +231,7 @@ export default {
           quizType: cuestionario.value.quizType,
           lessonId: cuestionario.value.lessonId,
           instituteId: cuestionario.value.instituteId,
+          evaluationType: cuestionario.value.evaluationType, // Include evaluationType in payload
         };
 
         try {
@@ -214,10 +239,7 @@ export default {
           if (quizId) {
             // Editing existing quiz
             payload.exist = cuestionario.value.exist; // Add exist property for PATCH
-            response = await axios.patch(
-              `/quizzes/${quizId}`,
-              payload
-            );
+            response = await axios.patch(`/quizzes/${quizId}`, payload);
           } else {
             // Creating new quiz
             response = await axios.post("/quizzes", payload);

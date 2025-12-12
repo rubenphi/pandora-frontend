@@ -428,11 +428,16 @@ export default {
         }
       } else {
         student.value = foundStudent;
-        if (student.value.groups && student.value.groups.length > 0) {
-          const userToGroup = student.value.groups.find((g) => g.active);
-          if (userToGroup) activeGroup.value = userToGroup.group;
-          else activeGroup.value = null;
-        } else {
+        try {
+          const groupsResponse = await axios.get(
+            `/users/${student.value.id}/groups?active=true`
+          );
+          const activeUserToGroup = groupsResponse.data.find((g) => g.active);
+          activeGroup.value = activeUserToGroup
+            ? activeUserToGroup.group
+            : null;
+        } catch (error) {
+          console.error("Error fetching student groups:", error);
           activeGroup.value = null;
         }
       }

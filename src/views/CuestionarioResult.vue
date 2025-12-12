@@ -439,23 +439,16 @@ export default {
           respuestas.value = response.data.map((e) => {
             e.points = parseFloat(e.points);
 
-            let topic = (cuestionario.value.topic || "")
-              .toLowerCase()
-              .trim()
-              .replace(/\s+/g, " ");
-
-            const regexRefuerzo = /^refuerzo\s*(#|nº?|n)?\s*\d*$/i;
-            const regexActividadRefuerzo =
-              /^actividades?\s+de\s+refuerzo\s*(#|nº?|n)?\s*\d*$/i;
-
-            const esRefuerzo =
-              regexRefuerzo.test(topic) || regexActividadRefuerzo.test(topic);
-
-            if (esRefuerzo) {
-              e.nota = e.points != 0 ? (e.points * 5) / quizPoints.value : 0;
+            // New logic based on evaluationType
+            if (cuestionario.value.evaluationType === 'absolute') {
+              e.nota = e.points !== 0 ? (e.points * 5) / quizPoints.value : 0;
+            } else if (cuestionario.value.evaluationType === 'relative') {
+              e.nota = e.points !== 0 ? (e.points * 5) / response.data[0].points : 0;
             } else {
-              e.nota =
-                e.points != 0 ? (e.points * 5) / response.data[0].points : 0;
+              // Fallback to relative if evaluationType is not explicitly set or unknown
+              // This should ideally not happen if backend defaults are correctly applied
+              console.warn('Unknown evaluationType, defaulting to relative grading.');
+              e.nota = e.points !== 0 ? (e.points * 5) / response.data[0].points : 0;
             }
 
             e.nota = e.nota < 0 ? 0 : e.nota;
