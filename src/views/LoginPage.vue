@@ -161,6 +161,7 @@ import axios from "axios";
 import { basedeURL, tokenHeader, usuarioGet } from "../globalService";
 import { Device } from "@capacitor/device"; // Import Device
 import {
+  alertController,
   IonPage,
   IonHeader,
   IonToolbar,
@@ -313,9 +314,20 @@ export default {
               error.value.estatus = 1;
               if (err.message === "Network Error") {
                 const url = basedeURL();
-                error.value.data = `Error de Red. No se pudo conectar a: ${
-                  url || "(URL no configurada)"
-                }. Verifique la IP del QR y la conexión de red.`;
+                const alert = await alertController.create({
+                  header: "Error de conexión",
+                  message: `No se pudo conectar con el servidor en ${url}. Por favor, verifique la configuración de la aplicación o contacte al administrador.`,
+                  buttons: [
+                    { text: "OK", role: "cancel" },
+                    {
+                      text: "Escanear QR",
+                      handler: () => {
+                        router.push("/onboarding-qr");
+                      },
+                    },
+                  ],
+                });
+                await alert.present();
               } else if (err.response) {
                 error.value.data = `Error: ${err.response.status} - Credenciales incorrectas o error del servidor.`;
               } else {

@@ -11,18 +11,18 @@
       </ion-toolbar>
     </ion-header>
     <ion-content class="ion-padding">
-      <ion-card v-if="cuestionario.id != 0">
-        <ion-card-header style="position: relative">
-          <ion-card-title class="ion-text-center">{{
-            cuestionario.title
-          }}</ion-card-title>
-          <ion-card-subtitle class="ion-text-center"
-            >Las respuestas escaneadas se registrarán a este
-            cuestionario.</ion-card-subtitle
-          >
-        </ion-card-header>
-      </ion-card>
       <div v-if="!isScanning" class="ion-padding-top">
+        <ion-card v-if="cuestionario.id != 0">
+          <ion-card-header style="position: relative">
+            <ion-card-title class="ion-text-center">{{
+              cuestionario.title
+            }}</ion-card-title>
+            <ion-card-subtitle class="ion-text-center"
+              >Las respuestas escaneadas se registrarán a este
+              cuestionario.</ion-card-subtitle
+            >
+          </ion-card-header>
+        </ion-card>
         <ion-grid>
           <ion-row>
             <ion-col>
