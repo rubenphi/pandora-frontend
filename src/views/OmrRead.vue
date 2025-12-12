@@ -31,6 +31,7 @@
               v-for="section in numberOfSections"
               :key="section"
               :value="section"
+              :disabled="!isSectionEnabled(section)"
               :class="{ 'section-invalid': !sectionValidity[section - 1] }"
             >
               <ion-label
@@ -62,7 +63,7 @@
                 expand="block"
                 @click="submitAnswers"
                 :disabled="!student.id || isSubmitting"
-                color="secondary"
+                :color="saveButtonColor"
               >
                 <ion-spinner v-if="isSubmitting" name="crescent"></ion-spinner>
                 <ion-icon v-else :icon="saveOutline" slot="start"></ion-icon>
@@ -85,7 +86,10 @@
         </div>
 
         <div
-          v-if="student.id || studentCodeInput"
+          v-if="
+            !invalidSectionDetails[currentSection] &&
+            (student.id || studentCodeInput)
+          "
           class="student-info-container ion-padding-top"
         >
           <ion-item>
@@ -114,6 +118,37 @@
               class="ion-padding-top"
             >
               <strong>Grupo Activo:</strong> {{ activeGroup.name }}
+            </div>
+          </div>
+        </div>
+        <div
+          v-if="invalidSectionDetails[currentSection]"
+          class="student-info-container ion-padding-top"
+        >
+          <ion-item lines="none">
+            <ion-label style="color: var(--ion-color-danger)"
+              ><strong>Código de sección no coincide</strong></ion-label
+            >
+          </ion-item>
+          <ion-item color="light">
+            <ion-label position="stacked"
+              >Código escaneado (incorrecto)</ion-label
+            >
+            <ion-input
+              :value="invalidSectionDetails[currentSection].code"
+              readonly
+              color="danger"
+            ></ion-input>
+          </ion-item>
+          <div
+            v-if="invalidSectionDetails[currentSection].name"
+            class="ion-padding-vertical"
+            style="color: var(--ion-color-danger)"
+          >
+            <div>
+              <strong>Estudiante encontrado:</strong>
+              {{ invalidSectionDetails[currentSection].name }}
+              {{ invalidSectionDetails[currentSection].lastName }}
             </div>
           </div>
         </div>
@@ -238,6 +273,7 @@ export default {
     const studentCodeInput = ref("");
     const activeGroup = ref(null);
     const isSubmitting = ref(false);
+    const invalidSectionDetails = ref({});
 
     // State for sections
     const numberOfSections = ref(1);
@@ -246,12 +282,26 @@ export default {
     const sectionStudentCodes = ref([]);
     const sectionValidity = ref([]);
 
+    const saveButtonColor = computed(() => {
+      return sectionValidity.value.includes(false) ? "medium" : "secondary";
+    });
+
     const questionsForCurrentSection = computed(() => {
       if (answersToSend.value.length === 0) return [];
       const start = (currentSection.value - 1) * 40;
       const end = currentSection.value * 40;
       return answersToSend.value.slice(start, end);
     });
+
+    // Función para determinar si una sección está habilitada
+    const isSectionEnabled = (sectionNumber) => {
+      // La primera sección siempre está habilitada
+      if (sectionNumber === 1) return true;
+
+      // Las secciones siguientes solo se habilitan si la sección anterior tiene código escaneado
+      const previousSectionIndex = sectionNumber - 2;
+      return !!sectionStudentCodes.value[previousSectionIndex];
+    };
 
     const startScan = async () => {
       const sectionIndex = currentSection.value - 1;
@@ -263,41 +313,72 @@ export default {
       }
       sectionScanImageUrls.value[sectionIndex] = null;
       sectionStudentCodes.value[sectionIndex] = "";
-      sectionValidity.value[sectionIndex] = true; // Reset validity for this section
+      sectionValidity.value[sectionIndex] = true;
 
       isScanning.value = true;
       await nextTick();
       if (scannerComponent.value) scannerComponent.value.start();
     };
 
-    const validateStudentCodes = async () => {
-      // The code from the first section is always the reference.
-      const referenceCode = sectionStudentCodes.value[0];
+    const fetchStudentByCodeAPI = async (code) => {
+      if (!code) return null;
+      try {
+        const response = await axios.get(`/users?code=${code}`);
+        return response.data.length > 0 ? response.data[0] : null;
+      } catch (error) {
+        console.error("Error fetching student data:", error);
+        return { error: "network" };
+      }
+    };
 
-      // If the first section hasn't been scanned, we can't validate yet.
+    const validateStudentCodes = async () => {
+      const referenceCode = sectionStudentCodes.value[0];
+      invalidSectionDetails.value = {};
+
       if (!referenceCode) {
-        // If other sections are scanned but not section 1, we can't validate.
-        // We reset validity to true for all to avoid confusion until section 1 is scanned.
         sectionValidity.value.fill(true);
         return;
       }
 
-      // Ensure the master student record matches the reference code.
       if (student.value.code !== referenceCode) {
         await findStudentByCode(referenceCode, "scan");
       }
 
       const mismatchedSections = [];
-      // Validate all sections against the reference code from section 1.
+      const promises = [];
+
       for (let i = 0; i < numberOfSections.value; i++) {
         const currentCode = sectionStudentCodes.value[i];
-        // A section is valid if it hasn't been scanned yet, or if its code matches the reference.
         const isValid = !currentCode || currentCode === referenceCode;
         sectionValidity.value[i] = isValid;
+
         if (!isValid) {
           mismatchedSections.push(i + 1);
+          const p = fetchStudentByCodeAPI(currentCode).then((data) => {
+            if (data?.error === "network") {
+              invalidSectionDetails.value[i + 1] = {
+                code: currentCode,
+                name: "Error de Red",
+                lastName: "",
+              };
+            } else if (data) {
+              invalidSectionDetails.value[i + 1] = {
+                code: currentCode,
+                ...data,
+              };
+            } else {
+              invalidSectionDetails.value[i + 1] = {
+                code: currentCode,
+                name: "No encontrado",
+                lastName: "",
+              };
+            }
+          });
+          promises.push(p);
         }
       }
+
+      await Promise.all(promises);
 
       if (mismatchedSections.length > 0) {
         const alert = await alertController.create({
@@ -318,28 +399,11 @@ export default {
         activeGroup.value = null;
         return;
       }
-      try {
-        const response = await axios.get(`/users?code=${code}`);
-        if (response.data.length === 0) {
-          student.value = { id: null, name: "No encontrado", lastName: "" };
-          activeGroup.value = null;
-          if (context === "scan") {
-            const alert = await alertController.create({
-              header: "Estudiante no encontrado",
-              message: `No se encontró ningún estudiante con el código "${code}".`,
-              buttons: ["OK"],
-            });
-            await alert.present();
-          }
-        } else {
-          student.value = response.data[0];
-          if (student.value.groups && student.value.groups.length > 0) {
-            const userToGroup = student.value.groups.find((g) => g.active);
-            if (userToGroup) activeGroup.value = userToGroup.group;
-          }
-        }
-      } catch (error) {
-        student.value = { id: null, name: "No encontrado", lastName: "" };
+
+      const foundStudent = await fetchStudentByCodeAPI(code);
+
+      if (foundStudent?.error === "network") {
+        student.value = { id: null, name: "Error de Red", lastName: "" };
         activeGroup.value = null;
         const alert = await alertController.create({
           header: "Error de Red",
@@ -348,10 +412,33 @@ export default {
           buttons: ["OK"],
         });
         await alert.present();
+        return;
+      }
+
+      if (!foundStudent) {
+        student.value = { id: null, name: "No encontrado", lastName: "" };
+        activeGroup.value = null;
+        if (context === "scan") {
+          const alert = await alertController.create({
+            header: "Estudiante no encontrado",
+            message: `No se encontró ningún estudiante con el código "${code}".`,
+            buttons: ["OK"],
+          });
+          await alert.present();
+        }
+      } else {
+        student.value = foundStudent;
+        if (student.value.groups && student.value.groups.length > 0) {
+          const userToGroup = student.value.groups.find((g) => g.active);
+          if (userToGroup) activeGroup.value = userToGroup.group;
+          else activeGroup.value = null;
+        } else {
+          activeGroup.value = null;
+        }
       }
     };
 
-    const onScanComplete = (payload) => {
+    const onScanComplete = async (payload) => {
       const sectionIndex = currentSection.value - 1;
       sectionScanImageUrls.value[sectionIndex] = payload.imageUrl;
 
@@ -385,7 +472,7 @@ export default {
         : "";
 
       isScanning.value = false;
-      validateStudentCodes();
+      await validateStudentCodes();
     };
 
     const onScanCancelled = () => {
@@ -538,11 +625,14 @@ export default {
       questionsForCurrentSection,
       sectionScanImageUrls,
       sectionValidity,
+      isSectionEnabled,
       startScan,
       onScanComplete,
       onScanCancelled,
       findStudentByCode,
       submitAnswers,
+      saveButtonColor,
+      invalidSectionDetails,
     };
   },
 };
