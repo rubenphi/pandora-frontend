@@ -23,6 +23,25 @@
             >
           </ion-card-header>
         </ion-card>
+
+        <!-- Section Tabs -->
+        <div v-if="numberOfSections > 1" class="ion-padding-vertical">
+          <ion-segment v-model="currentSection" scrollable>
+            <ion-segment-button
+              v-for="section in numberOfSections"
+              :key="section"
+              :value="section"
+            >
+              <ion-label
+                >Preguntas {{ (section - 1) * 40 + 1 }} -
+                {{
+                  Math.min(section * 40, cuestionario.questions.length)
+                }}</ion-label
+              >
+            </ion-segment-button>
+          </ion-segment>
+        </div>
+
         <ion-grid>
           <ion-row>
             <ion-col>
@@ -32,6 +51,9 @@
                 :disabled="isSubmitting"
               >
                 Escanear
+                <span v-if="numberOfSections > 1"
+                  >&nbsp;Sección {{ currentSection }}</span
+                >
               </ion-button>
             </ion-col>
             <ion-col>
@@ -93,7 +115,10 @@
         </div>
 
         <IonList>
-          <IonItem v-for="answer in answersToSend" :key="answer.id">
+          <IonItem
+            v-for="answer in questionsForCurrentSection"
+            :key="answer.id"
+          >
             <IonLabel>{{ answer.questionTitle }} </IonLabel>
             <ion-select
               v-model="answer.selectedOption"
@@ -157,8 +182,10 @@ import {
   IonRow,
   IonSpinner,
   IonGrid,
+  IonSegment,
+  IonSegmentButton,
 } from "@ionic/vue";
-import { ref, nextTick } from "vue";
+import { ref, nextTick, computed } from "vue"; // Import computed
 import OmrScanner from "@/components/OmrScanner.vue";
 import { tokenHeader } from "../globalService";
 import { useRoute, useRouter } from "vue-router";
@@ -191,6 +218,8 @@ export default {
     IonSelectOption,
     OmrScanner,
     IonInput,
+    IonSegment,
+    IonSegmentButton,
   },
   setup() {
     const route = useRoute();
@@ -208,7 +237,23 @@ export default {
     const activeGroup = ref(null);
     const isSubmitting = ref(false);
 
+    // New state for sections
+    const numberOfSections = ref(1);
+    const currentSection = ref(1);
+
+    // Computed property for displaying questions of the current section
+    const questionsForCurrentSection = computed(() => {
+      if (answersToSend.value.length === 0) {
+        return [];
+      }
+      const start = (currentSection.value - 1) * 40;
+      const end = currentSection.value * 40;
+      return answersToSend.value.slice(start, end);
+    });
+
     const startScan = async () => {
+      // This will clear the student info for each new scan, which is acceptable
+      // as the student code is on each sheet.
       scanImageUrl.value = null;
       scanResults.value = "";
       student.value = {};
@@ -289,16 +334,24 @@ export default {
         concatedAnswers.push(...block.content);
       });
 
-      answersToSend.value.forEach((answer, index) => {
-        const answerSameIdentfier = answer.options.find(
-          (opt) =>
-            opt.identifier.toLowerCase() ===
-            concatedAnswers[index].answer.toLowerCase()
-        );
-        if (answerSameIdentfier) {
-          answer.selectedOption = answerSameIdentfier.id;
+      // --- MODIFIED LOGIC FOR SECTIONS ---
+      const sectionOffset = (currentSection.value - 1) * 40;
+      concatedAnswers.forEach((scannedAnswer, index) => {
+        const globalIndex = sectionOffset + index;
+        if (globalIndex < answersToSend.value.length) {
+          const question = answersToSend.value[globalIndex];
+          const option = question.options.find(
+            (opt) =>
+              opt.identifier.toLowerCase() ===
+              scannedAnswer.answer.toLowerCase()
+          );
+          if (option) {
+            question.selectedOption = option.id;
+          }
         }
       });
+      // --- END OF MODIFIED LOGIC ---
+
       const studentCode = payload.results.find(
         (r) => r.typeOrigin === "numeric"
       );
@@ -432,6 +485,11 @@ export default {
         (a, b) => a.id - b.id
       );
 
+      // Calculate number of sections
+      numberOfSections.value = Math.ceil(
+        cuestionario.value.questions.length / 40
+      );
+
       answersToSend.value = cuestionario.value.questions.map((question) => {
         return {
           id: question.id,
@@ -464,6 +522,10 @@ export default {
       studentCodeInput,
       activeGroup,
       isSubmitting,
+      // New exports for sections
+      numberOfSections,
+      currentSection,
+      questionsForCurrentSection,
       startScan,
       onScanComplete,
       onScanCancelled,
