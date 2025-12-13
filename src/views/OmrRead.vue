@@ -242,7 +242,7 @@ import {
   IonSegment,
   IonSegmentButton,
 } from "@ionic/vue";
-import { ref, nextTick, computed } from "vue";
+import { ref, reactive, nextTick, computed } from "vue";
 import OmrScanner from "@/components/OmrScanner.vue";
 import { tokenHeader } from "../globalService";
 import { useRoute, useRouter } from "vue-router";
@@ -308,16 +308,7 @@ export default {
       if (answersToSend.value.length === 0) return [];
       const start = (currentSection.value - 1) * 40;
       const end = currentSection.value * 40;
-      return answersToSend.value.slice(start, end).map(question => {
-        const isCorrect = question.selectedOption !== null && question.selectedOption === question.correctOptionId;
-        const correctOption = question.options.find(opt => opt.id === question.correctOptionId);
-        const correctOptionIdentifier = correctOption ? correctOption.identifier : 'N/A';
-        return {
-          ...question,
-          isCorrect,
-          correctOptionIdentifier,
-        };
-      });
+      return answersToSend.value.slice(start, end);
     });
 
     const totalCorrectAnswers = computed(() => {
@@ -632,17 +623,27 @@ export default {
 
       answersToSend.value = cuestionario.value.questions.map((question) => {
         const correctOption = question.options.find(opt => opt.correct);
-        return {
-          id: question.id,
-          questionTitle: question.title,
-          correctOptionId: correctOption ? correctOption.id : null, // Store the ID of the correct option
-          options: question.options.map((option) => ({
-            id: option.id,
-            identifier: option.identifier,
-            correct: option.correct, // Store the 'correct' flag for each option
-          })),
-          selectedOption: null,
-        };
+        const correctOptionId = correctOption ? correctOption.id : null;
+        const correctOptionIdentifier = correctOption ? correctOption.identifier : 'N/A';
+
+        const questionReactive = reactive({
+            id: question.id,
+            questionTitle: question.title,
+            correctOptionId: correctOptionId,
+            options: question.options.map((option) => ({
+                id: option.id,
+                identifier: option.identifier,
+                correct: option.correct,
+            })),
+            selectedOption: null,
+            correctOptionIdentifier: correctOptionIdentifier,
+        });
+
+        questionReactive.isCorrect = computed(() =>
+            questionReactive.selectedOption !== null && questionReactive.selectedOption === questionReactive.correctOptionId
+        );
+
+        return questionReactive;
       });
 
       if (cuestionario.value.id) {
