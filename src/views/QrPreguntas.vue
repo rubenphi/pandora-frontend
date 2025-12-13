@@ -132,6 +132,7 @@ export default {
       lessonQuizType: "individual", // To store quizType from lesson/quiz
       student: { name: "", lastName: "" },
       activeGroup: { name: "" },
+      qrCount: 0, // Counter for valid QR codes
     };
   },
   mounted() {
@@ -199,21 +200,28 @@ export default {
       try {
         this.isScanning = true;
 
-        // Construct scanInstructions based on the *previous* lastScan
-        let currentScanInstructions = "Escanee un código QR";
+        // Construct scanInstructions based on the *previous* lastScan and current qrCount
+        let currentScanInstructions = `Escanee un código QR. Total escaneados: ${this.qrCount}`;
         if (this.lastScan) {
-          currentScanInstructions = `${this.lastScan}.`;
+          currentScanInstructions = `Último QR leído: ${this.lastScan}. Total escaneados: ${this.qrCount}. Escanee el siguiente código`;
         }
 
         const result = await CapacitorBarcodeScanner.scanBarcode({
           hint: CapacitorBarcodeScannerTypeHint.QR_CODE,
           scanInstructions: currentScanInstructions,
-          scanButton: false,
+          scanButton: false, // No manual close button
         });
 
         this.isScanning = false;
 
+        if (result.cancelled) {
+          console.log("Scanner closed by user.");
+          // Do not auto-restart, effectively stopping the continuous scanning
+          return;
+        }
+
         if (result.ScanResult) {
+          // Proceed only if a QR code was scanned
           const [codigoEstudiante, opcion] = result.ScanResult.split(":");
 
           if (!codigoEstudiante || !opcion) {
@@ -221,10 +229,17 @@ export default {
               header: "Formato de QR inválido",
               message:
                 "El código QR debe tener el formato 'codigoEstudiante:opcion'.",
-              buttons: ["OK"],
+              buttons: [
+                {
+                  text: "OK",
+                  handler: () => {
+                    setTimeout(() => this.scanQR(), 300); // Auto-restart after dismissing alert
+                  },
+                },
+              ],
             });
             await alert.present();
-            return;
+            return; // Stop further processing for invalid format
           }
 
           await this.fetchStudentAndGroup(codigoEstudiante);
@@ -240,68 +255,47 @@ export default {
 
           this.lastScan = formattedLastScan; // Update lastScan with the formatted string
           this.scannerResult = result.ScanResult;
-          this.scanFormat = result.ScanFormat;
+          this.scanFormat = result.scanFormat; // Corrected from result.ScanFormat
 
           // Verificar si el código ya existe
           const codeExists = this.scannedCodes.includes(result.ScanResult);
 
-          if (codeExists) {
-            // Mostrar alerta de código duplicado
-            const alert = await alertController.create({
-              header: "Código Duplicado",
-              message: "Este código QR ya ha sido escaneado.",
-              buttons: [
-                {
-                  text: "OK",
-                  role: "cancel",
-                },
-                {
-                  text: "Escanear Otro",
-                  handler: () => {
-                    // Escanear otro inmediatamente
-                    setTimeout(() => this.scanQR(), 300);
-                  },
-                },
-              ],
-            });
-            await alert.present();
-          } else {
-            // Agregar el nuevo código
+          if (!codeExists) {
+            // Agregar el nuevo código solo si no existe
             this.scannedCodes.unshift(result.ScanResult); // Keep raw result for the list
+            this.qrCount++; // Increment QR count only for valid, new codes
 
             // Mostrar toast de éxito
             this.toastMessage = `✓ Código #${this.scannedCodes.length} escaneado`;
             this.showToast = true;
-
-            // Preguntar si quiere escanear otro
-            const alert = await alertController.create({
-              header: "¡Código Escaneado!",
-              message: `Total de códigos: ${this.scannedCodes.length}`,
-              buttons: [
-                {
-                  text: "Terminar",
-                  role: "cancel",
-                },
-                {
-                  text: "Escanear Otro",
-                  handler: () => {
-                    // Escanear otro inmediatamente
-                    setTimeout(() => this.scanQR(), 300);
-                  },
-                },
-              ],
-            });
-            await alert.present();
           }
+          // Always restart the scanner after processing, without alerts for success/duplicate
+          setTimeout(() => this.scanQR(), 300);
         }
       } catch (error) {
-        console.error("Error al escanear QR:", error);
-        this.isScanning = false;
+        this.isScanning = false; // Ensure scanning state is reset
 
+        // Check for user cancellation error
+        const isUserCancellation = error.code === "OS-PLUG-BARC-0006";
+        if (isUserCancellation) {
+          // No alert, no auto-restart for user cancellation
+          return;
+        }
+
+        // For other genuine errors, show alert and auto-restart
+        console.error("Error al escanear QR:", error);
         const alert = await alertController.create({
           header: "Error",
-          message: "Ocurrió un error al escanear el QR.",
-          buttons: ["OK"],
+          message:
+            "Ocurrió un error al escanear el QR: " + JSON.stringify(error),
+          buttons: [
+            {
+              text: "OK",
+              handler: () => {
+                setTimeout(() => this.scanQR(), 300); // Auto-restart after dismissing alert
+              },
+            },
+          ],
         });
         await alert.present();
       }
