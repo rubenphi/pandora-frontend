@@ -33,145 +33,192 @@
             </ion-select-option>
           </ion-select>
         </ion-item>
-        <ion-accordion-group @ionChange="captarAbierto($event)">
-          <ion-accordion value="teachers" v-if="isPrivilegedUser">
-            <IonItem
-              slot="header"
-              @click="
-                changeCourse({
-                  id: 'teachers',
-                  name: 'Profesores del instituto',
-                })
-              "
-            >
-              <IonLabel>Profesores del instituto</IonLabel>
-            </IonItem>
-            <div class="ion-padding" slot="content">
-              <ion-list>
-                <ion-item v-for="usuario in usersCourse" :key="usuario.id">
-                  <ion-label class="ion-text-wrap">
-                    <h6>{{ usuario.lastName + " " + usuario.name }}</h6>
-                    <p>
-                      {{ getRoleLabel(usuario) }}<br />
-                      {{ usuario.code }}
-                    </p>
-                  </ion-label>
-                  <div slot="end" style="display: flex; gap: 10px">
-                    <ion-icon
-                      v-if="canManage(usuario)"
-                      :icon="swapHorizontalOutline"
-                      style="cursor: pointer; font-size: 24px"
-                      @click="openModal(usuario)"
-                    ></ion-icon>
-                    <ion-icon
-                      v-if="canManage(usuario)"
-                      :icon="trashOutline"
-                      style="cursor: pointer; font-size: 24px"
-                      color="danger"
-                      @click="deactivateUser(usuario)"
-                    ></ion-icon>
-                    <ion-icon
-                      v-if="canManage(usuario)"
-                      :icon="createOutline"
-                      style="cursor: pointer; font-size: 24px"
-                      @click="
-                        router.push(`/admin/actualizar/usuarios/${usuario.id}`)
-                      "
-                    ></ion-icon>
-                  </div>
-                </ion-item>
-              </ion-list>
-            </div>
-          </ion-accordion>
-          <ion-accordion value="archivedCourses" v-if="isPrivilegedUser">
-            <IonItem slot="header">
-              <IonLabel>Cursos Archivados</IonLabel>
-            </IonItem>
-            <div class="ion-padding" slot="content">
-              <div v-if="archivedCourses.length === 0" class="ion-text-center ion-padding">
-                <p>No hay cursos archivados.</p>
-              </div>
-              <ion-list v-else>
-                <ion-item v-for="curso in archivedCourses" :key="curso.id">
-                  <ion-label class="ion-text-wrap">
-                    <h6>{{ curso.name }}</h6>
-                    <p>ID: {{ curso.id }}</p>
-                  </ion-label>
-                  <div slot="end">
-                    <ion-button @click="reactivateCourse(curso)" size="small" color="success">
-                      Reactivar
-                    </ion-button>
-                  </div>
-                </ion-item>
-              </ion-list>
-            </div>
-          </ion-accordion>
-          <ion-accordion v-for="curso in cursosInstituto" :key="curso.id">
-            <IonItem slot="header" @click="changeCourse(curso)">
-              <IonLabel v-if="!loading || courseSelected.id != curso.id">{{
-                curso.name
-              }}</IonLabel>
-              <IonLabel v-if="loading && courseSelected.id == curso.id">{{
-                curso.name + ": ⏳ Cargando usuarios"
-              }}</IonLabel>
-              <ion-button
-                @click.stop="presentActionSheet(curso)"
-                color="medium"
-              >
-                <ion-icon slot="icon-only" :icon="downloadOutline"></ion-icon>
-              </ion-button>
-            </IonItem>
-            <div class="ion-padding" slot="content">
-              <div
-                v-if="usersCourse.length === 0 && !loading && curso.id !== 0"
-                class="ion-text-center ion-padding"
-              >
-                <p>Este curso no tiene usuarios.</p>
-                <ion-button
-                  v-if="isPrivilegedUser"
-                  @click="openAssignTeacherModal(curso)"
-                >
-                  Asignar Profesor
-                </ion-button>
-              </div>
-              <ion-list v-if="usersCourse.length > 0">
-                <ion-item v-for="usuario in usersCourse" :key="usuario.id">
-                  <ion-label class="ion-text-wrap">
-                    <h6>{{ usuario.lastName + " " + usuario.name }}</h6>
-                    <p>
-                      {{ getRoleLabel(usuario) }}<br />
-                      {{ usuario.code }}
-                    </p>
-                  </ion-label>
-                  <div slot="end" style="display: flex; gap: 10px">
-                    <ion-icon
-                      v-if="canManage(usuario)"
-                      :icon="swapHorizontalOutline"
-                      style="cursor: pointer; font-size: 24px"
-                      @click="openModal(usuario)"
-                    ></ion-icon>
-                    <ion-icon
-                      v-if="canManage(usuario)"
-                      :icon="trashOutline"
-                      style="cursor: pointer; font-size: 24px"
-                      color="danger"
-                      @click="deactivateUser(usuario)"
-                    ></ion-icon>
-                    <ion-icon
-                      v-if="canManage(usuario)"
-                      :icon="createOutline"
-                      style="cursor: pointer; font-size: 24px"
-                      @click="
-                        router.push(`/admin/actualizar/usuarios/${usuario.id}`)
-                      "
-                    ></ion-icon>
-                  </div>
-                </ion-item>
-              </ion-list>
-            </div>
-          </ion-accordion>
-        </ion-accordion-group>
       </ion-list>
+
+      <!-- Botones para alternar la visibilidad de las secciones -->
+      <ion-grid v-if="isPrivilegedUser">
+        <ion-row>
+          <ion-col>
+            <ion-button expand="block" fill="outline" @click="toggleTeachersSection()">
+              Profesores del Instituto
+            </ion-button>
+          </ion-col>
+          <ion-col>
+            <ion-button expand="block" fill="outline" @click="toggleArchivedCoursesSection()">
+              Cursos Archivados
+            </ion-button>
+          </ion-col>
+          <ion-col>
+            <ion-button expand="block" fill="outline" @click="toggleNoCourseSection()">
+              Usuarios Sin Curso
+            </ion-button>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+
+      <!-- Sección de Profesores del Instituto -->
+      <ion-list v-if="showTeachersSection && isPrivilegedUser">
+        <ion-list-header>
+          <ion-label>Profesores del Instituto</ion-label>
+        </ion-list-header>
+        <ion-item v-for="usuario in usersCourse" :key="usuario.id">
+          <ion-label class="ion-text-wrap">
+            <h6>{{ usuario.lastName + " " + usuario.name }}</h6>
+            <p>
+              {{ getRoleLabel(usuario) }}<br />
+              {{ usuario.code }}
+            </p>
+          </ion-label>
+          <div slot="end" style="display: flex; gap: 10px">
+            <ion-icon
+              v-if="canManage(usuario)"
+              :icon="swapHorizontalOutline"
+              style="cursor: pointer; font-size: 24px"
+              @click="openModal(usuario)"
+            ></ion-icon>
+            <ion-icon
+              v-if="canManage(usuario)"
+              :icon="trashOutline"
+              style="cursor: pointer; font-size: 24px"
+              color="danger"
+              @click="deactivateUser(usuario)"
+            ></ion-icon>
+            <ion-icon
+              v-if="canManage(usuario)"
+              :icon="createOutline"
+              style="cursor: pointer; font-size: 24px"
+              @click="router.push(`/admin/actualizar/usuarios/${usuario.id}`)"
+            ></ion-icon>
+          </div>
+        </ion-item>
+      </ion-list>
+
+      <!-- Sección de Cursos Archivados -->
+      <ion-list v-if="showArchivedCoursesSection && isPrivilegedUser">
+        <ion-list-header>
+          <ion-label>Cursos Archivados</ion-label>
+        </ion-list-header>
+        <div v-if="archivedCourses.length === 0" class="ion-text-center ion-padding">
+          <p>No hay cursos archivados.</p>
+        </div>
+        <ion-item v-else v-for="curso in archivedCourses" :key="curso.id">
+          <ion-label class="ion-text-wrap">
+            <h6>{{ curso.name }}</h6>
+            <p>ID: {{ curso.id }}</p>
+          </ion-label>
+          <div slot="end">
+            <ion-button @click="reactivateCourse(curso)" size="small" color="success">
+              Reactivar
+            </ion-button>
+          </div>
+        </ion-item>
+      </ion-list>
+
+      <!-- Sección de Usuarios Sin Curso -->
+      <ion-list v-if="showNoCourseSection && isPrivilegedUser">
+        <ion-list-header>
+          <ion-label>Usuarios Sin Curso</ion-label>
+        </ion-list-header>
+        <div v-if="usersCourse.length === 0" class="ion-text-center ion-padding">
+          <p>No hay usuarios sin curso.</p>
+        </div>
+        <ion-item v-else v-for="usuario in usersCourse" :key="usuario.id">
+          <ion-label class="ion-text-wrap">
+            <h6>{{ usuario.lastName + " " + usuario.name }}</h6>
+            <p>
+              {{ getRoleLabel(usuario) }}<br />
+              {{ usuario.code }}
+            </p>
+          </ion-label>
+          <div slot="end" style="display: flex; gap: 10px">
+            <ion-icon
+              v-if="canManage(usuario)"
+              :icon="swapHorizontalOutline"
+              style="cursor: pointer; font-size: 24px"
+              @click="openModal(usuario)"
+            ></ion-icon>
+            <ion-icon
+              v-if="canManage(usuario)"
+              :icon="trashOutline"
+              style="cursor: pointer; font-size: 24px"
+              color="danger"
+              @click="deactivateUser(usuario)"
+            ></ion-icon>
+            <ion-icon
+              v-if="canManage(usuario)"
+              :icon="createOutline"
+              style="cursor: pointer; font-size: 24px"
+              @click="router.push(`/admin/actualizar/usuarios/${usuario.id}`)"
+            ></ion-icon>
+          </div>
+        </ion-item>
+      </ion-list>
+
+      <!-- Main Accordion Group for Active Courses -->
+      <ion-accordion-group @ionChange="captarAbierto($event)">
+        <ion-accordion v-for="curso in cursosInstituto" :key="curso.id">
+          <IonItem slot="header" @click="changeCourse(curso)">
+            <IonLabel v-if="!loading || courseSelected.id != curso.id">{{
+              curso.name
+            }}</IonLabel>
+            <IonLabel v-if="loading && courseSelected.id == curso.id">{{
+              curso.name + ": ⏳ Cargando usuarios"
+            }}</IonLabel>
+            <ion-button
+              @click.stop="presentActionSheet(curso)"
+              color="medium"
+            >
+              <ion-icon slot="icon-only" :icon="downloadOutline"></ion-icon>
+            </ion-button>
+          </IonItem>
+          <div class="ion-padding" slot="content">
+            <div
+              v-if="usersCourse.length === 0 && !loading && curso.id !== 0"
+              class="ion-text-center ion-padding"
+            >
+              <p>Este curso no tiene usuarios.</p>
+              <ion-button
+                v-if="isPrivilegedUser"
+                @click="openAssignTeacherModal(curso)"
+              >
+                Asignar Profesor
+              </ion-button>
+            </div>
+            <ion-list v-if="usersCourse.length > 0">
+              <ion-item v-for="usuario in usersCourse" :key="usuario.id">
+                <ion-label class="ion-text-wrap">
+                  <h6>{{ usuario.lastName + " " + usuario.name }}</h6>
+                  <p>
+                    {{ getRoleLabel(usuario) }}<br />
+                    {{ usuario.code }}
+                  </p>
+                </ion-label>
+                <div slot="end" style="display: flex; gap: 10px">
+                  <ion-icon
+                    v-if="canManage(usuario)"
+                    :icon="swapHorizontalOutline"
+                    style="cursor: pointer; font-size: 24px"
+                    @click="openModal(usuario)"
+                  ></ion-icon>
+                  <ion-icon
+                    v-if="canManage(usuario)"
+                    :icon="trashOutline"
+                    style="cursor: pointer; font-size: 24px"
+                    color="danger"
+                    @click="deactivateUser(usuario)"
+                  ></ion-icon>
+                  <ion-icon
+                    v-if="canManage(usuario)"
+                    :icon="createOutline"
+                    style="cursor: pointer; font-size: 24px"
+                    @click="router.push(`/admin/actualizar/usuarios/${usuario.id}`)"
+                  ></ion-icon>
+                </div>
+              </ion-item>
+            </ion-list>
+          </div>
+        </ion-accordion>
+      </ion-accordion-group>
 
       <!-- Modal para asignar curso y grupo -->
       <ion-modal
@@ -435,6 +482,10 @@ import {
   IonSearchbar,
   IonInput, // New import
   IonToggle, // New import
+  IonGrid, // New import
+  IonRow, // New import
+  IonCol, // New import
+  IonListHeader, // New import
 } from "@ionic/vue";
 
 import {
@@ -471,6 +522,10 @@ export default {
     IonSearchbar,
     IonInput, // New component
     IonToggle, // New component
+    IonGrid, // New component
+    IonRow, // New component
+    IonCol, // New component
+    IonListHeader, // New component
   },
   setup() {
     const usuario = ref();
@@ -500,6 +555,9 @@ export default {
       exist: true,
     });
     const archivedCourses = ref([]); // New ref for archived courses
+    const showTeachersSection = ref(false); // New ref for teachers section visibility
+    const showArchivedCoursesSection = ref(false); // New ref for archived courses section visibility
+    const showNoCourseSection = ref(false); // New ref for no course section visibility
     const roles = ref([
       {
         titulo: "Estudiante",
@@ -996,11 +1054,7 @@ export default {
       abierto.value = selectedValue !== undefined;
 
       if (abierto.value) {
-        if (selectedValue === "teachers") {
-          getTeachers();
-        } else if (selectedValue === "archivedCourses") {
-          getArchivedCourses();
-        } else if (courseSelected.value?.id !== undefined) {
+        if (courseSelected.value?.id !== undefined) {
           getUsuarios(courseSelected.value.id, selectedYear.value);
         }
       }
@@ -1345,6 +1399,27 @@ export default {
       await alert.present();
     };
 
+    const toggleTeachersSection = () => {
+      showTeachersSection.value = !showTeachersSection.value;
+      if (showTeachersSection.value) {
+        getTeachers();
+      }
+    };
+
+    const toggleArchivedCoursesSection = () => {
+      showArchivedCoursesSection.value = !showArchivedCoursesSection.value;
+      if (showArchivedCoursesSection.value) {
+        getArchivedCourses();
+      }
+    };
+
+    const toggleNoCourseSection = async () => {
+      showNoCourseSection.value = !showNoCourseSection.value;
+      if (showNoCourseSection.value) {
+        await getUsuariosSinCurso();
+      }
+    };
+
     return {
       usuario,
       abierto,
@@ -1418,6 +1493,14 @@ export default {
       archivedCourses,
       getArchivedCourses,
       reactivateCourse,
+
+      // Section Visibility
+      showTeachersSection,
+      showArchivedCoursesSection,
+      showNoCourseSection,
+      toggleTeachersSection,
+      toggleArchivedCoursesSection,
+      toggleNoCourseSection,
     };
   },
 };
