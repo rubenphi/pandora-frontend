@@ -157,6 +157,83 @@
           </ion-item>
         </ion-content>
       </ion-modal>
+      <ion-modal :is-open="isBulkAssignModalOpen" @didDismiss="closeBulkAssignModal">
+        <ion-header>
+          <ion-toolbar>
+            <ion-buttons slot="start">
+              <ion-button @click="closeBulkAssignModal">Cancelar</ion-button>
+            </ion-buttons>
+            <ion-title
+              >Asignación Múltiple de
+              {{ sourceCourseForBulk?.name }}</ion-title
+            >
+            <ion-buttons slot="end">
+              <ion-button :strong="true" @click="confirmBulkAssign()"
+                >Confirmar</ion-button
+              >
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding">
+          <ion-item>
+            <ion-label>Curso Destino</ion-label>
+            <ion-select
+              v-model="selectedCourseId"
+              placeholder="Seleccione el curso"
+            >
+              <ion-select-option
+                v-for="curso in cursosInstituto.filter(
+                  (c) => c.id !== sourceCourseForBulk?.id
+                )"
+                :key="curso.id"
+                :value="curso.id"
+              >
+                {{ curso.name }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item>
+            <ion-label>Rol en el curso</ion-label>
+            <ion-select v-model="rolSelected" placeholder="Seleccione el rol">
+              <ion-select-option
+                v-for="rol in roles"
+                :key="rol.rol"
+                :value="rol.rol"
+              >
+                {{ rol.titulo }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+          <ion-list>
+            <ion-item>
+              <ion-label>Seleccionar todos</ion-label>
+              <ion-checkbox @ionChange="toggleSelectAll($event)"></ion-checkbox>
+            </ion-item>
+            <ion-item
+              v-for="student in studentsForBulkAssign"
+              :key="student.id"
+            >
+              <ion-label>{{ student.lastName }}, {{ student.name }}</ion-label>
+              <ion-checkbox
+                :value="student.id"
+                @ionChange="
+                  (ev) => {
+                    if (ev.detail.checked) {
+                      selectedStudents.push(student.id);
+                    } else {
+                      selectedStudents = selectedStudents.filter(
+                        (id) => id !== student.id
+                      );
+                    }
+                  }
+                "
+                :checked="selectedStudents.includes(student.id)"
+              ></ion-checkbox>
+            </ion-item>
+          </ion-list>
+        </ion-content>
+      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
@@ -187,6 +264,7 @@ import {
   IonIcon,
   actionSheetController,
   alertController, // Import alertController
+  IonCheckbox,
 } from "@ionic/vue";
 
 import {
@@ -219,6 +297,7 @@ export default {
     IonButton,
     IonButtons,
     IonIcon,
+    IonCheckbox,
   },
   setup() {
     const usuario = ref();
@@ -260,6 +339,11 @@ export default {
     );
     const selectedYear = ref(new Date().getFullYear());
 
+    const isBulkAssignModalOpen = ref(false);
+    const studentsForBulkAssign = ref([]);
+    let selectedStudents = ref([]);
+    const sourceCourseForBulk = ref(null);
+
     const openModal = (user) => {
       selectedUser.value = user;
       isModalOpen.value = true;
@@ -270,34 +354,122 @@ export default {
     };
 
     const presentActionSheet = async (curso) => {
+      const buttons = [
+        {
+          text: "Descargar CSV",
+          handler: () => {
+            downloadCSV(curso);
+          },
+        },
+        {
+          text: "Imprimir Lista",
+          handler: () => {
+            navigateToPrintableList(curso);
+          },
+        },
+        {
+          text: "Imprimir Hojas de Respuestas",
+          handler: () => {
+            navigateToPrintableSheet(curso);
+          },
+        },
+        {
+          text: "Cancelar",
+          role: "cancel",
+        },
+      ];
+
+      if (curso.id !== 0) {
+        buttons.splice(0, 0, {
+          text: "Asignación Múltiple",
+          handler: () => {
+            openBulkAssignModal(curso);
+          },
+        });
+      }
+
       const actionSheet = await actionSheetController.create({
         header: "Opciones para " + curso.name,
-        buttons: [
-          {
-            text: "Descargar CSV",
-            handler: () => {
-              downloadCSV(curso);
-            },
-          },
-          {
-            text: "Imprimir Lista",
-            handler: () => {
-              navigateToPrintableList(curso);
-            },
-          },
-          {
-            text: "Imprimir Hojas de Respuestas",
-            handler: () => {
-              navigateToPrintableSheet(curso);
-            },
-          },
-          {
-            text: "Cancelar",
-            role: "cancel",
-          },
-        ],
+        buttons: buttons,
       });
       await actionSheet.present();
+    };
+
+    const openBulkAssignModal = async (curso) => {
+      sourceCourseForBulk.value = curso;
+      selectedCourseId.value = null;
+      rolSelected.value = "student";
+      selectedStudents.value = [];
+
+      // Re-use getUsuarios logic to fetch students
+      loading.value = true;
+      const response = await axios.get(
+        `/courses/${curso.id}/users?year=${selectedYear.value}`,
+        tokenHeader()
+      );
+      const allUsers = response.data
+        .filter((assignment) => assignment.active !== false)
+        .map((usuario) => usuario.user);
+
+      studentsForBulkAssign.value = allUsers.filter(
+        (user) => user.rol === "student" || user.rol === "user"
+      );
+      loading.value = false;
+      isBulkAssignModalOpen.value = true;
+    };
+
+    const closeBulkAssignModal = () => {
+      isBulkAssignModalOpen.value = false;
+    };
+
+    const toggleSelectAll = (event) => {
+      if (event.detail.checked) {
+        selectedStudents.value = studentsForBulkAssign.value.map(
+          (student) => student.id
+        );
+      } else {
+        selectedStudents.value = [];
+      }
+    };
+
+    const confirmBulkAssign = async () => {
+      if (!selectedCourseId.value || selectedStudents.value.length === 0) {
+        const alert = await alertController.create({
+          header: "Información incompleta",
+          message:
+            "Por favor, seleccione un curso de destino y al menos un estudiante.",
+          buttons: ["OK"],
+        });
+        await alert.present();
+        return;
+      }
+
+      const assignments = selectedStudents.value.map((userId) => ({
+        userId: userId,
+        year: parseInt(selectedYear.value, 10),
+        rol: rolSelected.value || "student",
+      }));
+
+      try {
+        await axios.post(
+          `/courses/${selectedCourseId.value}/users`,
+          assignments,
+          {
+            headers: tokenHeader(),
+          }
+        );
+
+        closeBulkAssignModal();
+        location.reload(); // Reload to see the changes
+      } catch (error) {
+        console.error("Error en la asignación múltiple:", error);
+        const errorAlert = await alertController.create({
+          header: "Error",
+          message: "Hubo un error al intentar asignar los estudiantes.",
+          buttons: ["OK"],
+        });
+        await errorAlert.present();
+      }
     };
 
     const navigateToPrintableList = async (curso) => {
@@ -376,7 +548,7 @@ export default {
               const phoneNo = ""; // As per the comment, this is empty
 
               const row = `"${rollNo}","${name}","${className}","${email}","${phoneNo}"`;
-              csvContent += row + "\r\n";
+              csvContent += row + '\r\n';
             }
           });
         } catch (error) {
@@ -708,7 +880,18 @@ export default {
       createOutline,
       downloadOutline,
       trashOutline, // Expose the new icon
+
+      // Bulk Assign
+      isBulkAssignModalOpen,
+      studentsForBulkAssign,
+      selectedStudents,
+      sourceCourseForBulk,
+      openBulkAssignModal,
+      closeBulkAssignModal,
+      toggleSelectAll,
+      confirmBulkAssign,
     };
   },
 };
 </script>
+
