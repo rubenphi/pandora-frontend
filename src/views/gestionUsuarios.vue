@@ -47,23 +47,22 @@
                       {{ usuario.code }}
                     </p>
                   </ion-label>
-                  <div
-                    slot="end"
-                    style="display: flex; gap: 10px"
-                    v-if="canManage(usuario)"
-                  >
+                  <div slot="end" style="display: flex; gap: 10px">
                     <ion-icon
+                      v-if="canManage(usuario)"
                       :icon="swapHorizontalOutline"
                       style="cursor: pointer; font-size: 24px"
                       @click="openModal(usuario)"
                     ></ion-icon>
                     <ion-icon
+                      v-if="canManage(usuario)"
                       :icon="trashOutline"
                       style="cursor: pointer; font-size: 24px"
                       color="danger"
                       @click="deactivateUser(usuario)"
                     ></ion-icon>
                     <ion-icon
+                      v-if="canManage(usuario)"
                       :icon="createOutline"
                       style="cursor: pointer; font-size: 24px"
                       @click="
@@ -112,23 +111,22 @@
                       {{ usuario.code }}
                     </p>
                   </ion-label>
-                  <div
-                    slot="end"
-                    style="display: flex; gap: 10px"
-                    v-if="canManage(usuario)"
-                  >
+                  <div slot="end" style="display: flex; gap: 10px">
                     <ion-icon
+                      v-if="canManage(usuario)"
                       :icon="swapHorizontalOutline"
                       style="cursor: pointer; font-size: 24px"
                       @click="openModal(usuario)"
                     ></ion-icon>
                     <ion-icon
+                      v-if="canManage(usuario)"
                       :icon="trashOutline"
                       style="cursor: pointer; font-size: 24px"
                       color="danger"
                       @click="deactivateUser(usuario)"
                     ></ion-icon>
                     <ion-icon
+                      v-if="canManage(usuario)"
                       :icon="createOutline"
                       style="cursor: pointer; font-size: 24px"
                       @click="
@@ -454,17 +452,19 @@ export default {
 
     const canManage = (targetUser) => {
       if (!usuario.value) return false;
-      if (usuario.value.id === targetUser.id) return false;
 
+      // Privileged users can manage anyone, including themselves
       if (isPrivilegedUser.value) {
         return true;
       }
 
+      // Non-privileged users cannot manage themselves
+      if (usuario.value.id === targetUser.id) return false;
+
+      // Teachers can only manage students in their courses
       if (usuario.value.rol === "teacher") {
         const isStudent =
           targetUser.rol === "student" || targetUser.rol === "user";
-        // Basic check: Does the teacher teach the currently selected course?
-        // A more robust implementation would check against a list of the teacher's courses.
         const teacherCourses =
           usuario.value.courses?.map((c) => c.course.id) || [];
         const isTeacherInCourse = teacherCourses.includes(
@@ -913,9 +913,9 @@ export default {
         await getUsuariosSinCurso();
       } else {
         const response = await axios.get(
-          `/courses/${cursoId}/users?year=${year}`,
-          tokenHeader()
-        );
+      `/courses/${cursoId}/users?year=${year}&active=true`,
+      tokenHeader()
+    );
 
         const users = response.data
           .filter((assignment) => assignment.active !== false)
