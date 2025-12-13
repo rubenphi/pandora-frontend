@@ -25,6 +25,56 @@
           </ion-select>
         </ion-item>
         <ion-accordion-group @ionChange="captarAbierto($event)">
+          <ion-accordion value="teachers" v-if="isPrivilegedUser">
+            <IonItem
+              slot="header"
+              @click="
+                changeCourse({
+                  id: 'teachers',
+                  name: 'Profesores del instituto',
+                })
+              "
+            >
+              <IonLabel>Profesores del instituto</IonLabel>
+            </IonItem>
+            <div class="ion-padding" slot="content">
+              <ion-list>
+                <ion-item v-for="usuario in usersCourse" :key="usuario.id">
+                  <ion-label class="ion-text-wrap">
+                    <h6>{{ usuario.lastName + " " + usuario.name }}</h6>
+                    <p>
+                      {{ getRoleLabel(usuario) }}<br />
+                      {{ usuario.code }}
+                    </p>
+                  </ion-label>
+                  <div
+                    slot="end"
+                    style="display: flex; gap: 10px"
+                    v-if="canManage(usuario)"
+                  >
+                    <ion-icon
+                      :icon="swapHorizontalOutline"
+                      style="cursor: pointer; font-size: 24px"
+                      @click="openModal(usuario)"
+                    ></ion-icon>
+                    <ion-icon
+                      :icon="trashOutline"
+                      style="cursor: pointer; font-size: 24px"
+                      color="danger"
+                      @click="deactivateUser(usuario)"
+                    ></ion-icon>
+                    <ion-icon
+                      :icon="createOutline"
+                      style="cursor: pointer; font-size: 24px"
+                      @click="
+                        router.push(`/admin/actualizar/usuarios/${usuario.id}`)
+                      "
+                    ></ion-icon>
+                  </div>
+                </ion-item>
+              </ion-list>
+            </div>
+          </ion-accordion>
           <ion-accordion v-for="curso in cursosInstituto" :key="curso.id">
             <IonItem slot="header" @click="changeCourse(curso)">
               <IonLabel v-if="!loading || courseSelected.id != curso.id">{{
@@ -41,26 +91,32 @@
               </ion-button>
             </IonItem>
             <div class="ion-padding" slot="content">
-              <ion-list>
+              <div
+                v-if="usersCourse.length === 0 && !loading && curso.id !== 0"
+                class="ion-text-center ion-padding"
+              >
+                <p>Este curso no tiene usuarios.</p>
+                <ion-button
+                  v-if="isPrivilegedUser"
+                  @click="openAssignTeacherModal(curso)"
+                >
+                  Asignar Profesor
+                </ion-button>
+              </div>
+              <ion-list v-if="usersCourse.length > 0">
                 <ion-item v-for="usuario in usersCourse" :key="usuario.id">
                   <ion-label class="ion-text-wrap">
                     <h6>{{ usuario.lastName + " " + usuario.name }}</h6>
                     <p>
-                      {{
-                        usuario?.rol == "user" || usuario?.rol == "student"
-                          ? "Estudiante "
-                          : usuario?.rol == "admin"
-                          ? "Administrador "
-                          : usuario?.rol == "teacher"
-                          ? "Profesor "
-                          : usuario?.rol == ""
-                          ? ""
-                          : "Rol no identificado"
-                      }}<br />
+                      {{ getRoleLabel(usuario) }}<br />
                       {{ usuario.code }}
                     </p>
                   </ion-label>
-                  <div slot="end" style="display: flex; gap: 10px">
+                  <div
+                    slot="end"
+                    style="display: flex; gap: 10px"
+                    v-if="canManage(usuario)"
+                  >
                     <ion-icon
                       :icon="swapHorizontalOutline"
                       style="cursor: pointer; font-size: 24px"
@@ -109,62 +165,93 @@
           </ion-toolbar>
         </ion-header>
         <ion-content class="ion-padding">
-          <ion-item>
-            <ion-label>Curso Destino</ion-label>
-            <ion-select
-              v-model="selectedCourseId"
-              placeholder="Seleccione el curso"
-              @ionChange="getGruposCurso"
-            >
-              <ion-select-option
-                v-for="curso in cursosInstituto"
-                :key="curso.id"
-                :value="curso.id"
+          <div v-if="!selectedUser">
+            <ion-searchbar
+              v-model="searchQuery"
+              placeholder="Buscar profesor"
+              @ionInput="searchTeachers"
+            ></ion-searchbar>
+            <ion-list>
+              <ion-item
+                v-for="teacher in teacherSearchResults"
+                :key="teacher.id"
+                button
+                @click="selectedUser = teacher"
               >
-                {{ curso.name }}
-              </ion-select-option>
-            </ion-select>
-          </ion-item>
+                <ion-label>{{ teacher.lastName }} {{ teacher.name }}</ion-label>
+              </ion-item>
+            </ion-list>
+          </div>
 
-          <ion-item>
-            <ion-label>Rol en el curso</ion-label>
-            <ion-select v-model="rolSelected" placeholder="Seleccione el rol">
-              <ion-select-option
-                v-for="rol in roles"
-                :key="rol.rol"
-                :value="rol.rol"
+          <div v-if="selectedUser">
+            <ion-item>
+              <ion-label>
+                Usuario Seleccionado:
+                <strong
+                  >{{ selectedUser.lastName }} {{ selectedUser.name }}</strong
+                >
+              </ion-label>
+            </ion-item>
+            <ion-item>
+              <ion-label>Curso Destino</ion-label>
+              <ion-select
+                v-model="selectedCourseId"
+                placeholder="Seleccione el curso"
+                @ionChange="getGruposCurso"
               >
-                {{ rol.titulo }}
-              </ion-select-option>
-            </ion-select>
-          </ion-item>
+                <ion-select-option
+                  v-for="curso in availableCourses"
+                  :key="curso.id"
+                  :value="curso.id"
+                >
+                  {{ curso.name }}
+                </ion-select-option>
+              </ion-select>
+            </ion-item>
 
-          <ion-item>
-            <ion-label>Grupo Destino</ion-label>
-            <ion-select
-              v-model="selectedGroupId"
-              placeholder="Seleccione el grupo"
-              :disabled="!selectedCourseId"
-            >
-              <ion-select-option
-                v-for="grupo in gruposCursoDestino"
-                :key="grupo.id"
-                :value="grupo.id"
+            <ion-item>
+              <ion-label>Rol en el curso</ion-label>
+              <ion-select v-model="rolSelected" placeholder="Seleccione el rol">
+                <ion-select-option
+                  v-for="rol in availableRoles"
+                  :key="rol.rol"
+                  :value="rol.rol"
+                >
+                  {{ rol.titulo }}
+                </ion-select-option>
+              </ion-select>
+            </ion-item>
+
+            <ion-item v-if="rolSelected === 'student'">
+              <ion-label>Grupo Destino</ion-label>
+              <ion-select
+                v-model="selectedGroupId"
+                placeholder="Seleccione el grupo"
+                :disabled="!selectedCourseId"
               >
-                {{ grupo.name }}
-              </ion-select-option>
-            </ion-select>
-          </ion-item>
+                <ion-select-option
+                  v-for="grupo in gruposCursoDestino"
+                  :key="grupo.id"
+                  :value="grupo.id"
+                >
+                  {{ grupo.name }}
+                </ion-select-option>
+              </ion-select>
+            </ion-item>
+          </div>
         </ion-content>
       </ion-modal>
-      <ion-modal :is-open="isBulkAssignModalOpen" @didDismiss="closeBulkAssignModal">
+      <ion-modal
+        :is-open="isBulkAssignModalOpen"
+        @didDismiss="closeBulkAssignModal"
+      >
         <ion-header>
           <ion-toolbar>
             <ion-buttons slot="start">
               <ion-button @click="closeBulkAssignModal">Cancelar</ion-button>
             </ion-buttons>
-            <ion-title
-              >Asignación Múltiple de
+            <ion-title>
+              Asignación Múltiple de
               {{ sourceCourseForBulk?.name }}</ion-title
             >
             <ion-buttons slot="end">
@@ -189,19 +276,6 @@
                 :value="curso.id"
               >
                 {{ curso.name }}
-              </ion-select-option>
-            </ion-select>
-          </ion-item>
-
-          <ion-item>
-            <ion-label>Rol en el curso</ion-label>
-            <ion-select v-model="rolSelected" placeholder="Seleccione el rol">
-              <ion-select-option
-                v-for="rol in roles"
-                :key="rol.rol"
-                :value="rol.rol"
-              >
-                {{ rol.titulo }}
               </ion-select-option>
             </ion-select>
           </ion-item>
@@ -242,7 +316,7 @@
 import axios from "axios";
 import router from "../router";
 
-import { ref } from "vue";
+import { ref, computed, watch } from "vue";
 import { tokenHeader, usuarioGet } from "../globalService";
 import {
   onIonViewWillEnter,
@@ -265,6 +339,7 @@ import {
   actionSheetController,
   alertController, // Import alertController
   IonCheckbox,
+  IonSearchbar,
 } from "@ionic/vue";
 
 import {
@@ -298,6 +373,7 @@ export default {
     IonButtons,
     IonIcon,
     IonCheckbox,
+    IonSearchbar,
   },
   setup() {
     const usuario = ref();
@@ -343,6 +419,135 @@ export default {
     const studentsForBulkAssign = ref([]);
     let selectedStudents = ref([]);
     const sourceCourseForBulk = ref(null);
+    const teacherSearchResults = ref([]);
+    const searchQuery = ref("");
+
+    const openAssignTeacherModal = (curso) => {
+      selectedCourseId.value = curso.id;
+      selectedUser.value = null;
+      teacherSearchResults.value = [];
+      searchQuery.value = "";
+      isModalOpen.value = true;
+    };
+
+    const searchTeachers = async () => {
+      if (searchQuery.value.length < 3) {
+        teacherSearchResults.value = [];
+        return;
+      }
+      try {
+        const response = await axios.get(
+          `/users?instituteId=${usuario.value.institute.id}&rol=teacher,admin&name=${searchQuery.value}`,
+          tokenHeader()
+        );
+        teacherSearchResults.value = response.data;
+      } catch (error) {
+        console.error("Error searching teachers:", error);
+      }
+    };
+
+    const isPrivilegedUser = computed(() => {
+      if (!usuario.value) return false;
+      const privilegedRoles = ["admin", "director", "coordinator"];
+      return privilegedRoles.includes(usuario.value.rol);
+    });
+
+    const canManage = (targetUser) => {
+      if (!usuario.value) return false;
+      if (usuario.value.id === targetUser.id) return false;
+
+      if (isPrivilegedUser.value) {
+        return true;
+      }
+
+      if (usuario.value.rol === "teacher") {
+        const isStudent =
+          targetUser.rol === "student" || targetUser.rol === "user";
+        // Basic check: Does the teacher teach the currently selected course?
+        // A more robust implementation would check against a list of the teacher's courses.
+        const teacherCourses =
+          usuario.value.courses?.map((c) => c.course.id) || [];
+        const isTeacherInCourse = teacherCourses.includes(
+          courseSelected.value.id
+        );
+
+        return isStudent && isTeacherInCourse;
+      }
+
+      return false;
+    };
+
+    const availableRoles = computed(() => {
+      // Scenario 1: No user is selected yet (e.g., when using the search bar to find a teacher)
+      // In this case, we assume the intent is to assign a teacher/admin to the course.
+      if (!selectedUser.value) {
+        return roles.value.filter(
+          (r) => r.rol === "teacher" || r.rol === "admin"
+        );
+      }
+
+      // Scenario 2: A user has been selected
+      // Determine available roles based on the selected user's system role
+      if (
+        selectedUser.value.rol === "teacher" ||
+        selectedUser.value.rol === "admin"
+      ) {
+        return roles.value.filter(
+          (r) => r.rol === "teacher" || r.rol === "admin"
+        );
+      } else if (["student", "user"].includes(selectedUser.value.rol)) {
+        return roles.value.filter((r) => r.rol === "student");
+      }
+
+      // Scenario 3: Fallback for privileged users or unexpected roles
+      // If the logged-in user is privileged, they can assign any role,
+      // unless the selected user's system role restricts it (handled above).
+      // This part should only be reached if selectedUser.value.rol is something unexpected.
+      if (isPrivilegedUser.value) {
+        return roles.value;
+      }
+
+      return [];
+    });
+
+    const availableCourses = computed(() => {
+      if (isPrivilegedUser.value) {
+        return cursosInstituto.value;
+      }
+      if (usuario.value?.rol === "teacher") {
+        const teacherCourseIds =
+          usuario.value.courses?.map((c) => c.course.id) || [];
+        return cursosInstituto.value.filter(
+          (c) => c.id === 0 || teacherCourseIds.includes(c.id)
+        );
+      }
+      return [];
+    });
+
+    watch(rolSelected, (newRole) => {
+      if (newRole !== "student") {
+        selectedGroupId.value = null;
+      }
+    });
+
+    watch(selectedUser, () => {
+      rolSelected.value = null; // Reset selected role when user changes
+    });
+
+    const getRoleLabel = (item) => {
+      const rol = item.courseRol || item.rol;
+      switch (rol) {
+        case "user":
+        case "student":
+          return "Estudiante";
+        case "admin":
+          return "Administrador";
+        case "teacher":
+          return "Profesor";
+        default:
+          return "Rol no identificado";
+      }
+    };
 
     const openModal = (user) => {
       selectedUser.value = user;
@@ -447,7 +652,7 @@ export default {
       const assignments = selectedStudents.value.map((userId) => ({
         userId: userId,
         year: parseInt(selectedYear.value, 10),
-        rol: rolSelected.value || "student",
+        rol: "student",
       }));
 
       try {
@@ -548,7 +753,7 @@ export default {
               const phoneNo = ""; // As per the comment, this is empty
 
               const row = `"${rollNo}","${name}","${className}","${email}","${phoneNo}"`;
-              csvContent += row + '\r\n';
+              csvContent += row + "\r\n";
             }
           });
         } catch (error) {
@@ -675,11 +880,28 @@ export default {
       const selectedValue = event.detail.value;
       abierto.value = selectedValue !== undefined;
 
-      if (
-        (abierto.value && courseSelected.value?.id) ||
-        (abierto.value && courseSelected.value.id == 0)
-      ) {
-        getUsuarios(courseSelected.value.id, selectedYear.value);
+      if (abierto.value) {
+        if (selectedValue === "teachers") {
+          getTeachers();
+        } else if (courseSelected.value?.id !== undefined) {
+          getUsuarios(courseSelected.value.id, selectedYear.value);
+        }
+      }
+    };
+
+    const getTeachers = async () => {
+      loading.value = true;
+      usersCourse.value = [];
+      try {
+        const response = await axios.get(
+          `/users?instituteId=${usuario.value.institute.id}&rol=teacher,admin`,
+          tokenHeader()
+        );
+        usersCourse.value = response.data;
+      } catch (error) {
+        console.error("Error fetching teachers:", error);
+      } finally {
+        loading.value = false;
       }
     };
 
@@ -697,7 +919,12 @@ export default {
 
         const users = response.data
           .filter((assignment) => assignment.active !== false)
-          .map((usuario) => usuario.user);
+          .map((assignment) => {
+            return {
+              ...assignment.user,
+              courseRol: assignment.rol,
+            };
+          });
 
         const roleOrder = {
           admin: 0,
@@ -709,8 +936,8 @@ export default {
         };
 
         users.sort((a, b) => {
-          const roleA = a.rol || "user";
-          const roleB = b.rol || "user";
+          const roleA = a.courseRol || a.rol || "user";
+          const roleB = b.courseRol || b.rol || "user";
           const orderA = roleOrder[roleA] ?? 99;
           const orderB = roleOrder[roleB] ?? 99;
 
@@ -861,6 +1088,7 @@ export default {
       captarAbierto,
       getCurso,
       getUsuarios,
+      getTeachers,
       gruposCursoDestino,
       getGruposCurso,
       isModalOpen,
@@ -890,8 +1118,16 @@ export default {
       closeBulkAssignModal,
       toggleSelectAll,
       confirmBulkAssign,
+      canManage,
+      availableRoles,
+      availableCourses,
+      isPrivilegedUser,
+      getRoleLabel,
+      openAssignTeacherModal,
+      searchTeachers,
+      teacherSearchResults,
+      searchQuery,
     };
   },
 };
 </script>
-
