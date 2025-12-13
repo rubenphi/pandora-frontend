@@ -12,7 +12,11 @@
         </ion-toolbar>
       </ion-header>
 
-      <ion-button expand="block" @click="openCreateCourseModal()" v-if="isPrivilegedUser">
+      <ion-button
+        expand="block"
+        @click="openCreateCourseModal()"
+        v-if="isPrivilegedUser"
+      >
         Crear Nuevo Curso
       </ion-button>
 
@@ -74,6 +78,29 @@
                         router.push(`/admin/actualizar/usuarios/${usuario.id}`)
                       "
                     ></ion-icon>
+                  </div>
+                </ion-item>
+              </ion-list>
+            </div>
+          </ion-accordion>
+          <ion-accordion value="archivedCourses" v-if="isPrivilegedUser">
+            <IonItem slot="header">
+              <IonLabel>Cursos Archivados</IonLabel>
+            </IonItem>
+            <div class="ion-padding" slot="content">
+              <div v-if="archivedCourses.length === 0" class="ion-text-center ion-padding">
+                <p>No hay cursos archivados.</p>
+              </div>
+              <ion-list v-else>
+                <ion-item v-for="curso in archivedCourses" :key="curso.id">
+                  <ion-label class="ion-text-wrap">
+                    <h6>{{ curso.name }}</h6>
+                    <p>ID: {{ curso.id }}</p>
+                  </ion-label>
+                  <div slot="end">
+                    <ion-button @click="reactivateCourse(curso)" size="small" color="success">
+                      Reactivar
+                    </ion-button>
                   </div>
                 </ion-item>
               </ion-list>
@@ -333,11 +360,44 @@
         <ion-content class="ion-padding">
           <ion-item>
             <ion-label position="stacked">Nombre del Curso</ion-label>
-            <ion-input v-model="newCourse.name" placeholder="Ej: 1º Bachillerato A"></ion-input>
+            <ion-input
+              v-model="newCourse.name"
+              placeholder="Ej: 1º Bachillerato A"
+            ></ion-input>
           </ion-item>
           <ion-item>
             <ion-label>Activo</ion-label>
             <ion-toggle v-model="newCourse.exist" slot="end"></ion-toggle>
+          </ion-item>
+        </ion-content>
+      </ion-modal>
+
+      <!-- Modal para editar un curso existente -->
+      <ion-modal
+        :is-open="isEditCourseModalOpen"
+        @didDismiss="closeEditCourseModal"
+      >
+        <ion-header>
+          <ion-toolbar>
+            <ion-buttons slot="start">
+              <ion-button @click="closeEditCourseModal">Cancelar</ion-button>
+            </ion-buttons>
+            <ion-title>Editar Curso</ion-title>
+            <ion-buttons slot="end">
+              <ion-button :strong="true" @click="editCourse()">
+                Guardar
+              </ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding">
+          <ion-item>
+            <ion-label position="stacked">Nombre del Curso</ion-label>
+            <ion-input v-model="editedCourse.name"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-label>Activo</ion-label>
+            <ion-toggle v-model="editedCourse.exist" slot="end"></ion-toggle>
           </ion-item>
         </ion-content>
       </ion-modal>
@@ -425,11 +485,21 @@ export default {
     const selectedUser = ref(null);
     const rolSelected = ref(null);
     const isCreateCourseModalOpen = ref(false); // New ref
-    const newCourse = ref({ // New ref
-      name: '',
+    const newCourse = ref({
+      // New ref
+      name: "",
       instituteId: null,
       exist: true,
     });
+    const isEditCourseModalOpen = ref(false); // New ref for edit modal
+    const editedCourse = ref({
+      // New ref for edited course data
+      id: null,
+      name: "",
+      instituteId: null,
+      exist: true,
+    });
+    const archivedCourses = ref([]); // New ref for archived courses
     const roles = ref([
       {
         titulo: "Estudiante",
@@ -606,9 +676,9 @@ export default {
     const presentActionSheet = async (curso) => {
       const buttons = [
         {
-          text: "Descargar CSV",
+          text: "Editar Curso",
           handler: () => {
-            downloadCSV(curso);
+            openEditCourseModal(curso);
           },
         },
         {
@@ -928,6 +998,8 @@ export default {
       if (abierto.value) {
         if (selectedValue === "teachers") {
           getTeachers();
+        } else if (selectedValue === "archivedCourses") {
+          getArchivedCourses();
         } else if (courseSelected.value?.id !== undefined) {
           getUsuarios(courseSelected.value.id, selectedYear.value);
         }
@@ -958,9 +1030,9 @@ export default {
         await getUsuariosSinCurso();
       } else {
         const response = await axios.get(
-      `/courses/${cursoId}/users?year=${year}&active=true`,
-      tokenHeader()
-    );
+          `/courses/${cursoId}/users?year=${year}&active=true`,
+          tokenHeader()
+        );
 
         const users = response.data
           .filter((assignment) => assignment.active !== false)
@@ -1120,7 +1192,7 @@ export default {
 
     const openCreateCourseModal = () => {
       newCourse.value = {
-        name: '',
+        name: "",
         instituteId: usuario.value.institute.id, // Pre-fill instituteId
         exist: true,
       };
@@ -1134,33 +1206,143 @@ export default {
     const createCourse = async () => {
       if (!newCourse.value.name) {
         const alert = await alertController.create({
-          header: 'Error',
-          message: 'El nombre del curso no puede estar vacío.',
-          buttons: ['OK'],
+          header: "Error",
+          message: "El nombre del curso no puede estar vacío.",
+          buttons: ["OK"],
         });
         await alert.present();
         return;
       }
 
       try {
-        await axios.post('/courses', newCourse.value, tokenHeader());
+        await axios.post("/courses", newCourse.value, tokenHeader());
         closeCreateCourseModal();
         await getCurso(); // Refresh the course list
         const alert = await alertController.create({
-          header: 'Éxito',
-          message: 'Curso creado exitosamente.',
-          buttons: ['OK'],
+          header: "Éxito",
+          message: "Curso creado exitosamente.",
+          buttons: ["OK"],
         });
         await alert.present();
       } catch (error) {
-        console.error('Error creating course:', error);
+        console.error("Error creating course:", error);
         const alert = await alertController.create({
-          header: 'Error',
-          message: 'Hubo un error al crear el curso.',
-          buttons: ['OK'],
+          header: "Error",
+          message: "Hubo un error al crear el curso.",
+          buttons: ["OK"],
         });
         await alert.present();
       }
+    };
+
+    const openEditCourseModal = (curso) => {
+      editedCourse.value = { ...curso }; // Copy course data to editedCourse
+      isEditCourseModalOpen.value = true;
+    };
+
+    const closeEditCourseModal = () => {
+      isEditCourseModalOpen.value = false;
+    };
+
+    const editCourse = async () => {
+      if (!editedCourse.value.name) {
+        const alert = await alertController.create({
+          header: "Error",
+          message: "El nombre del curso no puede estar vacío.",
+          buttons: ["OK"],
+        });
+        await alert.present();
+        return;
+      }
+
+      try {
+        const payload = {
+          name: editedCourse.value.name,
+          instituteId: editedCourse.value.instituteId,
+          exist: editedCourse.value.exist,
+        };
+
+        await axios.patch(
+          `/courses/${editedCourse.value.id}`,
+          payload,
+          tokenHeader()
+        );
+        closeEditCourseModal();
+        await getCurso(); // Refresh the course list
+        const alert = await alertController.create({
+          header: "Éxito",
+          message: "Curso actualizado exitosamente.",
+          buttons: ["OK"],
+        });
+        await alert.present();
+      } catch (error) {
+        console.error("Error updating course:", error);
+        const alert = await alertController.create({
+          header: "Error",
+          message: "Hubo un error al actualizar el curso.",
+          buttons: ["OK"],
+        });
+        await alert.present();
+      }
+    };
+
+    
+
+    const getArchivedCourses = async () => {
+      loading.value = true;
+      try {
+        const response = await axios.get(
+          `/courses?instituteId=${usuario.value.institute.id}&exist=false`,
+          tokenHeader()
+        );
+        archivedCourses.value = response.data.sort((a, b) => a.name.localeCompare(b.name));
+      } catch (error) {
+        console.error("Error fetching archived courses:", error);
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const reactivateCourse = async (course) => {
+      const alert = await alertController.create({
+        header: "Confirmar Reactivación",
+        message: `¿Estás seguro de que quieres reactivar el curso "${course.name}"?`,
+        buttons: [
+          {
+            text: "Cancelar",
+            role: "cancel",
+            cssClass: "secondary",
+          },
+          {
+            text: "Reactivar",
+            handler: async () => {
+              try {
+                const payload = {
+                  exist: true,
+                };
+                await axios.patch(`/courses/${course.id}`, payload, tokenHeader());
+                await getArchivedCourses(); // Refresh archived courses list
+                await getCurso(); // Refresh active courses list
+                const successAlert = await alertController.create({
+                  header: "Éxito",
+                  message: `El curso "${course.name}" ha sido reactivado.`,
+                  buttons: ["OK"],
+                });
+                await successAlert.present();
+              } catch (error) {
+                console.error("Error reactivating course:", error);
+                const errorAlert = await alertController.create({
+                  header: "Error",
+                  message: "Hubo un error al reactivar el curso.",
+                  buttons: ["OK"],
+                });
+                await errorAlert.present();
+              }
+            },
+          },
+        ],
+      });
+      await alert.present();
     };
 
     return {
@@ -1224,6 +1406,18 @@ export default {
       openCreateCourseModal,
       closeCreateCourseModal,
       createCourse,
+
+      // Course Editing
+      isEditCourseModalOpen,
+      editedCourse,
+      openEditCourseModal,
+      closeEditCourseModal,
+      editCourse,
+
+      // Archived Courses
+      archivedCourses,
+      getArchivedCourses,
+      reactivateCourse,
     };
   },
 };
