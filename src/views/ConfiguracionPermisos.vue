@@ -27,7 +27,12 @@
             <ion-label>Grupo revisor</ion-label>
             <ion-label>Grupo a ser revisado</ion-label>
           </ion-list-header>
-          <ion-button expand="block" @click="assignAllSelfEvaluation" class="ion-margin">Asignar Autoevaluación a Todos</ion-button>
+          <ion-button
+            expand="block"
+            @click="assignAllSelfEvaluation"
+            class="ion-margin"
+            >Asignar Autoevaluación a Todos</ion-button
+          >
           <ion-item v-for="group in groups" :key="group.id">
             <ion-label>{{ group.name }}</ion-label>
             <ion-select
@@ -38,9 +43,9 @@
                 >{{ group.name }} (Autoevaluación)</ion-select-option
               >
               <ion-select-option
-                v-for="reviserGroup in getAvailableReviserGroups(group.id).filter(
-                  (g) => g.id !== group.id
-                )"
+                v-for="reviserGroup in getAvailableReviserGroups(
+                  group.id
+                ).filter((g) => g.id !== group.id)"
                 :key="reviserGroup.id"
                 :value="reviserGroup.id"
               >
@@ -53,34 +58,34 @@
       <div v-if="selectedTab === 'individuales'">
         <ion-list>
           <ion-list-header>
-          <ion-label>Estudiante revisor</ion-label>
-          <ion-label>Estudiante a ser revisado</ion-label>
-        </ion-list-header>
-        <ion-button expand="block" @click="assignAllSelfEvaluation" class="ion-margin">Asignar Autoevaluación a Todos</ion-button>
-          <ion-item
-            v-for="student in students"
-            :key="student.id"
+            <ion-label>Estudiante revisor</ion-label>
+            <ion-label>Estudiante a ser revisado</ion-label>
+          </ion-list-header>
+          <ion-button
+            expand="block"
+            @click="assignAllSelfEvaluation"
+            class="ion-margin"
+            >Asignar Autoevaluación a Todos</ion-button
           >
-            <ion-label
-              >{{ student.name }} {{ student.lastName }}</ion-label
-            >
+          <ion-item v-for="student in students" :key="student.id">
+            <ion-label>{{ student.name }} {{ student.lastName }}</ion-label>
             <ion-select
               v-model="individualPermissions[student.id]"
               placeholder="¿a quién revisa?"
             >
               <ion-select-option :value="null">Ninguno</ion-select-option>
-              <ion-select-option :value="student.id"
-                >{{ student.name }}
-                {{ student.lastName }} (Autoevaluación)</ion-select-option
+              <ion-select-option :value="student.id">
+                {{ student.lastName }}
+                {{ student.name }}(Autoevaluación)</ion-select-option
               >
               <ion-select-option
-                v-for="reviserStudent in getAvailableReviserStudents(student.id).filter(
-                  (s) => s.id !== student.id
-                )"
+                v-for="reviserStudent in getAvailableReviserStudents(
+                  student.id
+                ).filter((s) => s.id !== student.id)"
                 :key="reviserStudent.id"
                 :value="reviserStudent.id"
               >
-                {{ reviserStudent.name }} {{ reviserStudent.lastName }}
+                {{ reviserStudent.lastName }} {{ reviserStudent.name }}
               </ion-select-option>
             </ion-select>
           </ion-item>
@@ -217,9 +222,7 @@ export default {
       const otherSelectedIds = Object.entries(individualPermissions.value)
         .filter(([key]) => key !== String(currentStudentId))
         .map(([, value]) => value);
-      return students.value.filter(
-        (s) => !otherSelectedIds.includes(s.id)
-      );
+      return students.value.filter((s) => !otherSelectedIds.includes(s.id));
     };
 
     const fetchActivityDetails = async () => {
@@ -295,10 +298,10 @@ export default {
           tokenHeader()
         );
         initialPermissions.value = response.data; // Store initial state
-        initialPermissions.value.forEach(p => {
-          if (p.reviserType === 'Group') {
+        initialPermissions.value.forEach((p) => {
+          if (p.reviserType === "Group") {
             groupPermissions.value[p.reviserId] = p.revisedId;
-          } else if (p.reviserType === 'User') {
+          } else if (p.reviserType === "User") {
             individualPermissions.value[p.reviserId] = p.revisedId;
           }
         });
@@ -308,11 +311,11 @@ export default {
     };
 
     const removeAllPermissions = () => {
-      if (selectedTab.value === 'grupos') {
+      if (selectedTab.value === "grupos") {
         for (const key in groupPermissions.value) {
           groupPermissions.value[key] = null;
         }
-      } else if (selectedTab.value === 'individuales') {
+      } else if (selectedTab.value === "individuales") {
         for (const key in individualPermissions.value) {
           individualPermissions.value[key] = null;
         }
@@ -320,16 +323,16 @@ export default {
     };
 
     const assignAllSelfEvaluation = () => {
-      if (selectedTab.value === 'grupos') {
+      if (selectedTab.value === "grupos") {
         for (const group of groups.value) {
           groupPermissions.value[group.id] = group.id;
         }
-      } else if (selectedTab.value === 'individuales') {
+      } else if (selectedTab.value === "individuales") {
         for (const student of students.value) {
           individualPermissions.value[student.id] = student.id;
         }
       }
-    }
+    };
 
     const savePermissions = async () => {
       isLoading.value = true;
@@ -338,7 +341,11 @@ export default {
         const currentActivityId = parseInt(activityId.value);
 
         // Helper to process both group and individual permissions
-        const processPermissions = (permissionsMap, reviserType, revisedType) => {
+        const processPermissions = (
+          permissionsMap,
+          reviserType,
+          revisedType
+        ) => {
           for (const reviserId in permissionsMap) {
             const initialPermission = initialPermissions.value.find(
               (p) => p.reviserId == reviserId && p.reviserType === reviserType
