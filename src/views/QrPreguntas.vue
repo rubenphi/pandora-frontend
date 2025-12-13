@@ -151,6 +151,7 @@ export default {
       activeGroup: { id: null, name: "" }, // Initialize activeGroup with id
       qrCount: 0,
       isSubmitting: false, // Added isSubmitting
+      mutationObserver: null, // To store the MutationObserver instance
     };
   },
   computed: {
@@ -161,6 +162,48 @@ export default {
   mounted() {
     this.questionId = this.$route.params.d;
     this.fetchQuestionDetails();
+
+    // Create a MutationObserver to watch for the close button being added to the DOM
+    this.mutationObserver = new MutationObserver((mutationsList) => {
+      for (const mutation of mutationsList) {
+        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+          const closeButton = document.querySelector('.scanner-dialog-inner .close-button');
+          if (closeButton) {
+            closeButton.addEventListener('click', this.handleNativeCloseButtonClick);
+            this.mutationObserver.disconnect(); // Stop observing once found
+            break;
+          }
+        }
+      }
+    });
+
+    // Start observing the document body for child list changes
+    this.mutationObserver.observe(document.body, { childList: true, subtree: true });
+  },
+
+  beforeUnmount() {
+    // Ensure scanning state is reset when component is unmounted
+    this.isScanning = false;
+    // Attempt to stop the scanner explicitly, especially for web
+    if (
+      typeof CapacitorBarcodeScanner !== "undefined" &&
+      CapacitorBarcodeScanner.stopScan
+    ) {
+      CapacitorBarcodeScanner.stopScan().catch((e) =>
+        console.error("Error stopping barcode scanner:", e)
+      );
+    }
+
+    // Disconnect the MutationObserver
+    if (this.mutationObserver) {
+      this.mutationObserver.disconnect();
+    }
+
+    // Also ensure the event listener is removed if it was attached
+    const closeButton = document.querySelector('.scanner-dialog-inner .close-button');
+    if (closeButton) {
+      closeButton.removeEventListener('click', this.handleNativeCloseButtonClick);
+    }
   },
   methods: {
     async fetchQuestionDetails() {
@@ -246,80 +289,85 @@ export default {
           return;
         }
 
-        if (result.ScanResult) {
-          // Proceed only if a QR code was scanned
-          const [codigoEstudiante, opcion] = result.ScanResult.split(":");
-
-          if (!codigoEstudiante || !opcion) {
-            const alert = await alertController.create({
-              header: "Formato de QR inválido",
-              message:
-                "El código QR debe tener el formato 'codigoEstudiante:opcion'.",
-              buttons: [
-                {
-                  text: "OK",
-                  handler: () => {
-                    setTimeout(() => this.scanQR(), 300); // Auto-restart after dismissing alert
-                  },
-                },
-              ],
-            });
-            await alert.present();
-            return; // Stop further processing for invalid format
-          }
-
-          await this.fetchStudentAndGroup(codigoEstudiante);
-
-          const scannedObject = {
-            user: { ...this.student }, // Clone student object
-            group: { ...this.activeGroup }, // Clone activeGroup object
-            optionSelected: { identifier: opcion },
-            lessonQuizType: this.lessonQuizType, // Add lessonQuizType to the scanned object
-          };
-
-          let formattedLastScan = "";
-          if (this.lessonQuizType === "individual") {
-            formattedLastScan = `${this.student.name} ${this.student.lastName}: ${opcion}`;
-          } else if (this.lessonQuizType === "group" && this.activeGroup.name) {
-            formattedLastScan = `${this.activeGroup.name}: ${opcion}`;
-          } else {
-            formattedLastScan = `${codigoEstudiante}: ${opcion}`; // Fallback if group name not found or type unknown
-          }
-
-          // Verificar si ya existe una respuesta para este estudiante/grupo
-          let codeExists = false;
-          if (scannedObject.lessonQuizType === "individual") {
-            codeExists = this.scannedCodes.some(
-              (item) => item.user.id === scannedObject.user.id
-            );
-          } else if (scannedObject.lessonQuizType === "group") {
-            codeExists = this.scannedCodes.some(
-              (item) => item.group.id === scannedObject.group.id
-            );
-          }
-
-          if (codeExists) {
-            this.toastMessage = `Ya existe una respuesta para este ${
-              scannedObject.lessonQuizType === "individual"
-                ? "estudiante"
-                : "grupo"
-            }.`;
-            this.showToast = true;
-            setTimeout(() => this.scanQR(), 300);
-            return;
-          }
-
-          // Agregar el nuevo código
-          this.scannedCodes.unshift(scannedObject); // Add the new object
-          this.lastScan = formattedLastScan;
-          this.qrCount++; // Increment QR count only for valid, new codes
-
-          // Mostrar toast de éxito
-          this.toastMessage = `✓ Código #${this.scannedCodes.length} escaneado`;
-          this.showToast = true;
-          // Always restart the scanner after processing, without alerts for success/duplicate
-          setTimeout(() => this.scanQR(), 300);
+        // If not cancelled, but no ScanResult, it means the scanner closed without a scan.
+        // In this case, we should also ensure isScanning is false and not auto-restart.
+        if (!result.ScanResult) {
+          return;
         }
+
+        // If we reach here, it means a ScanResult was found.
+        // Proceed only if a QR code was scanned
+        const [codigoEstudiante, opcion] = result.ScanResult.split(":");
+
+        if (!codigoEstudiante || !opcion) {
+          const alert = await alertController.create({
+            header: "Formato de QR inválido",
+            message:
+              "El código QR debe tener el formato 'codigoEstudiante:opcion'.",
+            buttons: [
+              {
+                text: "OK",
+                handler: () => {
+                  setTimeout(() => this.scanQR(), 300); // Auto-restart after dismissing alert
+                },
+              },
+            ],
+          });
+          await alert.present();
+          return; // Stop further processing for invalid format
+        }
+
+        await this.fetchStudentAndGroup(codigoEstudiante);
+
+        const scannedObject = {
+          user: { ...this.student }, // Clone student object
+          group: { ...this.activeGroup }, // Clone activeGroup object
+          optionSelected: { identifier: opcion },
+          lessonQuizType: this.lessonQuizType, // Add lessonQuizType to the scanned object
+        };
+
+        let formattedLastScan = "";
+        if (this.lessonQuizType === "individual") {
+          formattedLastScan = `${this.student.name} ${this.student.lastName}: ${opcion}`;
+        } else if (this.lessonQuizType === "group" && this.activeGroup.name) {
+          formattedLastScan = `${this.activeGroup.name}: ${opcion}`;
+        } else {
+          formattedLastScan = `${codigoEstudiante}: ${opcion}`; // Fallback if group name not found or type unknown
+        }
+
+        // Verificar si ya existe una respuesta para este estudiante/grupo
+        let codeExists = false;
+        if (scannedObject.lessonQuizType === "individual") {
+          codeExists = this.scannedCodes.some(
+            (item) => item.user.id === scannedObject.user.id
+          );
+        } else if (scannedObject.lessonQuizType === "group") {
+          codeExists = this.scannedCodes.some(
+            (item) => item.group.id === scannedObject.group.id
+          );
+        }
+
+        if (codeExists) {
+          this.toastMessage = `Ya existe una respuesta para este ${
+            scannedObject.lessonQuizType === "individual"
+              ? "estudiante"
+              : "grupo"
+          }.`;
+          this.showToast = true;
+          setTimeout(() => this.scanQR(), 300);
+          return;
+        }
+
+        // Agregar el nuevo código
+        this.scannedCodes.unshift(scannedObject); // Add the new object
+        this.lastScan = formattedLastScan;
+        this.qrCount++; // Increment QR count only for valid, new codes
+
+        // Mostrar toast de éxito
+        this.toastMessage = `✓ Código #${this.scannedCodes.length} escaneado`;
+        this.showToast = true;
+        // Always restart the scanner after processing, without alerts for success/duplicate
+        setTimeout(() => this.scanQR(), 300);
       } catch (error) {
         this.isScanning = false; // Ensure scanning state is reset
 
@@ -349,6 +397,14 @@ export default {
       }
     },
 
+    handleNativeCloseButtonClick(event) {
+      if (event) event.preventDefault(); // Prevent default action if necessary
+
+      this.isScanning = false;
+      if (typeof CapacitorBarcodeScanner !== 'undefined' && CapacitorBarcodeScanner.stopScan) {
+        CapacitorBarcodeScanner.stopScan().catch(e => console.error("Error stopping barcode scanner from native close button:", e));
+      }
+    },
     removeCode(index) {
       this.scannedCodes.splice(index, 1);
       this.qrCount--; // Decrement qrCount when a code is removed
