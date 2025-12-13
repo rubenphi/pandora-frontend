@@ -77,7 +77,12 @@
           v-if="sectionScanImageUrls[currentSection - 1]"
           class="scan-result-container"
         >
-          <h3>Imagen del Escaneo (Sección {{ currentSection }})</h3>
+          <h3>
+            Imagen del Escaneo
+            <span v-if="numberOfSections > 1"
+              >(Sección {{ currentSection }})</span
+            >
+          </h3>
           <img
             :src="sectionScanImageUrls[currentSection - 1]"
             alt="Resultado del escaneo OMR"
@@ -181,7 +186,7 @@
                   {{ option.identifier }}
                 </ion-select-option>
               </ion-select>
-              <span v-if="answer.selectedOption !== null" class="correct-option-display">
+              <span class="correct-option-display">
                 Correcta: <span class="ion-text-success">{{ answer.correctOptionIdentifier }}</span>
               </span>
             </div>
