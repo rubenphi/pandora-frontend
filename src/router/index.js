@@ -24,6 +24,10 @@ const routes = [
     path: "/onboarding-qr", // New route
     component: QrScannerOnboarding,
   },
+  {
+    path: "/qr-preguntas/:d",
+    component: () => import("@/views/QrPreguntas.vue"),
+  },
 
   {
     path: "/",
