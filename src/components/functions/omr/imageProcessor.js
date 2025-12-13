@@ -325,7 +325,7 @@ export function drawMarkerOverlays(
       dst,
       contours,
       marker.outerIdx,
-      new cv.Scalar(0, 255, 0, 255),
+      new cv.Scalar(64, 224, 208, 255),
       2,
       cv.LINE_8,
       hierarchy,
@@ -335,7 +335,7 @@ export function drawMarkerOverlays(
       dst,
       contours,
       marker.innerIdx,
-      new cv.Scalar(0, 128, 255, 255),
+      new cv.Scalar(64, 224, 208, 255),
       2,
       cv.LINE_8
     );
@@ -390,7 +390,7 @@ export function drawCodeMatrix(OMR_STATE, ctx, markers) {
 
   ctx.save();
   // Draw polygon for region
-  ctx.strokeStyle = "rgba(255,255,0,0.8)";
+  ctx.strokeStyle = "rgba(64,224,208,0.8)";
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(TL.x, TL.y);
@@ -444,7 +444,7 @@ export function drawCodeMatrix(OMR_STATE, ctx, markers) {
 
         ctx.beginPath();
         ctx.fillStyle =
-          type === "numeric" ? "rgba(0,255,128,0.95)" : "rgba(255,200,0,0.95)";
+          type === "numeric" ? "rgba(64,224,208,0.95)" : "rgba(64,224,208,0.95)";
         ctx.arc(Math.round(x), Math.round(y), matrixDef.radius, 0, Math.PI * 2);
         ctx.fill();
       }
@@ -626,8 +626,8 @@ export function extractAndDrawResults(
 
     cctx.fillStyle =
       type === "numeric"
-        ? "rgba(0, 255, 128, 0.95)"
-        : "rgba(255, 200, 0, 0.95)";
+        ? "rgba(64, 224, 208, 0.95)"
+        : "rgba(64, 224, 208, 0.95)";
     for (let i = 0; i < dstData.length; i += 2) {
       const gx = Math.round(dstData[i]),
         gy = Math.round(dstData[i + 1]);
@@ -691,7 +691,7 @@ export function extractAndDrawResults(
       });
     }
 
-    cctx.fillStyle = "rgba(255,0,0,0.95)";
+    cctx.fillStyle = "rgba(128,0,128,0.95)";
     for (let i = 0; i < detectedPoints.length; i++) {
       if (detectedPoints[i]) {
         const px = Math.round(dstPts.data32F[i * 2]);
