@@ -11,6 +11,11 @@
           <ion-title size="large">Cursos</ion-title>
         </ion-toolbar>
       </ion-header>
+
+      <ion-button expand="block" @click="openCreateCourseModal()" v-if="isPrivilegedUser">
+        Crear Nuevo Curso
+      </ion-button>
+
       <ion-list>
         <ion-item>
           <ion-label><strong>Año:</strong></ion-label>
@@ -185,8 +190,8 @@
             <ion-item>
               <ion-label>
                 Usuario Seleccionado:
-                <strong
-                  >{{ selectedUser.lastName }} {{ selectedUser.name }}</strong
+                <strong>
+                  {{ selectedUser.lastName }} {{ selectedUser.name }}</strong
                 >
               </ion-label>
             </ion-item>
@@ -306,6 +311,36 @@
           </ion-list>
         </ion-content>
       </ion-modal>
+
+      <!-- Modal para crear un nuevo curso -->
+      <ion-modal
+        :is-open="isCreateCourseModalOpen"
+        @didDismiss="closeCreateCourseModal"
+      >
+        <ion-header>
+          <ion-toolbar>
+            <ion-buttons slot="start">
+              <ion-button @click="closeCreateCourseModal">Cancelar</ion-button>
+            </ion-buttons>
+            <ion-title>Crear Nuevo Curso</ion-title>
+            <ion-buttons slot="end">
+              <ion-button :strong="true" @click="createCourse()">
+                Crear
+              </ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding">
+          <ion-item>
+            <ion-label position="stacked">Nombre del Curso</ion-label>
+            <ion-input v-model="newCourse.name" placeholder="Ej: 1º Bachillerato A"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-label>Activo</ion-label>
+            <ion-toggle v-model="newCourse.exist" slot="end"></ion-toggle>
+          </ion-item>
+        </ion-content>
+      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
@@ -338,6 +373,8 @@ import {
   alertController, // Import alertController
   IonCheckbox,
   IonSearchbar,
+  IonInput, // New import
+  IonToggle, // New import
 } from "@ionic/vue";
 
 import {
@@ -372,6 +409,8 @@ export default {
     IonIcon,
     IonCheckbox,
     IonSearchbar,
+    IonInput, // New component
+    IonToggle, // New component
   },
   setup() {
     const usuario = ref();
@@ -385,6 +424,12 @@ export default {
     const selectedGroupId = ref(null);
     const selectedUser = ref(null);
     const rolSelected = ref(null);
+    const isCreateCourseModalOpen = ref(false); // New ref
+    const newCourse = ref({ // New ref
+      name: '',
+      instituteId: null,
+      exist: true,
+    });
     const roles = ref([
       {
         titulo: "Estudiante",
@@ -1073,6 +1118,51 @@ export default {
       ];
     };
 
+    const openCreateCourseModal = () => {
+      newCourse.value = {
+        name: '',
+        instituteId: usuario.value.institute.id, // Pre-fill instituteId
+        exist: true,
+      };
+      isCreateCourseModalOpen.value = true;
+    };
+
+    const closeCreateCourseModal = () => {
+      isCreateCourseModalOpen.value = false;
+    };
+
+    const createCourse = async () => {
+      if (!newCourse.value.name) {
+        const alert = await alertController.create({
+          header: 'Error',
+          message: 'El nombre del curso no puede estar vacío.',
+          buttons: ['OK'],
+        });
+        await alert.present();
+        return;
+      }
+
+      try {
+        await axios.post('/courses', newCourse.value, tokenHeader());
+        closeCreateCourseModal();
+        await getCurso(); // Refresh the course list
+        const alert = await alertController.create({
+          header: 'Éxito',
+          message: 'Curso creado exitosamente.',
+          buttons: ['OK'],
+        });
+        await alert.present();
+      } catch (error) {
+        console.error('Error creating course:', error);
+        const alert = await alertController.create({
+          header: 'Error',
+          message: 'Hubo un error al crear el curso.',
+          buttons: ['OK'],
+        });
+        await alert.present();
+      }
+    };
+
     return {
       usuario,
       abierto,
@@ -1127,6 +1217,13 @@ export default {
       searchTeachers,
       teacherSearchResults,
       searchQuery,
+
+      // New Course Creation
+      isCreateCourseModalOpen,
+      newCourse,
+      openCreateCourseModal,
+      closeCreateCourseModal,
+      createCourse,
     };
   },
 };
