@@ -2,6 +2,11 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
+        <ion-buttons slot="start">
+          <ion-button :router-link="backUrl">
+            <ion-icon :icon="arrowBackOutline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
         <ion-title>Escáner de respuestas</ion-title>
       </ion-toolbar>
     </ion-header>
@@ -100,6 +105,7 @@ import {
   IonLabel,
   IonIcon,
   IonToast,
+  IonButtons, // Added IonButtons
 } from "@ionic/vue";
 import { App } from "@capacitor/app";
 import { Device } from "@capacitor/device";
@@ -107,7 +113,7 @@ import {
   CapacitorBarcodeScanner,
   CapacitorBarcodeScannerTypeHint,
 } from "@capacitor/barcode-scanner";
-import { trashOutline } from "ionicons/icons";
+import { trashOutline, arrowBackOutline } from "ionicons/icons"; // Added arrowBackOutline
 
 import axios from "axios";
 import { tokenHeader } from "../globalService";
@@ -127,6 +133,7 @@ export default {
     IonLabel,
     IonIcon,
     IonToast,
+    IonButtons, // Added IonButtons
   },
   data() {
     return {
@@ -135,6 +142,7 @@ export default {
       showToast: false,
       toastMessage: "",
       trashOutline,
+      arrowBackOutline, // Added arrowBackOutline to data
       lastScan: null,
       scannerResult: null,
       scanFormat: null,
@@ -145,6 +153,11 @@ export default {
       activeGroup: { id: null, name: "" }, // Initialize activeGroup with id
       qrCount: 0,
     };
+  },
+  computed: {
+    backUrl() {
+      return `/resultado/${this.questionId}`;
+    },
   },
   mounted() {
     this.questionId = this.$route.params.d;
