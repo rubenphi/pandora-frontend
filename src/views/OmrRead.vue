@@ -525,6 +525,11 @@ export default {
         .map((a) => ({
           questionId: a.id,
           optionId: a.selectedOption,
+          quizId: cuestionario.value.id,
+          instituteId: cuestionario.value.instituteId,
+          userId: student.value.id,
+          groupId: cuestionario.value.quizType === "group" ? activeGroup.value.id : null,
+          exist: true, // Assuming new answers are always 'exist: true'
         }));
 
       if (answersPayload.length === 0) {
@@ -537,20 +542,9 @@ export default {
         return;
       }
 
-      const bulkDto = {
-        quizId: cuestionario.value.id,
-        instituteId: cuestionario.value.instituteId,
-        answers: answersPayload,
-        userId: student.value.id,
-      };
-
-      if (cuestionario.value.quizType === "group") {
-        bulkDto.groupId = activeGroup.value.id;
-      }
-
       isSubmitting.value = true;
       try {
-        await axios.post("/answers/bulk", bulkDto);
+        await axios.post("/answers/bulk", answersPayload);
         const alert = await alertController.create({
           header: "Éxito",
           message: "Las respuestas se han guardado correctamente.",

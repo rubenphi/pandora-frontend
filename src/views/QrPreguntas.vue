@@ -52,27 +52,26 @@
     <ion-footer>
       <ion-toolbar>
         <div class="ion-padding">
-          <ion-button expand="block" @click="scanQR" :disabled="isScanning">
+          <ion-button expand="block" @click="scanQR">
             {{ isScanning ? "Escaneando..." : "Escanear QR" }}
           </ion-button>
           <ion-button
             v-if="scannedCodes.length > 0"
             expand="block"
             fill="outline"
-            color="warning"
+            color="danger"
             @click="clearCodes"
-            :disabled="isScanning"
           >
             Limpiar Todo ({{ scannedCodes.length }})
           </ion-button>
           <ion-button
             expand="block"
             fill="outline"
-            color="danger"
-            @click="cancelAndExit"
-            :disabled="isScanning"
+            color="success"
+            @click="submitAnswersBulk"
+            :disabled="scannedCodes.length === 0"
           >
-            Salir
+            Guardar Respuestas
           </ion-button>
         </div>
       </ion-toolbar>
@@ -107,8 +106,7 @@ import {
   IonToast,
   IonButtons, // Added IonButtons
 } from "@ionic/vue";
-import { App } from "@capacitor/app";
-import { Device } from "@capacitor/device";
+
 import {
   CapacitorBarcodeScanner,
   CapacitorBarcodeScannerTypeHint,
@@ -152,6 +150,7 @@ export default {
       student: { id: null, name: "", lastName: "" }, // Initialize student with id
       activeGroup: { id: null, name: "" }, // Initialize activeGroup with id
       qrCount: 0,
+      isSubmitting: false, // Added isSubmitting
     };
   },
   computed: {
@@ -394,13 +393,78 @@ export default {
       await alert.present();
     },
 
-    async cancelAndExit() {
-      const info = await Device.getInfo();
-      if (info.platform !== "web") {
-        App.exitApp();
-      } else {
-        console.log("Running in web, cannot exit app.");
-        this.$router.replace("/login");
+    async submitAnswersBulk() {
+      if (this.scannedCodes.length === 0) {
+        const alert = await alertController.create({
+          header: "Sin respuestas",
+          message: "No hay ninguna respuesta escaneada para enviar.",
+          buttons: ["OK"],
+        });
+        await alert.present();
+        return;
+      }
+
+      this.isSubmitting = true;
+      try {
+        const answersPayload = await Promise.all(
+          this.scannedCodes.map(async (scannedCode) => {
+            // Find the optionId based on the identifier
+            const option = this.question.options.find(
+              (opt) => opt.identifier === scannedCode.optionSelected.identifier
+            );
+
+            if (!option) {
+              throw new Error(
+                `Option with identifier ${scannedCode.optionSelected.identifier} not found for question.`
+              );
+            }
+
+            return {
+              optionId: option.id,
+              questionId: this.question.id,
+              quizId: this.question.quiz?.id || this.question.lesson?.quiz?.id, // Adjust based on actual structure
+              instituteId:
+                this.question.institute?.id ||
+                this.question.lesson?.institute?.id, // Adjust based on actual structure
+              userId: scannedCode.user.id,
+              groupId: scannedCode.group?.id || null,
+              exist: true,
+            };
+          })
+        );
+
+        await axios.post("/answers/bulk", answersPayload);
+
+        const alert = await alertController.create({
+          header: "Éxito",
+          message: "Las respuestas se han guardado correctamente.",
+          buttons: [
+            {
+              text: "OK",
+              handler: () => {
+                this.scannedCodes = [];
+                this.qrCount = 0;
+                this.lastScan = null;
+                this.$router.push(this.backUrl);
+              },
+            },
+          ],
+        });
+        await alert.present();
+      } catch (error) {
+        console.error("Error al guardar respuestas en bulk:", error);
+        const message =
+          error.response?.data?.message ||
+          "Ocurrió un error al guardar las respuestas: " +
+            JSON.stringify(error);
+        const alert = await alertController.create({
+          header: "Error al Guardar",
+          message: message,
+          buttons: ["OK"],
+        });
+        await alert.present();
+      } finally {
+        this.isSubmitting = false;
       }
     },
   },

@@ -24,22 +24,13 @@
     <ion-content :fullscreen="true">
       <ion-list v-if="admin || pregunta.available == false">
         <ion-item
-          v-for="(respuesta, index) in respuestas"
+          v-for="respuesta in respuestas"
           :key="respuesta.id"
           lines="full"
           class="ion-padding-end"
         >
           <ion-icon
-            v-if="
-              ((index === 0) & admin && respuesta.points > 0) ||
-              (index === 0 && respuesta.points > 0)
-            "
-            :icon="ribbonOutline"
-            size="large"
-            slot="start"
-          ></ion-icon>
-          <ion-icon
-            v-else-if="(respuesta.points > 0) & admin || respuesta.points > 0"
+            v-if="(respuesta.points > 0) & admin || respuesta.points > 0"
             :icon="happyOutline"
             size="large"
             slot="start"
@@ -157,7 +148,6 @@ import {
   paperPlaneOutline,
   happyOutline,
   sadOutline,
-  ribbonOutline,
   helpCircleOutline,
   lockClosedOutline,
   trashOutline,
@@ -332,7 +322,7 @@ export default {
       refreshOutline,
       happyOutline,
       sadOutline,
-      ribbonOutline,
+
       lockClosedOutline,
       pregunta,
       helpCircleOutline,
