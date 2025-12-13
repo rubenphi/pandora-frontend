@@ -2,23 +2,34 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-title>Escáner QR Múltiple</ion-title>
+        <ion-title>Escáner de respuestas</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
       <div class="content-wrapper ion-padding">
         <div class="info-section">
-          <h2>Códigos Escaneados: {{ scannedCodes.length }}</h2>
+          <h2>Respuestas escaneadas: {{ scannedCodes.length }}</h2>
           <p v-if="scannedCodes.length === 0" class="empty-message">
-            No hay códigos escaneados aún. Presione "Escanear QR" para comenzar.
+            No hay respuestas escaneadas aún. Presione "Escanear QR" para
+            comenzar.
           </p>
         </div>
 
         <ion-list>
           <ion-item v-for="(code, index) in scannedCodes" :key="index">
             <ion-label class="ion-text-wrap">
-              <p class="code-number">Código #{{ index + 1 }}</p>
-              <h3>{{ code }}</h3>
+              <p class="code-number">Respuesta #{{ index + 1 }}</p>
+              <h3 v-if="code.lessonQuizType === 'individual'">
+                {{ code.user.name }} {{ code.user.lastName }}:
+                {{ code.optionSelected.identifier }}
+              </h3>
+              <h3 v-else-if="code.lessonQuizType === 'group'">
+                {{ code.group.name }}: {{ code.optionSelected.identifier }}
+              </h3>
+              <h3 v-else>
+                {{ code.user.name }} {{ code.user.lastName }} (Individual):
+                {{ code.optionSelected.identifier }}
+              </h3>
             </ion-label>
             <ion-button
               slot="end"
@@ -119,7 +130,7 @@ export default {
   },
   data() {
     return {
-      scannedCodes: [],
+      scannedCodes: [], // Array of { user: {id, name, lastName}, group: {id, name}, optionSelected: { identifier } }
       isScanning: false,
       showToast: false,
       toastMessage: "",
@@ -127,12 +138,12 @@ export default {
       lastScan: null,
       scannerResult: null,
       scanFormat: null,
-      questionId: null, // Now questionId
-      question: null, // To store fetched question details
-      lessonQuizType: "individual", // To store quizType from lesson/quiz
-      student: { name: "", lastName: "" },
-      activeGroup: { name: "" },
-      qrCount: 0, // Counter for valid QR codes
+      questionId: null,
+      question: null,
+      lessonQuizType: "individual",
+      student: { id: null, name: "", lastName: "" }, // Initialize student with id
+      activeGroup: { id: null, name: "" }, // Initialize activeGroup with id
+      qrCount: 0,
     };
   },
   mounted() {
@@ -161,8 +172,8 @@ export default {
       }
     },
     async fetchStudentAndGroup(studentCode) {
-      this.student = { name: "", lastName: "" };
-      this.activeGroup = { name: "" };
+      this.student = { id: null, name: "", lastName: "" };
+      this.activeGroup = { id: null, name: "" };
 
       if (!studentCode) return;
 
@@ -183,9 +194,12 @@ export default {
           }
         } else {
           console.warn(`Student with code ${studentCode} not found.`);
+          this.student = { id: null, name: "", lastName: "" }; // Ensure id is null if not found
         }
       } catch (error) {
         console.error("Error fetching student or group data:", error);
+        this.student = { id: null, name: "", lastName: "" }; // Ensure id is null on error
+        this.activeGroup = { id: null, name: "" }; // Ensure id is null on error
         const alert = await alertController.create({
           header: "Error",
           message: "No se pudo cargar los datos del estudiante o grupo.",
@@ -244,6 +258,13 @@ export default {
 
           await this.fetchStudentAndGroup(codigoEstudiante);
 
+          const scannedObject = {
+            user: { ...this.student }, // Clone student object
+            group: { ...this.activeGroup }, // Clone activeGroup object
+            optionSelected: { identifier: opcion },
+            lessonQuizType: this.lessonQuizType, // Add lessonQuizType to the scanned object
+          };
+
           let formattedLastScan = "";
           if (this.lessonQuizType === "individual") {
             formattedLastScan = `${this.student.name} ${this.student.lastName}: ${opcion}`;
@@ -253,16 +274,18 @@ export default {
             formattedLastScan = `${codigoEstudiante}: ${opcion}`; // Fallback if group name not found or type unknown
           }
 
-          this.lastScan = formattedLastScan; // Update lastScan with the formatted string
-          this.scannerResult = result.ScanResult;
-          this.scanFormat = result.scanFormat; // Corrected from result.ScanFormat
-
-          // Verificar si el código ya existe
-          const codeExists = this.scannedCodes.includes(result.ScanResult);
+          // Verificar si el código ya existe (basado en la nueva estructura)
+          const codeExists = this.scannedCodes.some(
+            (item) =>
+              item.user.id === scannedObject.user.id &&
+              item.group.id === scannedObject.group.id &&
+              item.optionSelected.identifier === scannedObject.optionSelected.identifier
+          );
 
           if (!codeExists) {
             // Agregar el nuevo código solo si no existe
-            this.scannedCodes.unshift(result.ScanResult); // Keep raw result for the list
+            this.scannedCodes.unshift(scannedObject); // Add the new object
+            this.lastScan = formattedLastScan;
             this.qrCount++; // Increment QR count only for valid, new codes
 
             // Mostrar toast de éxito
@@ -303,6 +326,7 @@ export default {
 
     removeCode(index) {
       this.scannedCodes.splice(index, 1);
+      this.qrCount--; // Decrement qrCount when a code is removed
     },
 
     async clearCodes() {
