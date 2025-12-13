@@ -217,7 +217,7 @@ export default {
         // Construct scanInstructions based on the *previous* lastScan and current qrCount
         let currentScanInstructions = `Escanee un código QR. Total escaneados: ${this.qrCount}`;
         if (this.lastScan) {
-          currentScanInstructions = `Último QR leído: ${this.lastScan}. Total escaneados: ${this.qrCount}. Escanee el siguiente código`;
+          currentScanInstructions = `${this.lastScan}. || Total escaneados: ${this.qrCount}.`;
         }
 
         const result = await CapacitorBarcodeScanner.scanBarcode({
@@ -274,24 +274,37 @@ export default {
             formattedLastScan = `${codigoEstudiante}: ${opcion}`; // Fallback if group name not found or type unknown
           }
 
-          // Verificar si el código ya existe (basado en la nueva estructura)
-          const codeExists = this.scannedCodes.some(
-            (item) =>
-              item.user.id === scannedObject.user.id &&
-              item.group.id === scannedObject.group.id &&
-              item.optionSelected.identifier === scannedObject.optionSelected.identifier
-          );
-
-          if (!codeExists) {
-            // Agregar el nuevo código solo si no existe
-            this.scannedCodes.unshift(scannedObject); // Add the new object
-            this.lastScan = formattedLastScan;
-            this.qrCount++; // Increment QR count only for valid, new codes
-
-            // Mostrar toast de éxito
-            this.toastMessage = `✓ Código #${this.scannedCodes.length} escaneado`;
-            this.showToast = true;
+          // Verificar si ya existe una respuesta para este estudiante/grupo
+          let codeExists = false;
+          if (scannedObject.lessonQuizType === "individual") {
+            codeExists = this.scannedCodes.some(
+              (item) => item.user.id === scannedObject.user.id
+            );
+          } else if (scannedObject.lessonQuizType === "group") {
+            codeExists = this.scannedCodes.some(
+              (item) => item.group.id === scannedObject.group.id
+            );
           }
+
+          if (codeExists) {
+            this.toastMessage = `Ya existe una respuesta para este ${
+              scannedObject.lessonQuizType === "individual"
+                ? "estudiante"
+                : "grupo"
+            }.`;
+            this.showToast = true;
+            setTimeout(() => this.scanQR(), 300);
+            return;
+          }
+
+          // Agregar el nuevo código
+          this.scannedCodes.unshift(scannedObject); // Add the new object
+          this.lastScan = formattedLastScan;
+          this.qrCount++; // Increment QR count only for valid, new codes
+
+          // Mostrar toast de éxito
+          this.toastMessage = `✓ Código #${this.scannedCodes.length} escaneado`;
+          this.showToast = true;
           // Always restart the scanner after processing, without alerts for success/duplicate
           setTimeout(() => this.scanQR(), 300);
         }
@@ -327,6 +340,22 @@ export default {
     removeCode(index) {
       this.scannedCodes.splice(index, 1);
       this.qrCount--; // Decrement qrCount when a code is removed
+
+      // Update lastScan logic
+      if (this.scannedCodes.length > 0) {
+        // If there are still codes, update lastScan to the most recent one (first in array)
+        const latestScannedObject = this.scannedCodes[0];
+        if (latestScannedObject.lessonQuizType === "individual") {
+          this.lastScan = `${latestScannedObject.user.name} ${latestScannedObject.user.lastName}: ${latestScannedObject.optionSelected.identifier}`;
+        } else if (latestScannedObject.lessonQuizType === "group") {
+          this.lastScan = `${latestScannedObject.group.name}: ${latestScannedObject.optionSelected.identifier}`;
+        } else {
+          this.lastScan = `${latestScannedObject.user.name} ${latestScannedObject.user.lastName} (Individual): ${latestScannedObject.optionSelected.identifier}`;
+        }
+      } else {
+        // If no codes left, clear lastScan
+        this.lastScan = null;
+      }
     },
 
     async clearCodes() {
@@ -343,6 +372,8 @@ export default {
             role: "destructive",
             handler: () => {
               this.scannedCodes = [];
+              this.qrCount = 0; // Reset qrCount
+              this.lastScan = null; // Reset lastScan
             },
           },
         ],
