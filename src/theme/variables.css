@@ -244,3 +244,28 @@ ion-modal.font-caligrafia ion-content * {
     --ion-card-background: #1e1e1e;
   }
 }
+
+/* Custom styles to prevent text truncation in ion-select-option */
+
+/* For options displayed in an ion-alert (default for many selects) */
+.alert-radio-label,
+.alert-checkbox-label {
+  white-space: normal !important; /* Allow text to wrap */
+  overflow: visible !important; /* Ensure content is not hidden */
+  text-overflow: unset !important; /* Remove ellipsis */
+  max-width: unset !important; /* Remove max-width constraint */
+}
+
+/* For options displayed in an ion-popover (if interface="popover" is used) */
+ion-popover ion-item ion-label {
+  white-space: normal !important; /* Allow text to wrap */
+  overflow: visible !important; /* Ensure content is not hidden */
+  text-overflow: unset !important; /* Remove ellipsis */
+  max-width: unset !important; /* Remove max-width constraint */
+}
+
+/* Additionally, ensure the popover itself is wide enough */
+.popover-content {
+  --width: auto !important; /* Allow popover to size based on content */
+  --min-width: 250px; /* Ensure a reasonable minimum width */
+}

@@ -30,7 +30,6 @@
           v-for="student in students"
           :key="student.id"
           @ionChange="handleAccordionChange($event, student)"
-          :class="{ 'no-group-student': !student.hasGroup }"
         >
           <IonItem slot="header">
             <ion-checkbox
@@ -113,8 +112,15 @@
                     >
                     </ion-range>
                   </div>
-                  <ion-note slot="end" style="min-width: 40px; text-align: center;">
-                    {{ evaluation[student.id][criterion.id].value != null ? evaluation[student.id][criterion.id].value.toFixed(1) : '-' }}
+                  <ion-note
+                    slot="end"
+                    style="min-width: 40px; text-align: center"
+                  >
+                    {{
+                      evaluation[student.id][criterion.id].value != null
+                        ? evaluation[student.id][criterion.id].value.toFixed(1)
+                        : "-"
+                    }}
                   </ion-note>
                 </ion-item>
               </template>
@@ -214,7 +220,11 @@
           <ion-grid>
             <ion-row>
               <ion-col>
-                <ion-button @click="closeBulkEvaluationModal" color="light" expand="block">
+                <ion-button
+                  @click="closeBulkEvaluationModal"
+                  color="light"
+                  expand="block"
+                >
                   Cancelar
                 </ion-button>
               </ion-col>
@@ -290,7 +300,6 @@ export default {
     IonFab,
     IonFabButton,
     IonModal,
-
   },
   setup() {
     const mroute = useRoute();
@@ -332,14 +341,14 @@ export default {
         const year = response.data.lesson.year;
         const lessonType = response.data.lesson.type;
         const lessonId = response.data.lesson.id;
-        
+
         periodId.value = response.data.lesson.period.id;
         instituteId.value = response.data.institute.id;
 
         await fetchCriteria(activityId); // Fetch criteria first
 
         // Conditional student fetch based on lesson type
-        if (lessonType === 'reinforcement') {
+        if (lessonType === "reinforcement") {
           await fetchReinforcementStudents(lessonId);
         } else {
           await fetchStudents(courseId, year);
@@ -410,29 +419,16 @@ export default {
           .filter((user) => user.rol === "student")
           .map((user) => user.user);
 
-        const usersNoGroupResponse = await axios.get(
-          `/courses/${courseId}/usersNoGroup?year=${year}`,
-          tokenHeader()
-        );
-        const usersWithoutGroupIds = new Set(
-          usersNoGroupResponse.data.map((u) => u.user.id)
-        );
-
-        students.value = allStudents
-          .map((student) => ({
-            ...student,
-            hasGroup: !usersWithoutGroupIds.has(student.id),
-          }))
-          .sort((a, b) => {
-            const lastNameA = a.lastName || "";
-            const lastNameB = b.lastName || "";
-            if (lastNameA !== lastNameB) {
-              return lastNameA.localeCompare(lastNameB);
-            }
-            const nameA = a.name || "";
-            const nameB = b.name || "";
-            return nameA.localeCompare(nameB);
-          });
+        students.value = allStudents.sort((a, b) => {
+          const lastNameA = a.lastName || "";
+          const lastNameB = b.lastName || "";
+          if (lastNameA !== lastNameB) {
+            return lastNameA.localeCompare(lastNameB);
+          }
+          const nameA = a.name || "";
+          const nameB = b.name || "";
+          return nameA.localeCompare(nameB);
+        });
 
         // Initialize evaluation for all students
         students.value.forEach((student) => {
@@ -458,30 +454,10 @@ export default {
           `/reinforcement/lesson/${lessonId}`,
           tokenHeader()
         );
-        
-        // Get the lesson to extract courseId and year for usersNoGroup check
-        const lessonResponse = await axios.get(
-          `/lessons/${lessonId}`,
-          tokenHeader()
-        );
-        const courseId = lessonResponse.data.course.id;
-        const year = lessonResponse.data.year;
 
-        // Fetch users without group to apply the hasGroup property
-        const usersNoGroupResponse = await axios.get(
-          `/courses/${courseId}/usersNoGroup?year=${year}`,
-          tokenHeader()
-        );
-        const usersWithoutGroupIds = new Set(
-          usersNoGroupResponse.data.map((u) => u.user.id)
-        );
-        
         // response.data is array of Reinforcement objects with student relation
-        const reinforcementStudents = response.data.map(r => ({
-          ...r.student,
-          hasGroup: !usersWithoutGroupIds.has(r.student.id)
-        }));
-        
+        const reinforcementStudents = response.data.map((r) => r.student);
+
         students.value = reinforcementStudents.sort((a, b) => {
           const lastNameA = a.lastName || "";
           const lastNameB = b.lastName || "";
@@ -507,7 +483,10 @@ export default {
           }
         });
       } catch (error) {
-        console.error("Error in fetchReinforcementStudents:", error.message || error);
+        console.error(
+          "Error in fetchReinforcementStudents:",
+          error.message || error
+        );
       }
     };
 
@@ -605,7 +584,9 @@ export default {
         const criterionPromises = criteria.value.map(async (criterion) => {
           const evaluationEntry = evaluation.value[student.id][criterion.id];
           let valueToSave = evaluationEntry.value;
-          if (valueToSave === null) { valueToSave = 0; }
+          if (valueToSave === null) {
+            valueToSave = 0;
+          }
           const score = valueToSave;
 
           const payload = {
@@ -618,9 +599,17 @@ export default {
 
           try {
             if (evaluationEntry.id) {
-              await axios.patch(`/student-criterion-scores/update/${evaluationEntry.id}`, payload, tokenHeader());
+              await axios.patch(
+                `/student-criterion-scores/update/${evaluationEntry.id}`,
+                payload,
+                tokenHeader()
+              );
             } else {
-              const response = await axios.post(`/student-criterion-scores/create`, payload, tokenHeader());
+              const response = await axios.post(
+                `/student-criterion-scores/create`,
+                payload,
+                tokenHeader()
+              );
               evaluation.value[student.id][criterion.id].id = response.data.id;
             }
           } catch (error) {
@@ -629,25 +618,30 @@ export default {
         });
 
         // Wait for all criterion scores for this student, then register final grade
-        const studentGradePromise = Promise.all(criterionPromises).then(async () => {
-          const finalGrade = calculateFinalGrade(student);
+        const studentGradePromise = Promise.all(criterionPromises).then(
+          async () => {
+            const finalGrade = calculateFinalGrade(student);
 
-          const payloadFinalGrade = {
-            userId: student.id,
-            gradableId: parseInt(activityId),
-            gradableType: "activity",
-            periodId: periodId.value,
-            gradeType: "regular",
-            grade: parseFloat(finalGrade.toFixed(2)),
-            instituteId: instituteId.value,
-          };
+            const payloadFinalGrade = {
+              userId: student.id,
+              gradableId: parseInt(activityId),
+              gradableType: "activity",
+              periodId: periodId.value,
+              gradeType: "regular",
+              grade: parseFloat(finalGrade.toFixed(2)),
+              instituteId: instituteId.value,
+            };
 
-          try {
-            await axios.post("/grades", payloadFinalGrade, tokenHeader());
-          } catch (error) {
-            console.error(`Error registrando nota final para ${student.name}:`, error);
+            try {
+              await axios.post("/grades", payloadFinalGrade, tokenHeader());
+            } catch (error) {
+              console.error(
+                `Error registrando nota final para ${student.name}:`,
+                error
+              );
+            }
           }
-        });
+        );
 
         allPromises.push(studentGradePromise);
       }
@@ -891,14 +885,5 @@ export default {
 
 .small-range {
   width: 70%;
-}
-
-.no-group-student {
-  opacity: 0.6;
-  font-style: italic;
-}
-
-ion-item ion-label {
-  white-space: normal !important;
 }
 </style>

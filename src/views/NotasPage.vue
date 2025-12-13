@@ -32,7 +32,6 @@
           <ion-accordion
             v-for="estudiante in usuariosEstudiantes"
             :key="estudiante.id"
-            :class="{ 'no-group-student': !estudiante.hasGroup }"
           >
             <ion-item slot="header">
               <ion-label>{{
@@ -402,7 +401,6 @@ export default {
     const processStudentGrades = (
       allGrades,
       studentList,
-      usersWithoutGroupIds,
       reinforcementStudents
     ) => {
       // 1. Build Master List of Gradable Items (excluding reinforcements)
@@ -566,7 +564,6 @@ export default {
           promedioReinf: hasReinforcement ? formatGrade(promedioFinalReinf).toFixed(1) : null,
           hasReinforcement: hasReinforcement,
           dimensiones, 
-          hasGroup: !usersWithoutGroupIds.has(estudiante.id),
         };
       });
     };
@@ -594,14 +591,6 @@ export default {
           .filter((estudiante) => estudiante.rol === "student")
           .map((estudiante) => estudiante.user);
 
-        const usersNoGroupResponse = await axios.get(
-          `/courses/${cursoId}/usersNoGroup?year=${year}`,
-          tokenHeader()
-        );
-        const usersWithoutGroupIds = new Set(
-          usersNoGroupResponse.data.map((u) => u.user.id)
-        );
-
         // Fetch Reinforcements
         const reinforcementsResponse = await axios.get(
              `/reinforcement/by-context?courseId=${cursoId}&areaId=${areaId}&periodId=${periodoSelected.value}&year=${year}`,
@@ -612,7 +601,6 @@ export default {
         usuariosEstudiantes.value = processStudentGrades(
           allGrades,
           studentList,
-          usersWithoutGroupIds,
           reinforcementStudents
         ).sort((a, b) => {
           const lastNameA = a.lastName || "";
@@ -829,8 +817,4 @@ export default {
 };
 </script>
 <style scoped>
-.no-group-student {
-  opacity: 0.6;
-  font-style: italic;
-}
 </style>

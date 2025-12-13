@@ -25,7 +25,6 @@
           v-for="student in students"
           :key="student.id"
           @ionChange="handleAccordionChange($event, student)"
-          :class="{ 'no-group-student': !student.hasGroup }"
         >
           <IonItem slot="header">
             <ion-checkbox
@@ -392,16 +391,8 @@ export default {
         }
       }
 
-      const usersNoGroupResponse = await axios.get(
-        `/courses/${courseId}/usersNoGroup?year=${year}`,
-        tokenHeader()
-      );
-      const usersWithoutGroupIds = new Set(
-        usersNoGroupResponse.data.map((u) => u.user.id)
-      );
       students.value = allStudents.map((student) => ({
         ...student,
-        hasGroup: !usersWithoutGroupIds.has(student.id),
       }));
       initializeEvaluation();
     };
@@ -731,12 +722,4 @@ export default {
   width: 70%;
 }
 
-.no-group-student {
-  opacity: 0.6;
-  font-style: italic;
-}
-
-ion-item ion-label {
-  white-space: normal !important;
-}
 </style>

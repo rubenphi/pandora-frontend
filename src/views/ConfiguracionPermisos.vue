@@ -60,16 +60,13 @@
           <ion-item
             v-for="student in students"
             :key="student.id"
-            :class="{ 'no-group-student': !student.hasGroup }"
           >
             <ion-label
-              >{{ student.name }} {{ student.lastName }}
-              <span v-if="!student.hasGroup">(Sin grupo)</span></ion-label
+              >{{ student.name }} {{ student.lastName }}</ion-label
             >
             <ion-select
               v-model="individualPermissions[student.id]"
               placeholder="¿a quién revisa?"
-              :disabled="!student.hasGroup"
             >
               <ion-select-option :value="null">Ninguno</ion-select-option>
               <ion-select-option :value="student.id"
@@ -221,7 +218,7 @@ export default {
         .filter(([key]) => key !== String(currentStudentId))
         .map(([, value]) => value);
       return students.value.filter(
-        (s) => s.hasGroup && !otherSelectedIds.includes(s.id)
+        (s) => !otherSelectedIds.includes(s.id)
       );
     };
 
@@ -276,19 +273,10 @@ export default {
         );
         const allUsersInCourse = usersResponse.data;
 
-        const usersNoGroupResponse = await axios.get(
-          `/courses/${courseId.value}/usersNoGroup?year=${year.value}`,
-          tokenHeader()
-        );
-        const usersWithoutGroupIds = new Set(
-          usersNoGroupResponse.data.map((u) => u.user.id)
-        );
-
         students.value = allUsersInCourse
           .filter((u) => u.rol === "student")
           .map((u) => ({
             ...u.user,
-            hasGroup: !usersWithoutGroupIds.has(u.user.id),
           }));
 
         students.value.forEach((student) => {
@@ -338,9 +326,7 @@ export default {
         }
       } else if (selectedTab.value === 'individuales') {
         for (const student of students.value) {
-          if (student.hasGroup) { // Only assign to students who have a group, as per UI logic
-            individualPermissions.value[student.id] = student.id;
-          }
+          individualPermissions.value[student.id] = student.id;
         }
       }
     }
@@ -463,8 +449,8 @@ export default {
 </script>
 
 <style scoped>
-.no-group-student {
-  opacity: 0.6;
-  font-style: italic;
+ion-item ion-select {
+  max-width: 60%; /* Allow it to take up more space, adjust as needed */
+  flex: 1; /* Allow it to grow and shrink */
 }
 </style>

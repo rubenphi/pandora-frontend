@@ -50,7 +50,7 @@
                 >
                   <ion-icon slot="start" :icon="personCircleOutline"></ion-icon>
                   <IonLabel
-                    ><h6>{{ miembro?.name + " " + miembro?.lastName }}</h6>
+                    ><h6>{{ miembro?.lastName + " " + miembro?.name }}</h6>
                     <p>{{ miembro.code }}</p></IonLabel
                   >
 
@@ -155,7 +155,7 @@
                 :key="student.id"
                 :value="student.id"
               >
-                {{ student.name }} {{ student.lastName }}
+                {{ student.lastName }} {{ student.name }}
               </ion-select-option>
             </ion-select>
           </ion-item>
@@ -258,6 +258,13 @@
     </ion-content>
   </ion-page>
 </template>
+
+<style scoped>
+ion-item ion-select {
+  max-width: 60%; /* Allow it to take up more space, adjust as needed */
+  flex: 1; /* Allow it to grow and shrink */
+}
+</style>
 
 <script>
 import axios from "axios";
@@ -714,7 +721,9 @@ export default {
                 location.reload();
               } catch (error) {
                 console.error("Error emptying all groups:", error);
-                alert("Error al vaciar los grupos. Por favor intente nuevamente.");
+                alert(
+                  "Error al vaciar los grupos. Por favor intente nuevamente."
+                );
               }
             },
           },
@@ -780,7 +789,7 @@ export default {
       isModalOpen.value = false;
     };
 
-        onIonViewWillEnter(async () => {
+    onIonViewWillEnter(async () => {
       curso.value = (
         await axios.get(`/courses/${cursoId}`, { headers: tokenHeader() })
       ).data;
