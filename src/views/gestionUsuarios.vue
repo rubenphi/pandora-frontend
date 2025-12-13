@@ -39,17 +39,29 @@
       <ion-grid v-if="isPrivilegedUser">
         <ion-row>
           <ion-col>
-            <ion-button expand="block" fill="outline" @click="toggleTeachersSection()">
+            <ion-button
+              expand="block"
+              fill="outline"
+              @click="toggleTeachersSection()"
+            >
               Profesores del Instituto
             </ion-button>
           </ion-col>
           <ion-col>
-            <ion-button expand="block" fill="outline" @click="toggleArchivedCoursesSection()">
+            <ion-button
+              expand="block"
+              fill="outline"
+              @click="toggleArchivedCoursesSection()"
+            >
               Cursos Archivados
             </ion-button>
           </ion-col>
           <ion-col>
-            <ion-button expand="block" fill="outline" @click="toggleNoCourseSection()">
+            <ion-button
+              expand="block"
+              fill="outline"
+              @click="toggleNoCourseSection()"
+            >
               Usuarios Sin Curso
             </ion-button>
           </ion-col>
@@ -98,7 +110,10 @@
         <ion-list-header>
           <ion-label>Cursos Archivados</ion-label>
         </ion-list-header>
-        <div v-if="archivedCourses.length === 0" class="ion-text-center ion-padding">
+        <div
+          v-if="archivedCourses.length === 0"
+          class="ion-text-center ion-padding"
+        >
           <p>No hay cursos archivados.</p>
         </div>
         <ion-item v-else v-for="curso in archivedCourses" :key="curso.id">
@@ -107,7 +122,11 @@
             <p>ID: {{ curso.id }}</p>
           </ion-label>
           <div slot="end">
-            <ion-button @click="reactivateCourse(curso)" size="small" color="success">
+            <ion-button
+              @click="reactivateCourse(curso)"
+              size="small"
+              color="success"
+            >
               Reactivar
             </ion-button>
           </div>
@@ -119,7 +138,10 @@
         <ion-list-header>
           <ion-label>Usuarios Sin Curso</ion-label>
         </ion-list-header>
-        <div v-if="usersCourse.length === 0" class="ion-text-center ion-padding">
+        <div
+          v-if="usersCourse.length === 0"
+          class="ion-text-center ion-padding"
+        >
           <p>No hay usuarios sin curso.</p>
         </div>
         <ion-item v-else v-for="usuario in usersCourse" :key="usuario.id">
@@ -154,9 +176,16 @@
         </ion-item>
       </ion-list>
 
+      <ion-list-header color="primary">
+        <ion-label>Cursos Activos</ion-label>
+      </ion-list-header>
+
       <!-- Main Accordion Group for Active Courses -->
       <ion-accordion-group @ionChange="captarAbierto($event)">
-        <ion-accordion v-for="curso in cursosInstituto" :key="curso.id">
+        <ion-accordion
+          v-for="curso in cursosInstituto.filter((c) => c.id !== 0)"
+          :key="curso.id"
+        >
           <IonItem slot="header" @click="changeCourse(curso)">
             <IonLabel v-if="!loading || courseSelected.id != curso.id">{{
               curso.name
@@ -164,10 +193,7 @@
             <IonLabel v-if="loading && courseSelected.id == curso.id">{{
               curso.name + ": ⏳ Cargando usuarios"
             }}</IonLabel>
-            <ion-button
-              @click.stop="presentActionSheet(curso)"
-              color="medium"
-            >
+            <ion-button @click.stop="presentActionSheet(curso)" color="medium">
               <ion-icon slot="icon-only" :icon="downloadOutline"></ion-icon>
             </ion-button>
           </IonItem>
@@ -211,7 +237,9 @@
                     v-if="canManage(usuario)"
                     :icon="createOutline"
                     style="cursor: pointer; font-size: 24px"
-                    @click="router.push(`/admin/actualizar/usuarios/${usuario.id}`)"
+                    @click="
+                      router.push(`/admin/actualizar/usuarios/${usuario.id}`)
+                    "
                   ></ion-icon>
                 </div>
               </ion-item>
@@ -1340,8 +1368,6 @@ export default {
       }
     };
 
-    
-
     const getArchivedCourses = async () => {
       loading.value = true;
       try {
@@ -1349,7 +1375,9 @@ export default {
           `/courses?instituteId=${usuario.value.institute.id}&exist=false`,
           tokenHeader()
         );
-        archivedCourses.value = response.data.sort((a, b) => a.name.localeCompare(b.name));
+        archivedCourses.value = response.data.sort((a, b) =>
+          a.name.localeCompare(b.name)
+        );
       } catch (error) {
         console.error("Error fetching archived courses:", error);
       } finally {
@@ -1374,7 +1402,11 @@ export default {
                 const payload = {
                   exist: true,
                 };
-                await axios.patch(`/courses/${course.id}`, payload, tokenHeader());
+                await axios.patch(
+                  `/courses/${course.id}`,
+                  payload,
+                  tokenHeader()
+                );
                 await getArchivedCourses(); // Refresh archived courses list
                 await getCurso(); // Refresh active courses list
                 const successAlert = await alertController.create({
