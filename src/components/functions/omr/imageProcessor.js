@@ -691,11 +691,18 @@ export function extractAndDrawResults(
       });
     }
 
-    cctx.fillStyle = "rgba(128,0,128,0.95)";
     for (let i = 0; i < detectedPoints.length; i++) {
       if (detectedPoints[i]) {
         const px = Math.round(dstPts.data32F[i * 2]);
         const py = Math.round(dstPts.data32F[i * 2 + 1]);
+
+        // Interpolate color based on fraction
+        const frac = fractions[i];
+        const red = Math.round(240 + frac * (128 - 240)); // From 240 (very light gray) to 128 (deep purple)
+        const green = Math.round(240 + frac * (0 - 240)); // From 240 (very light gray) to 0 (deep purple)
+        const blue = Math.round(240 + frac * (128 - 240)); // From 240 (very light gray) to 128 (deep purple)
+
+        cctx.fillStyle = `rgba(${red}, ${green}, ${blue}, 0.95)`;
         cctx.beginPath();
         cctx.arc(px, py, displayRadius, 0, Math.PI * 2);
         cctx.fill();
