@@ -119,6 +119,12 @@
             >
               <strong>Grupo Activo:</strong> {{ activeGroup.name }}
             </div>
+            <div class="ion-padding-top">
+              <strong>Respuestas Correctas:</strong> <span class="ion-text-success">{{ totalCorrectAnswers }}</span>
+            </div>
+            <div>
+              <strong>Respuestas Incorrectas:</strong> <span class="ion-text-danger">{{ totalIncorrectAnswers }}</span>
+            </div>
           </div>
         </div>
         <div
@@ -157,21 +163,28 @@
           <IonItem
             v-for="answer in questionsForCurrentSection"
             :key="answer.id"
+            :class="{ 'answer-correct': answer.isCorrect, 'answer-incorrect': !answer.isCorrect && answer.selectedOption !== null }"
           >
             <IonLabel>{{ answer.questionTitle }} </IonLabel>
-            <ion-select
-              v-model="answer.selectedOption"
-              placeholder="Seleccione"
-              interface="popover"
-            >
-              <ion-select-option
-                v-for="option in answer.options"
-                :key="option.id"
-                :value="option.id"
+            <div class="select-with-correct-option">
+              <ion-select
+                v-model="answer.selectedOption"
+                placeholder="Seleccione"
+                interface="popover"
+                :class="{ 'selected-option-correct': answer.isCorrect, 'selected-option-incorrect': !answer.isCorrect && answer.selectedOption !== null }"
               >
-                {{ option.identifier }}
-              </ion-select-option>
-            </ion-select>
+                <ion-select-option
+                  v-for="option in answer.options"
+                  :key="option.id"
+                  :value="option.id"
+                >
+                  {{ option.identifier }}
+                </ion-select-option>
+              </ion-select>
+              <span v-if="answer.selectedOption !== null" class="correct-option-display">
+                Correcta: <span class="ion-text-success">{{ answer.correctOptionIdentifier }}</span>
+              </span>
+            </div>
           </IonItem>
         </IonList>
       </div>
@@ -290,7 +303,28 @@ export default {
       if (answersToSend.value.length === 0) return [];
       const start = (currentSection.value - 1) * 40;
       const end = currentSection.value * 40;
-      return answersToSend.value.slice(start, end);
+      return answersToSend.value.slice(start, end).map(question => {
+        const isCorrect = question.selectedOption !== null && question.selectedOption === question.correctOptionId;
+        const correctOption = question.options.find(opt => opt.id === question.correctOptionId);
+        const correctOptionIdentifier = correctOption ? correctOption.identifier : 'N/A';
+        return {
+          ...question,
+          isCorrect,
+          correctOptionIdentifier,
+        };
+      });
+    });
+
+    const totalCorrectAnswers = computed(() => {
+      return answersToSend.value.filter(
+        (answer) => answer.selectedOption !== null && answer.selectedOption === answer.correctOptionId
+      ).length;
+    });
+
+    const totalIncorrectAnswers = computed(() => {
+      return answersToSend.value.filter(
+        (answer) => answer.selectedOption !== null && answer.selectedOption !== answer.correctOptionId
+      ).length;
     });
 
     // Función para determinar si una sección está habilitada
@@ -591,15 +625,20 @@ export default {
       sectionStudentCodes.value = Array(numberOfSections.value).fill("");
       sectionValidity.value = Array(numberOfSections.value).fill(true);
 
-      answersToSend.value = cuestionario.value.questions.map((question) => ({
-        id: question.id,
-        questionTitle: question.title,
-        options: question.options.map((option) => ({
-          id: option.id,
-          identifier: option.identifier,
-        })),
-        selectedOption: null,
-      }));
+      answersToSend.value = cuestionario.value.questions.map((question) => {
+        const correctOption = question.options.find(opt => opt.correct);
+        return {
+          id: question.id,
+          questionTitle: question.title,
+          correctOptionId: correctOption ? correctOption.id : null, // Store the ID of the correct option
+          options: question.options.map((option) => ({
+            id: option.id,
+            identifier: option.identifier,
+            correct: option.correct, // Store the 'correct' flag for each option
+          })),
+          selectedOption: null,
+        };
+      });
 
       if (cuestionario.value.id) {
         backUrl.value = `/ganadores/${cuestionario.value.id}`;
@@ -632,6 +671,8 @@ export default {
       submitAnswers,
       saveButtonColor,
       invalidSectionDetails,
+      totalCorrectAnswers,
+      totalIncorrectAnswers,
     };
   },
 };
@@ -650,6 +691,26 @@ export default {
 }
 .section-invalid {
   --indicator-color: var(--ion-color-danger) !important;
+  color: var(--ion-color-danger);
+}
+
+.select-with-correct-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto; /* This will push it to the right */
+}
+
+.correct-option-display {
+  font-size: 0.9em;
+  white-space: nowrap; /* Prevent wrapping */
+}
+
+.selected-option-correct {
+  color: var(--ion-color-success);
+}
+
+.selected-option-incorrect {
   color: var(--ion-color-danger);
 }
 </style>
