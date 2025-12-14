@@ -220,6 +220,10 @@ export default {
     const lessonId = parseInt(mroute.params.lessonId, 10);
     let materialId = mroute.params.id ? parseInt(mroute.params.id, 10) : null;
 
+    const uploadedFileUrl = ref(null); // Moved declaration
+    const originalFileUrl = ref(null); // Moved declaration
+    const materialSaved = ref(false); // Moved declaration
+
     const materialForm = ref({
       id: materialId,
       title: "",
@@ -246,9 +250,6 @@ export default {
     const usuario = ref(null);
     const lessonDetails = ref(null);
     const editor = ref(null);
-    const uploadedFileUrl = ref(null);
-    const originalFileUrl = ref(null); // New ref to store the original file URL
-    const materialSaved = ref(false);
 
     const previewSource = computed(() => {
       return uploadedFileUrl.value ? urlBackend + uploadedFileUrl.value : null;

@@ -412,7 +412,7 @@ export default {
     const fetchStudents = async (courseId, year) => {
       try {
         const response = await axios.get(
-          `/courses/${courseId}/users?year=${year}`,
+          `/courses/${courseId}/users?active=true&year=${year}`,
           tokenHeader()
         );
         const allStudents = response.data

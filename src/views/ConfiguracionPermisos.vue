@@ -271,7 +271,7 @@ export default {
       if (!courseId.value || !year.value) return;
       try {
         const usersResponse = await axios.get(
-          `/courses/${courseId.value}/users?year=${year.value}`,
+          `/courses/${courseId.value}/users?active=true&year=${year.value}`,
           tokenHeader()
         );
         const allUsersInCourse = usersResponse.data;

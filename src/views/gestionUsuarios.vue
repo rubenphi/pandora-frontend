@@ -810,7 +810,7 @@ export default {
       // Re-use getUsuarios logic to fetch students
       loading.value = true;
       const response = await axios.get(
-        `/courses/${curso.id}/users?year=${selectedYear.value}`,
+        `/courses/${curso.id}/users?active=true&year=${selectedYear.value}`,
         tokenHeader()
       );
       const allUsers = response.data
@@ -907,7 +907,7 @@ export default {
       if (curso.id !== 0) {
         try {
           const response = await axios.get(
-            `/courses/${curso.id}/users?year=${year}`,
+            `/courses/${curso.id}/users?active=true&year=${year}`,
             tokenHeader()
           );
           const users = response.data.map((usuario) => usuario.user);
@@ -940,7 +940,7 @@ export default {
         // Skip "Sin Curso"
         try {
           const response = await axios.get(
-            `/courses/${curso.id}/users?year=${year}`,
+            `/courses/${curso.id}/users?active=true&year=${year}`,
             tokenHeader()
           );
           const users = response.data.map((usuario) => usuario.user);
@@ -1182,7 +1182,7 @@ export default {
       // Fetch all assignments from all courses in parallel
       const assignmentPromises = allCourses.map((course) =>
         axios.get(
-          `/courses/${course.id}/users?year=${selectedYear.value}`,
+          `/courses/${course.id}/users?active=true&year=${selectedYear.value}`,
           tokenHeader()
         )
       );
