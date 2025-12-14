@@ -287,11 +287,11 @@ export default {
 
       cv.imshow(outputCanvas.value, dst);
 
-      const allMarkersPresent = ["TL", "TM", "TR", "BL", "BM", "BR"].every(
+      const allMarkersPresent = ["TL", "TR", "BL", "BR"].every(
         (label) => markers.some((m) => m.label === label)
       );
 
-      if (markers.length >= 6 && allMarkersPresent) {
+      if (markers.length >= 4 && allMarkersPresent) {
         OMR_STATE.captured = true;
         handleCapture(markers);
       }

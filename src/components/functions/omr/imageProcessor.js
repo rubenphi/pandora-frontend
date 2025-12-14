@@ -151,8 +151,8 @@ export function processingLoop(OMR_STATE) {
   cv.imshow("canvasOutput", dst);
 
   // 5. Draw Code Matrix and Handle Capture
-  if (markers.length >= 6) {
-    const allMarkersPresent = ["TL", "TM", "TR", "BL", "BM", "BR"].every(
+  if (markers.length >= 4) {
+    const allMarkersPresent = ["TL", "TR", "BL", "BR"].every(
       (label) => markers.some((m) => m.label === label)
     );
     if (allMarkersPresent) {
@@ -247,24 +247,20 @@ function getExpectedPositions(width, height) {
   const isPortrait = width < height;
 
   if (isPortrait) {
-    // Portrait mode: TL/TR are on the right side of the image.
+    // Portrait mode
     return [
       { label: "BL", x: width * 0.25, y: height * 0.25 },
-      { label: "BM", x: width * 0.25, y: height * 0.5 },
-      { label: "BR", x: width * 0.25, y: height * 0.75 },
+      { label: "BR", x: width * 0.25, y: height * 0.5 }, // Formerly BM
       { label: "TL", x: width * 0.75, y: height * 0.25 },
-      { label: "TM", x: width * 0.75, y: height * 0.5 },
-      { label: "TR", x: width * 0.75, y: height * 0.75 },
+      { label: "TR", x: width * 0.75, y: height * 0.5 }, // Formerly TM
     ];
   } else {
-    // Landscape mode: TL/TR are at the top of the image.
+    // Landscape mode
     return [
       { label: "TL", x: width * 0.25, y: height * 0.25 },
-      { label: "TM", x: width * 0.5, y: height * 0.25 },
-      { label: "TR", x: width * 0.75, y: height * 0.25 },
+      { label: "TR", x: width * 0.5, y: height * 0.25 },  // Formerly TM
       { label: "BL", x: width * 0.25, y: height * 0.75 },
-      { label: "BM", x: width * 0.5, y: height * 0.75 },
-      { label: "BR", x: width * 0.75, y: height * 0.75 },
+      { label: "BR", x: width * 0.5, y: height * 0.75 },  // Formerly BM
     ];
   }
 }
@@ -364,7 +360,7 @@ export function drawCodeMatrix(OMR_STATE, ctx, markers) {
 
   // Use corner weights if available
   if (OMR_STATE.matrixTemplate && OMR_STATE.matrixTemplate.cornerWeights) {
-    const detectedOrder = ["TL", "TM", "TR", "BL", "BM", "BR"].map(
+    const detectedOrder = ["TL", "TR", "BL", "BR"].map(
       (l) => labelMap[l]
     );
     const cw = OMR_STATE.matrixTemplate.cornerWeights;
@@ -372,7 +368,7 @@ export function drawCodeMatrix(OMR_STATE, ctx, markers) {
     const applyWeights = (w) => {
       let x = 0,
         y = 0;
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < 4; i++) {
         const m = detectedOrder[i];
         if (m) {
           x += (w[i] || 0) * m.x;
