@@ -229,6 +229,19 @@ export default {
       lessonId: lessonId,
       instituteId: null,
     });
+
+    // Check for copied material data from query parameters
+    const { copiedTitle, copiedType, copiedContent, copiedUrl } = mroute.query;
+
+    if (copiedTitle) {
+      materialForm.value.title = copiedTitle;
+      materialForm.value.type = copiedType || "PDF"; // Default to PDF if type is not provided
+      materialForm.value.content = copiedContent || "";
+      materialForm.value.url = copiedUrl || "";
+      materialForm.value.id = null; // Ensure it's a new material
+      materialId = null; // Ensure materialId is null for new creation
+      uploadedFileUrl.value = copiedUrl || null; // Set for preview
+    }
     const usuario = ref(null);
     const lessonDetails = ref(null);
     const editor = ref(null);
@@ -324,22 +337,6 @@ export default {
     onIonViewDidLeave(async () => {
       if (editor.value) {
         editor.value.destroy();
-      }
-      // Clean up uploaded file if material was not saved and it's a temporary file
-      if (
-        uploadedFileUrl.value &&
-        !materialSaved.value &&
-        uploadedFileUrl.value !== originalFileUrl.value
-      ) {
-        try {
-          const filename = uploadedFileUrl.value.split("/").pop();
-          await axios.delete(`/files/uploads/${filename}`, tokenHeader());
-        } catch (error) {
-          console.error(
-            `Error deleting temporary file ${uploadedFileUrl.value}:`,
-            error
-          );
-        }
       }
     });
 
@@ -463,24 +460,6 @@ export default {
           await axios.post("/materials", materialData, tokenHeader());
         }
 
-        // Eliminar el archivo original si se subió un archivo nuevo y es diferente al original
-        if (
-          originalFileUrl.value &&
-          uploadedFileUrl.value &&
-          uploadedFileUrl.value !== originalFileUrl.value &&
-          !isTextType.value
-        ) {
-          try {
-            const filename = originalFileUrl.value.split("/").pop();
-            await axios.delete(`/files/uploads/${filename}`, tokenHeader());
-          } catch (error) {
-            console.error(
-              `Error eliminando archivo original: ${originalFileUrl.value}`,
-              error
-            );
-          }
-        }
-
         materialSaved.value = true; // Mark as saved
         router.push(backUrl.value);
       } catch (error) {
@@ -502,11 +481,6 @@ export default {
             handler: async () => {
               try {
                 await axios.delete(`/materials/${materialId}`, tokenHeader());
-                // If there was an uploaded file, delete it from the server
-                if (originalFileUrl.value) {
-                  const filename = originalFileUrl.value.split("/").pop();
-                  await axios.delete(`/files/uploads/${filename}`, tokenHeader());
-                }
                 router.push(backUrl.value);
               } catch (error) {
                 console.error("Error deleting material:", error);

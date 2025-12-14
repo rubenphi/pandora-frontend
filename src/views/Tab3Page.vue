@@ -100,10 +100,7 @@
             </ion-button>
           </ion-item>
           <ion-item v-if="adminOProfesor">
-            <ion-button
-              expand="full"
-              :router-link="`/crear/material/${leccion.id}`"
-            >
+            <ion-button expand="full" @click="presentMaterialCreationOptions(leccion.id)">
               <ion-icon :icon="addOutline"></ion-icon>
               <ion-label>Crear Material</ion-label>
             </ion-button>
@@ -205,6 +202,8 @@ import { useRoute } from "vue-router";
 import router from "../router";
 import { addOutline, arrowBackOutline, createOutline, alertCircleOutline } from "ionicons/icons";
 import MaterialModal from "../components/MaterialModal.vue";
+import MaterialSelectionModal from "../components/MaterialSelectionModal.vue"; // Import the new modal
+import { actionSheetController } from "@ionic/vue";
 
 const MaterialType = {
   VIDEO: "VIDEO",
@@ -511,6 +510,55 @@ export default {
       localStorage.setItem("quizSelected", JSON.stringify(cuestionario));
     };
 
+    const presentMaterialCreationOptions = async (lessonId) => {
+      const actionSheet = await actionSheetController.create({
+        header: "Opciones de Material",
+        buttons: [
+          {
+            text: "Crear Material Nuevo",
+            handler: () => {
+              router.push(`/crear/material/${lessonId}`);
+            },
+          },
+          {
+            text: "Copiar Material Existente",
+            handler: async () => {
+              const modal = await modalController.create({
+                component: MaterialSelectionModal,
+                componentProps: {
+                  area: area, // Pass the area prop
+                },
+              });
+              await modal.present();
+
+              const { data: selectedMaterial } = await modal.onWillDismiss();
+
+              if (selectedMaterial) {
+                // Navigate to CrearMaterial.vue with the selected material's data
+                // We pass the data as query parameters or via a service
+                // Important: Do NOT pass selectedMaterial.id as 'id' to CrearMaterial.vue
+                // to ensure a new material is created.
+                router.push({
+                  path: `/crear/material/${lessonId}`,
+                  query: {
+                    copiedTitle: selectedMaterial.title,
+                    copiedType: selectedMaterial.type,
+                    copiedContent: selectedMaterial.content,
+                    copiedUrl: selectedMaterial.url,
+                  },
+                });
+              }
+            },
+          },
+          {
+            text: "Cancelar",
+            role: "cancel",
+          },
+        ],
+      });
+      await actionSheet.present();
+    };
+
     return {
       basedeURL,
       materialesConsulta,
@@ -545,6 +593,7 @@ export default {
       cuestionariosPendientes,
       actividadesPendientes,
       alertCircleOutline,
+      presentMaterialCreationOptions,
     };
   },
 };
