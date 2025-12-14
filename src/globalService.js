@@ -222,6 +222,10 @@ export function booltoInt(data) {
   }
 }
 
+export function getAlphabeticalIdentifier(index) {
+  return String.fromCharCode(65 + index); // 65 is ASCII for 'A'
+}
+
 export function adminOprofesor() {
   tokenHeader();
   if (
