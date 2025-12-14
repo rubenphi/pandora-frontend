@@ -13,10 +13,18 @@
       </ion-header>
 
       <div class="ion-padding">
-        <ion-item>
-          <ion-label position="stacked">Seleccionar archivo Excel</ion-label>
-          <input type="file" @change="handleFileUpload" accept=".xlsx, .xls" />
-        </ion-item>
+        <div
+          class="file-drop-area"
+          @dragover.prevent="handleDragOver"
+          @dragleave.prevent="handleDragLeave"
+          @drop.prevent="handleDrop"
+          :class="{ 'drag-over': isDragOver }"
+          @click="triggerFileInput"
+        >
+          <ion-icon :icon="documentAttachOutline" size="large"></ion-icon>
+          <p>Arrastra tu archivo Excel aquí o haz clic para seleccionarlo</p>
+          <input type="file" ref="fileInput" @change="handleFileInputChange" accept=".xlsx, .xls" style="display: none;" />
+        </div>
 
         <ion-button expand="block" @click="generateSampleExcel" color="secondary">Generar Excel de Ejemplo</ion-button>
 
@@ -41,6 +49,10 @@
               <ion-item>
                 <ion-label position="stacked">Código</ion-label>
                 <ion-input :value="user.code" @ionInput="updateUserCode(user, $event.target.value)" @ionBlur="checkCodeUniqueness(user)"></ion-input>
+              </ion-item>
+              <ion-item>
+                <ion-label position="stacked">Teléfono</ion-label>
+                <ion-input v-model="user.telephone" type="tel" inputmode="numeric" placeholder="Número de teléfono" @ionInput="validateUser(user)" @input="filterNumericInput($event, user, 'telephone')"></ion-input>
               </ion-item>
               <ion-item>
                 <ion-label position="stacked">Contraseña</ion-label>
@@ -88,14 +100,16 @@ import {
   IonButton,
   IonAccordionGroup,
   IonAccordion,
-  IonSelect, // Added
-  IonSelectOption, // Added
-  alertController, // Import alertController
+  IonSelect,
+  IonSelectOption,
+  alertController,
+  IonIcon, // Added IonIcon
 } from '@ionic/vue';
+import { documentAttachOutline } from 'ionicons/icons'; // Added documentAttachOutline icon
 import * as XLSX from 'xlsx';
-import axios from 'axios'; // Import axios
-import { onIonViewWillEnter } from '@ionic/vue'; // Import onIonViewWillEnter
-import { tokenHeader, usuarioGet } from '../globalService'; // Import globalService
+import axios from 'axios';
+import { onIonViewWillEnter } from '@ionic/vue';
+import { tokenHeader, usuarioGet } from '../globalService';
 
 /**
  * @typedef {object} UserImportData
@@ -105,9 +119,10 @@ import { tokenHeader, usuarioGet } from '../globalService'; // Import globalServ
  * @property {string} code
  * @property {string} [password]
  * @property {boolean} exist
- * @property {('student'|'teacher'|undefined)} systemRol // Updated type
+ * @property {('student'|'teacher'|undefined)} systemRol
  * @property {string} [course]
- * @property {boolean} [hasError] // New property to indicate if the user has an error
+ * @property {string} [telephone] // Added telephone field
+ * @property {boolean} [hasError]
  */
 
 export default defineComponent({
@@ -124,16 +139,19 @@ export default defineComponent({
     IonButton,
     IonAccordionGroup,
     IonAccordion,
-    IonSelect, // Added
-    IonSelectOption, // Added
+    IonSelect,
+    IonSelectOption,
+    IonIcon, // Added IonIcon
   },
   setup() {
     /** @type {import('vue').Ref<UserImportData[]>} */
     const usersToImport = ref([]);
-    const cursos = ref([]); // New ref for courses
-    const usuario = ref(null); // New ref for user data
-    const inconsistentUsers = ref([]); // New ref to store names of inconsistent users
-    const existingUserCodes = ref(new Set()); // New ref to store existing user codes
+    const cursos = ref([]);
+    const usuario = ref(null);
+    const inconsistentUsers = ref([]);
+    const existingUserCodes = ref(new Set());
+    const fileInput = ref(null); // Ref for the hidden file input
+    const isDragOver = ref(false); // Reactive state for drag-over effect
 
     onIonViewWillEnter(async () => {
       usuario.value = usuarioGet();
@@ -142,13 +160,13 @@ export default defineComponent({
     });
 
     const getExistingUserCodes = async (codesToCheck) => {
-      if (codesToCheck.length === 0) {
+      if (!Array.isArray(codesToCheck) || codesToCheck.length === 0) {
         existingUserCodes.value = new Set();
         return;
       }
       try {
         const response = await axios.get(`/users?instituteId=${usuario.value.institute.id}&code=${codesToCheck.join(',')}`, tokenHeader());
-        existingUserCodes.value = new Set(response.data.map(user => String(user.code))); // Extract codes from user objects
+        existingUserCodes.value = new Set(response.data.map(user => String(user.code)));
       } catch (error) {
         console.error('Error fetching existing user codes:', error);
       }
@@ -170,98 +188,122 @@ export default defineComponent({
       }
     };
 
-    const handleFileUpload = async (event) => {
-      const input = event.target;
-      if (input.files && input.files[0]) {
-        const file = input.files[0];
-        const reader = new FileReader();
+    // New method to trigger the hidden file input
+    const triggerFileInput = () => {
+      fileInput.value.click();
+    };
 
-        reader.onload = async (e) => {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          const sheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[sheetName];
-          const json = XLSX.utils.sheet_to_json(worksheet);
-          inconsistentUsers.value = []; // Clear previous inconsistencies
-
-          const codesFromExcel = json.map(row => String(row.Codigo)).filter(code => code);
-          await getExistingUserCodes(codesFromExcel);
-
-          usersToImport.value = json.map((row) => {
-            let systemRol = undefined; // Default to undefined for invalid roles
-            if (row['Rol en Sistema']) {
-              const lowerCaseRol = String(row['Rol en Sistema']).toLowerCase();
-              if (lowerCaseRol === 'estudiante') {
-                systemRol = 'student';
-              } else if (lowerCaseRol === 'profesor') {
-                systemRol = 'teacher';
-              }
-            }
-
-            let courseId = undefined;
-            if (row.Curso) {
-              const matchedCourse = cursos.value.find(
-                (c) => c.name.toLowerCase() === String(row.Curso).toLowerCase()
-              );
-              if (matchedCourse) {
-                courseId = matchedCourse.id;
-              } else {
-                // console.warn(`Course "${row.Curso}" from Excel not found in available courses.`);
-              }
-            }
-
-            const user = {
-              name: row.Nombre || '',
-              lastName: row.Apellido || '',
-              email: row.Email || '',
-              code: row.Codigo || '',
-              password: row.Contraseña || 'defaultpassword', // Use 'Contraseña'
-              exist: true,
-              systemRol: systemRol,
-              course: systemRol === 'teacher' ? undefined : courseId, // Assign courseId
-              hasError: false, // Initialize hasError
-            };
-
-            // Validate code is numeric
-            if (user.code && !/^\d+$/.test(user.code)) {
-              user.hasError = true;
-              inconsistentUsers.value.push(`${user.lastName}, ${user.name} (Código "${user.code}" no es numérico)`);
-            } else if (user.code && existingUserCodes.value.has(user.code)) {
-              user.hasError = true;
-              inconsistentUsers.value.push(`${user.lastName}, ${user.name} (Código "${user.code}" ya existe)`);
-            }
-
-            // Check for errors
-            if (user.systemRol === 'student' && user.course === undefined) {
-              user.hasError = true;
-              inconsistentUsers.value.push(`${user.lastName}, ${user.name} (Estudiante sin curso válido)`);
-            }
-            if (user.systemRol === undefined) {
-              user.hasError = true;
-              inconsistentUsers.value.push(`${user.lastName}, ${user.name} (Rol en Sistema inválido: "${row['Rol en Sistema']}")`);
-            }
-
-            return user;
-          });
-
-          // Display alert if there are inconsistent users
-          if (inconsistentUsers.value.length > 0) {
-            presentInconsistencyAlert();
-          }
-        };
-        reader.readAsArrayBuffer(file);
+    // New method to handle file input change (from click)
+    const handleFileInputChange = (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        processFile(file);
       }
+    };
+
+    // New methods for drag and drop
+    const handleDragOver = () => {
+      isDragOver.value = true;
+    };
+
+    const handleDragLeave = () => {
+      isDragOver.value = false;
+    };
+
+    const handleDrop = (event) => {
+      isDragOver.value = false;
+      const file = event.dataTransfer.files[0];
+      if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) {
+        processFile(file);
+      } else {
+        alert('Por favor, arrastra un archivo Excel válido (.xlsx o .xls).');
+      }
+    };
+
+    // Refactored file processing logic
+    const processFile = async (file) => {
+      const reader = new FileReader();
+
+      reader.onload = async (e) => {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(worksheet);
+        inconsistentUsers.value = [];
+
+        const codesFromExcel = json.map(row => String(row.Codigo)).filter(code => code);
+        await getExistingUserCodes(codesFromExcel);
+
+        usersToImport.value = json.map((row) => {
+          let systemRol = undefined;
+          if (row['Rol en Sistema']) {
+            const lowerCaseRol = String(row['Rol en Sistema']).toLowerCase();
+            if (lowerCaseRol === 'estudiante') {
+              systemRol = 'student';
+            } else if (lowerCaseRol === 'profesor') {
+              systemRol = 'teacher';
+            }
+          }
+
+          let courseId = undefined;
+          if (row.Curso) {
+            const matchedCourse = cursos.value.find(
+              (c) => c.name.toLowerCase() === String(row.Curso).toLowerCase()
+            );
+            if (matchedCourse) {
+              courseId = matchedCourse.id;
+            }
+          }
+
+          const user = {
+            name: row.Nombre || '',
+            lastName: row.Apellido || '',
+            email: row.Email || `${row.Codigo}@yopmail.com`,
+            code: row.Codigo || '',
+            telephone: row.Telefono || '', // Added telephone field
+            password: row.Contraseña || 'defaultpassword',
+            exist: true,
+            systemRol: systemRol,
+            course: systemRol === 'teacher' ? undefined : courseId,
+            hasError: false,
+          };
+
+          if (user.code && !/^\d+$/.test(user.code)) {
+            user.hasError = true;
+            inconsistentUsers.value.push(`${user.lastName}, ${user.name} (Código "${user.code}" no es numérico)`);
+          } else if (user.code && existingUserCodes.value.has(user.code)) {
+            user.hasError = true;
+            inconsistentUsers.value.push(`${user.lastName}, ${user.name} (Código "${user.code}" ya existe)`);
+          }
+
+          if (user.systemRol === 'student' && user.course === undefined) {
+            user.hasError = true;
+            inconsistentUsers.value.push(`${user.lastName}, ${user.name} (Estudiante sin curso válido)`);
+          }
+          if (user.systemRol === undefined) {
+            user.hasError = true;
+            inconsistentUsers.value.push(`${user.lastName}, ${user.name} (Rol en Sistema inválido: "${row['Rol en Sistema']}")`);
+          }
+
+          return user;
+        });
+
+        if (inconsistentUsers.value.length > 0) {
+          presentInconsistencyAlert();
+        }
+      };
+      reader.readAsArrayBuffer(file);
     };
 
     const presentInconsistencyAlert = async () => {
       const currentInconsistentUsers = usersToImport.value.filter(user => user.hasError);
       if (currentInconsistentUsers.length === 0) {
-        return; // No inconsistencies to report
+        return;
       }
 
       const messages = currentInconsistentUsers.map(user => {
         let msg = `${user.lastName}, ${user.name}`;
-        // Re-evaluate specific error messages for the alert
         if (user.code && !/^\d+$/.test(user.code)) {
           msg += ` (Código "${user.code}" no es numérico)`;
         } else if (user.code && existingUserCodes.value.has(user.code)) {
@@ -272,6 +314,9 @@ export default defineComponent({
         }
         if (user.systemRol === 'student' && user.course === undefined) {
           msg += ` (Estudiante sin curso válido)`;
+        }
+        if (user.telephone && !/^\d+$/.test(user.telephone)) {
+          msg += ` (Teléfono "${user.telephone}" no es numérico)`;
         }
         return `<li>${msg}</li>`;
       }).join('');
@@ -294,28 +339,31 @@ export default defineComponent({
           Nombre: 'Juan',
           Apellido: 'Perez',
           Email: 'juan.perez@example.com',
-          Codigo: '001', // Changed to include leading zeros
-          Contraseña: 'password123', // Changed to Contraseña
-          'Rol en Sistema': 'estudiante', // New field
+          Codigo: '001',
+          Contraseña: 'password123',
+          'Rol en Sistema': 'estudiante',
           Curso: 'Matematicas',
+          Telefono: '1122334455', // Added sample telephone
         },
         {
           Nombre: 'Maria',
           Apellido: 'Gomez',
           Email: 'maria.gomez@example.com',
-          Codigo: '002', // Changed to include leading zeros
+          Codigo: '002',
           Contraseña: 'password123',
           'Rol en Sistema': 'estudiante',
           Curso: 'Historia',
+          Telefono: '5544332211', // Added sample telephone
         },
         {
           Nombre: 'Carlos',
           Apellido: 'Ruiz',
           Email: 'carlos.ruiz@example.com',
-          Codigo: '003', // Changed to include leading zeros
+          Codigo: '003',
           Contraseña: 'password123',
-          'Rol en Sistema': 'profesor', // Teacher role
-          Curso: '', // Empty for teacher
+          'Rol en Sistema': 'profesor',
+          Curso: '',
+          Telefono: '9988776655', // Added sample telephone
         },
       ];
 
@@ -336,17 +384,17 @@ export default defineComponent({
             password: user.password,
             exist: user.exist,
             systemRol: user.systemRol,
-            courseId: user.course, // Send course ID directly
-            // rolEnCurso is not explicitly defined in frontend, backend will likely derive it
+            courseId: user.course,
+            telephone: user.telephone, // Added telephone field
           };
         });
 
-        console.log('Users being sent to backend:', usersToSend); // Diagnostic log
+        console.log('Users being sent to backend:', usersToSend);
 
         const response = await axios.post('/users/bulk', { users: usersToSend });
         console.log('Bulk import successful:', response.data);
         alert('Usuarios importados exitosamente!');
-        usersToImport.value = []; // Clear the list after successful import
+        usersToImport.value = [];
       } catch (error) {
         console.error('Error during bulk import:', error.response ? error.response.data : error.message);
         alert('Error al importar usuarios. Por favor, revise la consola para más detalles.');
@@ -355,43 +403,37 @@ export default defineComponent({
 
     const removeUser = (index) => {
       usersToImport.value.splice(index, 1);
-      // Re-evaluate inconsistencies if needed, though current logic should handle it
-      // if a user with error is removed, canSubmit will automatically update.
     };
 
     const validateUser = (user) => {
-      user.hasError = false; // Assume valid until an error is found
+      user.hasError = false;
       const currentInconsistencies = [];
 
-      // Validate code is numeric
       if (user.code && !/^\d+$/.test(user.code)) {
         user.hasError = true;
         currentInconsistencies.push(`${user.lastName}, ${user.name} (Código "${user.code}" no es numérico)`);
       }
 
-      // Validate systemRol
       if (user.systemRol === undefined) {
         user.hasError = true;
         currentInconsistencies.push(`${user.lastName}, ${user.name} (Rol en Sistema inválido)`);
       }
 
-      // Validate course for students
       if (user.systemRol === 'student' && user.course === undefined) {
         user.hasError = true;
         currentInconsistencies.push(`${user.lastName}, ${user.name} (Estudiante sin curso válido)`);
       }
-
-      // Update the global inconsistentUsers list (optional, but good for a summary alert)
-      // This part is a bit tricky to manage for individual user changes without re-parsing the whole file.
-      // For now, we'll just rely on user.hasError for the accordion color.
-      // If a summary alert is needed after manual edits, a re-evaluation of all users would be required.
+      // Validate telephone is numeric if not empty
+      if (user.telephone && !/^\d+$/.test(user.telephone)) {
+        user.hasError = true;
+        currentInconsistencies.push(`${user.lastName}, ${user.name} (Teléfono "${user.telephone}" no es numérico)`);
+      }
 
       return !user.hasError;
     };
 
     const checkCodeUniqueness = async (user) => {
       if (!user.code || !/^\d+$/.test(user.code)) {
-        // If code is empty or not numeric, uniqueness check is not applicable or already handled by validateUser
         return;
       }
 
@@ -400,24 +442,14 @@ export default defineComponent({
         const existingUsers = response.data;
 
         if (existingUsers.length > 0) {
-          // If there are existing users with this code, mark as error
           user.hasError = true;
-          // Add to inconsistentUsers for the alert summary if needed, or handle locally
-          // For now, we'll just rely on user.hasError for the accordion color.
-          // A more robust solution would involve updating the inconsistentUsers array dynamically.
         } else {
-          // If code is unique, ensure hasError is false for this specific check
-          // This is important if validateUser previously set hasError for other reasons
-          // We should only clear the code-related error here.
-          // For simplicity, we'll let validateUser handle other errors.
-          // If validateUser already set hasError for another reason, it will remain true.
-          if (!user.hasError) { // Only clear if no other errors are present
+          if (!user.hasError) {
             user.hasError = false;
           }
         }
       } catch (error) {
         console.error('Error checking code uniqueness:', error);
-        // Optionally, set user.hasError to true if there's an API error
         user.hasError = true;
       }
     };
@@ -427,27 +459,78 @@ export default defineComponent({
       validateUser(user);
     };
 
+    const filterNumericInput = (event, item, field) => {
+      let value = event.target.value;
+      if (value === null || value === undefined) {
+        value = '';
+      }
+      const filteredValue = value.replace(/\D/g, ''); // Remove non-digits
+      if (value !== filteredValue) {
+        event.target.value = filteredValue; // Update the input element directly
+        item[field] = filteredValue; // Update the v-model bound property
+      } else {
+        item[field] = value; // Ensure v-model is always in sync
+      }
+    };
+
     return {
       usersToImport,
-      handleFileUpload,
       generateSampleExcel,
       submitImport,
-      cursos, // Expose cursos
-      inconsistentUsers, // Expose inconsistentUsers
-      presentInconsistencyAlert, // Expose presentInconsistencyAlert
-      canSubmit, // Expose canSubmit
-      removeUser, // Expose removeUser
-      validateUser, // Expose validateUser
-      checkCodeUniqueness, // Expose checkCodeUniqueness
-      updateUserCode, // Expose updateUserCode
+      cursos,
+      inconsistentUsers,
+      presentInconsistencyAlert,
+      canSubmit,
+      removeUser,
+      validateUser,
+      checkCodeUniqueness,
+      updateUserCode,
+      fileInput, // Expose fileInput ref
+      isDragOver, // Expose isDragOver ref
+      handleDragOver, // Expose drag handlers
+      handleDragLeave,
+      handleDrop,
+      triggerFileInput, // Expose triggerFileInput
+      handleFileInputChange, // Expose handleFileInputChange
+      documentAttachOutline, // Expose the icon
+      filterNumericInput, // Expose filterNumericInput
     };
   },
 });
 </script>
 
 <style scoped>
-/*
- * The ion-item's color="danger" attribute handles the red styling for error rows.
- * A dedicated CSS class (e.g., .error-row) can be added here if more complex styling is needed.
- */
+.file-drop-area {
+  border: 2px dashed var(--ion-color-medium);
+  border-radius: 8px;
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 150px; /* Make it large */
+}
+
+.file-drop-area:hover,
+.file-drop-area.drag-over {
+  background-color: var(--ion-color-light);
+  border-color: var(--ion-color-primary);
+}
+
+.file-drop-area ion-icon {
+  font-size: 4em; /* Make icon large */
+  color: var(--ion-color-medium);
+  margin-bottom: 10px;
+}
+
+.file-drop-area p {
+  color: var(--ion-color-medium-shade);
+  font-size: 1.1em;
+  margin: 0;
+}
 </style>
+

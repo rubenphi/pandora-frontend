@@ -60,6 +60,17 @@
           ></ion-input>
         </ion-item>
         <ion-item>
+          <ion-label position="stacked">Teléfono</ion-label>
+          <ion-input
+            v-model="formData.telephone"
+            type="tel"
+            inputmode="numeric"
+            placeholder="Escribe tu número de teléfono"
+            clear-input
+            @input="filterNumericInput($event, formData, 'telephone')"
+          ></ion-input>
+        </ion-item>
+        <ion-item>
           <ion-label position="stacked"
             >Invitación de la institución (number)</ion-label
           >
@@ -306,6 +317,7 @@ export default {
         lastName: "",
         email: "",
         code: "",
+        telephone: "", // Added telephone field
         instituteInvitation: "",
         password: "",
         exist: false,
@@ -313,6 +325,22 @@ export default {
     };
   },
   methods: {
+    filterNumericInput(event, item, field) {
+      let value = event.target.value;
+      console.log('filterNumericInput called for field:', field, 'with value:', value);
+      if (value === null || value === undefined) {
+        value = '';
+      }
+      const filteredValue = value.replace(/\D/g, ''); // Remove non-digits
+      if (value !== filteredValue) {
+        event.target.value = filteredValue; // Update the input element directly
+        item[field] = filteredValue; // Update the v-model bound property
+        console.log('Filtered value set to:', item[field]);
+      } else {
+        item[field] = value; // Ensure v-model is always in sync
+      }
+    },
+
     async asignarUsuarioACurso(userId) {
       try {
         // Asignar usuario al curso
@@ -345,6 +373,13 @@ export default {
     },
 
     async registrarUsuario() {
+      // Frontend validation for telephone
+      if (this.formData.telephone && !/^\d+$/.test(this.formData.telephone)) {
+        this.errorMessage = "El número de teléfono solo debe contener dígitos.";
+        this.isErrorToastOpen = true;
+        return; // Stop execution if validation fails
+      }
+
       try {
         const response = await axios.post("/users", this.formData, {
           headers: {

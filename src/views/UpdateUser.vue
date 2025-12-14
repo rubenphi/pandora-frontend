@@ -51,6 +51,17 @@
           ></ion-input>
         </ion-item>
         <ion-item>
+          <ion-label position="stacked">Teléfono</ion-label>
+          <ion-input
+            v-model="formData.telephone"
+            type="tel"
+            inputmode="numeric"
+            placeholder="Número de teléfono"
+            clear-input
+            @input="filterNumericInput($event, formData, 'telephone')"
+          ></ion-input>
+        </ion-item>
+        <ion-item>
           <ion-label position="stacked"
             >Invitación de la institución (number)</ion-label
           >
@@ -168,12 +179,27 @@ export default {
         lastName: "",
         email: "",
         code: "",
+        telephone: "", // Added telephone field
         instituteInvitation: "",
         password: "",
       },
     };
   },
   methods: {
+    filterNumericInput(event, item, field) {
+      let value = event.target.value;
+      if (value === null || value === undefined) {
+        value = '';
+      }
+      const filteredValue = value.replace(/\D/g, ''); // Remove non-digits
+      if (value !== filteredValue) {
+        event.target.value = filteredValue; // Update the input element directly
+        item[field] = filteredValue; // Update the v-model bound property
+      } else {
+        item[field] = value; // Ensure v-model is always in sync
+      }
+    },
+
     async loadUserData() {
       try {
         const response = await axios.get(
@@ -187,6 +213,7 @@ export default {
           lastName: userData.lastName,
           email: userData.email,
           code: userData.code,
+          telephone: userData.telephone, // Added telephone field
           password: "", // Password siempre vacío inicialmente
         };
       } catch (error) {
@@ -196,6 +223,13 @@ export default {
     },
 
     async actualizarUsuario() {
+      // Frontend validation for telephone
+      if (this.formData.telephone && !/^\d+$/.test(this.formData.telephone)) {
+        this.errorMessage = "El número de teléfono solo debe contener dígitos.";
+        this.isErrorToastOpen = true;
+        return; // Stop execution if validation fails
+      }
+
       try {
         const submitData = { ...this.formData };
 
