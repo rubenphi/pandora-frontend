@@ -35,9 +35,9 @@
               :class="{ 'section-invalid': !sectionValidity[section - 1] }"
             >
               <ion-label
-                >Preguntas {{ (section - 1) * 40 + 1 }} -
+                >Preguntas {{ (section - 1) * 20 + 1 }} -
                 {{
-                  Math.min(section * 40, cuestionario.questions.length)
+                  Math.min(section * 20, cuestionario.questions.length)
                 }}</ion-label
               >
             </ion-segment-button>
@@ -306,8 +306,8 @@ export default {
 
     const questionsForCurrentSection = computed(() => {
       if (answersToSend.value.length === 0) return [];
-      const start = (currentSection.value - 1) * 40;
-      const end = currentSection.value * 40;
+      const start = (currentSection.value - 1) * 20;
+      const end = currentSection.value * 20;
       return answersToSend.value.slice(start, end);
     });
 
@@ -335,8 +335,8 @@ export default {
 
     const startScan = async () => {
       const sectionIndex = currentSection.value - 1;
-      const start = sectionIndex * 40;
-      const end = currentSection.value * 40;
+      const start = sectionIndex * 20;
+      const end = currentSection.value * 20;
 
       for (let i = start; i < end && i < answersToSend.value.length; i++) {
         answersToSend.value[i].selectedOption = null;
@@ -485,7 +485,7 @@ export default {
         concatedAnswers.push(...block.content);
       });
 
-      const sectionOffset = sectionIndex * 40;
+      const sectionOffset = sectionIndex * 20;
       concatedAnswers.forEach((scannedAnswer, index) => {
         const globalIndex = sectionOffset + index;
         if (globalIndex < answersToSend.value.length) {
@@ -614,7 +614,7 @@ export default {
       };
 
       numberOfSections.value = Math.ceil(
-        cuestionario.value.questions.length / 40
+        cuestionario.value.questions.length / 20
       );
 
       sectionScanImageUrls.value = Array(numberOfSections.value).fill(null);
