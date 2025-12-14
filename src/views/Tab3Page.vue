@@ -534,19 +534,10 @@ export default {
               const { data: selectedMaterial } = await modal.onWillDismiss();
 
               if (selectedMaterial) {
-                // Navigate to CrearMaterial.vue with the selected material's data
-                // We pass the data as query parameters or via a service
-                // Important: Do NOT pass selectedMaterial.id as 'id' to CrearMaterial.vue
-                // to ensure a new material is created.
-                router.push({
-                  path: `/crear/material/${lessonId}`,
-                  query: {
-                    copiedTitle: selectedMaterial.title,
-                    copiedType: selectedMaterial.type,
-                    copiedContent: selectedMaterial.content,
-                    copiedUrl: selectedMaterial.url,
-                  },
-                });
+                // Save selected material to sessionStorage
+                sessionStorage.setItem("copiedMaterial", JSON.stringify(selectedMaterial));
+                // Navigate to CrearMaterial.vue
+                router.push(`/crear/material/${lessonId}`);
               }
             },
           },

@@ -230,17 +230,18 @@ export default {
       instituteId: null,
     });
 
-    // Check for copied material data from query parameters
-    const { copiedTitle, copiedType, copiedContent, copiedUrl } = mroute.query;
-
-    if (copiedTitle) {
-      materialForm.value.title = copiedTitle;
-      materialForm.value.type = copiedType || "PDF"; // Default to PDF if type is not provided
-      materialForm.value.content = copiedContent || "";
-      materialForm.value.url = copiedUrl || "";
+    // Check for copied material data from sessionStorage
+    const copiedMaterialString = sessionStorage.getItem("copiedMaterial");
+    if (copiedMaterialString) {
+      const copiedMaterial = JSON.parse(copiedMaterialString);
+      materialForm.value.title = copiedMaterial.title;
+      materialForm.value.type = copiedMaterial.type || "PDF"; // Default to PDF if type is not provided
+      materialForm.value.content = copiedMaterial.content || "";
+      materialForm.value.url = copiedMaterial.url || "";
       materialForm.value.id = null; // Ensure it's a new material
       materialId = null; // Ensure materialId is null for new creation
-      uploadedFileUrl.value = copiedUrl || null; // Set for preview
+      uploadedFileUrl.value = copiedMaterial.url || null; // Set for preview
+      sessionStorage.removeItem("copiedMaterial"); // Clear from sessionStorage
     }
     const usuario = ref(null);
     const lessonDetails = ref(null);

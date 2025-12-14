@@ -10,6 +10,36 @@
     </ion-toolbar>
     <ion-toolbar>
       <ion-item>
+        <ion-label position="stacked">Curso</ion-label>
+        <ion-select
+          v-model="selectedCourse"
+          placeholder="Selecciona un curso"
+          @ionChange="handleCourseChange($event.detail.value)"
+        >
+          <ion-select-option
+            v-for="courseOpt in availableCourses"
+            :key="courseOpt.id"
+            :value="courseOpt.id"
+            >{{ courseOpt.name }}</ion-select-option
+          >
+        </ion-select>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Área</ion-label>
+        <ion-select
+          v-model="selectedArea"
+          placeholder="Selecciona un área"
+          @ionChange="handleAreaChange($event.detail.value)"
+        >
+          <ion-select-option
+            v-for="areaOpt in availableAreas"
+            :key="areaOpt.id"
+            :value="areaOpt.id"
+            >{{ areaOpt.name }}</ion-select-option
+          >
+        </ion-select>
+      </ion-item>
+      <ion-item>
         <ion-label position="stacked">Año</ion-label>
         <ion-select v-model="selectedYear" placeholder="Selecciona un año">
           <ion-select-option
@@ -53,14 +83,13 @@
         >
       </ion-item>
     </ion-list>
-    <ion-accordion-group v-else-if="searchPerformed">
+    <ion-accordion-group v-else-if="searchPerformed" :value="expandedLessonId" @ionChange="handleAccordionGroupChange($event.detail.value)">
       <ion-accordion
         v-for="lesson in lessons"
         :key="lesson.id"
         :value="lesson.id"
-        @ionChange="toggleLessonAccordion(lesson.id, $event)"
       >
-        <ion-item slot="header" color="light">
+        <ion-item slot="header" color="light" @click="handleLessonClick(lesson.id)">
           <ion-label>{{ lesson.topic }}</ion-label>
         </ion-item>
         <div slot="content" class="ion-padding">
@@ -111,14 +140,13 @@ import {
 } from "@ionic/vue";
 import { closeOutline } from "ionicons/icons";
 import axios from "axios";
-import {
-  tokenHeader,
-  selectedPeriod as getSelectedPeriod,
-} from "../globalService";
+import { tokenHeader, usuarioGet } from "../globalService";
 
 export default {
   name: "MaterialSelectionModal",
+  // Removed area and course props
   props: {
+    // The area prop is still needed to pre-select the area from the current view
     area: {
       type: [String, Number],
       required: true,
@@ -142,19 +170,20 @@ export default {
     IonAccordion,
   },
   setup(props) {
+    const selectedCourse = ref(null);
+    const availableCourses = ref([]);
+    const selectedArea = ref(props.area); // Pre-select area from prop
+    const availableAreas = ref([]);
     const selectedYear = ref(new Date().getFullYear());
-    const selectedPeriod = ref(getSelectedPeriod()); // Use global service for default period
+    const selectedPeriod = ref(null); // Default to "Todos los Periodos"
     const availableYears = ref([]);
-    const availablePeriods = ref([
-      { id: 1, name: "Primer Periodo" },
-      { id: 2, name: "Segundo Periodo" },
-      { id: 3, name: "Tercer Periodo" },
-    ]);
+    const availablePeriods = ref([]); // Will be fetched dynamically
     const lessons = ref([]);
     const isLoadingLessons = ref(false);
     const isLoadingMaterials = ref(false);
     const expandedLessonId = ref(null);
-    const searchPerformed = ref(false); // New ref to track if search button was pressed
+    const searchPerformed = ref(false);
+    const usuario = ref(usuarioGet());
 
     const fetchAvailableYears = () => {
       const currentYear = new Date().getFullYear();
@@ -165,18 +194,82 @@ export default {
       availableYears.value = years;
     };
 
+    const fetchAvailablePeriods = async () => {
+      try {
+        const response = await axios.get("/periods", tokenHeader());
+        availablePeriods.value = [
+          { id: null, name: "Todos los Periodos" }, // Prepend "All Periods" option
+          ...response.data,
+        ];
+      } catch (error) {
+        console.error("Error fetching periods:", error);
+      }
+    };
+
+    const fetchAvailableCourses = async () => {
+      try {
+        const response = await axios.get(
+          `/courses?instituteId=${usuario.value.institute.id}&exist=true`,
+          tokenHeader()
+        );
+        availableCourses.value = response.data;
+        // Optionally pre-select the first course or a default one
+        if (availableCourses.value.length > 0 && !selectedCourse.value) {
+          selectedCourse.value = availableCourses.value[0].id;
+          fetchAreasForCourse();
+        }
+      } catch (error) {
+        console.error("Error fetching courses:", error);
+      }
+    };
+
+    const fetchAreasForCourse = async () => {
+      if (!selectedCourse.value) {
+        availableAreas.value = [];
+        selectedArea.value = null;
+        return;
+      }
+      try {
+        const response = await axios.get(
+          `/courses/${selectedCourse.value}/areas`,
+          tokenHeader()
+        );
+        availableAreas.value = response.data;
+        // If the pre-selected area from props exists in the new list, keep it. Otherwise, select the first one.
+        if (
+          props.area &&
+          availableAreas.value.some((area) => area.id === props.area)
+        ) {
+          selectedArea.value = props.area;
+        } else if (availableAreas.value.length > 0) {
+          selectedArea.value = availableAreas.value[0].id;
+        } else {
+          selectedArea.value = null;
+        }
+      } catch (error) {
+        console.error(
+          `Error fetching areas for course ${selectedCourse.value}:`,
+          error
+        );
+        availableAreas.value = [];
+        selectedArea.value = null;
+      }
+    };
+
     const fetchLessons = async () => {
-      if (!selectedYear.value || !selectedPeriod.value || !props.area) {
+      if (!selectedYear.value || !selectedArea.value || !selectedCourse.value) {
         lessons.value = [];
         return;
       }
 
       isLoadingLessons.value = true;
       try {
-        const response = await axios.get(
-          `/lessons?areaId=${props.area}&periodId=${selectedPeriod.value}&year=${selectedYear.value}&exist=true`,
-          tokenHeader()
-        );
+        let url = `/lessons?courseId=${selectedCourse.value}&areaId=${selectedArea.value}&year=${selectedYear.value}&exist=true`;
+        if (selectedPeriod.value !== null) {
+          url += `&periodId=${selectedPeriod.value}`;
+        }
+
+        const response = await axios.get(url, tokenHeader());
         lessons.value = response.data.map((lesson) => ({
           ...lesson,
           materials: [],
@@ -215,22 +308,34 @@ export default {
       fetchLessons();
     };
 
-    const handleYearChange = (year) => {
-      selectedYear.value = year;
-      // No automatic fetch here
+    const handleCourseChange = (courseId) => {
+      selectedCourse.value = courseId;
+      fetchAreasForCourse(); // Fetch areas for the newly selected course
     };
 
-    const handlePeriodChange = (period) => {
-      selectedPeriod.value = period;
-      // No automatic fetch here
+    const handleAreaChange = (areaId) => {
+      selectedArea.value = areaId;
     };
 
-    const toggleLessonAccordion = async (lessonId, event) => {
-      if (event.detail.value === lessonId) {
+    const handleLessonClick = async (lessonId) => {
+      if (expandedLessonId.value === lessonId) {
+        // If already expanded, collapse it
+        expandedLessonId.value = null;
+      } else {
+        // If collapsed, expand it and fetch materials
         expandedLessonId.value = lessonId;
         await fetchMaterialsForLesson(lessonId);
+      }
+    };
+
+    // This method is needed to control the ion-accordion-group's value
+    const handleAccordionGroupChange = (value) => {
+      // The ion-accordion-group emits an array of values if multiple is true, or a single value if false
+      // We are using single accordion behavior, so value will be the ID of the opened accordion or undefined
+      if (Array.isArray(value)) {
+        expandedLessonId.value = value.length > 0 ? value[0] : null;
       } else {
-        expandedLessonId.value = null;
+        expandedLessonId.value = value;
       }
     };
 
@@ -244,12 +349,15 @@ export default {
 
     onMounted(() => {
       fetchAvailableYears();
-      // Removed initial fetchLessons()
+      fetchAvailablePeriods(); // Fetch periods dynamically
+      fetchAvailableCourses();
     });
 
-    // Removed watch for selectedYear and selectedPeriod
-
     return {
+      selectedCourse,
+      availableCourses,
+      selectedArea,
+      availableAreas,
       selectedYear,
       selectedPeriod,
       availableYears,
@@ -258,11 +366,12 @@ export default {
       isLoadingLessons,
       isLoadingMaterials,
       expandedLessonId,
-      searchPerformed, // Make searchPerformed available in template
+      searchPerformed,
       performSearch,
-      handleYearChange,
-      handlePeriodChange,
-      toggleLessonAccordion,
+      handleCourseChange,
+      handleAreaChange,
+      handleLessonClick,
+      handleAccordionGroupChange,
       selectMaterial,
       cancel,
       closeOutline,
