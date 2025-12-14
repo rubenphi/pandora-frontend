@@ -129,6 +129,15 @@ const routes = [
         },
       },
       {
+        path: "admin/importar-usuarios",
+        name: "UserImport",
+        component: () => import("@/views/UserImportView.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
         path: "admin/grupos/:cursoId/:selectedYear",
         component: () => import("@/views/GruposPage.vue"),
         beforeEnter: (to, from, next) => {
