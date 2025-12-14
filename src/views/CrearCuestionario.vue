@@ -7,9 +7,9 @@
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
-        <ion-buttons slot="end">
-          <ion-button @click="crearCuestionario">
-            <ion-icon :icon="checkmarkOutline"></ion-icon>
+        <ion-buttons v-if="cuestionario.id" slot="end">
+          <ion-button @click="borrarCuestionario()">
+            <ion-icon :icon="trashOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
         <ion-title>Cuestionario</ion-title>
@@ -53,21 +53,11 @@
           </ion-item>
           <ion-item
             class="ion-text-center"
-            v-if="cuestionario.id && cuestionario.exist == true"
-            button
-            color="danger"
-            @click="borrarCuestionario(false)"
-          >
-            <ion-label>Borrar Cuestionario</ion-label>
-          </ion-item>
-          <ion-item
-            class="ion-text-center"
-            v-if="cuestionario.id && cuestionario.exist == false"
             button
             color="success"
-            @click="borrarCuestionario(true)"
+            @click="crearCuestionario"
           >
-            <ion-label>Recuperar Cuestionario</ion-label>
+            <ion-label>Guardar Cuestionario </ion-label>
           </ion-item>
         </ion-list>
       </div>
@@ -81,7 +71,7 @@ import { useRoute } from "vue-router";
 import router from "../router";
 
 import { usuarioGet, tokenHeader } from "../globalService";
-import { arrowBackOutline, checkmarkOutline } from "ionicons/icons";
+import { arrowBackOutline, trashOutline } from "ionicons/icons";
 import {
   onIonViewWillEnter,
   IonLabel,
@@ -119,6 +109,7 @@ export default {
   },
   setup() {
     const mroute = useRoute();
+
     //change lessonId and id to Int
     const lessonId = parseInt(mroute.params.lessonId, 10);
     const quizId = mroute.params.id ? parseInt(mroute.params.id, 10) : null; // 'quizId' will be quizId if editing, null if creating
@@ -151,6 +142,15 @@ export default {
       } else {
         // Fallback if lessonDetails is not yet loaded or invalid
         return `/lecciones`; // Or a more appropriate default route
+      }
+    });
+
+    const backUrlAfterDelete = computed(() => {
+      if (lessonDetails.value) {
+        const { course, area, period, year } = lessonDetails.value;
+        return `/lecciones/${course.id}/${area.id}/${period.id}/${year}`;
+      } else {
+        return `/lecciones`;
       }
     });
 
@@ -215,9 +215,10 @@ export default {
     });
 
     return {
-      borrarCuestionario(valor) {
-        cuestionario.value.exist = valor;
-        this.crearCuestionario();
+      borrarCuestionario() {
+        axios.delete(`/quizzes/${quizId}`).then(() => {
+          router.push(backUrlAfterDelete.value);
+        });
       },
       async crearCuestionario() {
         if (cuestionario.value.title == "") {
@@ -265,8 +266,9 @@ export default {
       arrowBackOutline,
       cuestionario,
       error,
-      checkmarkOutline,
+      trashOutline,
       backUrl,
+      backUrlAfterDelete,
     };
   },
 };

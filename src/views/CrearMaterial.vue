@@ -7,6 +7,11 @@
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
+        <ion-buttons v-if="materialId" slot="end">
+          <ion-button @click="deleteMaterial()">
+            <ion-icon :icon="trashOutline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
         <ion-title>{{ pageTitle }}</ion-title>
       </ion-toolbar>
     </ion-header>
@@ -183,9 +188,9 @@ import {
   IonText,
 } from "@ionic/vue";
 import { basedeURL, tokenHeader, usuarioGet } from "../globalService";
-import { arrowBackOutline } from "ionicons/icons";
+import { arrowBackOutline, trashOutline } from "ionicons/icons";
 import { Editor, EditorContent } from "@tiptap/vue-3";
-import Underline from "@tiptap/extension-underline";
+
 import StarterKit from "@tiptap/starter-kit";
 
 export default {
@@ -304,7 +309,7 @@ export default {
       }
 
       editor.value = new Editor({
-        extensions: [StarterKit, Underline],
+        extensions: [StarterKit],
         autofocus: "start",
         editable: true,
         content: materialForm.value.content,
@@ -483,6 +488,42 @@ export default {
       }
     };
 
+    const deleteMaterial = async () => {
+      const alert = await alertController.create({
+        header: "¿Estás seguro?",
+        message: "Esta acción eliminará el material permanentemente.",
+        buttons: [
+          {
+            text: "Cancelar",
+            role: "cancel",
+          },
+          {
+            text: "Eliminar",
+            handler: async () => {
+              try {
+                await axios.delete(`/materials/${materialId}`, tokenHeader());
+                // If there was an uploaded file, delete it from the server
+                if (originalFileUrl.value) {
+                  const filename = originalFileUrl.value.split("/").pop();
+                  await axios.delete(`/files/uploads/${filename}`, tokenHeader());
+                }
+                router.push(backUrl.value);
+              } catch (error) {
+                console.error("Error deleting material:", error);
+                const errorAlert = await alertController.create({
+                  header: "Error",
+                  message: "No se pudo eliminar el material.",
+                  buttons: ["OK"],
+                });
+                await errorAlert.present();
+              }
+            },
+          },
+        ],
+      });
+      await alert.present();
+    };
+
     const goBack = () => {
       if (backUrl.value) {
         router.push(backUrl.value);
@@ -507,6 +548,9 @@ export default {
       goBack,
       uploadedFileUrl, // Make uploadedFileUrl available in the template
       previewSource,
+      materialId, // Make materialId available in the template for v-if
+      deleteMaterial,
+      trashOutline,
     };
   },
 };

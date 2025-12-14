@@ -51,7 +51,7 @@
       </ion-card>
       <ion-card class="ion-padding-top ion-padding-bottom">
         <div
-          style="position: relative; text-align: center; padding: 0 16px 10px;"
+          style="position: relative; text-align: center; padding: 0 16px 10px"
         >
           <ion-card-subtitle v-if="error.estatus === 0">
             Selecciona tu respuesta
@@ -60,9 +60,17 @@
             v-if="admin"
             @click="toggleShowCorrectAnswer()"
             fill="clear"
-            style="position: absolute; top: 50%; right: 8px; transform: translateY(-50%); margin: 0;"
+            style="
+              position: absolute;
+              top: 50%;
+              right: 8px;
+              transform: translateY(-50%);
+              margin: 0;
+            "
           >
-            <ion-icon :icon="showCorrectAnswer ? eyeOffOutline : eyeOutline"></ion-icon>
+            <ion-icon
+              :icon="showCorrectAnswer ? eyeOffOutline : eyeOutline"
+            ></ion-icon>
           </ion-button>
         </div>
 
@@ -115,7 +123,10 @@
       </ion-card>
 
       <ion-buttons
-        v-if="!admin && (grupoUsuario?.id || question.quiz?.quizType === 'individual')"
+        v-if="
+          !admin &&
+          (grupoUsuario?.id || question.quiz?.quizType === 'individual')
+        "
         class="ion-justify-content-center ion-padding-top ion-padding-bottom"
       >
         <ion-button
@@ -132,7 +143,13 @@
         </ion-button>
       </ion-buttons>
 
-      <div v-if="!admin && !grupoUsuario?.id && question.quiz?.quizType !== 'individual'">
+      <div
+        v-if="
+          !admin &&
+          !grupoUsuario?.id &&
+          question.quiz?.quizType !== 'individual'
+        "
+      >
         <ion-card>
           <ion-card-header>
             <ion-card-title class="ion-text-center">
@@ -141,22 +158,6 @@
           </ion-card-header>
         </ion-card>
       </div>
-
-      <ion-buttons
-        v-if="admin"
-        class="ion-justify-content-center ion-padding-top ion-padding-bottom"
-      >
-        <ion-button
-          expand="full"
-          fill="outline"
-          shape="round"
-          color="medium"
-          class="ion-align-self-center"
-          :href="'crear/opcion/' + question.id"
-        >
-          <ion-icon :icon="addOutline"></ion-icon>
-        </ion-button>
-      </ion-buttons>
     </ion-content>
   </ion-page>
 </template>
@@ -349,22 +350,25 @@ export default {
 
       if (!admin) {
         let queryParams = `?questionId=${id}`;
-        if (question.value.quiz?.quizType === 'individual') {
-             queryParams += `&userId=${usuario?.id}`;
+        if (question.value.quiz?.quizType === "individual") {
+          queryParams += `&userId=${usuario?.id}`;
         } else if (grupoUsuario.value?.id) {
-             queryParams += `&groupId=${grupoUsuario.value.id}`;
+          queryParams += `&groupId=${grupoUsuario.value.id}`;
         }
-        
-        if (question.value.quiz?.quizType === 'individual' || grupoUsuario.value?.id) {
-             await axios
+
+        if (
+          question.value.quiz?.quizType === "individual" ||
+          grupoUsuario.value?.id
+        ) {
+          await axios
             .get(`/answers${queryParams}`)
             .then((response) => {
-                if (response.data && response.data.length > 0) {
+              if (response.data && response.data.length > 0) {
                 resVisible.value = 1;
-                }
+              }
             })
             .catch(() => {
-                // Fail silently
+              // Fail silently
             });
         }
       }
@@ -396,10 +400,10 @@ export default {
           error.value.data = "Debe seleccionar una opción.";
         } else {
           respuesta.value.questionId = question.value.id;
-          if (question.value.quiz?.quizType !== 'individual') {
-               respuesta.value.groupId = grupoUsuario.value?.id;
+          if (question.value.quiz?.quizType !== "individual") {
+            respuesta.value.groupId = grupoUsuario.value?.id;
           } else {
-               delete respuesta.value.groupId;
+            delete respuesta.value.groupId;
           }
           respuesta.value.quizId = question.value.quiz?.id;
           respuesta.value.exist = true;

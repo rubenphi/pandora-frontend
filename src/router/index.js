@@ -296,22 +296,7 @@ const routes = [
           else next({ path: "/inicio" });
         },
       },
-      {
-        path: "crear/opcion/:pregunta",
-        component: () => import("@/views/CrearOpcion.vue"),
-        beforeEnter: (to, from, next) => {
-          if (adminOprofesor()) next();
-          else next({ path: "/inicio" });
-        },
-      },
-      {
-        path: "editar/opcion/:id",
-        component: () => import("@/views/CrearOpcion.vue"),
-        beforeEnter: (to, from, next) => {
-          if (adminOprofesor()) next();
-          else next({ path: "/inicio" });
-        },
-      },
+
       {
         path: "materials",
         component: () => import("@/views/MaterialsPage.vue"),
