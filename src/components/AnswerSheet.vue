@@ -49,7 +49,7 @@ export default {
     // Dimensiones originales de la imagen de referencia (en píxeles).
     // Usadas como base para calcular las posiciones relativas en porcentaje.
     const originalImageWidth = 3313;
-    const originalImageHeight = 3520;
+    const originalImageHeight = 4919; // Changed from 3520 to 4919
 
     // --- Variables de Posicionamiento (basadas en el layout original) ---
     // Estas variables usan porcentajes para posicionar los elementos.
@@ -57,32 +57,32 @@ export default {
     // La altura original (3520px) se usa como referencia para las posiciones verticales.
 
     // Posición y tamaño del nombre del estudiante
-    const nameTopPercent = (60 / originalImageHeight) * 100;
+    const nameTopPercent = (110 / originalImageHeight) * 100;
     const nameLeftPercent = (600 / originalImageWidth) * 100;
     const nameWidthPercent = (2934 / originalImageWidth) * 100;
     const nameHeightPercent = (114 / originalImageHeight) * 100;
     const nameFontSizePx = 16;
 
     // Posición y tamaño del nombre del curso
-    const courseTopPercent = (400 / originalImageHeight) * 100;
+    const courseTopPercent = (330 / originalImageHeight) * 100;
     const courseLeftPercent = (600 / originalImageWidth) * 100;
     const courseWidthPercent = (1883 / originalImageWidth) * 100;
     const courseHeightPercent = (161 / originalImageHeight) * 100;
     const courseFontSizePx = 16;
 
     // Posición de los dígitos del código del estudiante
-    const digitsTopPercent = (850 / originalImageHeight) * 100;
+    const digitsTopPercent = (1200 / originalImageHeight) * 100;
     const digitsLeftPercent = (670 / originalImageWidth) * 100;
     const digitsWidthPercent = (1309 / originalImageWidth) * 100; // Corrected value
     const digitsHeightPercent = (95 / originalImageHeight) * 100;
     // const digitsFontSizePx = 16; // Removed as it will be controlled by CSS
 
     // Posición y tamaño de la matriz de burbujas
-    const matrixTopPercent = (976 / originalImageHeight) * 100;
+    const matrixTopPercent = (1360 / originalImageHeight) * 100;
     const matrixLeftPercent = (671 / originalImageWidth) * 100;
     const matrixWidthPercent = (1303 / originalImageWidth) * 100;
-    const matrixHeightPercent = (922 / originalImageHeight) * 100;
-    const matrixGapPx = 2;
+    const matrixHeightPercent = (1289 / originalImageHeight) * 100;
+    const matrixGapPx = 1.3;
 
     const COLS = 10; // Updated from 9 to 10
     const ROWS = 10;
