@@ -23,7 +23,24 @@
           :key="student.id"
         >
           <div class="slide-content-wrapper">
-            <AnswerSheet :student="student" :course-name="courseName" :scale="0.12" />
+            <!-- Sección de Configuración para Vista Previa Individual -->
+            <!--
+              Estas variables controlan el tamaño de la hoja de respuesta individual
+              dentro del carrusel de vista previa, usando unidades relativas (porcentajes, vw, vh).
+
+              - individualSheetWidth: Ancho de la hoja de respuesta. Ejemplos: '80%', '70vw'.
+                                      Ajusta este valor para controlar el ancho de la hoja.
+              - individualSheetHeight: Alto de la hoja de respuesta. Ejemplos: 'auto', '90vh'.
+                                       'auto' mantendrá la proporción.
+            -->
+            <AnswerSheet
+              :student="student"
+              :course-name="courseName"
+              :style="{
+                width: individualSheetWidth,
+                height: individualSheetHeight,
+              }"
+            />
           </div>
         </swiper-slide>
       </swiper>
@@ -78,6 +95,14 @@ export default {
   setup() {
     const studentData = ref([]);
     const year = ref(null);
+
+    // --- Variables de Configuración para Vista Previa Individual ---
+    // Ajusta estos valores para controlar el tamaño de la hoja de respuesta
+    // en la vista previa individual (dentro del carrusel).
+    // Puedes usar porcentajes (ej. '80%') o unidades de viewport (ej. '70vw', '90vh').
+    const individualSheetWidth = ref('70vw'); // Ancho de la hoja de respuesta
+    const individualSheetHeight = ref('auto'); // Alto de la hoja de respuesta ('auto' para mantener proporción)
+    // --- Fin de Variables de Configuración para Vista Previa Individual ---
 
     const paginatedStudents = computed(() => {
       const students = studentData.value[0]?.students || [];
@@ -401,6 +426,8 @@ export default {
       printSheets,
       printOutline,
       modules: [Pagination],
+      individualSheetWidth,
+      individualSheetHeight,
     };
   },
 };
@@ -484,6 +511,21 @@ export default {
     transform-origin: center center;
     border: 1px dashed #ccc;
     margin: 0;
+  }
+
+  .slide-content-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* Ensure content doesn't spill out */
+  }
+
+  .slide-content-wrapper .answer-sheet {
+    /* The scale is applied directly to the answer-sheet component */
+    /* The margins are applied via inline style from the component */
+    /* No need for additional transform or margin here */
   }
 }
 </style>

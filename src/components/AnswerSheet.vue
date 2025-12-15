@@ -1,6 +1,12 @@
 <template>
-  <div class="answer-sheet" :style="{ transform: `scale(${scale})` }">
-    <div class="image-wrapper">
+  <div class="answer-sheet" ref="answerSheetRef">
+    <div
+      class="image-wrapper"
+      :style="{
+        transform: `scale(${internalScale})`,
+        transformOrigin: 'top left',
+      }"
+    >
       <img
         src="/hoja50.jpg"
         alt="Hoja OMR"
@@ -15,7 +21,7 @@
 </template>
 
 <script>
-import { onBeforeUnmount, ref } from "vue";
+import { onBeforeUnmount, ref, onMounted, watch, nextTick } from "vue";
 
 export default {
   props: {
@@ -27,15 +33,13 @@ export default {
       type: String,
       default: "",
     },
-    scale: {
-      type: Number,
-      default: 0.1044, // This default will be overridden by the prop from PrintableStudentSheet.vue
-    },
   },
   setup(props) {
     const textLayerRef = ref(null);
     const digitLayerRef = ref(null);
     const gridOverlayRef = ref(null);
+    const answerSheetRef = ref(null); // Add ref for the root element
+    const internalScale = ref(1.1); // Default to 1, will be calculated
 
     // --- Configuración de Dimensiones y Posicionamiento ---
     // Nuevas dimensiones de la imagen (en píxeles).
@@ -57,31 +61,64 @@ export default {
     const nameLeftPercent = (600 / originalImageWidth) * 100;
     const nameWidthPercent = (2934 / originalImageWidth) * 100;
     const nameHeightPercent = (114 / originalImageHeight) * 100;
-    const nameFontSizePx = 120;
+    const nameFontSizePx = 16;
 
     // Posición y tamaño del nombre del curso
     const courseTopPercent = (400 / originalImageHeight) * 100;
     const courseLeftPercent = (600 / originalImageWidth) * 100;
     const courseWidthPercent = (1883 / originalImageWidth) * 100;
     const courseHeightPercent = (161 / originalImageHeight) * 100;
-    const courseFontSizePx = 180;
+    const courseFontSizePx = 16;
 
     // Posición de los dígitos del código del estudiante
     const digitsTopPercent = (850 / originalImageHeight) * 100;
     const digitsLeftPercent = (670 / originalImageWidth) * 100;
-    const digitsWidthPercent = ((1089 - 177) / originalImageWidth) * 100; // Corrected value
+    const digitsWidthPercent = (1309 / originalImageWidth) * 100; // Corrected value
     const digitsHeightPercent = (95 / originalImageHeight) * 100;
-    const digitsFontSizePx = 180;
+    const digitsFontSizePx = 16;
 
     // Posición y tamaño de la matriz de burbujas
-    const matrixTopPercent = (980 / originalImageHeight) * 100;
-    const matrixLeftPercent = (670 / originalImageWidth) * 100;
+    const matrixTopPercent = (976 / originalImageHeight) * 100;
+    const matrixLeftPercent = (671 / originalImageWidth) * 100;
     const matrixWidthPercent = (1303 / originalImageWidth) * 100;
-    const matrixHeightPercent = (950 / originalImageHeight) * 100;
-    const matrixGapPx = 20;
+    const matrixHeightPercent = (922 / originalImageHeight) * 100;
+    const matrixGapPx = 2;
 
     const COLS = 10; // Updated from 9 to 10
     const ROWS = 10;
+
+    const calculateInternalScale = () => {
+      if (answerSheetRef.value) {
+        const containerWidth = answerSheetRef.value.offsetWidth;
+        // Calculate scale based on the desired width relative to the original image width
+        // We want the newImageWidth (3313px) to fit within the containerWidth
+        internalScale.value = containerWidth / newImageWidth;
+      }
+    };
+
+    onMounted(() => {
+      nextTick(() => {
+        // Ensure DOM is updated before calculating scale
+        calculateInternalScale();
+      });
+      window.addEventListener("resize", calculateInternalScale);
+    });
+
+    onBeforeUnmount(() => {
+      window.removeEventListener("resize", calculateInternalScale);
+    });
+
+    watch(
+      [() => props.student, () => props.courseName],
+      () => {
+        nextTick(() => {
+          // Ensure DOM is updated before re-initializing and calculating scale
+          initializeSheet();
+          calculateInternalScale();
+        });
+      },
+      { deep: true }
+    );
 
     const createGridOverlay = () => {
       const overlay = gridOverlayRef.value;
@@ -149,7 +186,14 @@ export default {
       });
     };
 
-    const putText = (str, topPercent, leftPercent, widthPercent, heightPercent, fontSizePx) => {
+    const putText = (
+      str,
+      topPercent,
+      leftPercent,
+      widthPercent,
+      heightPercent,
+      fontSizePx
+    ) => {
       const textLayer = textLayerRef.value;
       if (!textLayer) return;
 
@@ -178,7 +222,14 @@ export default {
       textLayer.appendChild(div);
     };
 
-    const putDigits = (str, topPercent, leftPercent, widthPercent, heightPercent, fontSizePx) => {
+    const putDigits = (
+      str,
+      topPercent,
+      leftPercent,
+      widthPercent,
+      heightPercent,
+      fontSizePx
+    ) => {
       const layer = digitLayerRef.value;
       if (!layer) return;
 
@@ -315,6 +366,7 @@ export default {
       gridOverlayRef,
       newImageWidth, // Expose for template if needed, though CSS handles it
       newImageHeight, // Expose for template if needed, though CSS handles it
+      internalScale,
     };
   },
 };
