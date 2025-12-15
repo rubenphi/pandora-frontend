@@ -81,7 +81,7 @@ export default {
     const matrixTopPercent = (1360 / originalImageHeight) * 100;
     const matrixLeftPercent = (671 / originalImageWidth) * 100;
     const matrixWidthPercent = (1303 / originalImageWidth) * 100;
-    const matrixHeightPercent = (1289 / originalImageHeight) * 100;
+    const matrixHeightPercent = (1320 / originalImageHeight) * 100;
     const matrixGapPx = 1.3;
 
     const COLS = 10; // Updated from 9 to 10

@@ -17,31 +17,44 @@
       </ion-toolbar>
     </ion-header>
     <ion-content class="ion-padding" :fullscreen="true">
-      <swiper
-        :modules="modules"
-        :pagination="{ clickable: true }"
-        class="fullscreen-slides"
-      >
-        <swiper-slide v-for="student in allStudents" :key="student.id">
-          <div class="slide-content-wrapper">
-            <!-- Sección de Configuración para Vista Previa Individual -->
-            <!--
-              Estas variables controlan el tamaño de la hoja de respuesta individual
-              dentro del carrusel de vista previa, usando unidades relativas (porcentajes, vw, vh).
+      <ion-list v-if="allStudents.length > 0">
+        <ion-list-header>
+          <ion-label>Estudiantes</ion-label>
+        </ion-list-header>
+        <ion-item
+          v-for="student in allStudents"
+          :key="student.id"
+          @click="openStudentSheetModal(student)"
+          button
+        >
+          <ion-label>{{ student.lastName }} {{ student.name }}</ion-label>
+        </ion-item>
+      </ion-list>
+      <div v-else>
+        <p>No hay estudiantes para mostrar.</p>
+      </div>
 
-              - individualSheetWidth: Ancho de la hoja de respuesta. Ejemplos: '80%', '70vw'.
-                                      Ajusta este valor para controlar el ancho de la hoja.
-              - individualSheetHeight: Alto de la hoja de respuesta. Ejemplos: 'auto', '90vh'.
-                                       'auto' mantendrá la proporción.
-            -->
+      <ion-modal :is-open="isModalOpen" @didDismiss="isModalOpen = false">
+        <ion-header>
+          <ion-toolbar>
+           <ion-buttons slot="start">
+             <ion-button slot="start" >Descargar</ion-button>
+           </ion-buttons>
+            <ion-buttons slot="end">
+               <ion-button slot="end" @click="isModalOpen = false">Cerrar</ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding">
+          <div class="modal-sheet-wrapper" v-if="selectedStudent">
             <AnswerSheet
-              :student="student"
+              :student="selectedStudent"
               :course-name="courseName"
-              class="responsive-answer-sheet"
+              class="responsive-answer-sheet-modal"
             />
           </div>
-        </swiper-slide>
-      </swiper>
+        </ion-content>
+      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
@@ -57,23 +70,17 @@ import {
   IonBackButton,
   IonButton,
   IonIcon,
+  IonList,
+  IonItem,
+  IonLabel,
+  IonListHeader,
+  IonModal,
 } from "@ionic/vue";
 import { printOutline } from "ionicons/icons";
 import { onMounted, ref, computed } from "vue";
 import AnswerSheet from "@/components/AnswerSheet.vue";
 import axios from "axios";
 import { tokenHeader } from "@/globalService";
-
-// Import Swiper Vue.js components
-import { Swiper, SwiperSlide } from "swiper/vue";
-
-// Import Swiper styles
-import "swiper/css";
-import "swiper/css/pagination";
-import "@ionic/vue/css/ionic-swiper.css";
-
-// import required modules
-import { Pagination } from "swiper/modules";
 
 export default {
   components: {
@@ -86,30 +93,18 @@ export default {
     IonBackButton,
     IonButton,
     IonIcon,
+    IonList,
+    IonItem,
+    IonLabel,
+    IonListHeader,
+    IonModal,
     AnswerSheet,
-    Swiper,
-    SwiperSlide,
   },
   setup() {
     const studentData = ref([]);
     const year = ref(null);
-
-    // --- Configuración para Vista Previa Individual (Responsiva) ---
-    // El tamaño de la hoja de respuesta individual se ajusta mediante CSS con media queries.
-    // Puedes modificar los estilos en la sección <style> de este archivo,
-    // buscando la clase '.responsive-answer-sheet' y ajustando los valores
-    // de 'width' y 'height' para diferentes tamaños de pantalla (escritorio, móvil).
-    // --- Fin de Configuración para Vista Previa Individual ---
-
-    const paginatedStudents = computed(() => {
-      const students = studentData.value[0]?.students || [];
-      const pageSize = 6;
-      const pages = [];
-      for (let i = 0; i < students.length; i += pageSize) {
-        pages.push(students.slice(i, i + pageSize));
-      }
-      return pages;
-    });
+    const isModalOpen = ref(false);
+    const selectedStudent = ref(null);
 
     const courseName = computed(() => studentData.value[0]?.name);
 
@@ -196,8 +191,8 @@ export default {
 
         // Posición de los dígitos del código del estudiante
         const digitsTopPercent = (850 / originalImageHeight) * 100;
-        const digitsLeftPercent = (670 / originalImageWidth) * 100;
-        const digitsWidthPercent = ((1089 - 177) / originalImageWidth) * 100;
+        const digitsLeftPercent = (640 / originalImageWidth) * 100;
+        const digitsWidthPercent = (1350 / originalImageWidth) * 100;
         const digitsHeightPercent = (95 / originalImageHeight) * 100;
 
         // Posición y tamaño de la matriz de burbujas
@@ -422,14 +417,20 @@ export default {
       return studentData.value[0]?.students || [];
     });
 
+    const openStudentSheetModal = (student) => {
+      selectedStudent.value = student;
+      isModalOpen.value = true;
+    };
+
     return {
-      paginatedStudents,
-      allStudents, // Added for individual student preview
+      allStudents,
       year,
       courseName,
       printSheets,
       printOutline,
-      modules: [Pagination],
+      isModalOpen,
+      selectedStudent,
+      openStudentSheetModal,
     };
   },
 };
@@ -493,49 +494,6 @@ export default {
     border: 1px dashed #ccc;
   }
 
-  .fullscreen-slides {
-    height: 100%;
-    background: #f0f0f0;
-  }
-
-  .print-page-wrapper {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-  }
-
-  /* For screen preview in slider, we scale down the page */
-  .fullscreen-slides .print-page {
-    transform: scale(0.3); /* Adjust this scale for best fit on screen */
-    transform-origin: center center;
-    border: 1px dashed #ccc;
-    margin: 0;
-  }
-
-  .slide-content-wrapper {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-    overflow: hidden; /* Ensure content doesn't spill out */
-  }
-
-  .slide-content-wrapper .answer-sheet {
-    /* The scale is applied directly to the answer-sheet component */
-    /* The margins are applied via inline style from the component */
-    /* No need for additional transform or margin here */
-  }
-
-  /* Responsive styles for the individual AnswerSheet */
-  .responsive-answer-sheet {
-    width: 70vw; /* Default for smaller screens */
-    height: auto;
-  }
-
   .student-name-text {
     font-size: 2.8vw !important; /* Default font size for smaller screens */
   }
@@ -546,25 +504,17 @@ export default {
 
   @media (min-width: 768px) {
     /* Adjust for tablets and larger screens */
-    .responsive-answer-sheet {
-      width: 20vw;
-    }
-
     .student-name-text {
-      font-size: 0.7vw !important; /* Example: Smaller font size on desktop */
+      font-size: 1.5vw !important; /* Example: Smaller font size on desktop */
     }
 
     .student-code-digit-text {
-      font-size: 0.7vw !important; /* Example: Smaller font size on desktop */
+      font-size: 1.5vw !important; /* Example: Smaller font size on desktop */
     }
   }
 
   @media (min-width: 1024px) {
     /* Adjust for desktops */
-    .responsive-answer-sheet {
-      width: 20vw; /* Example: 50% of viewport width on desktop */
-    }
-
     .student-name-text {
       font-size: 0.7vw !important; /* Example: Smaller font size on desktop */
     }
@@ -573,5 +523,19 @@ export default {
       font-size: 0.7vw !important; /* Example: Smaller font size on desktop */
     }
   }
+}
+
+.modal-sheet-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
+.responsive-answer-sheet-modal {
+  width: 90%; /* Adjust as needed for modal size */
+  height: auto;
+  max-height: 90%;
 }
 </style>
