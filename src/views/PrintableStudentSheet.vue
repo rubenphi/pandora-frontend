@@ -121,86 +121,143 @@ export default {
       const students = studentData.value[0]?.students || [];
       const course = courseName.value || "";
 
+      // --- Configuración de Dimensiones y Posicionamiento ---
+      // Nuevas dimensiones de la imagen (en píxeles).
+      const newImageWidth = 3313;
+      const newImageHeight = 4919;
+
+      // El factor de escala se calcula para que la nueva imagen quepa en el espacio de la grilla.
+      // Se asume que una celda de la grilla es aprox. 408x415px (a 96 DPI).
+      // La escala es el valor mínimo para asegurar que tanto el ancho como el alto quepan.
+      // scale = min(ancho_celda / ancho_imagen, alto_celda / alto_imagen)
+      // scale = min(408 / 3313, 415 / 4919) = min(0.123, 0.0843) = 0.0843
+      const scale = 0.0843;
+
       // Función para generar el código de una hoja
       const generateSheetCode = (student) => {
         const originalCode = student.code || "";
         const name = student.name || "";
         const lastName = student.lastName || "";
 
+        // --- Variables de Posicionamiento (basadas en el layout original) ---
+        // Estas variables usan porcentajes para posicionar los elementos.
+        // Se basan en las coordenadas de píxeles del diseño original para mantener la consistencia.
+        // La altura original (3520px) se usa como referencia para las posiciones verticales.
+
+        const originalImageWidth = 3313;
+        const originalImageHeight = 3520;
+
+        // Posición y tamaño del nombre del estudiante
+        const nameTopPercent = (60 / originalImageHeight) * 100;
+        const nameLeftPercent = (600 / originalImageWidth) * 100;
+        const nameWidthPercent = (2934 / originalImageWidth) * 100;
+        const nameHeightPercent = (114 / originalImageHeight) * 100;
+        const nameFontSizePx = 120; // Se escala con el transform del wrapper
+
+        // Posición y tamaño del nombre del curso
+        const courseTopPercent = (400 / originalImageHeight) * 100;
+        const courseLeftPercent = (600 / originalImageWidth) * 100;
+        const courseWidthPercent = (1883 / originalImageWidth) * 100;
+        const courseHeightPercent = (161 / originalImageHeight) * 100;
+        const courseFontSizePx = 180; // Se escala con el transform
+
+        // Posición de los dígitos del código del estudiante
+        const digitsTopPercent = (850 / originalImageHeight) * 100;
+        const digitsLeftPercent = (670 / originalImageWidth) * 100;
+        const digitsWidthPercent = ((1489 - 177) / originalImageWidth) * 100;
+        const digitsHeightPercent = (95 / originalImageHeight) * 100;
+        const digitsFontSizePx = 180; // Se escala con el transform
+
+        // Posición y tamaño de la matriz de burbujas
+        const matrixTopPercent = (980 / originalImageHeight) * 100;
+        const matrixLeftPercent = (670 / originalImageWidth) * 100;
+        const matrixWidthPercent = (1303 / originalImageWidth) * 100;
+        const matrixHeightPercent = (950 / originalImageHeight) * 100;
+        const matrixGapPx = 20; // Se escala con el transform
+
         // Formatear código a 9 dígitos SOLO para la matriz
         let formattedCode = String(originalCode).replace(/\D/g, "");
-        if (formattedCode.length > 9) {
-          formattedCode = formattedCode.slice(-9);
-        } else if (formattedCode.length < 9) {
-          formattedCode = formattedCode.padStart(9, "0");
-        }
 
-        if (formattedCode.length !== 9) {
-          formattedCode = formattedCode.padStart(9, "0");
-        }
-
-        // Crear matriz de 10 filas × 9 columnas
-        const matrix = Array.from({ length: 10 }, () => Array(9).fill(0));
-        for (let col = 0; col < 9; col++) {
+        // Crear matriz de 10 filas × 10 columnas
+        const matrix = Array.from({ length: 10 }, () => Array(10).fill(0));
+        for (let col = 0; col < 10; col++) {
           const digit = parseInt(formattedCode[col], 10);
           if (!isNaN(digit)) {
-            matrix[digit][col] = 1;
+            // Mapeo de dígitos a filas:
+            // Dígito 1-9 -> Fila 1-9 (índice 0-8)
+            // Dígito 0 -> Fila 10 (índice 9)
+            const rowIndex = digit === 0 ? 9 : digit - 1;
+            if (rowIndex >= 0 && rowIndex < 10) {
+              matrix[rowIndex][col] = 1;
+            }
           }
         }
 
-        // Generar celdas del grid
+        // Generar celdas del grid para la matriz
         let cellsHTML = "";
         for (let r = 0; r < 10; r++) {
-          for (let c = 0; c < 9; c++) {
-            const filled = matrix[r][c] === 1 ? "background: black; border-radius: 50%;" : "";
+          for (let c = 0; c < 10; c++) {
+            const filled =
+              matrix[r][c] === 1
+                ? "background: black; border-radius: 50%;"
+                : "";
             cellsHTML += `<div class="grid-cell" style="width: 100%; height: 100%; box-sizing: border-box; ${filled}"></div>`;
           }
         }
 
-        // Generar dígitos usando el código ORIGINAL (sin formatear)
-        const x1 = 177;
-        const x2 = 1089;
-        const totalWidth = x2 - x1;
+        // Generar dígitos del código
         const codeToDisplay = String(originalCode);
-        const digitWidth = totalWidth / codeToDisplay.length;
         let digitsHTML = "";
+        const digitWidthPercent = 100 / codeToDisplay.length;
         for (let i = 0; i < codeToDisplay.length; i++) {
           digitsHTML += `
-        <div style="position: absolute; left: ${
-          x1 + i * digitWidth
-        }px; top: 687px; 
-             width: ${digitWidth}px; height: 95px; font-size: 76px; line-height: 95px;
-             text-align: center; color: black; font-family: Arial, sans-serif;">
-          ${codeToDisplay[i]}
-        </div>
-      `;
+            <div style="position: absolute; left: ${
+              i * digitWidthPercent
+            }%; top: 0;
+                 width: ${digitWidthPercent}%; height: 100%;
+                 font-size: ${digitsFontSizePx}px; line-height: 1;
+                 text-align: center; color: black; font-family: Arial, sans-serif;
+                 display: flex; align-items: center; justify-content: center;">
+              ${codeToDisplay[i]}
+            </div>
+          `;
         }
 
         return `
       <div class="image-wrapper">
-        <img src="/hoja50.jpg" alt="Hoja OMR" style="display: block; width: 100%; height: 100%; object-fit: cover;" />
+        <img src="/hoja50.jpg" alt="Hoja OMR" style="display: block; width: 100%; height: 100%;" />
         <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;">
-          <div style="position: absolute; left: 366px; top: 20px; width: 2834px; height: 114px;
-               font-size: 91px; line-height: 114px; color: black; font-family: Arial, sans-serif;
-               white-space: nowrap; overflow: hidden;">
+          
+          <!-- Nombre del Estudiante -->
+          <div style="position: absolute; left: ${nameLeftPercent}%; top: ${nameTopPercent}%; width: ${nameWidthPercent}%; height: ${nameHeightPercent}%;
+               font-size: ${nameFontSizePx}px; line-height: 1; color: black; font-family: Arial, sans-serif;
+               white-space: nowrap; overflow: hidden; display: flex; align-items: center;">
             ${lastName} ${name}
           </div>
+
+          <!-- Nombre del Curso -->
           ${
             course
               ? `
-            <div style="position: absolute; left: 1396px; top: 295px; width: 1883px; height: 161px;
-                 font-size: 118px; line-height: 161px; color: black; font-family: Arial, sans-serif;
-                 white-space: nowrap; overflow: hidden;">
+            <div style="position: absolute; left: ${courseLeftPercent}%; top: ${courseTopPercent}%; width: ${courseWidthPercent}%; height: ${courseHeightPercent}%;
+                 font-size: ${courseFontSizePx}px; line-height: 1; color: black; font-family: Arial, sans-serif;
+                 white-space: nowrap; overflow: hidden; display: flex; align-items: center;">
               ${course}
             </div>
           `
               : ""
           }
-          ${digitsHTML}
+
+          <!-- Dígitos del Código -->
+          <div style="position: absolute; left: ${digitsLeftPercent}%; top: ${digitsTopPercent}%; width: ${digitsWidthPercent}%; height: ${digitsHeightPercent}%; display: flex;">
+             ${digitsHTML}
+          </div>
         </div>
-        <div style="position: absolute; left: 266px; top: 796px; width: 825px; height: 918px;
-             display: grid; grid-template-columns: repeat(9, 1fr); grid-template-rows: repeat(10, 1fr);
-             gap: 20px; z-index: 50; pointer-events: none;">
+
+        <!-- Matriz de Burbujas -->
+        <div style="position: absolute; left: ${matrixLeftPercent}%; top: ${matrixTopPercent}%; width: ${matrixWidthPercent}%; height: ${matrixHeightPercent}%;
+             display: grid; grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(10, 1fr);
+             gap: ${matrixGapPx}px; z-index: 50; pointer-events: none;">
           ${cellsHTML}
         </div>
       </div>
@@ -282,16 +339,14 @@ export default {
         }
         
        .image-wrapper {
-  position: relative;
-  width: 3313px;
-  height: 3520px;
-  user-select: none;
-  transform: scale(0.1044);
-  transform-origin: top left;
-  transform-box: fill-box;  /* <-- importante */
-  overflow: hidden;
-}
-
+          position: relative;
+          width: ${newImageWidth}px;
+          height: ${newImageHeight}px;
+          user-select: none;
+          transform: scale(${scale});
+          transform-origin: top left;
+          overflow: hidden;
+        }
         
         @media print {
           body {

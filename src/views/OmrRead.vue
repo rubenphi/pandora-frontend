@@ -459,6 +459,42 @@ export default {
       } else {
         student.value = foundStudent;
         try {
+          const coursesResponse = await axios.get(
+            `/users/${student.value.id}/courses`
+          );
+          const studentCourses = coursesResponse.data;
+          const activeUserCourse = studentCourses.find((uc) => uc.active);
+
+          if (
+            !activeUserCourse ||
+            activeUserCourse.course.id !== cuestionario.value.courseId
+          ) {
+            const alert = await alertController.create({
+              header: "Estudiante no Autorizado",
+              message: `El estudiante ${student.value.name} ${student.value.lastName} no pertenece al curso activo de este cuestionario.`,
+              buttons: ["OK"],
+            });
+            await alert.present();
+            student.value = {};
+            activeGroup.value = null;
+            studentCodeInput.value = "";
+            return;
+          }
+        } catch (error) {
+          console.error("Error fetching student courses:", error);
+          const alert = await alertController.create({
+            header: "Error de Verificación",
+            message:
+              "No se pudo verificar la inscripción del estudiante al curso. Por favor, inténtelo de nuevo.",
+            buttons: ["OK"],
+          });
+          await alert.present();
+          student.value = {};
+          activeGroup.value = null;
+          return;
+        }
+
+        try {
           const groupsResponse = await axios.get(
             `/users/${student.value.id}/groups?active=true`
           );
@@ -609,6 +645,7 @@ export default {
         title: response.data.title,
         quizType: response.data.quizType,
         lessonId: response.data.lesson.id,
+        courseId: response.data.lesson.course.id,
         questions: response.data.questions.sort((a, b) => a.id - b.id),
         instituteId: response.data.lesson.institute.id,
       };
