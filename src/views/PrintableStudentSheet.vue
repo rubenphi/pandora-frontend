@@ -38,7 +38,7 @@
         <ion-header>
           <ion-toolbar>
            <ion-buttons slot="start">
-             <ion-button slot="start" >Descargar</ion-button>
+             <ion-button slot="start" @click="downloadSheet">Descargar</ion-button>
            </ion-buttons>
             <ion-buttons slot="end">
                <ion-button slot="end" @click="isModalOpen = false">Cerrar</ion-button>
@@ -48,6 +48,7 @@
         <ion-content class="ion-padding">
           <div class="modal-sheet-wrapper" v-if="selectedStudent">
             <AnswerSheet
+              ref="answerSheetRef"
               :student="selectedStudent"
               :course-name="courseName"
               class="responsive-answer-sheet-modal"
@@ -105,6 +106,7 @@ export default {
     const year = ref(null);
     const isModalOpen = ref(false);
     const selectedStudent = ref(null);
+    const answerSheetRef = ref(null);
 
     const courseName = computed(() => studentData.value[0]?.name);
 
@@ -422,6 +424,24 @@ export default {
       isModalOpen.value = true;
     };
 
+    const downloadSheet = async () => {
+      // Acceder a la instancia del componente hijo
+      const componentInstance = answerSheetRef.value;
+      if (!componentInstance) return;
+
+      const imgSrc = componentInstance.generatedImageSrc;
+      
+      if (!imgSrc) {
+        console.warn("La imagen aún no se ha generado");
+        return;
+      }
+
+      const link = document.createElement("a");
+      link.download = `hoja_respuesta_${selectedStudent.value.code}.png`;
+      link.href = imgSrc;
+      link.click();
+    };
+
     return {
       allStudents,
       year,
@@ -431,6 +451,8 @@ export default {
       isModalOpen,
       selectedStudent,
       openStudentSheetModal,
+      answerSheetRef,
+      downloadSheet,
     };
   },
 };
