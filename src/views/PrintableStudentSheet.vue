@@ -440,9 +440,9 @@ export default {
         } catch (error) {
           // Ignorar errores de cancelación por parte del usuario
           if (
-            error.message &&
-            (!error.message.toLowerCase().includes("cancel") ||
-              !error.message.toLowerCase().includes("dismiss"))
+            error?.message &&
+            !error.message.toLowerCase().includes("cancel") &&
+            !error.message.toLowerCase().includes("dismiss")
           ) {
             console.error("Error al compartir el archivo:", error);
           }
