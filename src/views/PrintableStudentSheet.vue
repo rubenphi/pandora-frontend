@@ -37,11 +37,15 @@
       <ion-modal :is-open="isModalOpen" @didDismiss="isModalOpen = false">
         <ion-header>
           <ion-toolbar>
-           <ion-buttons slot="start">
-             <ion-button slot="start" @click="downloadSheet">Descargar</ion-button>
-           </ion-buttons>
+            <ion-buttons slot="start">
+              <ion-button slot="start" @click="downloadSheet"
+                >Descargar</ion-button
+              >
+            </ion-buttons>
             <ion-buttons slot="end">
-               <ion-button slot="end" @click="isModalOpen = false">Cerrar</ion-button>
+              <ion-button slot="end" @click="isModalOpen = false"
+                >Cerrar</ion-button
+              >
             </ion-buttons>
           </ion-toolbar>
         </ion-header>
@@ -82,8 +86,8 @@ import { onMounted, ref, computed } from "vue";
 import AnswerSheet from "@/components/AnswerSheet.vue";
 import axios from "axios";
 import { tokenHeader } from "@/globalService";
-import { FileSharer } from '@byteowls/capacitor-filesharer';
-import { Capacitor } from '@capacitor/core';
+import { FileSharer } from "@byteowls/capacitor-filesharer";
+import { Capacitor } from "@capacitor/core";
 
 export default {
   components: {
@@ -432,7 +436,7 @@ export default {
       if (!componentInstance) return;
 
       const imgSrc = componentInstance.generatedImageSrc;
-      
+
       if (!imgSrc) {
         console.warn("La imagen aún no se ha generado");
         return;
@@ -451,9 +455,13 @@ export default {
           });
         } catch (error) {
           // Ignorar errores de cancelación por parte del usuario
-          if (error.message && (error.message.toLowerCase().includes('cancel') || error.message.toLowerCase().includes('dismiss'))) {
-            console.log('El usuario canceló compartir el archivo');
-          } else {
+          if (
+            error.message &&
+            !(
+              error.message.toLowerCase().includes("cancel") &&
+              error.message.toLowerCase().includes("dismiss")
+            )
+          ) {
             console.error("Error al compartir el archivo:", error);
           }
         }
