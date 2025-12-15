@@ -238,7 +238,7 @@ export default {
                        (digit) => `
                <div style="flex: 1; height: 100%; 
                            display: flex; align-items: center; justify-content: center;
-                           font-size: 110px; font-weight: bold; color: black; font-family: Arial, sans-serif; line-height: 1;">
+                           font-size: 150px; font-weight: bold; color: black; font-family: Arial, sans-serif; line-height: 1;">
                  ${digit}
                </div>`
                      )
