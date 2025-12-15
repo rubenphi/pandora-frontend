@@ -10,7 +10,8 @@
         <ion-title>Hojas de Respuesta</ion-title>
         <ion-buttons slot="end">
           <ion-button @click="printSheets">
-            <ion-icon slot="icon-only" :icon="printOutline"></ion-icon>
+            <ion-icon :icon="printOutline"></ion-icon>
+            Imprimir todas
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
