@@ -538,8 +538,9 @@ export default {
       const studentCode = payload.results.find(
         (r) => r.typeOrigin === "numeric"
       );
+      // Remove leading zeros to match database format
       sectionStudentCodes.value[sectionIndex] = studentCode
-        ? studentCode.content
+        ? studentCode.content.replace(/^0+/, "")
         : "";
 
       isScanning.value = false;

@@ -80,12 +80,11 @@ import {
   IonLabel,
   IonListHeader,
   IonModal,
+  alertController,
 } from "@ionic/vue";
 import { printOutline } from "ionicons/icons";
 import { onMounted, ref, computed } from "vue";
 import AnswerSheet from "@/components/AnswerSheet.vue";
-import axios from "axios";
-import { tokenHeader } from "@/globalService";
 import { FileSharer } from "@byteowls/capacitor-filesharer";
 import { Capacitor } from "@capacitor/core";
 
@@ -118,38 +117,16 @@ export default {
 
     onMounted(async () => {
       if (window.history.state.studentData) {
-        const rawStudentData = window.history.state.studentData;
-        const courseId = rawStudentData[0]?.id;
-        const students = rawStudentData[0]?.students || [];
-        year.value = window.history.state.year;
-
-        if (courseId && students.length > 0) {
-          try {
-            const usersNoGroupResponse = await axios.get(
-              `/courses/${courseId}/usersNoGroup?year=${year.value}`,
-              tokenHeader()
-            );
-            const usersWithoutGroupIds = new Set(
-              usersNoGroupResponse.data.map((u) => u.user.id)
-            );
-
-            const studentsWithGroup = students.filter(
-              (student) => !usersWithoutGroupIds.has(student.id)
-            );
-
-            studentData.value = [
-              {
-                ...rawStudentData[0],
-                students: studentsWithGroup,
-              },
-            ];
-          } catch (error) {
-            console.error("Error filtering students by group:", error);
-            studentData.value = rawStudentData;
-          }
-        } else {
-          studentData.value = rawStudentData;
+        const data = window.history.state.studentData;
+        if (data[0] && data[0].students) {
+          data[0].students.sort((a, b) => {
+            const nameA = (a.lastName + " " + a.name).toLowerCase();
+            const nameB = (b.lastName + " " + b.name).toLowerCase();
+            return nameA.localeCompare(nameB);
+          });
         }
+        studentData.value = data;
+        year.value = window.history.state.year;
       }
     });
 
@@ -210,8 +187,9 @@ export default {
         const matrixHeightPercent = (950 / originalImageHeight) * 100;
         const matrixGapPx = 20; // Se escala con el transform
 
-        // Formatear código a 9 dígitos SOLO para la matriz
+        // Formatear código a 10 dígitos SOLO para la matriz y visualización OMR
         let formattedCode = String(originalCode).replace(/\D/g, "");
+        formattedCode = formattedCode.padStart(10, "0").slice(0, 10);
 
         // Crear matriz de 10 filas × 10 columnas
         const matrix = Array.from({ length: 10 }, () => Array(10).fill(0));
@@ -241,7 +219,7 @@ export default {
         }
 
         // Generar dígitos del código
-        const codeToDisplay = String(originalCode);
+        const codeToDisplay = formattedCode;
         let digitsHTML = "";
         const digitWidthPercent = 100 / codeToDisplay.length;
         for (let i = 0; i < codeToDisplay.length; i++) {
@@ -438,7 +416,13 @@ export default {
       const imgSrc = componentInstance.generatedImageSrc;
 
       if (!imgSrc) {
-        console.warn("La imagen aún no se ha generado");
+        const alert = await alertController.create({
+          header: "Espere un momento",
+          message:
+            "La imagen se está generando. Por favor intente nuevamente en unos segundos.",
+          buttons: ["OK"],
+        });
+        await alert.present();
         return;
       }
 
@@ -457,10 +441,8 @@ export default {
           // Ignorar errores de cancelación por parte del usuario
           if (
             error.message &&
-            !(
-              error.message.toLowerCase().includes("cancel") &&
-              error.message.toLowerCase().includes("dismiss")
-            )
+            (!error.message.toLowerCase().includes("cancel") ||
+              !error.message.toLowerCase().includes("dismiss"))
           ) {
             console.error("Error al compartir el archivo:", error);
           }

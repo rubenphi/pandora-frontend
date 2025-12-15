@@ -301,6 +301,7 @@ export default {
 
     const numberToMatrix = (input) => {
       let str = String(input).replace(/\D/g, "");
+      // Aseguramos 10 dígitos para la grilla
       str = str.padStart(COLS, "0").slice(0, COLS);
 
       const matrix = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
@@ -352,14 +353,17 @@ export default {
       }
 
       if (student.code) {
+        // Normalizamos a 10 dígitos para visualización y matriz
+        const paddedCode = String(student.code).replace(/\D/g, "").padStart(COLS, "0").slice(0, COLS);
+        
         putDigits(
-          student.code,
+          paddedCode,
           digitsTopPercent,
           digitsLeftPercent,
           digitsWidthPercent,
           digitsHeightPercent
         );
-        const { matrix } = numberToMatrix(student.code);
+        const { matrix } = numberToMatrix(paddedCode);
         setMatrix(overlay, matrix);
       }
     };
