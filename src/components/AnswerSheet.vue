@@ -191,21 +191,20 @@ export default {
       topPercent,
       leftPercent,
       widthPercent,
-      heightPercent,
-      fontSizePx
+      heightPercent
     ) => {
       const textLayer = textLayerRef.value;
       if (!textLayer) return;
 
       const div = document.createElement("div");
-      div.className = "text-box";
+      div.className = "text-box student-name-text"; // Add class here
       div.style.cssText = `
         position: absolute;
         left: ${leftPercent}%;
         top: ${topPercent}%;
         width: ${widthPercent}%;
         height: ${heightPercent}%;
-        font-size: ${fontSizePx}px;
+        /* font-size is now controlled by CSS class */
         line-height: 1; /* Adjusted to 1 for consistency with generatePrintHTML */
         background: transparent;
         border: none;
@@ -320,7 +319,7 @@ export default {
           nameLeftPercent,
           nameWidthPercent,
           nameHeightPercent,
-          nameFontSizePx
+          nameFontSizePx // Use the prop for name font size
         );
       }
 

@@ -17,11 +17,12 @@
       </ion-toolbar>
     </ion-header>
     <ion-content class="ion-padding" :fullscreen="true">
-      <swiper :modules="modules" :pagination="{ clickable: true }" class="fullscreen-slides">
-        <swiper-slide
-          v-for="student in allStudents"
-          :key="student.id"
-        >
+      <swiper
+        :modules="modules"
+        :pagination="{ clickable: true }"
+        class="fullscreen-slides"
+      >
+        <swiper-slide v-for="student in allStudents" :key="student.id">
           <div class="slide-content-wrapper">
             <!-- Sección de Configuración para Vista Previa Individual -->
             <!--
@@ -36,10 +37,7 @@
             <AnswerSheet
               :student="student"
               :course-name="courseName"
-              :style="{
-                width: individualSheetWidth,
-                height: individualSheetHeight,
-              }"
+              class="responsive-answer-sheet"
             />
           </div>
         </swiper-slide>
@@ -96,13 +94,12 @@ export default {
     const studentData = ref([]);
     const year = ref(null);
 
-    // --- Variables de Configuración para Vista Previa Individual ---
-    // Ajusta estos valores para controlar el tamaño de la hoja de respuesta
-    // en la vista previa individual (dentro del carrusel).
-    // Puedes usar porcentajes (ej. '80%') o unidades de viewport (ej. '70vw', '90vh').
-    const individualSheetWidth = ref('70vw'); // Ancho de la hoja de respuesta
-    const individualSheetHeight = ref('auto'); // Alto de la hoja de respuesta ('auto' para mantener proporción)
-    // --- Fin de Variables de Configuración para Vista Previa Individual ---
+    // --- Configuración para Vista Previa Individual (Responsiva) ---
+    // El tamaño de la hoja de respuesta individual se ajusta mediante CSS con media queries.
+    // Puedes modificar los estilos en la sección <style> de este archivo,
+    // buscando la clase '.responsive-answer-sheet' y ajustando los valores
+    // de 'width' y 'height' para diferentes tamaños de pantalla (escritorio, móvil).
+    // --- Fin de Configuración para Vista Previa Individual ---
 
     const paginatedStudents = computed(() => {
       const students = studentData.value[0]?.students || [];
@@ -426,8 +423,6 @@ export default {
       printSheets,
       printOutline,
       modules: [Pagination],
-      individualSheetWidth,
-      individualSheetHeight,
     };
   },
 };
@@ -526,6 +521,38 @@ export default {
     /* The scale is applied directly to the answer-sheet component */
     /* The margins are applied via inline style from the component */
     /* No need for additional transform or margin here */
+  }
+
+  /* Responsive styles for the individual AnswerSheet */
+  .responsive-answer-sheet {
+    width: 70vw; /* Default for smaller screens */
+    height: auto;
+  }
+
+  .student-name-text {
+    font-size: 2.8vw !important; /* Default font size for smaller screens */
+  }
+
+  @media (min-width: 768px) {
+    /* Adjust for tablets and larger screens */
+    .responsive-answer-sheet {
+      width: 20vw;
+    }
+
+    .student-name-text {
+      font-size: 0.7vw !important; /* Example: Smaller font size on desktop */
+    }
+  }
+
+  @media (min-width: 1024px) {
+    /* Adjust for desktops */
+    .responsive-answer-sheet {
+      width: 50vw; /* Example: 50% of viewport width on desktop */
+    }
+
+    .student-name-text {
+      font-size: 12px !important; /* Example: Smaller font size on desktop */
+    }
   }
 }
 </style>
