@@ -200,23 +200,6 @@ export default {
           }
         }
 
-        const codeToDisplay = formattedCode;
-        let digitsHTML = "";
-        const digitWidthPercent = 100 / codeToDisplay.length;
-        for (let i = 0; i < codeToDisplay.length; i++) {
-          digitsHTML += `
-            <div class="student-code-digit-text" style="position: absolute; left: ${
-              i * digitWidthPercent
-            }%; top: 0;
-                 width: ${digitWidthPercent}%; height: 100%;
-                 line-height: 1;
-                 text-align: center; color: black; font-family: Arial, sans-serif;
-                 display: flex; align-items: center; justify-content: center;">
-              ${codeToDisplay[i]}
-            </div>
-          `;
-        }
-
         const domain = window.location.origin;
 
         return `
@@ -245,8 +228,23 @@ export default {
           }
 
           <!-- Dígitos del Código -->
-          <div style="position: absolute; left: ${digitsLeftPercent}%; top: ${digitsTopPercent}%; width: ${digitsWidthPercent}%; height: ${digitsHeightPercent}%; display: flex;">
-             ${digitsHTML}
+          <div style="position: absolute; left: ${digitsLeftPercent}%; top: ${digitsTopPercent}%; width: ${digitsWidthPercent}%; height: ${digitsHeightPercent}%;
+                      display: flex; align-items: center; justify-content: space-between;">
+             ${
+               formattedCode
+                 ? formattedCode
+                     .split("")
+                     .map(
+                       (digit) => `
+               <div style="flex: 1; height: 100%; 
+                           display: flex; align-items: center; justify-content: center;
+                           font-size: 110px; font-weight: bold; color: black; font-family: Arial, sans-serif; line-height: 1;">
+                 ${digit}
+               </div>`
+                     )
+                     .join("")
+                 : ""
+             }
           </div>
         </div>
 
