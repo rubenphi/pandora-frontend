@@ -946,6 +946,13 @@
   resolved "https://registry.npmjs.org/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
+"@byteowls/capacitor-filesharer@^7.0.0":
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/@byteowls/capacitor-filesharer/-/capacitor-filesharer-7.0.0.tgz#d2bd3f574c0c9c86c659c90da9728fb5f802e8a1"
+  integrity sha512-cD3irIt2PfaSGwddb9X6HIQ2vAMYaNtafYqWMGemMW8LfqDz7+pzX02kMrOXhIIV88AlBg1lg5JiD7VDNzCHEA==
+  dependencies:
+    file-saver "2.0.5"
+
 "@capacitor/android@^7.4.4":
   version "7.4.4"
   resolved "https://registry.npmjs.org/@capacitor/android/-/android-7.4.4.tgz"
@@ -1771,12 +1778,12 @@
 
 "@tiptap/extension-underline@^3.13.0":
   version "3.13.0"
-  resolved "https://registry.yarnpkg.com/@tiptap/extension-underline/-/extension-underline-3.13.0.tgz#7fc969c3b7adc7d7cc7def498f85c4cb30cf3aba"
+  resolved "https://registry.npmjs.org/@tiptap/extension-underline/-/extension-underline-3.13.0.tgz"
   integrity sha512-VDQi+UYw0tFnfghpthJTFmtJ3yx90kXeDwFvhmT8G+O+si5VmP05xYDBYBmYCix5jqKigJxEASiBL0gYOgMDEg==
 
 "@tiptap/extensions@^3.13.0":
   version "3.13.0"
-  resolved "https://registry.yarnpkg.com/@tiptap/extensions/-/extensions-3.13.0.tgz#542ee8a97575ae32090302b7f09522e025715297"
+  resolved "https://registry.npmjs.org/@tiptap/extensions/-/extensions-3.13.0.tgz"
   integrity sha512-i7O0ptSibEtTy+2PIPsNKEvhTvMaFJg1W4Oxfnbuxvaigs7cJV9Q0lwDUcc7CPsNw2T1+44wcxg431CzTvdYoA==
 
 "@tiptap/pm@^3.13.0":
@@ -5079,6 +5086,11 @@ file-entry-cache@^6.0.1:
   dependencies:
     flat-cache "^3.0.4"
 
+file-saver@2.0.5:
+  version "2.0.5"
+  resolved "https://registry.npmjs.org/file-saver/-/file-saver-2.0.5.tgz"
+  integrity sha512-P9bmyZ3h/PRG+Nzga+rbdI4OEpNDzAVyy74uVO9ATgzLK6VtAsYybF/+TOCvrc0MO793d6+42lLyZTw7/ArVzA==
+
 fill-range@^7.0.1:
   version "7.0.1"
   resolved "https://registry.npmjs.org/fill-range/-/fill-range-7.0.1.tgz"
@@ -5569,17 +5581,9 @@ html-webpack-plugin@^5.1.0:
     pretty-error "^4.0.0"
     tapable "^2.0.0"
 
-html2canvas@^1.0.0, html2canvas@^1.0.0-rc.5:
+html2canvas@^1.0.0, html2canvas@^1.0.0-rc.5, html2canvas@^1.4.1:
   version "1.4.1"
   resolved "https://registry.npmjs.org/html2canvas/-/html2canvas-1.4.1.tgz"
-  integrity sha512-fPU6BHNpsyIhr8yyMpTLLxAbkaK8ArIBcmZIRiBLiDhjeqvXolaEmDGmELFuX9I4xDcaKKcJl+TKZLqruBbmWA==
-  dependencies:
-    css-line-break "^2.1.0"
-    text-segmentation "^1.0.3"
-
-html2canvas@^1.4.1:
-  version "1.4.1"
-  resolved "https://registry.yarnpkg.com/html2canvas/-/html2canvas-1.4.1.tgz#7cef1888311b5011d507794a066041b14669a543"
   integrity sha512-fPU6BHNpsyIhr8yyMpTLLxAbkaK8ArIBcmZIRiBLiDhjeqvXolaEmDGmELFuX9I4xDcaKKcJl+TKZLqruBbmWA==
   dependencies:
     css-line-break "^2.1.0"
@@ -9475,7 +9479,7 @@ svgo@^2.7.0:
 
 swiper@^12.0.3:
   version "12.0.3"
-  resolved "https://registry.yarnpkg.com/swiper/-/swiper-12.0.3.tgz#c7804fd39955189d3ec652d9832896bd3d04733e"
+  resolved "https://registry.npmjs.org/swiper/-/swiper-12.0.3.tgz"
   integrity sha512-BHd6U1VPEIksrXlyXjMmRWO0onmdNPaTAFduzqR3pgjvi7KfmUCAm/0cj49u2D7B0zNjMw02TSeXfinC1hDCXg==
 
 symbol-tree@^3.2.4:

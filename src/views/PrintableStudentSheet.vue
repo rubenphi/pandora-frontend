@@ -82,6 +82,8 @@ import { onMounted, ref, computed } from "vue";
 import AnswerSheet from "@/components/AnswerSheet.vue";
 import axios from "axios";
 import { tokenHeader } from "@/globalService";
+import { FileSharer } from '@byteowls/capacitor-filesharer';
+import { Capacitor } from '@capacitor/core';
 
 export default {
   components: {
@@ -436,10 +438,32 @@ export default {
         return;
       }
 
-      const link = document.createElement("a");
-      link.download = `hoja_respuesta_${selectedStudent.value.code}.png`;
-      link.href = imgSrc;
-      link.click();
+      const filename = `hoja_respuesta_${selectedStudent.value.code}.png`;
+
+      if (Capacitor.isNativePlatform()) {
+        try {
+          // Extraer la parte base64 (remover "data:image/png;base64,")
+          const base64Data = imgSrc.split(",")[1];
+          await FileSharer.share({
+            filename: filename,
+            contentType: "image/png",
+            base64Data: base64Data,
+          });
+        } catch (error) {
+          // Ignorar errores de cancelación por parte del usuario
+          if (error.message && (error.message.toLowerCase().includes('cancel') || error.message.toLowerCase().includes('dismiss'))) {
+            console.log('El usuario canceló compartir el archivo');
+          } else {
+            console.error("Error al compartir el archivo:", error);
+          }
+        }
+      } else {
+        // Lógica para web (descarga normal)
+        const link = document.createElement("a");
+        link.download = filename;
+        link.href = imgSrc;
+        link.click();
+      }
     };
 
     return {

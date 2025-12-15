@@ -12,6 +12,7 @@
     "ionic:serve": "vue-cli-service serve"
   },
   "dependencies": {
+    "@byteowls/capacitor-filesharer": "^7.0.0",
     "@capacitor/android": "^7.4.4",
     "@capacitor/app": "^7.1.0",
     "@capacitor/barcode-scanner": "^2.2.0",
