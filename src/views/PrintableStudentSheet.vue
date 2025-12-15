@@ -547,11 +547,11 @@ export default {
   @media (min-width: 1024px) {
     /* Adjust for desktops */
     .responsive-answer-sheet {
-      width: 50vw; /* Example: 50% of viewport width on desktop */
+      width: 20vw; /* Example: 50% of viewport width on desktop */
     }
 
     .student-name-text {
-      font-size: 12px !important; /* Example: Smaller font size on desktop */
+      font-size: 0.7vw !important; /* Example: Smaller font size on desktop */
     }
   }
 }
