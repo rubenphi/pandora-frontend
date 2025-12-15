@@ -16,20 +16,23 @@
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
-    <ion-content class="ion-padding">
-      <div id="printable-area">
-        <div
+    <ion-content class="ion-padding" :fullscreen="true">
+      <swiper :modules="modules" :pagination="{ clickable: true }" class="fullscreen-slides">
+        <swiper-slide
           v-for="(page, pageIndex) in paginatedStudents"
           :key="pageIndex"
-          class="print-page"
         >
-          <div class="grid-container">
-            <div v-for="student in page" :key="student.id" class="grid-item">
-              <AnswerSheet :student="student" :course-name="courseName" />
+          <div class="print-page-wrapper">
+            <div class="print-page">
+              <div class="grid-container">
+                <div v-for="student in page" :key="student.id" class="grid-item">
+                  <AnswerSheet :student="student" :course-name="courseName" />
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </swiper-slide>
+      </swiper>
     </ion-content>
   </ion-page>
 </template>
@@ -52,6 +55,17 @@ import AnswerSheet from "@/components/AnswerSheet.vue";
 import axios from "axios";
 import { tokenHeader } from "@/globalService";
 
+// Import Swiper Vue.js components
+import { Swiper, SwiperSlide } from "swiper/vue";
+
+// Import Swiper styles
+import "swiper/css";
+import "swiper/css/pagination";
+import "@ionic/vue/css/ionic-swiper.css";
+
+// import required modules
+import { Pagination } from "swiper/modules";
+
 export default {
   components: {
     IonPage,
@@ -64,6 +78,8 @@ export default {
     IonButton,
     IonIcon,
     AnswerSheet,
+    Swiper,
+    SwiperSlide,
   },
   setup() {
     const studentData = ref([]);
@@ -385,6 +401,7 @@ export default {
       courseName,
       printSheets,
       printOutline,
+      modules: [Pagination],
     };
   },
 };
@@ -446,6 +463,28 @@ export default {
     height: 330mm;
     margin: 20px auto;
     border: 1px dashed #ccc;
+  }
+
+  .fullscreen-slides {
+    height: 100%;
+    background: #f0f0f0;
+  }
+
+  .print-page-wrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  /* For screen preview in slider, we scale down the page */
+  .fullscreen-slides .print-page {
+    transform: scale(0.3); /* Adjust this scale for best fit on screen */
+    transform-origin: center center;
+    border: 1px dashed #ccc;
+    margin: 0;
   }
 }
 </style>
