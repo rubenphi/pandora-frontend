@@ -115,7 +115,15 @@ export default {
     const onContrastChange = (event) => {
       const value = event.detail.value;
       contrastSliderValue.value = value;
-      OMR_STATE.contrastValue = parseFloat(value) / 50.0;
+
+      // Rango estable para CLAHE
+      const clipLimit = 1.0 + (value / 100) * 4.0; // 1.0 → 5.0
+      OMR_STATE.contrastValue = clipLimit;
+
+      if (OMR_STATE.clahe) {
+        OMR_STATE.clahe.setClipLimit(clipLimit);
+      }
+
       try {
         localStorage.setItem("omrContrast", value);
       } catch (e) {
@@ -251,16 +259,23 @@ export default {
         return;
       }
 
-      const { cv, ctx, width, height, src, gray, bw, clahe, contrastValue } =
-        OMR_STATE;
+      const { cv, ctx, width, height, src, gray, bw, clahe } = OMR_STATE;
 
       ctx.drawImage(video.value, 0, 0, width, height);
       src.data.set(ctx.getImageData(0, 0, width, height).data);
 
       cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-      cv.convertScaleAbs(gray, gray, contrastValue, 0);
-      cv.GaussianBlur(gray, gray, new cv.Size(3, 3), 0);
+
+      // CLAHE primero
       clahe.apply(gray, gray);
+
+      const MAX_GRAY = 230; // ajustable (220–235)
+      cv.threshold(gray, gray, MAX_GRAY, MAX_GRAY, cv.THRESH_TRUNC);
+
+      // Suavizado ligero
+      cv.GaussianBlur(gray, gray, new cv.Size(3, 3), 0);
+
+      // Umbral adaptativo u Otsu
       cv.threshold(gray, bw, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
 
       let contours = new cv.MatVector();
@@ -287,8 +302,8 @@ export default {
 
       cv.imshow(outputCanvas.value, dst);
 
-      const allMarkersPresent = ["TL", "TR", "BL", "BR"].every(
-        (label) => markers.some((m) => m.label === label)
+      const allMarkersPresent = ["TL", "TR", "BL", "BR"].every((label) =>
+        markers.some((m) => m.label === label)
       );
 
       if (markers.length >= 4 && allMarkersPresent) {
