@@ -81,6 +81,7 @@ import {
   IonListHeader,
   IonModal,
   alertController,
+  actionSheetController,
 } from "@ionic/vue";
 import { printOutline } from "ionicons/icons";
 import { onMounted, ref, computed } from "vue";
@@ -381,6 +382,71 @@ export default {
   `;
     };
 
+    const processPDF = async (action) => {
+      // 1. Convert background image to Base64 to ensure it renders without loading issues
+      const getBase64ImageFromUrl = async (imageUrl) => {
+        const res = await fetch(imageUrl);
+        const blob = await res.blob();
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      };
+
+      const domain = window.location.origin;
+      const bgImageBase64 = await getBase64ImageFromUrl(`${domain}/hoja50.jpg`);
+
+      // 2. Generate HTML (we'll replace the image source manually)
+      let { pagesHTML, newImageWidth, newImageHeight, scale } =
+        generateSheetContentHTML();
+
+      // Replace the image url with the base64 data
+      // The original src was: src="${domain}/hoja50.jpg"
+      // or src="/hoja50.jpg" depending on how it was generated
+      const originalSrcRegex = new RegExp(`${domain}/hoja50.jpg`, "g");
+      const relativeSrcRegex = /src="\/hoja50.jpg"/g;
+
+      pagesHTML = pagesHTML.replace(originalSrcRegex, `${bgImageBase64}`);
+      pagesHTML = pagesHTML.replace(
+        relativeSrcRegex,
+        `src="${bgImageBase64}"`
+      );
+
+      const css = generateStyles(newImageWidth, newImageHeight, scale);
+
+      // 3. Create a detached container (matches the working Android implementation)
+      // We do NOT append this to the body, avoiding z-index/viewport issues.
+      const element = document.createElement("div");
+      element.innerHTML = `
+        <style>${css}</style>
+        ${pagesHTML}
+      `;
+
+      // html2pdf options
+      const opt = {
+        margin: 0,
+        filename: "hojas_respuesta.pdf",
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          // Remove scroll options that might conflict with detached elements
+        },
+        jsPDF: { unit: "mm", format: "legal", orientation: "portrait" },
+      };
+
+      const worker = html2pdf().from(element).set(opt);
+
+      if (action === "save") {
+        await worker.save();
+      } else if (action === "base64") {
+        return await worker.outputPdf("datauristring");
+      }
+    };
+
     const printSheets = async () => {
       if (Capacitor.isNativePlatform()) {
         const loading = await alertController.create({
@@ -392,35 +458,7 @@ export default {
         await loading.present();
 
         try {
-          const { pagesHTML, newImageWidth, newImageHeight, scale } =
-            generateSheetContentHTML();
-          const css = generateStyles(newImageWidth, newImageHeight, scale);
-
-          const element = document.createElement("div");
-          element.innerHTML = `
-            <style>${css}</style>
-            ${pagesHTML}
-          `;
-
-          // html2pdf options
-          const opt = {
-            margin: 0,
-            filename: "hojas_respuesta.pdf",
-            image: { type: "jpeg", quality: 0.98 },
-            html2canvas: {
-              scale: 2,
-              useCORS: true,
-              logging: false, // Suppress logs
-            },
-            jsPDF: { unit: "mm", format: "legal", orientation: "portrait" },
-          };
-
-          // Generate PDF
-          const pdfDataUri = await html2pdf()
-            .from(element)
-            .set(opt)
-            .outputPdf("datauristring");
-
+          const pdfDataUri = await processPDF("base64");
           const base64Data = pdfDataUri.split(",")[1];
           const filename = `hojas_respuesta_${Date.now()}.pdf`;
 
@@ -447,18 +485,60 @@ export default {
           await loading.dismiss();
         }
       } else {
-        const printWindow = window.open("", "_blank");
-        if (printWindow) {
-          printWindow.document.write(generatePrintHTML());
-          printWindow.document.close();
+        // Web Platform - Show Action Sheet
+        const actionSheet = await actionSheetController.create({
+          header: "Opciones de Impresión",
+          buttons: [
+            {
+              text: "Imprimir / Vista Previa",
+              icon: printOutline,
+              handler: () => {
+                const printWindow = window.open("", "_blank");
+                if (printWindow) {
+                  printWindow.document.write(generatePrintHTML());
+                  printWindow.document.close();
 
-          // Esperar a que las imágenes se carguen antes de permitir imprimir
-          printWindow.onload = () => {
-            setTimeout(() => {
-              printWindow.focus();
-            }, 500);
-          };
-        }
+                  // Esperar a que las imágenes se carguen antes de permitir imprimir
+                  printWindow.onload = () => {
+                    setTimeout(() => {
+                      printWindow.focus();
+                    }, 500);
+                  };
+                }
+              },
+            },
+            {
+              text: "Descargar PDF",
+              icon: null,
+              handler: async () => {
+                const loading = await alertController.create({
+                  header: "Generando PDF",
+                  message: "Espere mientras se descarga el archivo...",
+                  backdropDismiss: false,
+                });
+                await loading.present();
+                try {
+                  await processPDF("save");
+                } catch (e) {
+                  console.error("Error downloading PDF", e);
+                  const errorAlert = await alertController.create({
+                    header: "Error",
+                    message: "Hubo un error al descargar el PDF.",
+                    buttons: ["OK"],
+                  });
+                  await errorAlert.present();
+                } finally {
+                  await loading.dismiss();
+                }
+              },
+            },
+            {
+              text: "Cancelar",
+              role: "cancel",
+            },
+          ],
+        });
+        await actionSheet.present();
       }
     };
 
