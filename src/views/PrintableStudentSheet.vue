@@ -87,6 +87,7 @@ import { onMounted, ref, computed } from "vue";
 import AnswerSheet from "@/components/AnswerSheet.vue";
 import { FileSharer } from "@byteowls/capacitor-filesharer";
 import { Capacitor } from "@capacitor/core";
+import html2pdf from "html2pdf.js";
 
 export default {
   components: {
@@ -130,7 +131,7 @@ export default {
       }
     });
 
-    const generatePrintHTML = () => {
+    const generateSheetContentHTML = () => {
       const students = studentData.value[0]?.students || [];
       const course = courseName.value || "";
 
@@ -140,65 +141,46 @@ export default {
       const newImageHeight = 4919;
 
       // El factor de escala se calcula para que la nueva imagen quepa en el espacio de la grilla.
-      // Se asume que una celda de la grilla es aprox. 408x415px (a 96 DPI).
-      // La escala es el valor mínimo para asegurar que tanto el ancho como el alto quepan.
-      // scale = min(ancho_celda / ancho_imagen, alto_celda / alto_imagen)
-      // scale = min(408 / 3313, 415 / 4919) = min(0.123, 0.0843) = 0.0843
       const scale = 0.0843;
 
-      // Función para generar el código de una hoja
       const generateSheetCode = (student) => {
         const originalCode = student.code || "";
         const name = student.name || "";
         const lastName = student.lastName || "";
 
-        // --- Variables de Posicionamiento (basadas en el layout original) ---
-        // Estas variables usan porcentajes para posicionar los elementos.
-        // Se basan en las coordenadas de píxeles del diseño original para mantener la consistencia.
-        // La altura original (3520px) se usa como referencia para las posiciones verticales.
-
         const originalImageWidth = 3313;
         const originalImageHeight = 3520;
 
-        // Posición y tamaño del nombre del estudiante
         const nameTopPercent = (60 / originalImageHeight) * 100;
         const nameLeftPercent = (600 / originalImageWidth) * 100;
         const nameWidthPercent = (2934 / originalImageWidth) * 100;
         const nameHeightPercent = (114 / originalImageHeight) * 100;
-        const nameFontSizePx = 120; // Se escala con el transform del wrapper
+        const nameFontSizePx = 120;
 
-        // Posición y tamaño del nombre del curso
         const courseTopPercent = (400 / originalImageHeight) * 100;
         const courseLeftPercent = (600 / originalImageWidth) * 100;
         const courseWidthPercent = (1883 / originalImageWidth) * 100;
         const courseHeightPercent = (161 / originalImageHeight) * 100;
-        const courseFontSizePx = 180; // Se escala con el transform
+        const courseFontSizePx = 180;
 
-        // Posición de los dígitos del código del estudiante
         const digitsTopPercent = (850 / originalImageHeight) * 100;
         const digitsLeftPercent = (640 / originalImageWidth) * 100;
         const digitsWidthPercent = (1350 / originalImageWidth) * 100;
         const digitsHeightPercent = (95 / originalImageHeight) * 100;
 
-        // Posición y tamaño de la matriz de burbujas
         const matrixTopPercent = (980 / originalImageHeight) * 100;
         const matrixLeftPercent = (670 / originalImageWidth) * 100;
         const matrixWidthPercent = (1303 / originalImageWidth) * 100;
         const matrixHeightPercent = (950 / originalImageHeight) * 100;
-        const matrixGapPx = 20; // Se escala con el transform
+        const matrixGapPx = 20;
 
-        // Formatear código a 10 dígitos SOLO para la matriz y visualización OMR
         let formattedCode = String(originalCode).replace(/\D/g, "");
         formattedCode = formattedCode.padStart(10, "0").slice(0, 10);
 
-        // Crear matriz de 10 filas × 10 columnas
         const matrix = Array.from({ length: 10 }, () => Array(10).fill(0));
         for (let col = 0; col < 10; col++) {
           const digit = parseInt(formattedCode[col], 10);
           if (!isNaN(digit)) {
-            // Mapeo de dígitos a filas:
-            // Dígito 1-9 -> Fila 1-9 (índice 0-8)
-            // Dígito 0 -> Fila 10 (índice 9)
             const rowIndex = digit === 0 ? 9 : digit - 1;
             if (rowIndex >= 0 && rowIndex < 10) {
               matrix[rowIndex][col] = 1;
@@ -206,7 +188,6 @@ export default {
           }
         }
 
-        // Generar celdas del grid para la matriz
         let cellsHTML = "";
         for (let r = 0; r < 10; r++) {
           for (let c = 0; c < 10; c++) {
@@ -218,7 +199,6 @@ export default {
           }
         }
 
-        // Generar dígitos del código
         const codeToDisplay = formattedCode;
         let digitsHTML = "";
         const digitWidthPercent = 100 / codeToDisplay.length;
@@ -236,9 +216,11 @@ export default {
           `;
         }
 
+        const domain = window.location.origin;
+
         return `
       <div class="image-wrapper">
-        <img src="/hoja50.jpg" alt="Hoja OMR" style="display: block; width: 100%; height: 100%;" />
+        <img src="${domain}/hoja50.jpg" crossorigin="anonymous" alt="Hoja OMR" style="display: block; width: 100%; height: 100%;" />
         <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;">
           
           <!-- Nombre del Estudiante -->
@@ -277,7 +259,6 @@ export default {
     `;
       };
 
-      // Generar páginas
       let pagesHTML = "";
       for (let i = 0; i < students.length; i += 6) {
         const pageStudents = students.slice(i, i + 6);
@@ -299,15 +280,16 @@ export default {
       </div>
     `;
       }
+      return {
+        pagesHTML,
+        newImageHeight,
+        newImageWidth,
+        scale,
+      };
+    };
 
+    const generateStyles = (newImageWidth, newImageHeight, scale) => {
       return `
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Hojas de Respuesta</title>
-      <style>
         * {
           margin: 0;
           padding: 0;
@@ -351,6 +333,11 @@ export default {
           height: 100%;
         }
         
+        /* Styles for student code digits in print */
+        .student-code-digit-text {
+          font-size: 180px; /* Default font size for print */
+        }
+
        .image-wrapper {
           position: relative;
           width: ${newImageWidth}px;
@@ -359,11 +346,6 @@ export default {
           transform: scale(${scale});
           transform-origin: top left;
           overflow: hidden;
-        }
-        
-        /* Styles for student code digits in print */
-        .student-code-digit-text {
-          font-size: 180px; /* Default font size for print */
         }
 
         @media print {
@@ -375,7 +357,22 @@ export default {
             font-size: 180px; /* Ensure consistent font size for print */
           }
         }
-      </style>
+      `;
+    };
+
+    const generatePrintHTML = () => {
+      const { pagesHTML, newImageWidth, newImageHeight, scale } =
+        generateSheetContentHTML();
+      const css = generateStyles(newImageWidth, newImageHeight, scale);
+
+      return `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Hojas de Respuesta</title>
+      <style>${css}</style>
     </head>
     <body>
       ${pagesHTML}
@@ -384,18 +381,84 @@ export default {
   `;
     };
 
-    const printSheets = () => {
-      const printWindow = window.open("", "_blank");
-      if (printWindow) {
-        printWindow.document.write(generatePrintHTML());
-        printWindow.document.close();
+    const printSheets = async () => {
+      if (Capacitor.isNativePlatform()) {
+        const loading = await alertController.create({
+          header: "Generando PDF",
+          message:
+            "Por favor espere mientras se genera el archivo para imprimir...",
+          backdropDismiss: false,
+        });
+        await loading.present();
 
-        // Esperar a que las imágenes se carguen antes de permitir imprimir
-        printWindow.onload = () => {
-          setTimeout(() => {
-            printWindow.focus();
-          }, 500);
-        };
+        try {
+          const { pagesHTML, newImageWidth, newImageHeight, scale } =
+            generateSheetContentHTML();
+          const css = generateStyles(newImageWidth, newImageHeight, scale);
+
+          const element = document.createElement("div");
+          element.innerHTML = `
+            <style>${css}</style>
+            ${pagesHTML}
+          `;
+
+          // html2pdf options
+          const opt = {
+            margin: 0,
+            filename: "hojas_respuesta.pdf",
+            image: { type: "jpeg", quality: 0.98 },
+            html2canvas: {
+              scale: 2,
+              useCORS: true,
+              logging: false, // Suppress logs
+            },
+            jsPDF: { unit: "mm", format: "legal", orientation: "portrait" },
+          };
+
+          // Generate PDF
+          const pdfDataUri = await html2pdf()
+            .from(element)
+            .set(opt)
+            .outputPdf("datauristring");
+
+          const base64Data = pdfDataUri.split(",")[1];
+          const filename = `hojas_respuesta_${Date.now()}.pdf`;
+
+          await FileSharer.share({
+            filename: filename,
+            contentType: "application/pdf",
+            base64Data: base64Data,
+          });
+        } catch (error) {
+          if (
+            error?.message &&
+            !error.message.toLowerCase().includes("cancel") &&
+            !error.message.toLowerCase().includes("dismiss")
+          ) {
+            console.error("Error generating/sharing PDF:", error);
+            const errorAlert = await alertController.create({
+              header: "Error",
+              message: "Hubo un error al generar o compartir el archivo.",
+              buttons: ["OK"],
+            });
+            await errorAlert.present();
+          }
+        } finally {
+          await loading.dismiss();
+        }
+      } else {
+        const printWindow = window.open("", "_blank");
+        if (printWindow) {
+          printWindow.document.write(generatePrintHTML());
+          printWindow.document.close();
+
+          // Esperar a que las imágenes se carguen antes de permitir imprimir
+          printWindow.onload = () => {
+            setTimeout(() => {
+              printWindow.focus();
+            }, 500);
+          };
+        }
       }
     };
 
@@ -470,6 +533,7 @@ export default {
     };
   },
 };
+
 </script>
 
 <style>
