@@ -137,6 +137,7 @@ export default {
           windowWidth: newImageWidth,
           windowHeight: newImageHeight,
           backgroundColor: null,
+          logging: false, // Evitar logs en consola (#1)
         });
         generatedImageSrc.value = canvas.toDataURL("image/png");
       } catch (error) {
