@@ -998,13 +998,6 @@
   resolved "https://registry.npmjs.org/@capacitor/device/-/device-7.0.2.tgz"
   integrity sha512-OMGMBjLbh7ApaqW1oOJIV73iyrFK/T5v2MzuQYq3GLT+jnGvCuj/y82Ofq2Fz9/hlJ2fukztPwG1K80jyk0i6w==
 
-"@capacitor/filesystem@^8.0.0":
-  version "8.0.0"
-  resolved "https://registry.yarnpkg.com/@capacitor/filesystem/-/filesystem-8.0.0.tgz#752bdff67686940cb73459fd94c58cb114098ff7"
-  integrity sha512-RRGNLW9xEqvVVHGyGlfS4Oy0R3Na+bEefwZElKbex22S9eZr5cg8wc750BPPVwbcv5lf5fJymkY8x8y6UwKPyg==
-  dependencies:
-    "@capacitor/synapse" "^1.0.4"
-
 "@capacitor/haptics@^7.0.2":
   version "7.0.2"
   resolved "https://registry.npmjs.org/@capacitor/haptics/-/haptics-7.0.2.tgz"
@@ -1015,20 +1008,10 @@
   resolved "https://registry.npmjs.org/@capacitor/keyboard/-/keyboard-7.0.3.tgz"
   integrity sha512-BIBKjmky5rOYNhvYhNeDi0MMvjwYZ6YF9JoCYcGKvKY+XLJKtezsEL78XfOlgWZBkbfR8uq3tzktY6PqgoYLKA==
 
-"@capacitor/share@^8.0.0":
-  version "8.0.0"
-  resolved "https://registry.yarnpkg.com/@capacitor/share/-/share-8.0.0.tgz#8f8151bfad8f33804d9fed0f0cca9ee78b02e0c5"
-  integrity sha512-VU+xT4LFwr4keIC0UKDqGQVAiNlAHwoTMQg8wVVSxtn/k32VOvvtqFfu63qnXr40WKytZWrxJfVESvRjd761yg==
-
 "@capacitor/status-bar@^7.0.3":
   version "7.0.3"
   resolved "https://registry.npmjs.org/@capacitor/status-bar/-/status-bar-7.0.3.tgz"
   integrity sha512-JyRpVnKwHij9hgPWolF6PK+HT3e2HSPjN11/h2OmKxq8GAdPGARFLv+97eZl0pvuvm0Kka/LpiLb5whXISBg7Q==
-
-"@capacitor/synapse@^1.0.4":
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/@capacitor/synapse/-/synapse-1.0.4.tgz#c6beb33119d9656b1f04cb7783989fb78933ef6d"
-  integrity sha512-/C1FUo8/OkKuAT4nCIu/34ny9siNHr9qtFezu4kxm6GY1wNFxrCFWjfYx5C1tUhVGz3fxBABegupkpjXvjCHrw==
 
 "@capgo/capacitor-flash@^7.1.23":
   version "7.1.23"
@@ -1788,12 +1771,12 @@
 
 "@tiptap/extension-underline@^3.13.0":
   version "3.13.0"
-  resolved "https://registry.npmjs.org/@tiptap/extension-underline/-/extension-underline-3.13.0.tgz"
+  resolved "https://registry.yarnpkg.com/@tiptap/extension-underline/-/extension-underline-3.13.0.tgz#7fc969c3b7adc7d7cc7def498f85c4cb30cf3aba"
   integrity sha512-VDQi+UYw0tFnfghpthJTFmtJ3yx90kXeDwFvhmT8G+O+si5VmP05xYDBYBmYCix5jqKigJxEASiBL0gYOgMDEg==
 
 "@tiptap/extensions@^3.13.0":
   version "3.13.0"
-  resolved "https://registry.npmjs.org/@tiptap/extensions/-/extensions-3.13.0.tgz"
+  resolved "https://registry.yarnpkg.com/@tiptap/extensions/-/extensions-3.13.0.tgz#542ee8a97575ae32090302b7f09522e025715297"
   integrity sha512-i7O0ptSibEtTy+2PIPsNKEvhTvMaFJg1W4Oxfnbuxvaigs7cJV9Q0lwDUcc7CPsNw2T1+44wcxg431CzTvdYoA==
 
 "@tiptap/pm@^3.13.0":
@@ -5586,9 +5569,9 @@ html-webpack-plugin@^5.1.0:
     pretty-error "^4.0.0"
     tapable "^2.0.0"
 
-html2canvas@^1.0.0, html2canvas@^1.0.0-rc.5, html2canvas@^1.4.1:
+html2canvas@^1.0.0, html2canvas@^1.0.0-rc.5:
   version "1.4.1"
-  resolved "https://registry.yarnpkg.com/html2canvas/-/html2canvas-1.4.1.tgz#7cef1888311b5011d507794a066041b14669a543"
+  resolved "https://registry.npmjs.org/html2canvas/-/html2canvas-1.4.1.tgz"
   integrity sha512-fPU6BHNpsyIhr8yyMpTLLxAbkaK8ArIBcmZIRiBLiDhjeqvXolaEmDGmELFuX9I4xDcaKKcJl+TKZLqruBbmWA==
   dependencies:
     css-line-break "^2.1.0"
@@ -9484,7 +9467,7 @@ svgo@^2.7.0:
 
 swiper@^12.0.3:
   version "12.0.3"
-  resolved "https://registry.npmjs.org/swiper/-/swiper-12.0.3.tgz"
+  resolved "https://registry.yarnpkg.com/swiper/-/swiper-12.0.3.tgz#c7804fd39955189d3ec652d9832896bd3d04733e"
   integrity sha512-BHd6U1VPEIksrXlyXjMmRWO0onmdNPaTAFduzqR3pgjvi7KfmUCAm/0cj49u2D7B0zNjMw02TSeXfinC1hDCXg==
 
 symbol-tree@^3.2.4:

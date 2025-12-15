@@ -17,20 +17,11 @@
       <div ref="digitLayerRef" class="digit-layer"></div>
       <div ref="gridOverlayRef" class="grid-overlay"></div>
     </div>
-  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-      <ion-fab-button @click="shareAnswerSheet">
-        <ion-icon :icon="shareOutline"></ion-icon>
-      </ion-fab-button>
-    </ion-fab>
   </div>
 </template>
 
 <script>
 import { onBeforeUnmount, ref, onMounted, watch, nextTick } from "vue";
-import { Filesystem, Directory } from "@capacitor/filesystem";
-import { Share } from "@capacitor/share";
-import html2canvas from "html2canvas";
-import { shareOutline } from "ionicons/icons";
 
 export default {
   props: {
@@ -117,8 +108,6 @@ export default {
     onBeforeUnmount(() => {
       window.removeEventListener("resize", calculateInternalScale);
     });
-
-    
 
     watch(
       [() => props.student, () => props.courseName],
@@ -358,50 +347,6 @@ export default {
       }
     };
 
-    const shareAnswerSheet = async () => {
-      const element = answerSheetRef.value;
-      if (!element) {
-        console.error("Element with ref 'answerSheetRef' not found.");
-        alert("No se encontró el contenido para compartir.");
-        return;
-      }
-
-      try {
-        const canvas = await html2canvas(element, {
-          scale: 2, // Use a higher scale for better quality
-          useCORS: true, // Important if your image is hosted on a different origin
-          background: "#ffffff", // Ensure a white background for transparency issues
-        });
-
-        const imageData = canvas.toDataURL("image/png");
-        const fileName = `answer_sheet_share_${new Date().getTime()}.png`;
-
-        // Save to cache directory for sharing
-        const result = await Filesystem.writeFile({
-          path: fileName,
-          data: imageData.split(",")[1], // Remove "data:image/png;base64," prefix
-          directory: Directory.Cache,
-          recursive: true,
-        });
-
-        if (result.uri) {
-          await Share.share({
-            title: "Hoja de Respuestas",
-            text: "Aquí tienes tu hoja de respuestas generada.",
-            url: result.uri,
-            files: [result.uri],
-            dialogTitle: "Compartir Hoja de Respuestas",
-          });
-          alert("Hoja de respuestas compartida!");
-        } else {
-          throw new Error("Failed to get URI for the saved file.");
-        }
-      } catch (error) {
-        console.error("Error sharing answer sheet:", error);
-        alert("Error al compartir la hoja de respuestas.");
-      }
-    };
-
     onBeforeUnmount(() => {
       const textLayer = textLayerRef.value;
       const digitLayer = digitLayerRef.value;
@@ -417,11 +362,9 @@ export default {
       textLayerRef,
       digitLayerRef,
       gridOverlayRef,
-      newImageWidth,
-      newImageHeight,
+      newImageWidth, // Expose for template if needed, though CSS handles it
+      newImageHeight, // Expose for template if needed, though CSS handles it
       internalScale,
-      shareAnswerSheet, // Expose the new function
-      shareOutline,     // Expose the icon
     };
   },
 };
