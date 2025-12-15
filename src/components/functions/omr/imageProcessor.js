@@ -72,12 +72,12 @@ export function processingLoop(OMR_STATE) {
   ctx.save(); // Save the current context state
 
   if (isPortrait) {
+    ctx.drawImage(video, 0, 0, width, height);
+  } else {
     // Apply transformation for 90 degrees clockwise rotation, mapping original bottom-left to new top-left
     ctx.setTransform(0, 1, -1, 0, originalVideoHeight, 0);
     // Draw the video using its original dimensions
     ctx.drawImage(video, 0, 0, originalVideoWidth, originalVideoHeight);
-  } else {
-    ctx.drawImage(video, 0, 0, width, height);
   }
 
   ctx.restore(); // Restore the context to its original state for subsequent operations
@@ -87,10 +87,10 @@ export function processingLoop(OMR_STATE) {
     const cleanCtx = cleanCanvas.getContext("2d");
     cleanCtx.save();
     if (isPortrait) {
+      cleanCtx.drawImage(video, 0, 0, width, height);
+    } else {
       cleanCtx.setTransform(0, 1, -1, 0, originalVideoHeight, 0);
       cleanCtx.drawImage(video, 0, 0, originalVideoWidth, originalVideoHeight);
-    } else {
-      cleanCtx.drawImage(video, 0, 0, width, height);
     }
     cleanCtx.restore();
     OMR_STATE.lastCleanDataURL = cleanCanvas.toDataURL("image/png");
@@ -152,8 +152,8 @@ export function processingLoop(OMR_STATE) {
 
   // 5. Draw Code Matrix and Handle Capture
   if (markers.length >= 4) {
-    const allMarkersPresent = ["TL", "TR", "BL", "BR"].every(
-      (label) => markers.some((m) => m.label === label)
+    const allMarkersPresent = ["TL", "TR", "BL", "BR"].every((label) =>
+      markers.some((m) => m.label === label)
     );
     if (allMarkersPresent) {
       drawCodeMatrix(OMR_STATE, ctx, markers);
@@ -180,7 +180,7 @@ export function findAndLabelMarkers(
   const cv = getCv();
   let normalMarkers = [];
   const hierArr = hierarchy.data32S;
-  const minArea = Math.max(100, width * height * 0.0005);
+  const minArea = Math.max(30, width * height * 0.00005);
 
   for (let i = 0; i < contours.size(); ++i) {
     let cnt = contours.get(i);
@@ -244,25 +244,13 @@ export function findAndLabelMarkers(
 }
 
 function getExpectedPositions(width, height) {
-  const isPortrait = width < height;
-
-  if (isPortrait) {
-    // Portrait mode
-    return [
-      { label: "BL", x: width * 0.25, y: height * 0.25 },
-      { label: "BR", x: width * 0.25, y: height * 0.5 }, // Formerly BM
-      { label: "TL", x: width * 0.75, y: height * 0.25 },
-      { label: "TR", x: width * 0.75, y: height * 0.5 }, // Formerly TM
-    ];
-  } else {
-    // Landscape mode
-    return [
-      { label: "TL", x: width * 0.25, y: height * 0.25 },
-      { label: "TR", x: width * 0.5, y: height * 0.25 },  // Formerly TM
-      { label: "BL", x: width * 0.25, y: height * 0.75 },
-      { label: "BR", x: width * 0.5, y: height * 0.75 },  // Formerly BM
-    ];
-  }
+  // Force a simple rectangular layout, assuming a portrait-like orientation
+  return [
+    { label: "TL", x: width * 0.25, y: height * 0.25 },
+    { label: "TR", x: width * 0.75, y: height * 0.25 },
+    { label: "BL", x: width * 0.25, y: height * 0.75 },
+    { label: "BR", x: width * 0.75, y: height * 0.75 },
+  ];
 }
 
 export function assignLabelToMarker(cx, cy, width, height) {
@@ -360,9 +348,7 @@ export function drawCodeMatrix(OMR_STATE, ctx, markers) {
 
   // Use corner weights if available
   if (OMR_STATE.matrixTemplate && OMR_STATE.matrixTemplate.cornerWeights) {
-    const detectedOrder = ["TL", "TR", "BL", "BR"].map(
-      (l) => labelMap[l]
-    );
+    const detectedOrder = ["TL", "TR", "BL", "BR"].map((l) => labelMap[l]);
     const cw = OMR_STATE.matrixTemplate.cornerWeights;
 
     const applyWeights = (w) => {
@@ -440,7 +426,9 @@ export function drawCodeMatrix(OMR_STATE, ctx, markers) {
 
         ctx.beginPath();
         ctx.fillStyle =
-          type === "numeric" ? "rgba(64,224,208,0.95)" : "rgba(64,224,208,0.95)";
+          type === "numeric"
+            ? "rgba(64,224,208,0.95)"
+            : "rgba(64,224,208,0.95)";
         ctx.arc(Math.round(x), Math.round(y), matrixDef.radius, 0, Math.PI * 2);
         ctx.fill();
       }
