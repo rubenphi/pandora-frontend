@@ -1,21 +1,21 @@
 <template>
   <div class="answer-sheet" :style="{ transform: `scale(${scale})` }">
-    <div class="image-wrapper" :id="`imageWrapper-${student.id}`">
+    <div class="image-wrapper">
       <img
         src="/hoja50.jpg"
         alt="Hoja OMR"
         class="base-image"
         @load="initializeSheet"
       />
-      <div :id="`text-layer-${student.id}`" class="text-layer"></div>
-      <div :id="`digit-layer-${student.id}`" class="digit-layer"></div>
-      <div :id="`grid-overlay-${student.id}`" class="grid-overlay"></div>
+      <div ref="textLayerRef" class="text-layer"></div>
+      <div ref="digitLayerRef" class="digit-layer"></div>
+      <div ref="gridOverlayRef" class="grid-overlay"></div>
     </div>
   </div>
 </template>
 
 <script>
-import { onBeforeUnmount } from "vue";
+import { onBeforeUnmount, ref } from "vue";
 
 export default {
   props: {
@@ -29,35 +29,74 @@ export default {
     },
     scale: {
       type: Number,
-      default: 0.1044,
+      default: 0.1044, // This default will be overridden by the prop from PrintableStudentSheet.vue
     },
   },
   setup(props) {
-    const digitLayerId = `digit-layer-${props.student.id}`;
-    const textLayerId = `text-layer-${props.student.id}`;
-    const gridOverlayId = `grid-overlay-${props.student.id}`;
+    const textLayerRef = ref(null);
+    const digitLayerRef = ref(null);
+    const gridOverlayRef = ref(null);
 
-    const AREA_LEFT = 266;
-    const AREA_TOP = 796;
-    const AREA_WIDTH = 825;
-    const AREA_HEIGHT = 918;
-    const COLS = 9;
+    // --- Configuración de Dimensiones y Posicionamiento ---
+    // Nuevas dimensiones de la imagen (en píxeles).
+    const newImageWidth = 3313;
+    const newImageHeight = 4919;
+
+    // Dimensiones originales de la imagen de referencia (en píxeles).
+    // Usadas como base para calcular las posiciones relativas en porcentaje.
+    const originalImageWidth = 3313;
+    const originalImageHeight = 3520;
+
+    // --- Variables de Posicionamiento (basadas en el layout original) ---
+    // Estas variables usan porcentajes para posicionar los elementos.
+    // Se basan en las coordenadas de píxeles del diseño original para mantener la consistencia.
+    // La altura original (3520px) se usa como referencia para las posiciones verticales.
+
+    // Posición y tamaño del nombre del estudiante
+    const nameTopPercent = (60 / originalImageHeight) * 100;
+    const nameLeftPercent = (600 / originalImageWidth) * 100;
+    const nameWidthPercent = (2934 / originalImageWidth) * 100;
+    const nameHeightPercent = (114 / originalImageHeight) * 100;
+    const nameFontSizePx = 120;
+
+    // Posición y tamaño del nombre del curso
+    const courseTopPercent = (400 / originalImageHeight) * 100;
+    const courseLeftPercent = (600 / originalImageWidth) * 100;
+    const courseWidthPercent = (1883 / originalImageWidth) * 100;
+    const courseHeightPercent = (161 / originalImageHeight) * 100;
+    const courseFontSizePx = 180;
+
+    // Posición de los dígitos del código del estudiante
+    const digitsTopPercent = (850 / originalImageHeight) * 100;
+    const digitsLeftPercent = (670 / originalImageWidth) * 100;
+    const digitsWidthPercent = ((1089 - 177) / originalImageWidth) * 100; // Corrected value
+    const digitsHeightPercent = (95 / originalImageHeight) * 100;
+    const digitsFontSizePx = 180;
+
+    // Posición y tamaño de la matriz de burbujas
+    const matrixTopPercent = (980 / originalImageHeight) * 100;
+    const matrixLeftPercent = (670 / originalImageWidth) * 100;
+    const matrixWidthPercent = (1303 / originalImageWidth) * 100;
+    const matrixHeightPercent = (950 / originalImageHeight) * 100;
+    const matrixGapPx = 20;
+
+    const COLS = 10; // Updated from 9 to 10
     const ROWS = 10;
 
     const createGridOverlay = () => {
-      const overlay = document.getElementById(gridOverlayId);
+      const overlay = gridOverlayRef.value;
       if (!overlay) return null;
 
       overlay.style.cssText = `
         position: absolute;
-        left: ${AREA_LEFT}px;
-        top: ${AREA_TOP}px;
-        width: ${AREA_WIDTH}px;
-        height: ${AREA_HEIGHT}px;
+        left: ${matrixLeftPercent}%;
+        top: ${matrixTopPercent}%;
+        width: ${matrixWidthPercent}%;
+        height: ${matrixHeightPercent}%;
         display: grid;
-        grid-template-columns: repeat(9, 1fr);
-        grid-template-rows: repeat(10, 1fr);
-        gap: 20px;
+        grid-template-columns: repeat(${COLS}, 1fr);
+        grid-template-rows: repeat(${ROWS}, 1fr);
+        gap: ${matrixGapPx}px;
         z-index: 50;
         pointer-events: none;
       `;
@@ -110,23 +149,20 @@ export default {
       });
     };
 
-    const putText = (str, x1, y1, x2, y2) => {
-      const textLayer = document.getElementById(textLayerId);
+    const putText = (str, topPercent, leftPercent, widthPercent, heightPercent, fontSizePx) => {
+      const textLayer = textLayerRef.value;
       if (!textLayer) return;
-
-      const width = x2 - x1;
-      const height = y2 - y1;
 
       const div = document.createElement("div");
       div.className = "text-box";
       div.style.cssText = `
         position: absolute;
-        left: ${x1}px;
-        top: ${y1}px;
-        width: ${width}px;
-        height: ${height}px;
-        font-size: ${Math.floor(height * 0.8)}px;
-        line-height: ${height}px;
+        left: ${leftPercent}%;
+        top: ${topPercent}%;
+        width: ${widthPercent}%;
+        height: ${heightPercent}%;
+        font-size: ${fontSizePx}px;
+        line-height: 1; /* Adjusted to 1 for consistency with generatePrintHTML */
         background: transparent;
         border: none;
         color: black;
@@ -134,33 +170,42 @@ export default {
         overflow: hidden;
         text-overflow: clip;
         font-family: Arial, sans-serif;
+        display: flex; /* Added for consistency with generatePrintHTML */
+        align-items: center; /* Added for consistency with generatePrintHTML */
       `;
       div.textContent = str;
 
       textLayer.appendChild(div);
     };
 
-    const putDigits = (str, x1, y1, x2, y2) => {
-      str.length < 9 && (str = str.padStart(10, "0"));
-      const layer = document.getElementById(digitLayerId);
+    const putDigits = (str, topPercent, leftPercent, widthPercent, heightPercent, fontSizePx) => {
+      const layer = digitLayerRef.value;
       if (!layer) return;
 
-      const width = x2 - x1;
-      const height = y2 - y1;
-      const n = str.length;
-      const cellWidth = width / n;
+      const codeToDisplay = String(str);
+      const digitWidthPercent = 100 / codeToDisplay.length;
 
-      for (let i = 0; i < n; i++) {
+      const containerDiv = document.createElement("div");
+      containerDiv.style.cssText = `
+        position: absolute;
+        left: ${leftPercent}%;
+        top: ${topPercent}%;
+        width: ${widthPercent}%;
+        height: ${heightPercent}%;
+        display: flex; /* Added for consistency with generatePrintHTML */
+      `;
+
+      for (let i = 0; i < codeToDisplay.length; i++) {
         const div = document.createElement("div");
         div.className = "digit-box";
         div.style.cssText = `
-          position: absolute;
-          left: ${x1 + i * cellWidth}px;
-          top: ${y1}px;
-          width: ${cellWidth}px;
-          height: ${height}px;
-          font-size: ${Math.floor(height * 0.8)}px;
-          line-height: ${height}px;
+          position: absolute; /* Changed to absolute for individual positioning within containerDiv */
+          left: ${i * digitWidthPercent}%;
+          top: 0;
+          width: ${digitWidthPercent}%;
+          height: 100%;
+          font-size: ${fontSizePx}px;
+          line-height: 1; /* Adjusted to 1 for consistency with generatePrintHTML */
           background: transparent;
           border: none;
           color: black;
@@ -168,28 +213,35 @@ export default {
           overflow: hidden;
           white-space: nowrap;
           font-family: Arial, sans-serif;
+          display: flex; /* Added for consistency with generatePrintHTML */
+          align-items: center; /* Added for consistency with generatePrintHTML */
+          justify-content: center; /* Added for consistency with generatePrintHTML */
         `;
-        div.textContent = str[i];
+        div.textContent = codeToDisplay[i];
 
-        layer.appendChild(div);
+        containerDiv.appendChild(div);
       }
+      layer.appendChild(containerDiv);
     };
 
     const numberToMatrix = (input) => {
       let str = String(input).replace(/\D/g, "");
 
-      if (str.length > 9) {
-        str = str.slice(-9);
-      } else if (str.length < 9) {
-        str = str.padStart(9, "0");
-      }
+      // Ensure formattedCode is 10 digits for a 10-column matrix
+      str = str.padStart(COLS, "0").slice(0, COLS);
 
-      const matrix = Array.from({ length: 10 }, () => Array(9).fill(0));
+      const matrix = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
 
-      for (let col = 0; col < 9; col++) {
+      for (let col = 0; col < COLS; col++) {
         const digit = parseInt(str[col], 10);
         if (!isNaN(digit)) {
-          matrix[digit][col] = 1;
+          // Mapeo de dígitos a filas:
+          // Dígito 1-9 -> Fila 1-9 (índice 0-8)
+          // Dígito 0 -> Fila 10 (índice 9)
+          const rowIndex = digit === 0 ? 9 : digit - 1;
+          if (rowIndex >= 0 && rowIndex < ROWS) {
+            matrix[rowIndex][col] = 1;
+          }
         }
       }
 
@@ -197,40 +249,59 @@ export default {
     };
 
     const initializeSheet = () => {
-      setTimeout(() => {
-        const overlay = createGridOverlay();
+      const overlay = createGridOverlay();
 
-        if (!overlay) {
-          return;
-        }
+      if (!overlay) {
+        return;
+      }
 
-        const student = props.student;
-        const textLayer = document.getElementById(textLayerId);
-        const digitLayer = document.getElementById(digitLayerId);
+      const student = props.student;
+      const textLayer = textLayerRef.value;
+      const digitLayer = digitLayerRef.value;
 
-        if (textLayer) textLayer.innerHTML = "";
-        if (digitLayer) digitLayer.innerHTML = "";
+      if (textLayer) textLayer.innerHTML = "";
+      if (digitLayer) digitLayer.innerHTML = "";
 
-        if (student.name && student.lastName) {
-          putText(`${student.lastName} ${student.name}`, 366, 20, 3200, 134);
-        }
+      if (student.name && student.lastName) {
+        putText(
+          `${student.lastName} ${student.name}`,
+          nameTopPercent,
+          nameLeftPercent,
+          nameWidthPercent,
+          nameHeightPercent,
+          nameFontSizePx
+        );
+      }
 
-        if (props.courseName) {
-          putText(props.courseName, 1396, 295, 3279, 456);
-        }
+      if (props.courseName) {
+        putText(
+          props.courseName,
+          courseTopPercent,
+          courseLeftPercent,
+          courseWidthPercent,
+          courseHeightPercent,
+          courseFontSizePx
+        );
+      }
 
-        if (student.code) {
-          putDigits(student.code, 177, 687, 1089, 782);
-          const { matrix } = numberToMatrix(student.code);
-          setMatrix(overlay, matrix);
-        }
-      }, 150);
+      if (student.code) {
+        putDigits(
+          student.code,
+          digitsTopPercent,
+          digitsLeftPercent,
+          digitsWidthPercent,
+          digitsHeightPercent,
+          digitsFontSizePx
+        );
+        const { matrix } = numberToMatrix(student.code);
+        setMatrix(overlay, matrix);
+      }
     };
 
     onBeforeUnmount(() => {
-      const textLayer = document.getElementById(textLayerId);
-      const digitLayer = document.getElementById(digitLayerId);
-      const overlay = document.getElementById(gridOverlayId);
+      const textLayer = textLayerRef.value;
+      const digitLayer = digitLayerRef.value;
+      const overlay = gridOverlayRef.value;
 
       if (textLayer) textLayer.innerHTML = "";
       if (digitLayer) digitLayer.innerHTML = "";
@@ -239,47 +310,12 @@ export default {
 
     return {
       initializeSheet,
+      textLayerRef,
+      digitLayerRef,
+      gridOverlayRef,
+      newImageWidth, // Expose for template if needed, though CSS handles it
+      newImageHeight, // Expose for template if needed, though CSS handles it
     };
   },
 };
 </script>
-
-<style scoped>
-.answer-sheet {
-  display: inline-block;
-  transform-origin: top left;
-}
-
-.image-wrapper {
-  position: relative;
-  width: 3313px;
-  height: 3520px;
-  user-select: none;
-}
-
-.image-wrapper img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.text-layer,
-.digit-layer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 10;
-}
-
-.grid-overlay {
-  pointer-events: none;
-}
-
-.grid-cell.filled {
-  background: black !important;
-}
-</style>

@@ -19,17 +19,11 @@
     <ion-content class="ion-padding" :fullscreen="true">
       <swiper :modules="modules" :pagination="{ clickable: true }" class="fullscreen-slides">
         <swiper-slide
-          v-for="(page, pageIndex) in paginatedStudents"
-          :key="pageIndex"
+          v-for="student in allStudents"
+          :key="student.id"
         >
-          <div class="print-page-wrapper">
-            <div class="print-page">
-              <div class="grid-container">
-                <div v-for="student in page" :key="student.id" class="grid-item">
-                  <AnswerSheet :student="student" :course-name="courseName" />
-                </div>
-              </div>
-            </div>
+          <div class="slide-content-wrapper">
+            <AnswerSheet :student="student" :course-name="courseName" :scale="0.12" />
           </div>
         </swiper-slide>
       </swiper>
@@ -181,7 +175,7 @@ export default {
         // Posición de los dígitos del código del estudiante
         const digitsTopPercent = (850 / originalImageHeight) * 100;
         const digitsLeftPercent = (670 / originalImageWidth) * 100;
-        const digitsWidthPercent = ((1489 - 177) / originalImageWidth) * 100;
+        const digitsWidthPercent = ((1089 - 177) / originalImageWidth) * 100;
         const digitsHeightPercent = (95 / originalImageHeight) * 100;
         const digitsFontSizePx = 180; // Se escala con el transform
 
@@ -395,8 +389,13 @@ export default {
       }
     };
 
+    const allStudents = computed(() => {
+      return studentData.value[0]?.students || [];
+    });
+
     return {
       paginatedStudents,
+      allStudents, // Added for individual student preview
       year,
       courseName,
       printSheets,
