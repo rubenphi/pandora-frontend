@@ -75,7 +75,7 @@ export default {
     const digitsLeftPercent = (670 / originalImageWidth) * 100;
     const digitsWidthPercent = (1309 / originalImageWidth) * 100; // Corrected value
     const digitsHeightPercent = (95 / originalImageHeight) * 100;
-    const digitsFontSizePx = 16;
+    // const digitsFontSizePx = 16; // Removed as it will be controlled by CSS
 
     // Posición y tamaño de la matriz de burbujas
     const matrixTopPercent = (976 / originalImageHeight) * 100;
@@ -99,6 +99,7 @@ export default {
     onMounted(() => {
       nextTick(() => {
         // Ensure DOM is updated before calculating scale
+        initializeSheet();
         calculateInternalScale();
       });
       window.addEventListener("resize", calculateInternalScale);
@@ -226,8 +227,7 @@ export default {
       topPercent,
       leftPercent,
       widthPercent,
-      heightPercent,
-      fontSizePx
+      heightPercent
     ) => {
       const layer = digitLayerRef.value;
       if (!layer) return;
@@ -247,14 +247,14 @@ export default {
 
       for (let i = 0; i < codeToDisplay.length; i++) {
         const div = document.createElement("div");
-        div.className = "digit-box";
+        div.className = "digit-box student-code-digit-text"; // Add class here
         div.style.cssText = `
           position: absolute; /* Changed to absolute for individual positioning within containerDiv */
           left: ${i * digitWidthPercent}%;
           top: 0;
           width: ${digitWidthPercent}%;
           height: 100%;
-          font-size: ${fontSizePx}px;
+          /* font-size is now controlled by CSS class */
           line-height: 1; /* Adjusted to 1 for consistency with generatePrintHTML */
           background: transparent;
           border: none;
@@ -340,8 +340,7 @@ export default {
           digitsTopPercent,
           digitsLeftPercent,
           digitsWidthPercent,
-          digitsHeightPercent,
-          digitsFontSizePx
+          digitsHeightPercent
         );
         const { matrix } = numberToMatrix(student.code);
         setMatrix(overlay, matrix);

@@ -199,7 +199,6 @@ export default {
         const digitsLeftPercent = (670 / originalImageWidth) * 100;
         const digitsWidthPercent = ((1089 - 177) / originalImageWidth) * 100;
         const digitsHeightPercent = (95 / originalImageHeight) * 100;
-        const digitsFontSizePx = 180; // Se escala con el transform
 
         // Posición y tamaño de la matriz de burbujas
         const matrixTopPercent = (980 / originalImageHeight) * 100;
@@ -244,11 +243,11 @@ export default {
         const digitWidthPercent = 100 / codeToDisplay.length;
         for (let i = 0; i < codeToDisplay.length; i++) {
           digitsHTML += `
-            <div style="position: absolute; left: ${
+            <div class="student-code-digit-text" style="position: absolute; left: ${
               i * digitWidthPercent
             }%; top: 0;
                  width: ${digitWidthPercent}%; height: 100%;
-                 font-size: ${digitsFontSizePx}px; line-height: 1;
+                 line-height: 1;
                  text-align: center; color: black; font-family: Arial, sans-serif;
                  display: flex; align-items: center; justify-content: center;">
               ${codeToDisplay[i]}
@@ -381,10 +380,18 @@ export default {
           overflow: hidden;
         }
         
+        /* Styles for student code digits in print */
+        .student-code-digit-text {
+          font-size: 180px; /* Default font size for print */
+        }
+
         @media print {
           body {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+          }
+          .student-code-digit-text {
+            font-size: 180px; /* Ensure consistent font size for print */
           }
         }
       </style>
@@ -533,6 +540,10 @@ export default {
     font-size: 2.8vw !important; /* Default font size for smaller screens */
   }
 
+  .student-code-digit-text {
+    font-size: 2.8vw !important; /* Default font size for smaller screens */
+  }
+
   @media (min-width: 768px) {
     /* Adjust for tablets and larger screens */
     .responsive-answer-sheet {
@@ -540,6 +551,10 @@ export default {
     }
 
     .student-name-text {
+      font-size: 0.7vw !important; /* Example: Smaller font size on desktop */
+    }
+
+    .student-code-digit-text {
       font-size: 0.7vw !important; /* Example: Smaller font size on desktop */
     }
   }
@@ -551,6 +566,10 @@ export default {
     }
 
     .student-name-text {
+      font-size: 0.7vw !important; /* Example: Smaller font size on desktop */
+    }
+
+    .student-code-digit-text {
       font-size: 0.7vw !important; /* Example: Smaller font size on desktop */
     }
   }
