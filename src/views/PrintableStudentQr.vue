@@ -229,7 +229,7 @@ export default {
             columns === 2 ? "45%" : "90%"
           }; margin-bottom: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; }
           .qr-img { width: 100%; max-width: ${
-            perPage === 2 ? "100mm" : "75mm"
+            perPage === 2 ? "120mm" : "75mm"
           }; height: auto; display: block; }
           .qr-txt { font-size: ${
             perPage === 2 ? "11pt" : "10pt"
@@ -281,11 +281,14 @@ export default {
           const element = document.createElement("div");
           element.innerHTML = pregeneratedHtml;
 
+          // Dynamic scale to reduce memory on the problematic layout
+          const scale = qrsPerPage.value === 2 ? 1.5 : 2;
+
           const opt = {
             margin: 0,
             filename: "hojas_qr.pdf",
             image: { type: "jpeg", quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, logging: false },
+            html2canvas: { scale: scale, useCORS: true, logging: false },
             jsPDF: { unit: "mm", format: "letter", orientation: "portrait" },
           };
 
@@ -366,10 +369,18 @@ export default {
                 try {
                   const element = document.createElement("div");
                   element.innerHTML = pregeneratedHtml;
+
+                  // Dynamic scale to reduce memory on the problematic layout
+                  const scale = qrsPerPage.value === 2 ? 1 : 2;
+
                   const opt = {
                     margin: 0,
                     filename: "estudiantes_qr.pdf",
-                    html2canvas: { scale: 2, useCORS: true, logging: false },
+                    html2canvas: {
+                      scale: scale,
+                      useCORS: true,
+                      logging: false,
+                    },
                     jsPDF: {
                       unit: "mm",
                       format: "letter",
