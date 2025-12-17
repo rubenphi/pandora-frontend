@@ -9,14 +9,6 @@
         </ion-buttons>
         <ion-title>Hojas de Respuesta</ion-title>
         <ion-buttons slot="end">
-          <ion-item lines="none" style="--background: transparent; margin-right: 10px;">
-             <!-- <ion-label>Formato:</ion-label> -->
-             <ion-select v-model="sheetsPerPage" interface="popover">
-               <ion-select-option :value="6">6 por pág</ion-select-option>
-               <ion-select-option :value="4">4 por pág</ion-select-option>
-               <ion-select-option :value="1">1 por pág</ion-select-option>
-             </ion-select>
-          </ion-item>
           <ion-button @click="printSheets">
             <ion-icon :icon="printOutline"></ion-icon>
             Imprimir todas
@@ -88,8 +80,7 @@ import {
   IonLabel,
   IonListHeader,
   IonModal,
-  IonSelect,
-  IonSelectOption,
+
   alertController,
   actionSheetController,
 } from "@ionic/vue";
@@ -116,8 +107,7 @@ export default {
     IonLabel,
     IonListHeader,
     IonModal,
-    IonSelect,
-    IonSelectOption,
+
     AnswerSheet,
   },
   setup() {
@@ -328,6 +318,7 @@ export default {
         @page {
           size: legal;
           margin: 0;
+          padding-top: 3mm;
         }
         
         .print-page {
@@ -483,7 +474,7 @@ export default {
       }
     };
 
-    const printSheets = async () => {
+    const presentOutputOptions = async () => {
       if (Capacitor.isNativePlatform()) {
         const loading = await alertController.create({
           header: "Generando PDF",
@@ -576,6 +567,40 @@ export default {
         });
         await actionSheet.present();
       }
+    };
+
+    const printSheets = async () => {
+      const actionSheet = await actionSheetController.create({
+        header: "Seleccione formato por página",
+        buttons: [
+          {
+            text: "6 por página",
+            handler: () => {
+              sheetsPerPage.value = 6;
+              presentOutputOptions();
+            },
+          },
+          {
+            text: "4 por página",
+            handler: () => {
+              sheetsPerPage.value = 4;
+              presentOutputOptions();
+            },
+          },
+          {
+            text: "1 por página",
+            handler: () => {
+              sheetsPerPage.value = 1;
+              presentOutputOptions();
+            },
+          },
+          {
+            text: "Cancelar",
+            role: "cancel",
+          },
+        ],
+      });
+      await actionSheet.present();
     };
 
     const allStudents = computed(() => {
