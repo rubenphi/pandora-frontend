@@ -7,7 +7,7 @@
         </ion-buttons>
         <ion-title>QR de Respuestas</ion-title>
         <ion-buttons slot="end" v-if="configConfirmed">
-          <ion-button @click="printAllQrs">
+          <ion-button @click="() => printAllQrs()">
             <ion-icon :icon="printOutline" slot="start"></ion-icon>
             Imprimir todos
           </ion-button>
@@ -193,19 +193,10 @@ export default {
          const loading = await alertController.create({ header: "Generando PDF", message: "Espere un momento...", backdropDismiss: false });
          await loading.present();
          try {
+           // Create a detached container for PDF generation, similar to the working implementation.
+           // This avoids issues with appending/removing elements from the live DOM.
            const element = document.createElement('div');
-           // Set styles to make it visible but not interfering with UI
-           element.style.position = 'absolute';
-           element.style.left = '0';
-           element.style.top = '0';
-           element.style.width = '216mm';
-           element.style.zIndex = '-1000';
-           element.style.opacity = '0.01';
            element.innerHTML = pregeneratedHtml;
-           document.body.appendChild(element);
-
-           // Wait for rendering
-           await new Promise(resolve => setTimeout(resolve, 1000));
            
            const opt = {
              margin: 0,
@@ -216,7 +207,6 @@ export default {
            };
 
            const pdfBase64 = await html2pdf().from(element).set(opt).outputPdf('datauristring');
-           document.body.removeChild(element);
 
            await FileSharer.share({
               filename: `QRs_${Date.now()}.pdf`,
