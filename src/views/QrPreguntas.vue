@@ -236,7 +236,56 @@ export default {
         tokenHeader();
         const studentResponse = await axios.get(`/users?code=${studentCode}`);
         if (studentResponse.data.length > 0) {
-          this.student = studentResponse.data[0];
+          const foundStudent = studentResponse.data[0];
+          
+          // --- Validation Start ---
+          try {
+            const coursesResponse = await axios.get(
+              `/users/${foundStudent.id}/courses`
+            );
+            const studentCourses = coursesResponse.data;
+            const activeUserCourse = studentCourses.find((uc) => uc.active);
+
+            // Determine the courseId from the question
+            // The structure might vary, so we check multiple paths
+            const questionCourseId = 
+              this.question.lesson?.course?.id || 
+              this.question.quiz?.lesson?.course?.id ||
+              this.question.course?.id;
+
+            if (questionCourseId) {
+               if (
+                !activeUserCourse ||
+                activeUserCourse.course.id !== questionCourseId
+              ) {
+                const alert = await alertController.create({
+                  header: "Estudiante no Autorizado",
+                  message: `El estudiante ${foundStudent.name} ${foundStudent.lastName} no pertenece al curso activo de esta pregunta.`,
+                  buttons: ["OK"],
+                });
+                await alert.present();
+                return; // Stop processing this student
+              }
+            } else {
+               console.warn("Could not determine courseId from question details. Skipping course validation.");
+            }
+           
+          } catch (error) {
+             console.error("Error validating student course:", error);
+             // We allow to proceed if validation fails due to network/server error? 
+             // Or we block? OmrRead blocks. Let's block to be safe and consistent.
+              const alert = await alertController.create({
+                header: "Error de Verificación",
+                message:
+                  "No se pudo verificar la inscripción del estudiante al curso. Por favor, inténtelo de nuevo.",
+                buttons: ["OK"],
+              });
+              await alert.present();
+              return;
+          }
+           // --- Validation End ---
+
+          this.student = foundStudent;
 
           if (this.lessonQuizType === "group" && this.student.id) {
             const groupsResponse = await axios.get(
@@ -250,6 +299,13 @@ export default {
         } else {
           console.warn(`Student with code ${studentCode} not found.`);
           this.student = { id: null, name: "", lastName: "" }; // Ensure id is null if not found
+          
+           const alert = await alertController.create({
+            header: "Estudiante no encontrado",
+            message: `No se encontró ningún estudiante con el código "${studentCode}".`,
+            buttons: ["OK"],
+          });
+          await alert.present();
         }
       } catch (error) {
         console.error("Error fetching student or group data:", error);
