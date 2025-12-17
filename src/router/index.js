@@ -129,6 +129,15 @@ const routes = [
         },
       },
       {
+        path: "admin/imprimir-qr-estudiantes",
+        name: "PrintableStudentQr",
+        component: () => import("@/views/PrintableStudentQr.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
         path: "admin/importar-usuarios",
         name: "UserImport",
         component: () => import("@/views/UserImportView.vue"),

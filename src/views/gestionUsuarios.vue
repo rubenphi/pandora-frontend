@@ -774,9 +774,15 @@ export default {
           },
         },
         {
-          text: "Imprimir Hojas de Respuestas/QR",
+          text: "Imprimir Hojas de Respuestas",
           handler: () => {
             navigateToPrintableSheet(curso);
+          },
+        },
+        {
+          text: "Imprimir QRs de Respuestas",
+          handler: () => {
+            navigateToPrintableQr(curso);
           },
         },
         {
@@ -893,6 +899,17 @@ export default {
       const studentData = await preparePrintableData(curso);
       router.push({
         name: "PrintableStudentSheet",
+        state: {
+          studentData: studentData,
+          year: selectedYear.value,
+        },
+      });
+    };
+
+    const navigateToPrintableQr = async (curso) => {
+      const studentData = await preparePrintableData(curso);
+      router.push({
+        name: "PrintableStudentQr",
         state: {
           studentData: studentData,
           year: selectedYear.value,
