@@ -774,7 +774,7 @@ export default {
           },
         },
         {
-          text: "Imprimir Hojas de Respuestas",
+          text: "Imprimir Hojas de Respuestas/QR",
           handler: () => {
             navigateToPrintableSheet(curso);
           },

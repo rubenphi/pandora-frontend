@@ -9,6 +9,14 @@
         </ion-buttons>
         <ion-title>Hojas de Respuesta</ion-title>
         <ion-buttons slot="end">
+          <ion-item lines="none" style="--background: transparent; margin-right: 10px;">
+             <!-- <ion-label>Formato:</ion-label> -->
+             <ion-select v-model="sheetsPerPage" interface="popover">
+               <ion-select-option :value="6">6 por pág</ion-select-option>
+               <ion-select-option :value="4">4 por pág</ion-select-option>
+               <ion-select-option :value="1">1 por pág</ion-select-option>
+             </ion-select>
+          </ion-item>
           <ion-button @click="printSheets">
             <ion-icon :icon="printOutline"></ion-icon>
             Imprimir todas
@@ -80,6 +88,8 @@ import {
   IonLabel,
   IonListHeader,
   IonModal,
+  IonSelect,
+  IonSelectOption,
   alertController,
   actionSheetController,
 } from "@ionic/vue";
@@ -106,6 +116,8 @@ export default {
     IonLabel,
     IonListHeader,
     IonModal,
+    IonSelect,
+    IonSelectOption,
     AnswerSheet,
   },
   setup() {
@@ -114,6 +126,7 @@ export default {
     const isModalOpen = ref(false);
     const selectedStudent = ref(null);
     const answerSheetRef = ref(null);
+    const sheetsPerPage = ref(6);
 
     const courseName = computed(() => studentData.value[0]?.name);
 
@@ -141,8 +154,17 @@ export default {
       const newImageWidth = 3313;
       const newImageHeight = 4919;
 
-      // El factor de escala se calcula para que la nueva imagen quepa en el espacio de la grilla.
-      const scale = 0.0843;
+      let scale = 0.0843; // Valor por defecto
+      if (sheetsPerPage.value === 6) {
+        scale = 0.0843;
+      } else if (sheetsPerPage.value === 4) {
+        scale = 0.1232;
+      } else if (sheetsPerPage.value === 1) {
+        scale = 0.2464;
+      }
+      
+      const scaledWidth = newImageWidth * scale;
+      const scaledHeight = newImageHeight * scale;
 
       const generateSheetCode = (student) => {
         const originalCode = student.code || "";
@@ -258,15 +280,18 @@ export default {
     `;
       };
 
+      const perPage = sheetsPerPage.value;
       let pagesHTML = "";
-      for (let i = 0; i < students.length; i += 6) {
-        const pageStudents = students.slice(i, i + 6);
+      for (let i = 0; i < students.length; i += perPage) {
+        const pageStudents = students.slice(i, i + perPage);
         let sheetsHTML = "";
 
         pageStudents.forEach((student) => {
           sheetsHTML += `
         <div class="grid-item">
-          ${generateSheetCode(student)}
+          <div style="width: ${scaledWidth}px; height: ${scaledHeight}px; position: relative; overflow: hidden;">
+            ${generateSheetCode(student)}
+          </div>
         </div>
       `;
         });
@@ -319,8 +344,16 @@ export default {
         
         .grid-container {
           display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          grid-template-rows: repeat(3, 1fr);
+          grid-template-columns: ${
+            sheetsPerPage.value === 1 ? "1fr" : "repeat(2, 1fr)"
+          };
+          grid-template-rows: ${
+            sheetsPerPage.value === 6
+              ? "repeat(3, 1fr)"
+              : sheetsPerPage.value === 4
+              ? "repeat(2, 1fr)"
+              : "1fr"
+          };
           width: 100%;
           height: 100%;
         }
@@ -330,6 +363,9 @@ export default {
           overflow: hidden;
           width: 100%;
           height: 100%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
         }
         
         /* Styles for student code digits in print */
@@ -338,7 +374,9 @@ export default {
         }
 
        .image-wrapper {
-          position: relative;
+          position: absolute;
+          top: 0;
+          left: 0;
           width: ${newImageWidth}px;
           height: ${newImageHeight}px;
           user-select: none;
@@ -608,6 +646,7 @@ export default {
       openStudentSheetModal,
       answerSheetRef,
       downloadSheet,
+      sheetsPerPage,
     };
   },
 };
