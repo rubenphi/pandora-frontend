@@ -48,13 +48,27 @@
             slot="start"
           ></ion-icon>
 
-          <ion-label color="medium">{{
-            respuesta.group
-              ? respuesta.group.name
-              : respuesta.user
-              ? respuesta.user.name + " " + respuesta.user.lastName
-              : "Desconocido"
-          }}</ion-label>
+          <ion-label color="medium">
+            <span v-if="pregunta.quiz?.quizType === 'group'">
+              {{ respuesta.group?.name || "Grupo Desconocido" }}
+            </span>
+            <span v-else-if="pregunta.quiz?.quizType === 'individual'">
+              {{
+                respuesta.user
+                  ? respuesta.user.name + " " + respuesta.user.lastName
+                  : "Usuario Desconocido"
+              }}
+            </span>
+            <span v-else>
+              {{
+                respuesta.group
+                  ? respuesta.group.name
+                  : respuesta.user
+                  ? respuesta.user.name + " " + respuesta.user.lastName
+                  : "Desconocido"
+              }}
+            </span>
+          </ion-label>
           <ion-note slot="end">
             <ion-text
               v-if="(respuesta.points > 0) & admin || respuesta.points > 0"
@@ -286,13 +300,10 @@ export default {
           grupoUsuario.value = response.data.filter((g) => g.active)[0]?.group;
         });
       tokenHeader();
-      await axios.get("/questions/" + id).then((response) => {
-        pregunta.value = {
-          title: response.data.title,
-          available: response.data.available,
-        };
-      });
-      await axios.get("/questions/" + id + "/answers").then((response) => {
+          await axios.get("/questions/" + id).then((response) => {
+            pregunta.value = response.data;
+          });
+          await axios.get("/questions/" + id + "/answers").then((response) => {
         respuestas.value = response.data;
         calcularRespuestasPorGrupo();
       });

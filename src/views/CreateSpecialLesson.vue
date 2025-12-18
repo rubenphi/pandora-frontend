@@ -3,7 +3,9 @@
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-button :href="`/refuerzos/${curso}/${area}/${periodo}/${year}`">
+          <ion-button
+            :href="`/special-lessons/${lessonType}/${curso}/${area}/${periodo}/${year}`"
+          >
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -12,9 +14,7 @@
             <ion-icon :icon="checkmarkOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
-        <ion-title>{{
-          isEditing ? "Editar Refuerzo" : "Crear Refuerzo"
-        }}</ion-title>
+        <ion-title>{{ pageTitle }}</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content>
@@ -62,7 +62,8 @@
 
 <script>
 import axios from "axios";
-import { ref } from "vue";
+import { ref, computed } from "vue";
+import { LessonType } from "../globalService";
 import { useRoute } from "vue-router";
 import router from "../router";
 import { usuarioGet, tokenHeader } from "../globalService";
@@ -104,7 +105,7 @@ export default {
   },
   setup() {
     const mroute = useRoute();
-    const { curso, area, year, periodo, id } = mroute.params;
+    const { curso, area, year, periodo, id, lessonType } = mroute.params;
     const usuario = ref();
     const error = ref("");
     const isEditing = ref(false);
@@ -116,6 +117,12 @@ export default {
 
     const studentList = ref([]);
     const isLoadingStudents = ref(false);
+
+    const pageTitle = computed(() => {
+      const typeText =
+        lessonType === LessonType.REMEDIAL ? "Nivelación" : "Refuerzo";
+      return isEditing.value ? `Editar ${typeText}` : `Crear ${typeText}`;
+    });
 
     onIonViewWillEnter(async () => {
       usuario.value = usuarioGet();
@@ -170,8 +177,16 @@ export default {
         const masterItemsMap = new Map();
         allGrades.forEach((grade) => {
           const isReinforcement =
-            grade.gradableItem?.lesson?.type === "reinforcement";
-          if (!isReinforcement && grade.gradableItem && grade.gradableItem.id) {
+            grade.gradableItem?.lesson?.type === LessonType.REINFORCEMENT;
+          const isRemedial =
+            grade.gradableItem?.lesson?.type === LessonType.REMEDIAL;
+
+          if (
+            !isReinforcement &&
+            !isRemedial &&
+            grade.gradableItem &&
+            grade.gradableItem.id
+          ) {
             const uniqueKey = `${grade.gradableType}-${grade.gradableItem.id}`;
             if (!masterItemsMap.has(uniqueKey)) {
               masterItemsMap.set(uniqueKey, {
@@ -273,10 +288,8 @@ export default {
             topic: form.value.topic,
             date: form.value.date,
             studentIds: selectedStudentIds,
-            // teacherId might be needed if adding new students?
-            // But our backend logic handles it (uses existing or passed).
-            // We should probably pass it to be safe.
             teacherId: usuario.value.id,
+            lessonType: lessonType, // Pass the lessonType
           });
         } else {
           await axios.post("/reinforcement/lesson", {
@@ -289,11 +302,14 @@ export default {
             instituteId: usuario.value.institute.id,
             teacherId: usuario.value.id,
             studentIds: selectedStudentIds,
+            lessonType: lessonType, // Pass the lessonType
             exist: true,
           });
         }
 
-        router.push(`/refuerzos/${curso}/${area}/${periodo}/${year}`);
+        router.push(
+          `/special-lessons/${lessonType}/${curso}/${area}/${periodo}/${year}`
+        );
       } catch (e) {
         console.error(e);
         error.value = "Error al guardar refuerzo";
@@ -320,6 +336,8 @@ export default {
       isLoadingStudents,
       getAverageColor,
       isEditing,
+      pageTitle,
+      lessonType,
     };
   },
 };

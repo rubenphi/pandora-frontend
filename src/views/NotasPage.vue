@@ -39,21 +39,24 @@
               }}</ion-label>
               <ion-chip
                 slot="end"
-                :color="estudiante.promedio < 3.5 ? 'danger' : 'primary'"
+                v-if="estudiante.promedioRegular !== null"
+                :class="getGradeColorClass(estudiante.promedioRegular)"
               >
-                <span
-                  :style="{
-                    opacity: estudiante.hasReinforcement ? '0.6' : '1',
-                  }"
-                >
-                  {{ estudiante.promedio }}
-                </span>
-                <span
-                  v-if="estudiante.hasReinforcement"
-                  style="opacity: 1; font-weight: bold"
-                >
-                  / {{ estudiante.promedioReinf }}
-                </span>
+                <span>RG: {{ estudiante.promedioRegular }}</span>
+              </ion-chip>
+              <ion-chip
+                slot="end"
+                v-if="estudiante.hasReinforcement"
+                :class="getGradeColorClass(estudiante.promedioRefuerzo)"
+              >
+                <span>RF: {{ estudiante.promedioRefuerzo }}</span>
+              </ion-chip>
+              <ion-chip
+                slot="end"
+                v-if="estudiante.hasRemedial"
+                :class="getGradeColorClass(estudiante.promedioNivelacion)"
+              >
+                <span>NV: {{ estudiante.promedioNivelacion }}</span>
               </ion-chip>
             </ion-item>
             <div class="ion-padding" slot="content">
@@ -65,138 +68,253 @@
                 <ion-icon :icon="addOutline" slot="start"></ion-icon>
                 Añadir Nota
               </ion-button>
-              <ion-list>
-                <ion-item-sliding
-                  v-for="dimension in estudiante.dimensiones"
-                  :key="dimension.id"
+              <ion-button
+                :href="`/create-special-lesson/${LessonType.REINFORCEMENT}/${estudiante.id}/${cursoId}/${periodoSelected}/${year}`"
+                fill="outline"
+                size="small"
+                class="ion-margin-start"
+              >
+                <ion-icon :icon="addOutline" slot="start"></ion-icon>
+                Refuerzo
+              </ion-button>
+              <ion-button
+                v-if="estudiante.promedio < 3.5"
+                :href="`/create-special-lesson/${LessonType.REMEDIAL}/${estudiante.id}/${cursoId}/${periodoSelected}/${year}`"
+                fill="outline"
+                size="small"
+                class="ion-margin-start"
+              >
+                <ion-icon :icon="schoolOutline" slot="start"></ion-icon>
+                Nivelación
+              </ion-button>
+
+              <!-- Sub-acordeones para tipos de notas -->
+              <ion-accordion-group class="ion-margin-top">
+                <!-- Notas Regulares -->
+                <ion-accordion
+                  value="regular"
+                  v-if="
+                    estudiante.dimensionesRegular.some(
+                      (d) => d.notas.length > 0
+                    )
+                  "
                 >
-                  <ion-item-group>
-                    <ion-item-divider>
-                      <ion-label>
-                        {{ dimension.name }}
-                        <!-- Average Badge: Regular (Opaque if has reinforcement) -->
-                        <ion-chip
-                          size="small"
-                          :color="
-                            parseFloat(dimension.promedio) < 3.5
-                              ? 'danger'
-                              : 'success'
-                          "
-                          :style="{
-                            opacity: estudiante.hasReinforcement ? '0.6' : '1',
-                          }"
-                        >
-                          {{ dimension.promedio }}
-                        </ion-chip>
-                        <!-- Average Badge: Reinforcement (if exists, normal opacity) -->
-                        <span v-if="estudiante.hasReinforcement">
-                          /
-                          <ion-chip
-                            size="small"
-                            :color="
-                              parseFloat(dimension.promedioReinf) < 3.5
-                                ? 'danger'
-                                : 'success'
-                            "
-                            style="opacity: 1; font-weight: bold"
-                          >
-                            {{ dimension.promedioReinf }}
-                          </ion-chip>
-                        </span>
-                      </ion-label>
-                    </ion-item-divider>
-
-                    <!-- Regular Grades (Opaque if hasReinforcement) -->
-                    <div
-                      :style="{
-                        opacity: estudiante.hasReinforcement ? '0.6' : '1',
-                      }"
+                  <ion-item slot="header">
+                    <ion-label>Notas Regulares</ion-label>
+                    <ion-chip
+                      slot="end"
+                      :class="getGradeColorClass(estudiante.promedioRegular)"
                     >
-                      <ion-item-sliding
-                        v-for="nota in dimension.notas"
-                        :key="nota.id"
+                      {{ estudiante.promedioRegular }}
+                    </ion-chip>
+                  </ion-item>
+                  <div class="ion-padding" slot="content">
+                    <ion-list>
+                      <ion-item-group
+                        v-for="dimension in estudiante.dimensionesRegular"
+                        :key="dimension.id"
                       >
-                        <ion-item>
-                          <ion-icon
-                            :icon="easelOutline"
-                            slot="start"
-                          ></ion-icon>
+                        <ion-item-divider v-if="dimension.notas.length > 0">
                           <ion-label>
-                            <h2>
-                              {{ nota.gradableItem?.title }}
-                            </h2>
-                            <p>
-                              Lección: {{ nota.gradableItem?.lesson?.topic }}
-                            </p>
-                            <p
-                              v-if="nota.grade && nota.grade < 3.5"
-                              style="color: #bf9494"
+                            {{ dimension.name }}
+                            <ion-chip
+                              size="small"
+                              :class="getGradeColorClass(dimension.promedio)"
                             >
-                              {{ nota.grade }}
-                            </p>
-                            <p v-else-if="nota.grade">{{ nota.grade }}</p>
-                            <p v-else>Pendiente</p>
+                              {{ dimension.promedio }}
+                            </ion-chip>
                           </ion-label>
-                        </ion-item>
-                        <ion-item-options side="end">
-                          <ion-item-option
-                            @click="editarNota(nota, estudiante.id)"
-                            color="primary"
-                          >
+                        </ion-item-divider>
+                        <ion-item-sliding
+                          v-for="nota in dimension.notas"
+                          :key="nota.id"
+                        >
+                          <ion-item>
                             <ion-icon
-                              :icon="pencilOutline"
-                              slot="icon-only"
+                              :icon="easelOutline"
+                              slot="start"
                             ></ion-icon>
-                          </ion-item-option>
-                        </ion-item-options>
-                      </ion-item-sliding>
-                    </div>
+                            <ion-label>
+                              <h2>{{ nota.gradableItem?.title }}</h2>
+                              <p>
+                                Lección: {{ nota.gradableItem?.lesson?.topic }}
+                              </p>
+                              <p
+                                v-if="nota.grade !== null"
+                                :class="getGradeColorClass(nota.grade)"
+                              >
+                                {{ nota.grade }}
+                              </p>
+                              <p v-else>Pendiente</p>
+                            </ion-label>
+                          </ion-item>
+                          <ion-item-options side="end">
+                            <ion-item-option
+                              @click="editarNota(nota, estudiante.id)"
+                              color="primary"
+                            >
+                              <ion-icon
+                                :icon="pencilOutline"
+                                slot="icon-only"
+                              ></ion-icon>
+                            </ion-item-option>
+                          </ion-item-options>
+                        </ion-item-sliding>
+                      </ion-item-group>
+                    </ion-list>
+                  </div>
+                </ion-accordion>
 
-                    <!-- Reinforcement Grades (Normal Opacity, only if hasReinforcement) -->
-                    <div v-if="estudiante.hasReinforcement">
-                      <!-- Optional sub-header or divider for visual separation, but user asked for just list -->
-                      <ion-item-sliding
-                        v-for="nota in dimension.notasReinf"
-                        :key="nota.id"
+                <!-- Notas de Refuerzo -->
+                <ion-accordion
+                  value="reinforcement"
+                  v-if="
+                    estudiante.dimensionesReinforcement.some(
+                      (d) => d.notas.length > 0
+                    )
+                  "
+                >
+                  <ion-item slot="header">
+                    <ion-label>Notas de Refuerzo</ion-label>
+                    <ion-chip
+                      slot="end"
+                      :class="getGradeColorClass(estudiante.promedioRefuerzo)"
+                    >
+                      {{ estudiante.promedioRefuerzo }}
+                    </ion-chip>
+                  </ion-item>
+                  <div class="ion-padding" slot="content">
+                    <ion-list>
+                      <ion-item-group
+                        v-for="dimension in estudiante.dimensionesReinforcement"
+                        :key="dimension.id"
                       >
-                        <ion-item>
-                          <!-- Different icon or color to distinguish? User didn't ask, but maybe helpful. -->
-                          <ion-icon
-                            :icon="easelOutline"
-                            slot="start"
-                            color="tertiary"
-                          ></ion-icon>
+                        <ion-item-divider v-if="dimension.notas.length > 0">
                           <ion-label>
-                            <h2>{{ nota.gradableItem?.title }} (Refuerzo)</h2>
-                            <p>
-                              Lección: {{ nota.gradableItem?.lesson?.topic }}
-                            </p>
-                            <p
-                              v-if="nota.grade && nota.grade < 3.5"
-                              style="color: #bf9494"
+                            {{ dimension.name }}
+                            <ion-chip
+                              size="small"
+                              :class="getGradeColorClass(dimension.promedio)"
                             >
-                              {{ nota.grade }}
-                            </p>
-                            <p v-else-if="nota.grade">{{ nota.grade }}</p>
-                            <p v-else>Pendiente</p>
+                              {{ dimension.promedio }}
+                            </ion-chip>
                           </ion-label>
-                        </ion-item>
-                        <ion-item-options side="end">
-                          <ion-item-option
-                            @click="editarNota(nota, estudiante.id)"
-                            color="primary"
-                          >
+                        </ion-item-divider>
+                        <ion-item-sliding
+                          v-for="nota in dimension.notas"
+                          :key="nota.id"
+                        >
+                          <ion-item>
                             <ion-icon
-                              :icon="pencilOutline"
-                              slot="icon-only"
+                              :icon="easelOutline"
+                              slot="start"
                             ></ion-icon>
-                          </ion-item-option>
-                        </ion-item-options>
-                      </ion-item-sliding>
-                    </div>
-                  </ion-item-group>
-                </ion-item-sliding>
-              </ion-list>
+                            <ion-label>
+                              <h2>{{ nota.gradableItem?.title }}</h2>
+                              <p>
+                                Lección: {{ nota.gradableItem?.lesson?.topic }}
+                              </p>
+                              <p
+                                v-if="nota.grade !== null"
+                                :class="getGradeColorClass(nota.grade)"
+                              >
+                                {{ nota.grade }}
+                              </p>
+                              <p v-else>Pendiente</p>
+                            </ion-label>
+                          </ion-item>
+                          <ion-item-options side="end">
+                            <ion-item-option
+                              @click="editarNota(nota, estudiante.id)"
+                              color="primary"
+                            >
+                              <ion-icon
+                                :icon="pencilOutline"
+                                slot="icon-only"
+                              ></ion-icon>
+                            </ion-item-option>
+                          </ion-item-options>
+                        </ion-item-sliding>
+                      </ion-item-group>
+                    </ion-list>
+                  </div>
+                </ion-accordion>
+
+                <!-- Notas de Nivelación -->
+                <ion-accordion
+                  value="remedial"
+                  v-if="
+                    estudiante.dimensionesRemedial.some(
+                      (d) => d.notas.length > 0
+                    )
+                  "
+                >
+                  <ion-item slot="header">
+                    <ion-label>Notas de Nivelación</ion-label>
+                    <ion-chip
+                      slot="end"
+                      :class="getGradeColorClass(estudiante.promedioNivelacion)"
+                    >
+                      {{ estudiante.promedioNivelacion }}
+                    </ion-chip>
+                  </ion-item>
+                  <div class="ion-padding" slot="content">
+                    <ion-list>
+                      <ion-item-group
+                        v-for="dimension in estudiante.dimensionesRemedial"
+                        :key="dimension.id"
+                      >
+                        <ion-item-divider v-if="dimension.notas.length > 0">
+                          <ion-label>
+                            {{ dimension.name }}
+                            <ion-chip
+                              size="small"
+                              :class="getGradeColorClass(dimension.promedio)"
+                            >
+                              {{ dimension.promedio }}
+                            </ion-chip>
+                          </ion-label>
+                        </ion-item-divider>
+                        <ion-item-sliding
+                          v-for="nota in dimension.notas"
+                          :key="nota.id"
+                        >
+                          <ion-item>
+                            <ion-icon
+                              :icon="easelOutline"
+                              slot="start"
+                            ></ion-icon>
+                            <ion-label>
+                              <h2>{{ nota.gradableItem?.title }}</h2>
+                              <p>
+                                Lección: {{ nota.gradableItem?.lesson?.topic }}
+                              </p>
+                              <p
+                                v-if="nota.grade !== null"
+                                :class="getGradeColorClass(nota.grade)"
+                              >
+                                {{ nota.grade }}
+                              </p>
+                              <p v-else>Pendiente</p>
+                            </ion-label>
+                          </ion-item>
+                          <ion-item-options side="end">
+                            <ion-item-option
+                              @click="editarNota(nota, estudiante.id)"
+                              color="primary"
+                            >
+                              <ion-icon
+                                :icon="pencilOutline"
+                                slot="icon-only"
+                              ></ion-icon>
+                            </ion-item-option>
+                          </ion-item-options>
+                        </ion-item-sliding>
+                      </ion-item-group>
+                    </ion-list>
+                  </div>
+                </ion-accordion>
+              </ion-accordion-group>
             </div>
           </ion-accordion>
         </ion-accordion-group>
@@ -375,8 +493,13 @@ import {
   IonItemDivider,
 } from "@ionic/vue";
 import { useRoute } from "vue-router";
-import { easelOutline, addOutline, pencilOutline } from "ionicons/icons";
-
+import {
+  easelOutline,
+  addOutline,
+  pencilOutline,
+  schoolOutline,
+} from "ionicons/icons";
+import { LessonType } from "../globalService";
 export default {
   components: {
     IonHeader,
@@ -435,27 +558,31 @@ export default {
     const processStudentGrades = (
       allGrades,
       studentList,
-      reinforcementStudents
+      reinforcementStudents,
+      remedialStudents
     ) => {
-      // 1. Build Master List of Gradable Items (excluding reinforcements)
+      // 1. Build Master List of Gradable Items (excluding special types)
       const masterItemsMap = new Map();
 
       allGrades.forEach((grade) => {
-        // If lesson type is standard (or undefined, assuming standard if missing)
-        // We can check grade.gradableItem.lesson.type if available.
-        // Note: Backend might send 'standard' literal.
-        // We INCLUDE reinforcement items in the initial master map extraction
-        // But we tag them so we can filter later.
-        // const isReinforcement = grade.gradableItem?.lesson?.type === 'reinforcement';
+        const isReinforcement =
+          grade.gradableItem?.lesson?.type === LessonType.REINFORCEMENT;
+        const isRemedial =
+          grade.gradableItem?.lesson?.type === LessonType.REMEDIAL;
 
-        if (grade.gradableItem && grade.gradableItem.id) {
+        if (
+          !isReinforcement &&
+          !isRemedial &&
+          grade.gradableItem &&
+          grade.gradableItem.id
+        ) {
           const uniqueKey = `${grade.gradableType}-${grade.gradableItem.id}`;
           if (!masterItemsMap.has(uniqueKey)) {
             masterItemsMap.set(uniqueKey, {
               id: grade.gradableItem.id,
               type: grade.gradableType,
               item: grade.gradableItem,
-              classification: grade.classification, // Infer classification from first occurrence
+              classification: grade.classification,
             });
           }
         }
@@ -472,18 +599,13 @@ export default {
         (i) => i.classification === "behavior"
       );
 
-      const getStudentGradeForItem = (studentGrades, item) => {
-        return studentGrades.find(
-          (g) => g.gradableType === item.type && g.gradableItem.id === item.id
-        );
-      };
-
       const mapToDisplayParamsWithMasterList = (studentGrades, masterList) => {
         return masterList
           .map((masterItem) => {
-            const foundGrade = getStudentGradeForItem(
-              studentGrades,
-              masterItem
+            const foundGrade = studentGrades.find(
+              (g) =>
+                g.gradableType === masterItem.type &&
+                g.gradableItem.id === masterItem.id
             );
             if (foundGrade) {
               return {
@@ -514,56 +636,49 @@ export default {
       };
 
       const calculateAverageFromMasterList = (studentGrades, masterList) => {
-        if (masterList.length === 0) return 0;
+        if (masterList.length === 0) return 0; // Return 0 if no items in the master list
+
         let totalScore = 0;
+        const itemsConsideredCount = masterList.length; // All assigned items count towards the average
+
         masterList.forEach((masterItem) => {
-          const foundGrade = getStudentGradeForItem(studentGrades, masterItem);
-          if (foundGrade) {
-            totalScore += foundGrade.grade;
-          }
-          // If not found, adds 0 to score
+          const foundGrade = studentGrades.find(
+            (g) =>
+              g.gradableType === masterItem.type &&
+              g.gradableItem.id === masterItem.id
+          );
+          // If grade exists and is not null, use it. Otherwise, treat as 0.
+          totalScore +=
+            foundGrade && foundGrade.grade !== null ? foundGrade.grade : 0;
         });
-        return totalScore / masterList.length;
+
+        return itemsConsideredCount > 0 ? totalScore / itemsConsideredCount : 0;
       };
 
       const formatGrade = (grade) => {
-        if (!grade && grade !== 0) return 0;
+        if (grade === null || isNaN(grade)) return null;
         return Math.floor(grade * 10) / 10;
       };
 
       return studentList.map((estudiante) => {
         const hasReinforcement = reinforcementStudents.has(estudiante.id);
+        const hasRemedial = remedialStudents.has(estudiante.id);
+
         const studentGrades = allGrades
           .filter((grade) => grade.user.id === estudiante.id)
           .map((n) => ({ ...n, grade: formatGrade(n.grade) }));
 
         // --- REGULAR GRADES LOGIC ---
-        // Lists excluding reinforcement items
         const masterKnowledgeRegular = masterKnowledge.filter(
-          (i) => i.item.lesson?.type !== "reinforcement"
+          (i) => i.item.lesson?.type === LessonType.STANDARD
         );
         const masterExecutionRegular = masterExecution.filter(
-          (i) => i.item.lesson?.type !== "reinforcement"
+          (i) => i.item.lesson?.type === LessonType.STANDARD
         );
         const masterBehaviorRegular = masterBehavior.filter(
-          (i) => i.item.lesson?.type !== "reinforcement"
+          (i) => i.item.lesson?.type === LessonType.STANDARD
         );
 
-        // Display lists (Regular)
-        const saberNotasRegular = mapToDisplayParamsWithMasterList(
-          studentGrades,
-          masterKnowledgeRegular
-        );
-        const hacerNotasRegular = mapToDisplayParamsWithMasterList(
-          studentGrades,
-          masterExecutionRegular
-        );
-        const serNotasRegular = mapToDisplayParamsWithMasterList(
-          studentGrades,
-          masterBehaviorRegular
-        );
-
-        // Averages (Regular) - Divisor is count of REGULAR items
         const promSaberRegular = calculateAverageFromMasterList(
           studentGrades,
           masterKnowledgeRegular
@@ -580,37 +695,20 @@ export default {
         const promedioFinalRegular =
           (promSaberRegular + promHacerRegular + promSerRegular) / 3;
 
-        // --- REINFORCEMENT GRADES LOGIC (Only if hasReinforcement) ---
+        // --- REINFORCEMENT GRADES LOGIC ---
         let promSaberReinf = 0,
           promHacerReinf = 0,
           promSerReinf = 0,
           promedioFinalReinf = 0;
-        let saberNotasReinf = [],
-          hacerNotasReinf = [],
-          serNotasReinf = [];
-
         if (hasReinforcement) {
           const masterKnowledgeReinf = masterKnowledge.filter(
-            (i) => i.item.lesson?.type === "reinforcement"
+            (i) => i.item.lesson?.type === LessonType.REINFORCEMENT
           );
           const masterExecutionReinf = masterExecution.filter(
-            (i) => i.item.lesson?.type === "reinforcement"
+            (i) => i.item.lesson?.type === LessonType.REINFORCEMENT
           );
           const masterBehaviorReinf = masterBehavior.filter(
-            (i) => i.item.lesson?.type === "reinforcement"
-          );
-
-          saberNotasReinf = mapToDisplayParamsWithMasterList(
-            studentGrades,
-            masterKnowledgeReinf
-          );
-          hacerNotasReinf = mapToDisplayParamsWithMasterList(
-            studentGrades,
-            masterExecutionReinf
-          );
-          serNotasReinf = mapToDisplayParamsWithMasterList(
-            studentGrades,
-            masterBehaviorReinf
+            (i) => i.item.lesson?.type === LessonType.REINFORCEMENT
           );
 
           promSaberReinf = calculateAverageFromMasterList(
@@ -625,56 +723,176 @@ export default {
             studentGrades,
             masterBehaviorReinf
           );
-
-          // If no items in a dimension for reinforcement, average is 0.
-          // We assume (Saber + Hacer + Ser)/3 roughly applies, but rarely we have behavior reinforcement?
-          // Let's stick to simple average of 3 dimensions for consistency.
           promedioFinalReinf =
             (promSaberReinf + promHacerReinf + promSerReinf) / 3;
         }
 
-        const dimensiones = [
+        // --- REMEDIAL GRADES LOGIC ---
+        let promSaberRemedial = 0,
+          promHacerRemedial = 0,
+          promSerRemedial = 0,
+          promedioFinalRemedial = 0;
+        if (hasRemedial) {
+          const masterKnowledgeRemedial = masterKnowledge.filter(
+            (i) => i.item.lesson?.type === LessonType.REMEDIAL
+          );
+          const masterExecutionRemedial = masterExecution.filter(
+            (i) => i.item.lesson?.type === LessonType.REMEDIAL
+          );
+          const masterBehaviorRemedial = masterBehavior.filter(
+            (i) => i.item.lesson?.type === LessonType.REMEDIAL
+          );
+
+          promSaberRemedial = calculateAverageFromMasterList(
+            studentGrades,
+            masterKnowledgeRemedial
+          );
+          promHacerRemedial = calculateAverageFromMasterList(
+            studentGrades,
+            masterExecutionRemedial
+          );
+          promSerRemedial = calculateAverageFromMasterList(
+            studentGrades,
+            masterBehaviorRemedial
+          );
+          promedioFinalRemedial =
+            (promSaberRemedial + promHacerRemedial + promSerRemedial) / 3;
+        }
+
+        // Apply Hierarchy for the main student chip color: Remedial > Reinforcement > Regular
+        let finalPromedio = promedioFinalRegular;
+        if (hasReinforcement && promedioFinalReinf > 0) {
+          finalPromedio = Math.max(finalPromedio, promedioFinalReinf);
+        }
+        if (hasRemedial && promedioFinalRemedial > 0) {
+          finalPromedio = Math.max(finalPromedio, promedioFinalRemedial);
+        }
+
+        const getGradesByLessonType = (grades, lessonTypeFilter) => {
+          return grades.filter(
+            (g) => g.gradableItem?.lesson?.type === lessonTypeFilter
+          );
+        };
+
+        const dimensionesRegular = [
           {
             id: "knowledge",
             name: "Saber",
-            promedio: formatGrade(promSaberRegular).toFixed(1),
-            notas: saberNotasRegular,
-            // Reinforcement data
-            promedioReinf: hasReinforcement
-              ? formatGrade(promSaberReinf).toFixed(1)
-              : null,
-            notasReinf: saberNotasReinf,
+            promedio: formatGrade(promSaberRegular)?.toFixed(1),
+            notas: mapToDisplayParamsWithMasterList(
+              getGradesByLessonType(studentGrades, LessonType.STANDARD),
+              masterKnowledge.filter(
+                (i) => i.item.lesson?.type === LessonType.STANDARD
+              )
+            ),
           },
           {
             id: "execution",
             name: "Hacer",
-            promedio: formatGrade(promHacerRegular).toFixed(1),
-            notas: hacerNotasRegular,
-            promedioReinf: hasReinforcement
-              ? formatGrade(promHacerReinf).toFixed(1)
-              : null,
-            notasReinf: hacerNotasReinf,
+            promedio: formatGrade(promHacerRegular)?.toFixed(1),
+            notas: mapToDisplayParamsWithMasterList(
+              getGradesByLessonType(studentGrades, LessonType.STANDARD),
+              masterExecution.filter(
+                (i) => i.item.lesson?.type === LessonType.STANDARD
+              )
+            ),
           },
           {
             id: "behavior",
             name: "Ser",
-            promedio: formatGrade(promSerRegular).toFixed(1),
-            notas: serNotasRegular,
-            promedioReinf: hasReinforcement
-              ? formatGrade(promSerReinf).toFixed(1)
-              : null,
-            notasReinf: serNotasReinf,
+            promedio: formatGrade(promSerRegular)?.toFixed(1),
+            notas: mapToDisplayParamsWithMasterList(
+              getGradesByLessonType(studentGrades, LessonType.STANDARD),
+              masterBehavior.filter(
+                (i) => i.item.lesson?.type === LessonType.STANDARD
+              )
+            ),
+          },
+        ];
+
+        const dimensionesReinforcement = [
+          {
+            id: "knowledge",
+            name: "Saber",
+            promedio: formatGrade(promSaberReinf)?.toFixed(1),
+            notas: mapToDisplayParamsWithMasterList(
+              getGradesByLessonType(studentGrades, LessonType.REINFORCEMENT),
+              masterKnowledge.filter(
+                (i) => i.item.lesson?.type === LessonType.REINFORCEMENT
+              )
+            ),
+          },
+          {
+            id: "execution",
+            name: "Hacer",
+            promedio: formatGrade(promHacerReinf)?.toFixed(1),
+            notas: mapToDisplayParamsWithMasterList(
+              getGradesByLessonType(studentGrades, LessonType.REINFORCEMENT),
+              masterExecution.filter(
+                (i) => i.item.lesson?.type === LessonType.REINFORCEMENT
+              )
+            ),
+          },
+          {
+            id: "behavior",
+            name: "Ser",
+            promedio: formatGrade(promSerReinf)?.toFixed(1),
+            notas: mapToDisplayParamsWithMasterList(
+              getGradesByLessonType(studentGrades, LessonType.REINFORCEMENT),
+              masterBehavior.filter(
+                (i) => i.item.lesson?.type === LessonType.REINFORCEMENT
+              )
+            ),
+          },
+        ];
+
+        const dimensionesRemedial = [
+          {
+            id: "knowledge",
+            name: "Saber",
+            promedio: formatGrade(promSaberRemedial)?.toFixed(1),
+            notas: mapToDisplayParamsWithMasterList(
+              getGradesByLessonType(studentGrades, LessonType.REMEDIAL),
+              masterKnowledge.filter(
+                (i) => i.item.lesson?.type === LessonType.REMEDIAL
+              )
+            ),
+          },
+          {
+            id: "execution",
+            name: "Hacer",
+            promedio: formatGrade(promHacerRemedial)?.toFixed(1),
+            notas: mapToDisplayParamsWithMasterList(
+              getGradesByLessonType(studentGrades, LessonType.REMEDIAL),
+              masterExecution.filter(
+                (i) => i.item.lesson?.type === LessonType.REMEDIAL
+              )
+            ),
+          },
+          {
+            id: "behavior",
+            name: "Ser",
+            promedio: formatGrade(promSerRemedial)?.toFixed(1),
+            notas: mapToDisplayParamsWithMasterList(
+              getGradesByLessonType(studentGrades, LessonType.REMEDIAL),
+              masterBehavior.filter(
+                (i) => i.item.lesson?.type === LessonType.REMEDIAL
+              )
+            ),
           },
         ];
 
         return {
           ...estudiante,
-          promedio: formatGrade(promedioFinalRegular).toFixed(1),
-          promedioReinf: hasReinforcement
-            ? formatGrade(promedioFinalReinf).toFixed(1)
-            : null,
+          promedio: formatGrade(finalPromedio)?.toFixed(1), // Keep for main chip color
           hasReinforcement: hasReinforcement,
-          dimensiones,
+          hasRemedial: hasRemedial,
+          promedioRegular: formatGrade(promedioFinalRegular)?.toFixed(1),
+          promedioRefuerzo: formatGrade(promedioFinalReinf)?.toFixed(1),
+          promedioNivelacion: formatGrade(promedioFinalRemedial)?.toFixed(1),
+          dimensionesRegular,
+          dimensionesReinforcement,
+          dimensionesRemedial,
         };
       });
     };
@@ -704,17 +922,27 @@ export default {
 
         // Fetch Reinforcements
         const reinforcementsResponse = await axios.get(
-          `/reinforcement/by-context?courseId=${cursoId}&areaId=${areaId}&periodId=${periodoSelected.value}&year=${year}`,
+          `/reinforcement/by-context?courseId=${cursoId}&areaId=${areaId}&periodId=${periodoSelected.value}&year=${year}&lessonType=${LessonType.REINFORCEMENT}`,
           tokenHeader()
         );
         const reinforcementStudents = new Set(
           reinforcementsResponse.data.map((r) => r.student.id)
         );
 
+        // Fetch Remedial Lessons
+        const remedialResponse = await axios.get(
+          `/reinforcement/by-context?courseId=${cursoId}&areaId=${areaId}&periodId=${periodoSelected.value}&year=${year}&lessonType=${LessonType.REMEDIAL}`,
+          tokenHeader()
+        );
+        const remedialStudents = new Set(
+          remedialResponse.data.map((r) => r.student.id)
+        );
+
         usuariosEstudiantes.value = processStudentGrades(
           allGrades,
           studentList,
-          reinforcementStudents
+          reinforcementStudents,
+          remedialStudents
         ).sort((a, b) => {
           const lastNameA = a.lastName || "";
           const lastNameB = b.lastName || "";
@@ -901,6 +1129,16 @@ export default {
       return item ? item.title : "";
     });
 
+    const getGradeColorClass = (grade) => {
+      if (grade === null || isNaN(grade)) return "";
+      const numericGrade = parseFloat(grade);
+      if (numericGrade < 3.0) return "red-grade";
+      if (numericGrade >= 3.0 && numericGrade < 4.0) return "orange-grade";
+      if (numericGrade >= 4.0 && numericGrade < 4.5) return "light-green-grade";
+      if (numericGrade >= 4.5) return "dark-green-grade";
+      return "";
+    };
+
     return {
       usuario,
       usuariosEstudiantes,
@@ -911,6 +1149,7 @@ export default {
       pencilOutline,
       actualizarNotas,
       mostrarModal,
+      LessonType,
       modoEdicion,
       lessons,
       quizzes,
@@ -925,8 +1164,29 @@ export default {
       onGradableTypeSelected,
       lessonName,
       gradableItemName,
+      schoolOutline,
+      year,
+      cursoId,
+      getGradeColorClass,
     };
   },
 };
 </script>
-<style scoped></style>
+<style scoped>
+.red-grade {
+  color: red;
+  font-weight: bold;
+}
+.orange-grade {
+  color: orange;
+  font-weight: bold;
+}
+.light-green-grade {
+  color: lightgreen;
+  font-weight: bold;
+}
+.dark-green-grade {
+  color: darkgreen;
+  font-weight: bold;
+}
+</style>

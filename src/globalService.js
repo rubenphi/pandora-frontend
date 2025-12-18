@@ -266,6 +266,12 @@ export function defaultFile(name) {
   return retorno;
 }
 
+export const LessonType = {
+  STANDARD: "standard",
+  REINFORCEMENT: "reinforcement",
+  REMEDIAL: "remedial",
+};
+
 export async function QuizSinNotas(cursoId, usuario, onlyGroupQuizzes = false) {
   try {
     tokenHeader();

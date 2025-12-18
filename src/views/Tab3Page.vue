@@ -204,6 +204,7 @@ import { addOutline, arrowBackOutline, createOutline, alertCircleOutline } from 
 import MaterialModal from "../components/MaterialModal.vue";
 import MaterialSelectionModal from "../components/MaterialSelectionModal.vue"; // Import the new modal
 import { actionSheetController } from "@ionic/vue";
+import { LessonType } from "../globalService"; // Import LessonType
 
 const MaterialType = {
   VIDEO: "VIDEO",
@@ -336,7 +337,12 @@ export default {
 
     const segmentChanged = (ev) => {
       if (ev.detail.value === "reinforcement") {
-        router.push(`/refuerzos/${curso}/${area}/${periodo}/${year}`);
+        router.push(`/special-lessons/${LessonType.REINFORCEMENT}/${curso}/${area}/${periodo}/${year}`);
+      } else if (ev.detail.value === "remedial") {
+        router.push(`/special-lessons/${LessonType.REMEDIAL}/${curso}/${area}/${periodo}/${year}`);
+      } else if (ev.detail.value === "standard") {
+        // If "Lecciones" (standard) is selected, navigate back to the lessons page
+        router.push(`/lecciones/${curso}/${area}/${periodo}/${year}`);
       }
     };
 

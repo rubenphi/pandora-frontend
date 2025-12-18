@@ -58,12 +58,12 @@ const routes = [
         component: () => import("@/views/Tab3Page.vue"),
       },
       {
-        path: "refuerzos/:curso/:area/:periodo/:year",
+        path: "special-lessons/:lessonType/:curso/:area/:periodo/:year",
         component: () => import("@/views/ReinforcementList.vue"),
       },
       {
-        path: "crear/refuerzo/:curso/:area/:year/:periodo/:id?",
-        component: () => import("@/views/CreateReinforcement.vue"),
+        path: "create-special-lesson/:lessonType/:curso/:area/:year/:periodo/:id?",
+        component: () => import("@/views/CreateSpecialLesson.vue"),
         beforeEnter: (to, from, next) => {
           if (adminOprofesor()) next();
           else next({ path: "/inicio" });
