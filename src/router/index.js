@@ -54,7 +54,7 @@ const routes = [
         component: () => import("@/views/OmrRead.vue"),
       },
       {
-        path: "lecciones/:curso/:area/:periodo/:year",
+        path: "lecciones/:curso/:area/:periodo/:year/:lessonType?",
         component: () => import("@/views/Tab3Page.vue"),
       },
       {

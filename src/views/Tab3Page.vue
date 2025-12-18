@@ -2,7 +2,7 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-title>Lecciones</ion-title>
+        <ion-title>{{ pageTitle }}</ion-title>
 
         <ion-buttons slot="start" class="ion-margin-end">
           <ion-button v-if="curso" :href="'/areas/' + curso">
@@ -14,24 +14,16 @@
           <ion-button
             v-if="curso && area"
             slot="end"
-            :href="`/crear/leccion/${curso}/${area}/${year}`"
+            :href="createUrl"
           >
             <ion-icon :icon="addOutline"></ion-icon>
+            <ion-label v-if="lessonType !== 'standard'">{{ createLabel }}</ion-label>
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <div class="ion-padding" v-if="showReinforcementToggle">
-        <ion-segment :value="'standard'" @ionChange="segmentChanged">
-          <ion-segment-button value="standard">
-            <ion-label>Lecciones</ion-label>
-          </ion-segment-button>
-          <ion-segment-button value="reinforcement">
-            <ion-label>Refuerzos</ion-label>
-          </ion-segment-button>
-        </ion-segment>
-      </div>
+      <!-- Segment removed as selection is now done in AreasPage -->
       <ion-card v-for="leccion in lecciones" :key="leccion.id">
         <ion-item lines="none">
           <div>
@@ -48,7 +40,7 @@
           <ion-buttons slot="end">
             <ion-button
               v-if="adminOProfesor"
-              :href="`/crear/leccion/${leccion.id}`"
+              :href="getEditUrl(leccion)"
             >
               <ion-icon :icon="createOutline"></ion-icon>
             </ion-button>
@@ -190,7 +182,7 @@
 
 <script>
 import axios from "axios";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import {
   tokenHeader,
   usuarioGet,
@@ -206,15 +198,6 @@ import MaterialSelectionModal from "../components/MaterialSelectionModal.vue"; /
 import { actionSheetController } from "@ionic/vue";
 import { LessonType } from "../globalService"; // Import LessonType
 
-const MaterialType = {
-  VIDEO: "VIDEO",
-  PDF: "PDF",
-  IMAGE: "IMAGE",
-  AUDIO: "AUDIO",
-  DOC: "DOC",
-  TEXT_RICH: "TEXT_RICH",
-  TEXT_SHORT: "TEXT_SHORT",
-};
 
 import {
   onIonViewWillEnter,
@@ -234,8 +217,6 @@ import {
   IonList,
   IonItem,
   IonLabel,
-  IonSegment,
-  IonSegmentButton,
 } from "@ionic/vue";
 import { modalController } from "@ionic/vue";
 
@@ -257,16 +238,14 @@ export default {
     IonList,
     IonItem,
     IonLabel,
-    IonSegment,
-    IonSegmentButton,
   },
   setup() {
     const mroute = useRoute();
     const { curso } = mroute.params;
     const { area } = mroute.params;
-    const { year } = mroute.params;
+    const { year, periodo, lessonType: lessonTypeParam } = mroute.params;
+    const lessonType = lessonTypeParam || LessonType.STANDARD;
     const backendUrl = basedeURL();
-    const { periodo } = mroute.params;
     const cursoSelected = ref(
       JSON.parse(localStorage.getItem("courseSelected"))
     );
@@ -290,6 +269,25 @@ export default {
 
     const openedLessonId = ref(null);
     const openedSection = ref(null);
+
+    const createUrl = computed(() => {
+      if (lessonType === LessonType.REINFORCEMENT || lessonType === LessonType.REMEDIAL) {
+        return `/create-special-lesson/${lessonType}/${curso}/${area}/${year}/${periodo}`;
+      }
+      return `/crear/leccion/${curso}/${area}/${year}`;
+    });
+
+    const createLabel = computed(() => {
+      if (lessonType === LessonType.REINFORCEMENT) return "Crear Refuerzo";
+      if (lessonType === LessonType.REMEDIAL) return "Crear Nivelación";
+      return "Crear Lección";
+    });
+
+    const pageTitle = computed(() => {
+      if (lessonType === LessonType.REINFORCEMENT) return "Refuerzos";
+      if (lessonType === LessonType.REMEDIAL) return "Nivelaciones";
+      return "Lecciones";
+    });
 
     const openMaterial = async (material) => {
       const modal = await modalController.create({
@@ -333,18 +331,7 @@ export default {
       }
     };
 
-    const showReinforcementToggle = ref(false);
 
-    const segmentChanged = (ev) => {
-      if (ev.detail.value === "reinforcement") {
-        router.push(`/special-lessons/${LessonType.REINFORCEMENT}/${curso}/${area}/${periodo}/${year}`);
-      } else if (ev.detail.value === "remedial") {
-        router.push(`/special-lessons/${LessonType.REMEDIAL}/${curso}/${area}/${periodo}/${year}`);
-      } else if (ev.detail.value === "standard") {
-        // If "Lecciones" (standard) is selected, navigate back to the lessons page
-        router.push(`/lecciones/${curso}/${area}/${periodo}/${year}`);
-      }
-    };
 
     onIonViewWillEnter(async () => {
       adminOProfesor.value = adminOprofesor();
@@ -352,26 +339,6 @@ export default {
 
       tokenHeader();
 
-      // Check for Reinforcement access
-      if (adminOProfesor.value) {
-        showReinforcementToggle.value = true;
-      } else {
-        try {
-          const res = await axios.get("/reinforcement/count", {
-            params: {
-              studentId: usuario.value.id,
-              courseId: curso,
-              areaId: area,
-              periodId: periodo,
-              year: year,
-            },
-          });
-          showReinforcementToggle.value = res.data > 0;
-        } catch (e) {
-          console.error(e);
-          showReinforcementToggle.value = false;
-        }
-      }
 
       if (adminOProfesor.value) {
         try {
@@ -419,7 +386,7 @@ export default {
           .get(
             `/lessons?courseId=${curso}&areaId=${area}&periodId=${periodo}${
               year ? "&year=" + year : ""
-            }&exist=true&type=standard`
+            }&exist=true&type=${lessonType}`
           )
           .then((response) => {
             lecciones.value = response.data
@@ -430,6 +397,7 @@ export default {
                 area: { id: leccion.area.id },
                 course: { id: leccion.course.id },
                 year: leccion.year,
+                type: leccion.type,
               }))
               .sort((a, b) => {
                 return new Date(a.date) - new Date(b.date);
@@ -556,22 +524,26 @@ export default {
       await actionSheet.present();
     };
 
+
     return {
       basedeURL,
       materialesConsulta,
       actividadesConsulta,
       cuestionarioConsulta,
-      materialsList,
-      createOutline,
-      cuestionariosList,
-      actvitiesList,
-      cursoSelected,
+      getEditUrl: (leccion) => {
+        if (lessonType === LessonType.REINFORCEMENT || lessonType === LessonType.REMEDIAL) {
+          return `/create-special-lesson/${lessonType}/${curso}/${area}/${year}/${periodo}/${leccion.id}`;
+        }
+        return `/crear/leccion/${leccion.id}`;
+      },
+      presentMaterialCreationOptions,
       adminOProfesor,
       area,
       curso,
       addOutline,
       arrowBackOutline,
       usuario,
+      cursoSelected,
       lecciones,
       leccionesConCuestionariosPendientes,
       leccionesConActividadesPendientes,
@@ -582,15 +554,20 @@ export default {
       isLoadingMaterials,
       isLoadingCuestionarios,
       isLoadingActivities,
-      MaterialType,
-      openMaterial,
-      showReinforcementToggle,
-      segmentChanged,
-      quizSelected,
+      materialsList,
+      cuestionariosList,
+      actvitiesList,
       cuestionariosPendientes,
       actividadesPendientes,
+      quizSelected,
+      openMaterial,
+      createOutline,
       alertCircleOutline,
-      presentMaterialCreationOptions,
+      lessonType,
+      createUrl,
+      createLabel,
+      pageTitle,
+      backendUrl,
     };
   },
 };

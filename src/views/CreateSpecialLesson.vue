@@ -4,7 +4,7 @@
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-button
-            :href="`/special-lessons/${lessonType}/${curso}/${area}/${periodo}/${year}`"
+            :href="`/lecciones/${curso}/${area}/${periodo}/${year}/${lessonType}`"
           >
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
@@ -308,7 +308,7 @@ export default {
         }
 
         router.push(
-          `/special-lessons/${lessonType}/${curso}/${area}/${periodo}/${year}`
+          `/lecciones/${curso}/${area}/${periodo}/${year}/${lessonType}`
         );
       } catch (e) {
         console.error(e);

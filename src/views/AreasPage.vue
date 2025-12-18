@@ -11,49 +11,66 @@
           <ion-title size="large">Areas</ion-title>
         </ion-toolbar>
       </ion-header>
-      
-      
-      <ion-list>
-        <ion-item>
-          <ion-label slot="start" v-if="!adminOProfesor"
-            ><strong>Periodo:</strong></ion-label
-          >
-          <ion-select
-            v-if="adminOProfesor"
-            slot="start"
-            v-model="yearSelected"
-            @ionChange="changeYear($event)"
-            placeholder="Selecciona un año"
-          >
-            <ion-select-option v-for="year in years" :key="year" :value="year">
-              <strong>Año: </strong> {{ year }}
-            </ion-select-option>
-          </ion-select>
-
-          <ion-select
-            slot="end"
-            v-model="periodoSelected"
-            placeholder="Selecciona un periodo"
-            @ionChange="changePeriodo($event)"
-          >
-            <ion-select-option
-              v-for="periodo in periodos"
-              :key="periodo.id"
-              :value="periodo.id"
-            >
-              {{ periodo.name }}
-            </ion-select-option>
-          </ion-select>
-        </ion-item>
-        <ion-item
-          v-for="area in areas"
-          :key="area.id"
-          @click="navigateToCuestionario(area.id)"
+      <ion-item lines="none">
+        <ion-label slot="start" v-if="!adminOProfesor"
+          ><strong>Periodo:</strong></ion-label
         >
-          <ion-icon slot="start" :icon="libraryOutline"></ion-icon>
-          <ion-label>{{ area.name }}</ion-label>
-        </ion-item>
-      </ion-list>
+        <ion-select
+          v-if="adminOProfesor"
+          slot="start"
+          v-model="yearSelected"
+          @ionChange="changeYear($event)"
+          placeholder="Selecciona un año"
+        >
+          <ion-select-option v-for="year in years" :key="year" :value="year">
+            <strong>Año: </strong> {{ year }}
+          </ion-select-option>
+        </ion-select>
+
+        <ion-select
+          slot="end"
+          v-model="periodoSelected"
+          placeholder="Selecciona un periodo"
+          @ionChange="changePeriodo($event)"
+        >
+          <ion-select-option
+            v-for="periodo in periodos"
+            :key="periodo.id"
+            :value="periodo.id"
+          >
+            {{ periodo.name }}
+          </ion-select-option>
+        </ion-select>
+      </ion-item>
+      <ion-accordion-group>
+        <ion-accordion v-for="area in areas" :key="area.id" :value="area.id">
+          <ion-item slot="header" color="light" @click="handleHeaderClick($event)">
+            <ion-icon slot="start" :icon="libraryOutline"></ion-icon>
+            <ion-label>{{ area.name }}</ion-label>
+          </ion-item>
+          <div slot="content">
+            <ion-list>
+              <ion-item button @click="navigateToTab3(area.id, LessonType.STANDARD)">
+                <ion-label>Lecciones</ion-label>
+              </ion-item>
+              <ion-item 
+                v-if="adminOProfesor || hasReinforcement(area.id)" 
+                button 
+                @click="navigateToTab3(area.id, LessonType.REINFORCEMENT)"
+              >
+                <ion-label>Refuerzos</ion-label>
+              </ion-item>
+              <ion-item 
+                v-if="adminOProfesor || hasRemedial(area.id)" 
+                button 
+                @click="navigateToTab3(area.id, LessonType.REMEDIAL)"
+              >
+                <ion-label>Nivelaciones</ion-label>
+              </ion-item>
+            </ion-list>
+          </div>
+        </ion-accordion>
+      </ion-accordion-group>
       <ion-toast
         :is-open="isOpen"
         position="middle"
@@ -70,7 +87,7 @@
 import { libraryOutline, alertCircleOutline } from "ionicons/icons";
 import axios from "axios";
 import router from "../router";
-import { ref } from "vue";
+import { ref, watch, computed } from "vue";
 import { useRoute } from "vue-router";
 
 import {
@@ -78,6 +95,7 @@ import {
   usuarioGet,
   periodosGet,
   adminOprofesor,
+  LessonType,
 } from "../globalService";
 import {
   onIonViewWillEnter,
@@ -93,6 +111,8 @@ import {
   IonSelect,
   IonSelectOption,
   IonToast,
+  IonAccordion,
+  IonAccordionGroup,
 } from "@ionic/vue";
 export default {
   components: {
@@ -108,6 +128,8 @@ export default {
     IonSelect,
     IonSelectOption,
     IonToast,
+    IonAccordion,
+    IonAccordionGroup,
   },
   setup() {
     const mroute = useRoute();
@@ -117,11 +139,15 @@ export default {
     const setOpen = (state) => {
       isOpen.value = state;
     };
-    const adminOProfesor = ref();
+    const adminOProfesor = ref(false);
+    const isStudent = computed(() => {
+      return usuario.value?.rol === "student" || usuario.value?.rol === "user";
+    });
     const { id } = mroute.params;
     const usuario = ref();
     const areas = ref([]);
     const isOpen = ref(false);
+    const assignmentsCount = ref({}); // { areaId: { reinforcement: 0, remedial: 0 } }
 
     const periodos = ref();
 
@@ -161,27 +187,89 @@ export default {
         areas.value = response.data;
       });
     });
+
+    watch([areas, periodoSelected], () => {
+      if (isStudent.value && areas.value.length > 0 && periodoSelected.value) {
+        fetchStudentAssignments();
+      }
+    });
+
+    const handleHeaderClick = (event) => {
+      if (!periodoSelected.value) {
+        event.stopPropagation();
+        event.preventDefault();
+        presentToast();
+      }
+    };
+
+    const fetchStudentAssignments = async () => {
+      try {
+        const counts = await Promise.all(
+          areas.value.flatMap((area) => [
+            axios.get("/reinforcement/count", {
+              params: {
+                studentId: usuario.value.id,
+                courseId: id,
+                areaId: area.id,
+                periodId: periodoSelected.value,
+                year: yearSelected.value,
+                lessonType: LessonType.REINFORCEMENT,
+              },
+            }),
+            axios.get("/reinforcement/count", {
+              params: {
+                studentId: usuario.value.id,
+                courseId: id,
+                areaId: area.id,
+                periodId: periodoSelected.value,
+                year: yearSelected.value,
+                lessonType: LessonType.REMEDIAL,
+              },
+            }),
+          ])
+        );
+
+        let idx = 0;
+        areas.value.forEach((area) => {
+          assignmentsCount.value[area.id] = {
+            reinforcement: counts[idx++].data,
+            remedial: counts[idx++].data,
+          };
+        });
+      } catch (error) {
+        console.error("Error fetching assignments:", error);
+      }
+    };
     return {
       changePeriodo: (event) => {
         localStorage.setItem(
           "periodoSelected",
           JSON.stringify(event.detail.value)
         );
+        periodoSelected.value = event.detail.value;
       },
 
       changeYear: (event) => {
         localStorage.setItem("yearSelected", event.detail.value);
+        yearSelected.value = event.detail.value;
       },
 
-      navigateToCuestionario: (areaId) => {
+      navigateToTab3: (areaId, type) => {
         if (!periodoSelected.value) {
           presentToast();
           return;
         }
         router.push(
-            `/lecciones/${id}/${areaId}/${periodoSelected.value}/${yearSelected.value}`
+          `/lecciones/${id}/${areaId}/${periodoSelected.value}/${yearSelected.value}/${type}`
         );
       },
+      hasReinforcement: (areaId) => {
+        return assignmentsCount.value[areaId]?.reinforcement > 0;
+      },
+      hasRemedial: (areaId) => {
+        return assignmentsCount.value[areaId]?.remedial > 0;
+      },
+      LessonType,
       usuario,
       adminOProfesor,
       libraryOutline,
@@ -195,6 +283,7 @@ export default {
       presentToast,
       years,
       yearSelected,
+      handleHeaderClick,
     };
   },
 };
