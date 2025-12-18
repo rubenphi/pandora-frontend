@@ -166,10 +166,15 @@ export default {
     // Create a MutationObserver to watch for the close button being added to the DOM
     this.mutationObserver = new MutationObserver((mutationsList) => {
       for (const mutation of mutationsList) {
-        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-          const closeButton = document.querySelector('.scanner-dialog-inner .close-button');
+        if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
+          const closeButton = document.querySelector(
+            ".scanner-dialog-inner .close-button"
+          );
           if (closeButton) {
-            closeButton.addEventListener('click', this.handleNativeCloseButtonClick);
+            closeButton.addEventListener(
+              "click",
+              this.handleNativeCloseButtonClick
+            );
             this.mutationObserver.disconnect(); // Stop observing once found
             break;
           }
@@ -178,7 +183,10 @@ export default {
     });
 
     // Start observing the document body for child list changes
-    this.mutationObserver.observe(document.body, { childList: true, subtree: true });
+    this.mutationObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
   },
 
   beforeUnmount() {
@@ -200,9 +208,14 @@ export default {
     }
 
     // Also ensure the event listener is removed if it was attached
-    const closeButton = document.querySelector('.scanner-dialog-inner .close-button');
+    const closeButton = document.querySelector(
+      ".scanner-dialog-inner .close-button"
+    );
     if (closeButton) {
-      closeButton.removeEventListener('click', this.handleNativeCloseButtonClick);
+      closeButton.removeEventListener(
+        "click",
+        this.handleNativeCloseButtonClick
+      );
     }
   },
   methods: {
@@ -237,7 +250,7 @@ export default {
         const studentResponse = await axios.get(`/users?code=${studentCode}`);
         if (studentResponse.data.length > 0) {
           const foundStudent = studentResponse.data[0];
-          
+
           // --- Validation Start ---
           try {
             const coursesResponse = await axios.get(
@@ -248,13 +261,12 @@ export default {
 
             // Determine the courseId from the question
             // The structure might vary, so we check multiple paths
-            const questionCourseId = 
-              this.question.lesson?.course?.id || 
-              this.question.quiz?.lesson?.course?.id ||
-              this.question.course?.id;
+            const questionCourseId = await axios
+              .get("/lessons/" + this.question.quiz.lesson.id)
+              .then((res) => res.data.course?.id);
 
             if (questionCourseId) {
-               if (
+              if (
                 !activeUserCourse ||
                 activeUserCourse.course.id !== questionCourseId
               ) {
@@ -267,23 +279,24 @@ export default {
                 return; // Stop processing this student
               }
             } else {
-               console.warn("Could not determine courseId from question details. Skipping course validation.");
+              console.warn(
+                "Could not determine courseId from question details. Skipping course validation."
+              );
             }
-           
           } catch (error) {
-             console.error("Error validating student course:", error);
-             // We allow to proceed if validation fails due to network/server error? 
-             // Or we block? OmrRead blocks. Let's block to be safe and consistent.
-              const alert = await alertController.create({
-                header: "Error de Verificación",
-                message:
-                  "No se pudo verificar la inscripción del estudiante al curso. Por favor, inténtelo de nuevo.",
-                buttons: ["OK"],
-              });
-              await alert.present();
-              return;
+            console.error("Error validating student course:", error);
+            // We allow to proceed if validation fails due to network/server error?
+            // Or we block? OmrRead blocks. Let's block to be safe and consistent.
+            const alert = await alertController.create({
+              header: "Error de Verificación",
+              message:
+                "No se pudo verificar la inscripción del estudiante al curso. Por favor, inténtelo de nuevo.",
+              buttons: ["OK"],
+            });
+            await alert.present();
+            return;
           }
-           // --- Validation End ---
+          // --- Validation End ---
 
           this.student = foundStudent;
 
@@ -299,8 +312,8 @@ export default {
         } else {
           console.warn(`Student with code ${studentCode} not found.`);
           this.student = { id: null, name: "", lastName: "" }; // Ensure id is null if not found
-          
-           const alert = await alertController.create({
+
+          const alert = await alertController.create({
             header: "Estudiante no encontrado",
             message: `No se encontró ningún estudiante con el código "${studentCode}".`,
             buttons: ["OK"],
@@ -374,6 +387,37 @@ export default {
         }
 
         await this.fetchStudentAndGroup(codigoEstudiante);
+
+        // If student not found, an alert is shown in fetchStudentAndGroup.
+        // We stop the scan loop here as requested for invalid data.
+        if (!this.student.id) {
+          this.isScanning = false;
+          return;
+        }
+
+        // --- New Validation Logic ---
+        const validOptions = this.question.options.map((opt) => opt.identifier);
+        if (!validOptions.includes(opcion)) {
+          this.isScanning = false; // Stop the scanning loop
+
+          let entityName = "";
+          if (this.lessonQuizType === "group" && this.activeGroup.name) {
+            entityName = `el grupo ${this.activeGroup.name}`;
+          } else if (this.student.name) {
+            entityName = `${this.student.lastName} ${this.student.name}`;
+          } else {
+            entityName = `el código ${codigoEstudiante}`; // Fallback
+          }
+
+          const alert = await alertController.create({
+            header: "Opción Inválida",
+            message: `La respuesta seleccionada por ${entityName} no existe entre las opciones. Seleccionó ${opcion}.`,
+            buttons: ["OK"],
+          });
+          await alert.present();
+          return; // Stop execution and the scan loop.
+        }
+        // --- End of Validation Logic ---
 
         const scannedObject = {
           user: { ...this.student }, // Clone student object
@@ -457,8 +501,16 @@ export default {
       if (event) event.preventDefault(); // Prevent default action if necessary
 
       this.isScanning = false;
-      if (typeof CapacitorBarcodeScanner !== 'undefined' && CapacitorBarcodeScanner.stopScan) {
-        CapacitorBarcodeScanner.stopScan().catch(e => console.error("Error stopping barcode scanner from native close button:", e));
+      if (
+        typeof CapacitorBarcodeScanner !== "undefined" &&
+        CapacitorBarcodeScanner.stopScan
+      ) {
+        CapacitorBarcodeScanner.stopScan().catch((e) =>
+          console.error(
+            "Error stopping barcode scanner from native close button:",
+            e
+          )
+        );
       }
     },
     removeCode(index) {

@@ -9,7 +9,7 @@
         </ion-buttons>
         <ion-title>QR de Respuestas</ion-title>
         <ion-buttons slot="end" v-if="configConfirmed">
-          <ion-button @click="() => printAllQrs()">
+          <ion-button @click="() => printAllQrs()" :disabled="isRangeTooBig">
             <ion-icon :icon="printOutline" slot="start"></ion-icon>
             Imprimir todos
           </ion-button>
@@ -86,6 +86,11 @@
       >
         <ion-header>
           <ion-toolbar>
+            <ion-buttons slot="start">
+              <ion-button @click="printAllQrsForStudent(selectedStudent)"
+                >Todos</ion-button
+              >
+            </ion-buttons>
             <ion-title
               >{{ selectedStudent?.lastName }}
               {{ selectedStudent?.name }}</ion-title
@@ -115,14 +120,6 @@
                 </ion-button>
               </ion-item>
             </ion-list>
-            <ion-button
-              expand="block"
-              color="secondary"
-              class="ion-margin-top"
-              @click="printAllQrsForStudent(selectedStudent)"
-            >
-              Imprimir todas las opciones (PDF/Preview)
-            </ion-button>
           </div>
         </ion-content>
       </ion-modal>
@@ -199,6 +196,10 @@ export default {
       return alphabet.slice(startIdx, endIdx + 1);
     });
 
+    const isRangeTooBig = computed(() => {
+      return optionRange.value.length > 4;
+    });
+
     const allStudents = computed(() => {
       return studentData.value[0]?.students || [];
     });
@@ -209,8 +210,17 @@ export default {
       }
     });
 
-    const confirmConfig = () => {
+    const confirmConfig = async () => {
       configConfirmed.value = true;
+      if (isRangeTooBig.value) {
+        const alert = await alertController.create({
+          header: "Advertencia",
+          message:
+            "El rango escogido es muy grande, solo podrá imprimir los QR estudiante por estudiante",
+          buttons: ["OK"],
+        });
+        await alert.present();
+      }
     };
 
     const openSingleStudentQr = (student) => {
@@ -224,15 +234,15 @@ export default {
 
       const styles = `
         <style>
-          .print-page { page-break-after: always; width: 216mm; min-height: 279mm; padding: 5px; background: white; box-sizing: border-box; display: flex; flex-wrap: wrap; justify-content: space-around; align-content: flex-start; }
+          .print-page { page-break-after: always; width: 216mm;  padding: 5px; background: white; box-sizing: border-box; display: flex; flex-wrap: wrap; justify-content: space-around; align-content: flex-start; }
           .qr-box { border: 1px solid #eee; padding: 2px; text-align: center; width: ${
             columns === 2 ? "45%" : "90%"
           }; margin-bottom: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; }
           .qr-img { width: 100%; max-width: ${
-            perPage === 2 ? "120mm" : "75mm"
+            perPage === 2 ? "145mm" : "90mm"
           }; height: auto; display: block; }
           .qr-txt { font-size: ${
-            perPage === 2 ? "11pt" : "10pt"
+            perPage === 2 ? "13pt" : "10pt"
           }; font-family: sans-serif; font-weight: light; margin-top: 5mm; text-align: center; color: black; line-height: 1.2; width: 100%; }
         </style>
       `;
@@ -267,153 +277,117 @@ export default {
       return html;
     };
 
-    const processPrint = async (students, range, pregeneratedHtml) => {
-      if (Capacitor.isNativePlatform()) {
-        const loading = await alertController.create({
-          header: "Generando PDF",
-          message: "Espere un momento...",
-          backdropDismiss: false,
-        });
-        await loading.present();
-        try {
-          // Create a detached container for PDF generation, similar to the working implementation.
-          // This avoids issues with appending/removing elements from the live DOM.
-          const element = document.createElement("div");
-          element.innerHTML = pregeneratedHtml;
+    const processQrPDF = async (htmlContent, action) => {
+      const element = document.createElement("div");
+      element.innerHTML = htmlContent;
 
-          // Dynamic scale to reduce memory on the problematic layout
-          const scale = qrsPerPage.value === 2 ? 1.5 : 2;
+      // Use a fixed, reliable scale. Scale 2 is good for quality.
+      const scale = 1;
 
-          const opt = {
-            margin: 0,
-            filename: "hojas_qr.pdf",
-            image: { type: "jpeg", quality: 0.98 },
-            html2canvas: { scale: scale, useCORS: true, logging: false },
-            jsPDF: { unit: "mm", format: "letter", orientation: "portrait" },
-          };
+      const opt = {
+        margin: 0,
+        filename: "QRs_estudiantes.pdf",
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: scale, useCORS: true, logging: false },
+        jsPDF: { unit: "mm", format: "legal", orientation: "portrait" },
+      };
 
-          const pdfBase64 = await html2pdf()
-            .from(element)
-            .set(opt)
-            .outputPdf("datauristring");
+      const worker = html2pdf().from(element).set(opt);
 
-          await FileSharer.share({
-            filename: `QRs_${Date.now()}.pdf`,
-            contentType: "application/pdf",
-            base64Data: pdfBase64.split(",")[1],
-          });
-        } catch (e) {
-          console.error("Error generating/sharing QR PDF:", e);
-          const msg = (e.message || "").toLowerCase();
-          if (
-            msg.includes("user canceled") ||
-            msg.includes("user cancelled") ||
-            msg.includes("cancelado")
-          ) {
-            console.log("User canceled share dialog");
-          } else {
-            const errorAlert = await alertController.create({
-              header: "Error",
-              message:
-                "Hubo un problema al generar o compartir el PDF. " +
-                (e.message || ""),
-              buttons: ["OK"],
-            });
-            await errorAlert.present();
-          }
-        } finally {
-          await loading.dismiss();
-        }
-      } else {
-        // Web Platform - Show Output Options
-        const actionSheet = await actionSheetController.create({
-          header: "Opciones de Salida",
-          buttons: [
-            {
-              text: "Vista Previa / Imprimir",
-              icon: printOutline,
-              handler: () => {
-                // Synchronous open to avoid popup blockers
-                const printWindow = window.open("", "_blank");
-                if (printWindow) {
-                  const fullHtml = `
-                    <html>
-                      <head>
-                        <style>
-                          body { margin: 0; padding: 0; }
-                          @media print {
-                            .print-page { page-break-after: always; }
-                          }
-                        </style>
-                      </head>
-                      <body>
-                        ${pregeneratedHtml}
-                      </body>
-                    </html>
-                   `;
-                  printWindow.document.write(fullHtml);
-                  printWindow.document.close();
-                  printWindow.focus();
-                }
-              },
-            },
-            {
-              text: "Descargar PDF",
-              handler: async () => {
-                const loading = await alertController.create({
-                  header: "Generando PDF",
-                  message: "Descargando...",
-                  backdropDismiss: false,
-                });
-                await loading.present();
-                try {
-                  const element = document.createElement("div");
-                  element.innerHTML = pregeneratedHtml;
-
-                  // Dynamic scale to reduce memory on the problematic layout
-                  const scale = qrsPerPage.value === 2 ? 1 : 2;
-
-                  const opt = {
-                    margin: 0,
-                    filename: "estudiantes_qr.pdf",
-                    html2canvas: {
-                      scale: scale,
-                      useCORS: true,
-                      logging: false,
-                    },
-                    jsPDF: {
-                      unit: "mm",
-                      format: "letter",
-                      orientation: "portrait",
-                    },
-                  };
-                  await html2pdf().from(element).set(opt).save();
-                } catch (e) {
-                  console.error(e);
-                } finally {
-                  await loading.dismiss();
-                }
-              },
-            },
-            { text: "Cancelar", role: "cancel" },
-          ],
-        });
-        await actionSheet.present();
+      if (action === "save") {
+        await worker.save();
+      } else if (action === "base64") {
+        return await worker.outputPdf("datauristring");
       }
     };
 
-    const handlePrintRequest = async (students, range) => {
+    const presentOutputOptions = async (students, range) => {
       const loading = await alertController.create({
         header: "Preparando Contenido",
-        message: "Generando códigos QR...",
+        message: "Generando códigos QR, esto puede tardar...",
         backdropDismiss: false,
       });
       await loading.present();
 
       try {
-        const pregeneratedHtml = await generatePdfContent(students, range);
-        await loading.dismiss();
-        processPrint(students, range, pregeneratedHtml);
+        const htmlContent = await generatePdfContent(students, range);
+        await loading.dismiss(); // Dismiss after content is ready
+
+        if (Capacitor.isNativePlatform()) {
+          const nativeLoading = await alertController.create({
+            header: "Generando PDF",
+            message: "Por favor espere...",
+            backdropDismiss: false,
+          });
+          await nativeLoading.present();
+          try {
+            const pdfDataUri = await processQrPDF(htmlContent, "base64");
+            const base64Data = pdfDataUri.split(",")[1];
+            await FileSharer.share({
+              filename: `QRs_${Date.now()}.pdf`,
+              contentType: "application/pdf",
+              base64Data: base64Data,
+            });
+          } catch (e) {
+            if (
+              e?.message &&
+              !e.message.toLowerCase().includes("cancel") &&
+              !e.message.toLowerCase().includes("dismiss")
+            ) {
+              const errorAlert = await alertController.create({
+                header: "Error",
+                message: "Hubo un problema al compartir el PDF.",
+                buttons: ["OK"],
+              });
+              await errorAlert.present();
+            }
+          } finally {
+            await nativeLoading.dismiss();
+          }
+        } else {
+          // Web platform action sheet
+          const actionSheet = await actionSheetController.create({
+            header: "Opciones de Salida",
+            buttons: [
+              {
+                text: "Vista Previa / Imprimir",
+                icon: printOutline,
+                handler: () => {
+                  const printWindow = window.open("", "_blank");
+                  if (printWindow) {
+                    printWindow.document.write(`
+                      <html>
+                        <head><title>Imprimir QRs</title></head>
+                        <body>${htmlContent}</body>
+                      </html>`);
+                    printWindow.document.close();
+                    printWindow.focus();
+                  }
+                },
+              },
+              {
+                text: "Descargar PDF",
+                handler: async () => {
+                  const downloadLoading = await alertController.create({
+                    header: "Generando PDF",
+                    message: "Descargando...",
+                    backdropDismiss: false,
+                  });
+                  await downloadLoading.present();
+                  try {
+                    await processQrPDF(htmlContent, "save");
+                  } catch (e) {
+                    console.error("Error downloading PDF:", e);
+                  } finally {
+                    await downloadLoading.dismiss();
+                  }
+                },
+              },
+              { text: "Cancelar", role: "cancel" },
+            ],
+          });
+          await actionSheet.present();
+        }
       } catch (e) {
         console.error("Error preparing QR content:", e);
         await loading.dismiss();
@@ -425,6 +399,33 @@ export default {
         await errAlert.present();
       }
     };
+
+    const printAllQrs = async (targetStudents = null) => {
+      const studentsToPrint = targetStudents || allStudents.value;
+      const actionSheet = await actionSheetController.create({
+        header: "Seleccione formato por página",
+        buttons: [
+          {
+            text: "6 por página",
+            handler: () => {
+              qrsPerPage.value = 6;
+              presentOutputOptions(studentsToPrint, optionRange.value);
+            },
+          },
+          {
+            text: "2 por página",
+            handler: () => {
+              qrsPerPage.value = 2;
+              presentOutputOptions(studentsToPrint, optionRange.value);
+            },
+          },
+          { text: "Cancelar", role: "cancel" },
+        ],
+      });
+      await actionSheet.present();
+    };
+
+    const printAllQrsForStudent = (student) => printAllQrs([student]);
 
     const shareQrImage = async (student, letter) => {
       const loading = await alertController.create({
@@ -506,38 +507,10 @@ export default {
       }
     };
 
-    const printAllQrs = async (targetStudents = null) => {
-      const studentsToPrint = targetStudents || allStudents.value;
-      const actionSheet = await actionSheetController.create({
-        header: "Seleccione formato por página",
-        buttons: [
-          {
-            text: "6 por página",
-            handler: () => {
-              qrsPerPage.value = 6;
-              handlePrintRequest(studentsToPrint, optionRange.value);
-            },
-          },
-          {
-            text: "2 por página",
-            handler: () => {
-              qrsPerPage.value = 2;
-              handlePrintRequest(studentsToPrint, optionRange.value);
-            },
-          },
-          {
-            text: "Cancelar",
-            role: "cancel",
-          },
-        ],
-      });
-      await actionSheet.present();
-    };
-
-    const printAllQrsForStudent = (student) => printAllQrs([student]);
     const printQrItem = (student, letter) => shareQrImage(student, letter);
 
     return {
+      isRangeTooBig,
       configConfirmed,
       startLetter,
       endLetter,
@@ -575,7 +548,6 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 10px;
 }
 .qr-image {
   width: 250px;
