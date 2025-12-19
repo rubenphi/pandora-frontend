@@ -477,7 +477,10 @@
         <ion-list>
           <ion-item>
             <ion-label position="stacked">Condición</ion-label>
-            <ion-select v-model="reportConfig.condition" placeholder="Seleccione">
+            <ion-select
+              v-model="reportConfig.condition"
+              placeholder="Seleccione"
+            >
               <ion-select-option value="lt">Menor a</ion-select-option>
               <ion-select-option value="lte">Igual o menor a</ion-select-option>
               <ion-select-option value="eq">Igual a</ion-select-option>
@@ -509,7 +512,9 @@
           </ion-item>
         </ion-list>
         <div class="ion-padding">
-          <ion-button expand="block" @click="generarReporte">Generar Reporte</ion-button>
+          <ion-button expand="block" @click="generarReporte"
+            >Generar Reporte</ion-button
+          >
         </div>
       </ion-content>
     </ion-modal>
@@ -519,7 +524,7 @@
       <ion-header>
         <ion-toolbar>
           <ion-buttons slot="start">
-            <ion-button @click="cerrarModalReporte">Compartir</ion-button>
+            <ion-button @click="presentShareActionSheet">Compartir</ion-button>
           </ion-buttons>
           <ion-title class="ion-text-center">Reporte de Notas</ion-title>
           <ion-buttons slot="end">
@@ -527,76 +532,89 @@
           </ion-buttons>
         </ion-toolbar>
       </ion-header>
-      <ion-content class="ion-padding">
-        <div class="report-header ion-padding">
-          <h3>Informe de Estudiantes</h3>
-          <h6>Grado: {{ cursoSelected.name }}</h6>
-          <h6>Área: {{ areaSelected.name }}</h6>
-          <p>
-            A continuación se listan los estudiantes con nota
-            {{ reportConditionText }} {{ reportConfig.value }}.
-          </p>
-        </div>
 
-        <!-- Tabla Corta -->
-        <div v-if="reportConfig.format === 'short'">
-          <table class="report-table">
-            <thead>
-              <tr>
-                <th>Apellido</th>
-                <th>Nombre</th>
-                <th>Promedio</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="est in estudiantesReporte" :key="est.id">
-                <td>{{ est.lastName }}</td>
-                <td>{{ est.name }}</td>
-                <td :class="getGradeColorClass(est.promedioRegular)">
-                  {{ est.promedioRegular }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <ion-content>
+        <div ref="reportContent" class="ion-padding">
+          <div class="report-header ion-padding">
+            <h3>Informe de Estudiantes</h3>
+            <h6>Grado: {{ cursoSelected.name }}</h6>
+            <h6>Área: {{ areaSelected.name }}</h6>
+            <p>
+              A continuación se listan los estudiantes con nota
+              {{ reportConditionText }} {{ reportConfig.value }}.
+            </p>
+          </div>
 
-        <!-- Tabla Detallada -->
-        <div v-else>
-          <div v-for="est in estudiantesReporte" :key="est.id" class="detailed-student">
-            <div class="student-info-header">
-              <strong>{{ est.lastName }} {{ est.name }}</strong>
-              <ion-chip :class="getGradeColorClass(est.promedioRegular)">
-                RG: {{ est.promedioRegular }}
-              </ion-chip>
-            </div>
-            <table class="report-table detailed">
+          <!-- Tabla Corta -->
+          <div v-if="reportConfig.format === 'short'">
+            <table class="report-table">
               <thead>
                 <tr>
-                  <th>Dimensión / Item</th>
-                  <th>Nota</th>
+                  <th>Apellido</th>
+                  <th>Nombre</th>
+                  <th>Promedio</th>
                 </tr>
               </thead>
               <tbody>
-                <template v-for="dim in est.dimensionesRegular" :key="dim.id">
-                  <tr class="dimension-row">
-                    <td>
-                      <strong>{{ dim.name }}</strong>
-                    </td>
-                    <td>
-                      <strong :class="getGradeColorClass(dim.promedio)">{{ dim.promedio }}</strong>
-                    </td>
-                  </tr>
-                  <tr v-for="nota in dim.notas" :key="nota.id" class="item-row">
-                    <td class="item-name">
-                      {{ nota.gradableItem?.title }}
-                    </td>
-                    <td :class="getGradeColorClass(nota.grade)">
-                      {{ nota.grade !== null ? nota.grade : "Pendiente" }}
-                    </td>
-                  </tr>
-                </template>
+                <tr v-for="est in estudiantesReporte" :key="est.id">
+                  <td>{{ est.lastName }}</td>
+                  <td>{{ est.name }}</td>
+                  <td :class="getGradeColorClass(est.promedioRegular)">
+                    {{ est.promedioRegular }}
+                  </td>
+                </tr>
               </tbody>
             </table>
+          </div>
+
+          <!-- Tabla Detallada -->
+          <div v-else>
+            <div
+              v-for="est in estudiantesReporte"
+              :key="est.id"
+              class="detailed-student"
+            >
+              <div class="student-info-header">
+                <strong>{{ est.lastName }} {{ est.name }}</strong>
+                <ion-chip :class="getGradeColorClass(est.promedioRegular)">
+                  RG: {{ est.promedioRegular }}
+                </ion-chip>
+              </div>
+              <table class="report-table detailed">
+                <thead>
+                  <tr>
+                    <th>Dimensión / Item</th>
+                    <th>Nota</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template v-for="dim in est.dimensionesRegular" :key="dim.id">
+                    <tr class="dimension-row">
+                      <td>
+                        <strong>{{ dim.name }}</strong>
+                      </td>
+                      <td>
+                        <strong :class="getGradeColorClass(dim.promedio)">{{
+                          dim.promedio
+                        }}</strong>
+                      </td>
+                    </tr>
+                    <tr
+                      v-for="nota in dim.notas"
+                      :key="nota.id"
+                      class="item-row"
+                    >
+                      <td class="item-name">
+                        {{ nota.gradableItem?.title }}
+                      </td>
+                      <td :class="getGradeColorClass(nota.grade)">
+                        {{ nota.grade !== null ? nota.grade : "Pendiente" }}
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </ion-content>
@@ -607,8 +625,11 @@
 <script>
 import axios from "axios";
 import { ref, computed } from "vue";
-import { alertController } from "@ionic/vue";
+import { alertController, actionSheetController } from "@ionic/vue";
 import { periodosGet, tokenHeader, usuarioGet } from "../globalService";
+import html2canvas from "html2canvas";
+import { Capacitor } from "@capacitor/core";
+import { FileSharer } from "@byteowls/capacitor-filesharer";
 
 import {
   onIonViewWillEnter,
@@ -646,6 +667,7 @@ import {
   pencilOutline,
   schoolOutline,
   documentTextOutline,
+  shareOutline,
 } from "ionicons/icons";
 import { LessonType } from "../globalService";
 export default {
@@ -685,7 +707,8 @@ export default {
     const periodoSelected = ref();
     const usuariosEstudiantes = ref([]);
     const cursoSelected = ref({});
-    const areaSelected = ref({}); 
+    const areaSelected = ref({});
+    const reportContent = ref(null);
 
     const lessons = ref([]);
     const quizzes = ref([]);
@@ -804,7 +827,8 @@ export default {
             foundGrade && foundGrade.grade !== null ? foundGrade.grade : 0;
         });
 
-        const avg = itemsConsideredCount > 0 ? totalScore / itemsConsideredCount : 0;
+        const avg =
+          itemsConsideredCount > 0 ? totalScore / itemsConsideredCount : 0;
         return itemsConsideredCount > 0 ? Math.max(avg, 1.0) : 0;
       };
 
@@ -917,10 +941,16 @@ export default {
         // Apply Hierarchy for the main student chip color: Remedial > Reinforcement > Regular
         let finalPromedio = Math.max(promedioFinalRegular, 1.0);
         if (hasReinforcement && promedioFinalReinf > 0) {
-          finalPromedio = Math.max(finalPromedio, Math.max(promedioFinalReinf, 1.0));
+          finalPromedio = Math.max(
+            finalPromedio,
+            Math.max(promedioFinalReinf, 1.0)
+          );
         }
         if (hasRemedial && promedioFinalRemedial > 0) {
-          finalPromedio = Math.max(finalPromedio, Math.max(promedioFinalRemedial, 1.0));
+          finalPromedio = Math.max(
+            finalPromedio,
+            Math.max(promedioFinalRemedial, 1.0)
+          );
         }
 
         const getGradesByLessonType = (grades, lessonTypeFilter) => {
@@ -965,8 +995,10 @@ export default {
           },
         ];
 
-        const studentReinforcementLessons = reinforcementMap.get(estudiante.id) || new Set();
-        const studentRemedialLessons = remedialMap.get(estudiante.id) || new Set();
+        const studentReinforcementLessons =
+          reinforcementMap.get(estudiante.id) || new Set();
+        const studentRemedialLessons =
+          remedialMap.get(estudiante.id) || new Set();
 
         const dimensionesReinforcement = [
           {
@@ -976,7 +1008,9 @@ export default {
             notas: mapToDisplayParamsWithMasterList(
               getGradesByLessonType(studentGrades, LessonType.REINFORCEMENT),
               masterKnowledge.filter(
-                (i) => i.item.lesson?.type === LessonType.REINFORCEMENT && studentReinforcementLessons.has(i.item.lesson?.id)
+                (i) =>
+                  i.item.lesson?.type === LessonType.REINFORCEMENT &&
+                  studentReinforcementLessons.has(i.item.lesson?.id)
               )
             ),
           },
@@ -987,7 +1021,9 @@ export default {
             notas: mapToDisplayParamsWithMasterList(
               getGradesByLessonType(studentGrades, LessonType.REINFORCEMENT),
               masterExecution.filter(
-                (i) => i.item.lesson?.type === LessonType.REINFORCEMENT && studentReinforcementLessons.has(i.item.lesson?.id)
+                (i) =>
+                  i.item.lesson?.type === LessonType.REINFORCEMENT &&
+                  studentReinforcementLessons.has(i.item.lesson?.id)
               )
             ),
           },
@@ -998,7 +1034,9 @@ export default {
             notas: mapToDisplayParamsWithMasterList(
               getGradesByLessonType(studentGrades, LessonType.REINFORCEMENT),
               masterBehavior.filter(
-                (i) => i.item.lesson?.type === LessonType.REINFORCEMENT && studentReinforcementLessons.has(i.item.lesson?.id)
+                (i) =>
+                  i.item.lesson?.type === LessonType.REINFORCEMENT &&
+                  studentReinforcementLessons.has(i.item.lesson?.id)
               )
             ),
           },
@@ -1012,7 +1050,9 @@ export default {
             notas: mapToDisplayParamsWithMasterList(
               getGradesByLessonType(studentGrades, LessonType.REMEDIAL),
               masterKnowledge.filter(
-                (i) => i.item.lesson?.type === LessonType.REMEDIAL && studentRemedialLessons.has(i.item.lesson?.id)
+                (i) =>
+                  i.item.lesson?.type === LessonType.REMEDIAL &&
+                  studentRemedialLessons.has(i.item.lesson?.id)
               )
             ),
           },
@@ -1023,7 +1063,9 @@ export default {
             notas: mapToDisplayParamsWithMasterList(
               getGradesByLessonType(studentGrades, LessonType.REMEDIAL),
               masterExecution.filter(
-                (i) => i.item.lesson?.type === LessonType.REMEDIAL && studentRemedialLessons.has(i.item.lesson?.id)
+                (i) =>
+                  i.item.lesson?.type === LessonType.REMEDIAL &&
+                  studentRemedialLessons.has(i.item.lesson?.id)
               )
             ),
           },
@@ -1034,7 +1076,9 @@ export default {
             notas: mapToDisplayParamsWithMasterList(
               getGradesByLessonType(studentGrades, LessonType.REMEDIAL),
               masterBehavior.filter(
-                (i) => i.item.lesson?.type === LessonType.REMEDIAL && studentRemedialLessons.has(i.item.lesson?.id)
+                (i) =>
+                  i.item.lesson?.type === LessonType.REMEDIAL &&
+                  studentRemedialLessons.has(i.item.lesson?.id)
               )
             ),
           },
@@ -1045,9 +1089,15 @@ export default {
           promedio: formatGrade(finalPromedio)?.toFixed(1), // Keep for main chip color
           hasReinforcement: hasReinforcement,
           hasRemedial: hasRemedial,
-          promedioRegular: formatGrade(Math.max(promedioFinalRegular, 1.0))?.toFixed(1),
-          promedioRefuerzo: hasReinforcement ? formatGrade(Math.max(promedioFinalReinf, 1.0))?.toFixed(1) : 0,
-          promedioNivelacion: hasRemedial ? formatGrade(Math.max(promedioFinalRemedial, 1.0))?.toFixed(1) : 0,
+          promedioRegular: formatGrade(
+            Math.max(promedioFinalRegular, 1.0)
+          )?.toFixed(1),
+          promedioRefuerzo: hasReinforcement
+            ? formatGrade(Math.max(promedioFinalReinf, 1.0))?.toFixed(1)
+            : 0,
+          promedioNivelacion: hasRemedial
+            ? formatGrade(Math.max(promedioFinalRemedial, 1.0))?.toFixed(1)
+            : 0,
           dimensionesRegular,
           dimensionesReinforcement,
           dimensionesRemedial,
@@ -1086,7 +1136,8 @@ export default {
         // Map: studentId -> Set of reinforcement lessonIds
         const reinforcementMap = new Map();
         reinforcementsResponse.data.forEach((r) => {
-          if (!reinforcementMap.has(r.student.id)) reinforcementMap.set(r.student.id, new Set());
+          if (!reinforcementMap.has(r.student.id))
+            reinforcementMap.set(r.student.id, new Set());
           if (r.lesson?.id) reinforcementMap.get(r.student.id).add(r.lesson.id);
         });
 
@@ -1097,7 +1148,8 @@ export default {
         // Map: studentId -> Set of remedial lessonIds
         const remedialMap = new Map();
         remedialResponse.data.forEach((r) => {
-          if (!remedialMap.has(r.student.id)) remedialMap.set(r.student.id, new Set());
+          if (!remedialMap.has(r.student.id))
+            remedialMap.set(r.student.id, new Set());
           if (r.lesson?.id) remedialMap.get(r.student.id).add(r.lesson.id);
         });
 
@@ -1128,8 +1180,12 @@ export default {
     onIonViewWillEnter(async () => {
       usuario.value = usuarioGet();
       periodos.value = periodosGet();
-      cursoSelected.value = await axios.get(`/courses/${cursoId}`, tokenHeader()).then((res) => res.data);
-      areaSelected.value = await axios.get(`/areas/${areaId}`, tokenHeader()).then((res) => res.data);
+      cursoSelected.value = await axios
+        .get(`/courses/${cursoId}`, tokenHeader())
+        .then((res) => res.data);
+      areaSelected.value = await axios
+        .get(`/areas/${areaId}`, tokenHeader())
+        .then((res) => res.data);
       const storedPeriod = localStorage.getItem("periodoSelected");
       periodoSelected.value = storedPeriod
         ? JSON.parse(storedPeriod)
@@ -1370,6 +1426,65 @@ export default {
       return "";
     };
 
+    const shareAsImage = async () => {
+      const reportElement = reportContent.value;
+      if (!reportElement) return;
+
+      const loading = await alertController.create({
+        header: "Imagen",
+        message: "Por favor espere mientras se genera la imagen",
+        backdropDismiss: false,
+      });
+      await loading.present();
+
+      const canvas = await html2canvas(reportElement, {
+        useCORS: true,
+
+        scale: 1,
+
+        logging: false,
+      }).finally(() => {
+        loading.dismiss();
+      });
+      const fileName = `reporte-notas-${Date.now()}.png`;
+
+      if (Capacitor.isNativePlatform()) {
+        try {
+          await FileSharer.share({
+            filename: fileName,
+            contentType: "image/png",
+            base64Data: canvas.toDataURL("image/png").split(",")[1],
+          });
+        } catch (error) {
+          console.error("Error sharing image:", error);
+        }
+      } else {
+        // Web
+        const link = document.createElement("a");
+        link.download = fileName;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      }
+    };
+
+    const presentShareActionSheet = async () => {
+      const actionSheet = await actionSheetController.create({
+        header: "Compartir Reporte",
+        buttons: [
+          {
+            text: "Compartir como Imagen",
+            handler: shareAsImage,
+          },
+
+          {
+            text: "Cancelar",
+            role: "cancel",
+          },
+        ],
+      });
+      await actionSheet.present();
+    };
+
     return {
       usuario,
       usuariosEstudiantes,
@@ -1411,6 +1526,9 @@ export default {
       documentTextOutline,
       cursoSelected,
       areaSelected,
+      shareOutline,
+      presentShareActionSheet,
+      reportContent,
     };
   },
 };
