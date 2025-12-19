@@ -628,6 +628,7 @@ import { ref, computed } from "vue";
 import { alertController, actionSheetController } from "@ionic/vue";
 import { periodosGet, tokenHeader, usuarioGet } from "../globalService";
 import DomToImage from "dom-to-image";
+import htmlToDocx from "html-to-docx";
 import { Capacitor } from "@capacitor/core";
 import { FileSharer } from "@byteowls/capacitor-filesharer";
 
@@ -1436,10 +1437,13 @@ export default {
         backdropDismiss: false,
       });
 
-      //white background and scale 2x
       const canvas = await DomToImage.toPng(reportElement, {
+        width: reportElement.offsetWidth * 2,
+        height: reportElement.offsetHeight * 2,
         style: {
           background: "white",
+          transform: "scale(2)",
+          transformOrigin: "top left",
         },
       }).finally(() => {
         loading.dismiss();
@@ -1452,7 +1456,7 @@ export default {
           await FileSharer.share({
             filename: fileName,
             contentType: "image/png",
-            base64Data: canvas.toDataURL("image/png").split(",")[1],
+            base64Data: canvas.split(",")[1],
           });
         } catch (error) {
           console.error("Error sharing image:", error);
@@ -1466,20 +1470,84 @@ export default {
       }
     };
 
+    const shareAsWord = async () => {
+      const reportElement = reportContent.value;
+      if (!reportElement) return;
+
+      const loading = await alertController.create({
+        header: "Word",
+        message: "Por favor espere mientras se genera el documento",
+        backdropDismiss: false,
+      });
+
+      try {
+        const htmlString = reportElement.outerHTML;
+        const fileBuffer = await htmlToDocx(htmlString, null, {
+          table: { row: { cantSplit: true } },
+          footer: true,
+          pageNumber: true,
+        });
+
+        loading.dismiss();
+
+        const fileName = `reporte-notas-${Date.now()}.docx`;
+        const blob = new Blob([fileBuffer], {
+          type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        });
+
+        // Convert blob to base64
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onloadend = async function () {
+          const base64data = reader.result;
+
+          if (Capacitor.isNativePlatform()) {
+            await FileSharer.share({
+              filename: fileName,
+              contentType:
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+              base64Data: base64data.split(",")[1],
+            });
+          } else {
+            // Web
+            const link = document.createElement("a");
+            link.href = window.URL.createObjectURL(blob);
+            link.download = fileName;
+            link.click();
+          }
+        };
+      } catch (error) {
+        loading.dismiss();
+        console.error("Error sharing as Word:", error);
+        const alert = await alertController.create({
+          header: "Error",
+          message: "No se pudo generar el archivo de Word.",
+          buttons: ["OK"],
+        });
+        await alert.present();
+      }
+    };
+
     const presentShareActionSheet = async () => {
+      const buttons = [];
+      if (reportConfig.value.format === "short") {
+        buttons.push({
+          text: "Compartir como Imagen",
+          handler: shareAsImage,
+        });
+      }
+      buttons.push({
+        text: "Compartir como Word",
+        handler: shareAsWord,
+      });
+      buttons.push({
+        text: "Cancelar",
+        role: "cancel",
+      });
+
       const actionSheet = await actionSheetController.create({
         header: "Compartir Reporte",
-        buttons: [
-          {
-            text: "Compartir como Imagen",
-            handler: shareAsImage,
-          },
-
-          {
-            text: "Cancelar",
-            role: "cancel",
-          },
-        ],
+        buttons: buttons,
       });
       await actionSheet.present();
     };
@@ -1558,24 +1626,19 @@ export default {
 
 .report-table th,
 .report-table td {
-  border: 1px solid #ddd;
+  border: 1px solid;
   padding: 8px;
   text-align: left;
 }
 
-.report-table th {
-  background-color: #f2f2f2;
-}
-
 .detailed-student {
   margin-bottom: 20px;
-  border: 1px solid #ccc;
+  border: 1px solid;
   border-radius: 8px;
   overflow: hidden;
 }
 
 .student-info-header {
-  background-color: #e9e9e9;
   padding: 10px;
   display: flex;
   justify-content: space-between;
@@ -1587,16 +1650,8 @@ export default {
   border: none;
 }
 
-.dimension-row {
-  background-color: #fafafa;
-}
-
 .item-row td {
   font-size: 0.9em;
   padding-left: 20px;
-}
-
-.item-name {
-  color: #555;
 }
 </style>
