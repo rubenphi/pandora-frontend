@@ -627,7 +627,7 @@ import axios from "axios";
 import { ref, computed } from "vue";
 import { alertController, actionSheetController } from "@ionic/vue";
 import { periodosGet, tokenHeader, usuarioGet } from "../globalService";
-import html2canvas from "html2canvas";
+import DomToImage from "dom-to-image";
 import { Capacitor } from "@capacitor/core";
 import { FileSharer } from "@byteowls/capacitor-filesharer";
 
@@ -1435,17 +1435,16 @@ export default {
         message: "Por favor espere mientras se genera la imagen",
         backdropDismiss: false,
       });
-      await loading.present();
 
-      const canvas = await html2canvas(reportElement, {
-        useCORS: true,
-
-        scale: 1,
-
-        logging: false,
+      //white background and scale 2x
+      const canvas = await DomToImage.toPng(reportElement, {
+        style: {
+          background: "white",
+        },
       }).finally(() => {
         loading.dismiss();
       });
+
       const fileName = `reporte-notas-${Date.now()}.png`;
 
       if (Capacitor.isNativePlatform()) {
@@ -1462,7 +1461,7 @@ export default {
         // Web
         const link = document.createElement("a");
         link.download = fileName;
-        link.href = canvas.toDataURL("image/png");
+        link.href = canvas;
         link.click();
       }
     };
