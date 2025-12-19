@@ -269,3 +269,11 @@ ion-popover ion-item ion-label {
   --width: auto !important; /* Allow popover to size based on content */
   --min-width: 250px; /* Ensure a reasonable minimum width */
 }
+
+
+
+/* FIX GLOBAL: IonModal recorta contenido largo */
+ion-modal::part(content) {
+  padding-bottom: 10%;
+}
+

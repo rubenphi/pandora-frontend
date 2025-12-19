@@ -91,7 +91,7 @@
                 >Todos</ion-button
               >
             </ion-buttons>
-            <ion-title
+            <ion-title class="ion-text-center"
               >{{ selectedStudent?.lastName }}
               {{ selectedStudent?.name }}</ion-title
             >

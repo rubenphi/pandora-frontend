@@ -5,7 +5,7 @@
         <ion-buttons slot="start">
           <ion-back-button default-href="/"></ion-back-button>
         </ion-buttons>
-        <ion-title>Notas de Estudiantes</ion-title>
+        <ion-title>Notas de Estudiantes </ion-title>
         <ion-buttons slot="end">
           <ion-button @click="abrirModalConfig">
             <ion-icon :icon="documentTextOutline" slot="icon-only"></ion-icon>
@@ -518,7 +518,10 @@
     <ion-modal :is-open="mostrarModalReporte" @didDismiss="cerrarModalReporte">
       <ion-header>
         <ion-toolbar>
-          <ion-title>Reporte de Notas</ion-title>
+          <ion-buttons slot="start">
+            <ion-button @click="cerrarModalReporte">Compartir</ion-button>
+          </ion-buttons>
+          <ion-title class="ion-text-center">Reporte de Notas</ion-title>
           <ion-buttons slot="end">
             <ion-button @click="cerrarModalReporte">Cerrar</ion-button>
           </ion-buttons>
@@ -527,6 +530,8 @@
       <ion-content class="ion-padding">
         <div class="report-header ion-padding">
           <h3>Informe de Estudiantes</h3>
+          <h6>Grado: {{ cursoSelected.name }}</h6>
+          <h6>Área: {{ areaSelected.name }}</h6>
           <p>
             A continuación se listan los estudiantes con nota
             {{ reportConditionText }} {{ reportConfig.value }}.
@@ -679,6 +684,8 @@ export default {
     const periodos = ref([]);
     const periodoSelected = ref();
     const usuariosEstudiantes = ref([]);
+    const cursoSelected = ref({});
+    const areaSelected = ref({}); 
 
     const lessons = ref([]);
     const quizzes = ref([]);
@@ -1121,6 +1128,8 @@ export default {
     onIonViewWillEnter(async () => {
       usuario.value = usuarioGet();
       periodos.value = periodosGet();
+      cursoSelected.value = await axios.get(`/courses/${cursoId}`, tokenHeader()).then((res) => res.data);
+      areaSelected.value = await axios.get(`/areas/${areaId}`, tokenHeader()).then((res) => res.data);
       const storedPeriod = localStorage.getItem("periodoSelected");
       periodoSelected.value = storedPeriod
         ? JSON.parse(storedPeriod)
@@ -1400,6 +1409,8 @@ export default {
       generarReporte,
       reportConditionText,
       documentTextOutline,
+      cursoSelected,
+      areaSelected,
     };
   },
 };
