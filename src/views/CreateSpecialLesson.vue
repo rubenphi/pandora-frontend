@@ -45,9 +45,16 @@
           <ion-checkbox slot="start" v-model="student.selected"></ion-checkbox>
           <ion-label>
             <h2>{{ student.name }}</h2>
-            <p :class="getAverageColor(student.average)">
-              Promedio:
-              {{ student.average ? student.average.toFixed(2) : "N/A" }}
+            <div v-if="lessonType === LessonType.REMEDIAL">
+              <p :class="getGradeColorClass(student.averageRegular)">
+                RG: {{ student.averageRegular ? student.averageRegular.toFixed(1) : "1.0" }}
+              </p>
+              <p :class="getGradeColorClass(student.averageReinforcement)">
+                RF: {{ student.averageReinforcement ? student.averageReinforcement.toFixed(1) : "1.0" }}
+              </p>
+            </div>
+            <p v-else :class="getGradeColorClass(student.averageRegular)">
+              Promedio: {{ student.averageRegular ? student.averageRegular.toFixed(1) : "1.0" }}
             </p>
           </ion-label>
         </ion-item>
@@ -209,6 +216,43 @@ export default {
           (i) => i.classification === "behavior"
         );
 
+        // Build Master List for REINFORCEMENT (needed for RF calculation)
+        const masterReinfMap = new Map();
+        allGrades.forEach((grade) => {
+          if (
+            grade.gradableItem?.lesson?.type === LessonType.REINFORCEMENT &&
+            grade.gradableItem?.id
+          ) {
+            const uniqueKey = `${grade.gradableType}-${grade.gradableItem.id}`;
+            if (!masterReinfMap.has(uniqueKey)) {
+              masterReinfMap.set(uniqueKey, {
+                id: grade.gradableItem.id,
+                type: grade.gradableType,
+                classification: grade.classification,
+              });
+            }
+          }
+        });
+
+        const masterKnowledgeReinf = Array.from(masterReinfMap.values()).filter(
+          (i) => i.classification === "knowledge"
+        );
+        const masterExecutionReinf = Array.from(masterReinfMap.values()).filter(
+          (i) => i.classification === "execution"
+        );
+        const masterBehaviorReinf = Array.from(masterReinfMap.values()).filter(
+          (i) => i.classification === "behavior"
+        );
+
+        // Fetch Reinforcement Students for filtering Remedial
+        let reinforcementStudentsSet = new Set();
+        if (lessonType === LessonType.REMEDIAL) {
+          const reinfRes = await axios.get(
+            `/reinforcement/by-context?courseId=${curso}&areaId=${area}&periodId=${periodo}&year=${year}&lessonType=${LessonType.REINFORCEMENT}`
+          );
+          reinforcementStudentsSet = new Set(reinfRes.data.map((r) => r.student.id));
+        }
+
         const formatGrade = (grade) => {
           if (!grade && grade !== 0) return 0;
           return Math.floor(grade * 10) / 10;
@@ -223,47 +267,61 @@ export default {
                 g.gradableType === masterItem.type &&
                 g.gradableItem.id === masterItem.id
             );
-            if (foundGrade) {
+            if (foundGrade && foundGrade.grade !== null) {
               totalScore += foundGrade.grade;
             }
-            // If not found, adds 0 to score (pending)
           });
-          return totalScore / masterList.length;
+          const avg = totalScore / masterList.length;
+          return Math.max(avg, 1.0);
+        };
+        
+        const calcPromedioFinal = (grades, mK, mE, mB) => {
+          const pS = calculateAverageFromMasterList(grades, mK);
+          const pH = calculateAverageFromMasterList(grades, mE);
+          const pB = calculateAverageFromMasterList(grades, mB);
+          if (pS === 0 && pH === 0 && pB === 0) return 0;
+          const avgFinal = (pS + pH + pB) / 3;
+          return Math.max(avgFinal, 1.0);
         };
 
         studentList.value = allStudents
+          .filter((student) => {
+            if (lessonType === LessonType.REMEDIAL) {
+              return reinforcementStudentsSet.has(student.id);
+            }
+            return true;
+          })
           .map((student) => {
             const studentGrades = allGrades
               .filter((g) => g.user.id === student.id)
               .map((n) => ({ ...n, grade: formatGrade(n.grade) }));
 
-            // Calculate Averages based on Master Lists (Regular items only)
-            const promSaber = calculateAverageFromMasterList(
+            // Calculate Averages based on Master Lists
+            const promedioRegular = calcPromedioFinal(
               studentGrades,
-              masterKnowledge
-            );
-            const promHacer = calculateAverageFromMasterList(
-              studentGrades,
-              masterExecution
-            );
-            const promSer = calculateAverageFromMasterList(
-              studentGrades,
+              masterKnowledge,
+              masterExecution,
               masterBehavior
             );
 
-            // Promedio Final: (Saber + Hacer + Ser) / 3
-            const promedioFinal = (promSaber + promHacer + promSer) / 3;
+            const promedioReinforcement = calcPromedioFinal(
+              studentGrades,
+              masterKnowledgeReinf,
+              masterExecutionReinf,
+              masterBehaviorReinf
+            );
 
             return {
               id: student.id,
               name: student.name + " " + student.lastName,
-              average: formatGrade(promedioFinal),
+              averageRegular: formatGrade(promedioRegular),
+              averageReinforcement: formatGrade(promedioReinforcement),
               selected: isEditing.value
                 ? assignedStudentIds.has(student.id)
                 : false,
             };
           })
-          .sort((a, b) => a.average - b.average);
+          .sort((a, b) => (a.averageRegular || 0) - (b.averageRegular || 0));
       } catch (e) {
         console.error(e);
         error.value = "Error al cargar datos";
@@ -316,10 +374,14 @@ export default {
       }
     };
 
-    const getAverageColor = (avg) => {
-      if (avg < 3.5) return "low-grade";
-      if (avg < 4.0) return "mid-grade";
-      return "high-grade";
+    const getGradeColorClass = (grade) => {
+      if (grade === null || isNaN(grade) || grade === 0) return "";
+      const numericGrade = parseFloat(grade);
+      if (numericGrade < 3.0) return "red-grade";
+      if (numericGrade >= 3.0 && numericGrade < 4.0) return "orange-grade";
+      if (numericGrade >= 4.0 && numericGrade < 4.5) return "light-green-grade";
+      if (numericGrade >= 4.5) return "dark-green-grade";
+      return "";
     };
 
     return {
@@ -334,25 +396,30 @@ export default {
       checkmarkOutline,
       error,
       isLoadingStudents,
-      getAverageColor,
+      getGradeColorClass,
       isEditing,
       pageTitle,
       lessonType,
+      LessonType,
     };
   },
 };
 </script>
 <style scoped>
-.low-grade {
+.red-grade {
   color: red;
   font-weight: bold;
 }
-.mid-grade {
-  color: #daa520;
+.orange-grade {
+  color: orange;
   font-weight: bold;
 }
-.high-grade {
-  color: green;
+.light-green-grade {
+  color: lightgreen;
+  font-weight: bold;
+}
+.dark-green-grade {
+  color: darkgreen;
   font-weight: bold;
 }
 </style>

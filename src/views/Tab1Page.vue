@@ -72,103 +72,171 @@
           <ion-accordion
             v-for="member in groupMembersWithGrades"
             :key="member.userId"
+            :value="member.userId"
           >
             <ion-item slot="header">
               <ion-label>{{ member.userName }}</ion-label>
             </ion-item>
-            <div class="ion-padding" slot="content">
-              <ion-list>
-                <div v-for="area in member.areas" :key="area.id">
-                  <ion-item>
+            <div slot="content">
+              <ion-accordion-group @ionChange="handleAreaExpand($event, member)">
+                <ion-accordion
+                  v-for="area in member.areas"
+                  :key="area.id"
+                  :value="area.id"
+                >
+                  <ion-item slot="header">
                     <ion-label>
                       <h3>{{ area?.name }}</h3>
                     </ion-label>
-                    <ion-chip
-                      slot="end"
-                      :color="area.promedio < 3.5 ? 'danger' : 'primary'"
-                      :style="{ opacity: member.hasReinforcement ? '0.6' : '1' }"
-                    >
-                      {{ area.promedio }}
-                    </ion-chip>
-                    <span v-if="member.hasReinforcement">
-                      /
+                    <div v-if="area.loaded" slot="end" style="display: flex; align-items: center">
                       <ion-chip
-                        slot="end"
-                        :color="area.promedioReinf < 3.5 ? 'danger' : 'primary'"
-                        style="opacity: 1; font-weight: bold"
+                        :class="getGradeColorClass(area.promedio)"
+                        :style="{ opacity: area.hasReinforcement ? '0.6' : '1' }"
                       >
-                        {{ area.promedioReinf }}
+                        RG: {{ area.promedio }}
                       </ion-chip>
-                    </span>
+                      <span v-if="area.hasReinforcement">
+                        /
+                        <ion-chip
+                          :class="getGradeColorClass(area.promedioReinf || '1.0')"
+                          style="opacity: 1; font-weight: bold"
+                        >
+                          RF: {{ area.promedioReinf || '1.0' }}
+                        </ion-chip>
+                      </span>
+                      <span v-if="area.hasRemedial">
+                        /
+                        <ion-chip
+                          :class="getGradeColorClass(area.promedioRemedial || '1.0')"
+                          style="opacity: 1; font-weight: bold"
+                        >
+                          NV: {{ area.promedioRemedial || '1.0' }}
+                        </ion-chip>
+                      </span>
+                    </div>
+                    <ion-spinner v-else-if="area.loading" name="dots" slot="end"></ion-spinner>
                   </ion-item>
 
-                  <!-- Dimensions -->
-                  <div v-for="dimension in area.dimensiones" :key="dimension.id">
-                    <ion-item-divider>
-                      <ion-label>
-                        {{ dimension.name }}
-                        <ion-chip
-                          size="small"
-                          :color="parseFloat(dimension.promedio) < 3.5 ? 'danger' : 'success'"
-                          :style="{ opacity: member.hasReinforcement ? '0.6' : '1' }"
-                        >
-                          {{ dimension.promedio }}
-                        </ion-chip>
-                        <span v-if="member.hasReinforcement">
-                          /
-                          <ion-chip
-                            size="small"
-                            :color="parseFloat(dimension.promedioReinf) < 3.5 ? 'danger' : 'success'"
-                            style="opacity: 1; font-weight: bold"
-                          >
-                            {{ dimension.promedioReinf }}
-                          </ion-chip>
-                        </span>
-                      </ion-label>
-                    </ion-item-divider>
-
-                    <!-- Regular Grades (Opaque if hasReinforcement) -->
-                    <div :style="{ opacity: member.hasReinforcement ? '0.6' : '1' }">
-                      <div v-for="nota in dimension.notas" :key="nota?.id">
-                        <ion-item>
-                          <ion-icon :icon="easelOutline" slot="start"></ion-icon>
-                          <ion-label>
-                            <h2>{{ nota?.gradableItem?.title || nota.title }}</h2>
-                            <p
-                              v-if="nota.grade && nota.grade < 3.5"
-                              style="color: #bf9494"
-                            >
-                              {{ nota.grade }}
-                            </p>
-                            <p v-else-if="nota.grade">{{ nota.grade }}</p>
-                            <p v-else>Pendiente</p>
-                          </ion-label>
-                        </ion-item>
-                      </div>
+                  <div class="ion-padding" slot="content">
+                    <div v-if="area.loading" style="text-align: center">
+                      <ion-spinner name="crescent"></ion-spinner>
+                      <p>Cargando notas...</p>
                     </div>
+                    <div v-else-if="area.loaded">
+                      <!-- Main Details Accordion Group -->
+                      <ion-accordion-group>
+                        
+                        <!-- 1. Notas Regulares -->
+                        <ion-accordion value="regulares">
+                          <ion-item slot="header">
+                            <ion-label color="primary">
+                              <strong>Notas Regulares</strong>
+                              <ion-chip :class="getGradeColorClass(area.promedio)">
+                                {{ area.promedio }}
+                              </ion-chip>
+                            </ion-label>
+                          </ion-item>
+                          <div slot="content" class="ion-padding-start">
+                            <div v-for="dimension in area.dimensiones" :key="dimension.id">
+                              <ion-item lines="none" class="dimension-header">
+                                <ion-label>
+                                  <small>{{ dimension.name }}</small>
+                                  <ion-chip size="small" :class="getGradeColorClass(dimension.promedio)">
+                                    {{ dimension.promedio }}
+                                  </ion-chip>
+                                </ion-label>
+                              </ion-item>
+                              <ion-list lines="none" style="margin-top: -10px">
+                                <ion-item v-for="nota in dimension.notas" :key="nota?.id">
+                                  <ion-icon :icon="easelOutline" slot="start" size="small"></ion-icon>
+                                  <ion-label>
+                                    <h3>{{ nota?.gradableItem?.title || nota.title }}</h3>
+                                    <p :class="getGradeColorClass(nota.grade)">
+                                      {{ nota.grade || 'Pendiente' }}
+                                    </p>
+                                  </ion-label>
+                                </ion-item>
+                              </ion-list>
+                            </div>
+                          </div>
+                        </ion-accordion>
 
-                    <!-- Reinforcement Grades (Normal Opacity, only if hasReinforcement) -->
-                    <div v-if="member.hasReinforcement">
-                      <div v-for="nota in dimension.notasReinf" :key="nota?.id">
-                        <ion-item>
-                          <ion-icon :icon="easelOutline" slot="start" color="tertiary"></ion-icon>
-                          <ion-label>
-                            <h2>{{ nota?.gradableItem?.title }} (Refuerzo)</h2>
-                            <p
-                              v-if="nota.grade && nota.grade < 3.5"
-                              style="color: #bf9494"
-                            >
-                              {{ nota.grade }}
-                            </p>
-                            <p v-else-if="nota.grade">{{ nota.grade }}</p>
-                            <p v-else>Pendiente</p>
-                          </ion-label>
-                        </ion-item>
-                      </div>
+                        <!-- 2. Notas de Refuerzo -->
+                        <ion-accordion v-if="area.hasReinforcement" value="refuerzo">
+                          <ion-item slot="header">
+                            <ion-label color="tertiary">
+                              <strong>Notas de Refuerzo</strong>
+                              <ion-chip size="small" :class="getGradeColorClass(area.promedioReinf || '1.0')">
+                                RF: {{ area.promedioReinf || '1.0' }}
+                              </ion-chip>
+                            </ion-label>
+                          </ion-item>
+                          <div slot="content" class="ion-padding-start">
+                            <div v-for="dimension in area.dimensiones" :key="'reinf-'+dimension.id">
+                              <div v-if="dimension.notasReinf && dimension.notasReinf.length > 0">
+                                <ion-item lines="none" class="dimension-header">
+                                  <ion-label color="tertiary">
+                                    <small>{{ dimension.name }} (RF: {{ dimension.promedioReinf }})</small>
+                                  </ion-label>
+                                </ion-item>
+                                <ion-list lines="none" style="margin-top: -10px">
+                                  <ion-item v-for="nota in dimension.notasReinf" :key="nota?.id">
+                                    <ion-icon :icon="easelOutline" slot="start" color="tertiary" size="small"></ion-icon>
+                                    <ion-label>
+                                      <h3>{{ nota?.gradableItem?.title }}</h3>
+                                      <p :class="getGradeColorClass(nota.grade)">
+                                        {{ nota.grade || 'Pendiente' }}
+                                      </p>
+                                    </ion-label>
+                                  </ion-item>
+                                </ion-list>
+                              </div>
+                            </div>
+                          </div>
+                        </ion-accordion>
+
+                        <!-- 3. Notas de Nivelación -->
+                        <ion-accordion v-if="area.hasRemedial" value="nivelacion">
+                          <ion-item slot="header">
+                            <ion-label color="warning">
+                              <strong>Notas de Nivelación</strong>
+                              <ion-chip size="small" :class="getGradeColorClass(area.promedioRemedial || '1.0')">
+                                NV: {{ area.promedioRemedial || '1.0' }}
+                              </ion-chip>
+                            </ion-label>
+                          </ion-item>
+                          <div slot="content" class="ion-padding-start">
+                            <div v-for="dimension in area.dimensiones" :key="'rem-'+dimension.id">
+                              <div v-if="dimension.notasRemedial && dimension.notasRemedial.length > 0">
+                                <ion-item lines="none" class="dimension-header">
+                                  <ion-label color="warning">
+                                    <small>{{ dimension.name }} (NV: {{ dimension.promedioRemedial }})</small>
+                                  </ion-label>
+                                </ion-item>
+                                <ion-list lines="none" style="margin-top: -10px">
+                                  <ion-item v-for="nota in dimension.notasRemedial" :key="nota?.id">
+                                    <ion-icon :icon="easelOutline" slot="start" color="warning" size="small"></ion-icon>
+                                    <ion-label>
+                                      <h3>{{ nota?.gradableItem?.title }}</h3>
+                                      <p :class="getGradeColorClass(nota.grade)">
+                                        {{ nota.grade || 'Pendiente' }}
+                                      </p>
+                                    </ion-label>
+                                  </ion-item>
+                                </ion-list>
+                              </div>
+                            </div>
+                          </div>
+                        </ion-accordion>
+
+                      </ion-accordion-group>
+                    </div>
+                    <div v-else style="text-align: center; color: gray">
+                      <p>Seleccione este área para cargar sus notas.</p>
                     </div>
                   </div>
-                </div>
-              </ion-list>
+                </ion-accordion>
+              </ion-accordion-group>
             </div>
           </ion-accordion>
         </ion-accordion-group>
@@ -235,7 +303,6 @@
 <script>
 import {
   easelOutline,
-  personOutline,
   swapHorizontalOutline,
 } from "ionicons/icons";
 import axios from "axios";
@@ -271,7 +338,7 @@ import {
   IonAccordion,
   IonAccordionGroup,
   IonChip,
-  IonItemDivider,
+  IonSpinner,
 } from "@ionic/vue";
 
 export default {
@@ -298,7 +365,7 @@ export default {
     IonAccordion,
     IonAccordionGroup,
     IonChip,
-    IonItemDivider,
+    IonSpinner,
   },
 
   setup() {
@@ -308,7 +375,11 @@ export default {
 
     const cursosUsuario = ref([]);
     const periodos = ref();
-    const periodoSelected = ref();
+    const periodoSelected = ref(
+      localStorage.getItem("periodoSelected")
+        ? parseInt(localStorage.getItem("periodoSelected"), 10)
+        : null
+    );
     const actualCurso = ref({});
     const year = ref();
     const grupo = ref();
@@ -319,9 +390,10 @@ export default {
     const groupMembersWithGrades = ref([]);
 
     const grupos = ref([]);
-
     const miembros = ref([]);
+
     const cancel = () => modal.value.$el.dismiss(null, "cancel");
+    const presentModal = () => {};
 
     const confirm = () => {
       let data = {
@@ -338,43 +410,8 @@ export default {
       });
     };
 
-    onIonViewWillEnter(async () => {
-      adminOProfesor.value = adminOprofesor();
-      periodoSelected.value = localStorage.getItem("periodoSelected")
-        ? parseInt(localStorage.getItem("periodoSelected"), 10)
-        : null;
-      year.value = Number.isNaN(parseInt(localStorage.getItem("year"), 10))
-        ? selectedYear()
-        : parseInt(localStorage.getItem("year"), 10);
-
-      usuario.value = usuarioGet();
-      periodos.value = periodosGet();
-      if (Array.isArray(periodos.value)) {
-        periodos.value.sort((a, b) => a.name.localeCompare(b.name));
-      }
-
-      cursosUsuario.value = (
-        await axios.get(`/users/${usuario.value.id}/courses`)
-      ).data;
-
-      actualCurso.value = cursosUsuario.value.find((curso) => curso.active);
-
-      tokenHeader();
-
-      await axios.get(`/users/${usuario.value.id}/groups`).then((response) => {
-        grupoUsuario.value =
-          response.data.filter((g) => g.active)[0]?.group ?? null;
-      });
-
-      if (grupoUsuario.value?.id) {
-        await axios
-          .get(`/groups/${grupoUsuario.value.id}/${year.value}/users`)
-          .then((response) => {
-            miembros.value = response.data;
-          });
-      }
-
-      const getGradesForGroup = async () => {
+    const initializeGroupData = async () => {
+      try {
         if (
           !actualCurso.value?.course?.id ||
           !periodoSelected.value ||
@@ -384,16 +421,62 @@ export default {
           return;
         }
 
-        const allGradesUrl = `/grades?courseId=${actualCurso.value.course.id}&periodId=${periodoSelected.value}&year=${year.value}`;
-        const allGradesResponse = await axios.get(allGradesUrl);
-        const allGrades = allGradesResponse.data;
+        const areasResponse = await axios.get(
+          `/courses/${actualCurso.value.course.id}/areas`,
+          tokenHeader()
+        );
+        const areas = areasResponse.data;
 
-        // Build Master List of Regular Gradable Items (excluding reinforcement)
+        groupMembersWithGrades.value = miembros.value.map((miembro) => ({
+          userId: miembro.user.id,
+          userName: `${miembro.user.name} ${miembro.user.lastName}`,
+          areas: areas.map((area) => ({
+            id: area.id,
+            name: area.name,
+            loading: false,
+            loaded: false,
+            promedio: "-",
+            promedioReinf: null,
+            promedioRemedial: null,
+            hasReinforcement: false,
+            hasRemedial: false,
+            dimensiones: [],
+          })),
+        }));
+      } catch (err) {
+        console.error("Error initializing group data:", err);
+      }
+    };
+
+    const handleAreaExpand = async (ev, member) => {
+      let areaId = ev.detail.value;
+      if (Array.isArray(areaId)) {
+        areaId = areaId.length > 0 ? areaId[areaId.length - 1] : null;
+      }
+
+
+      if (areaId === undefined || areaId === null || areaId === "") return;
+
+      const area = member.areas.find((a) => String(a.id) === String(areaId));
+      
+      if (!area || area.loaded || area.loading) {
+        return;
+      }
+
+      area.loading = true;
+
+      try {
+        const courseId = actualCurso.value?.course?.id;
+        if (!courseId) throw new Error("Course ID not found");
+
+        // 1. Fetch Master List
+        const masterGradesUrl = `/grades?courseId=${courseId}&areaId=${area.id}&periodId=${periodoSelected.value}&year=${year.value}`;
+        const masterGradesResponse = await axios.get(masterGradesUrl);
+        const masterAllGrades = masterGradesResponse.data;
+
         const masterItemsMap = new Map();
-        allGrades.forEach((grade) => {
-          const isReinforcement =
-            grade.gradableItem?.lesson?.type === "reinforcement";
-          if (!isReinforcement && grade.gradableItem && grade.gradableItem.id) {
+        masterAllGrades.forEach((grade) => {
+          if (grade.gradableItem && grade.gradableItem.id) {
             const uniqueKey = `${grade.gradableType}-${grade.gradableItem.id}`;
             if (!masterItemsMap.has(uniqueKey)) {
               masterItemsMap.set(uniqueKey, {
@@ -406,28 +489,38 @@ export default {
           }
         });
 
-        // Helper functions
-        const formatGrade = (grade) => {
+        // 2. Fetch specific student grades
+        const studentGradesUrl = `/grades?userId=${member.userId}&areaId=${area.id}&periodId=${periodoSelected.value}&year=${year.value}`;
+        const studentGradesResponse = await axios.get(studentGradesUrl);
+        const formatGradeValue = (grade) => {
           if (!grade && grade !== 0) return 0;
           return Math.floor(grade * 10) / 10;
         };
+        const studentGrades = studentGradesResponse.data.map((n) => ({
+          ...n,
+          grade: formatGradeValue(n.grade),
+        }));
 
-        const getStudentGradeForItem = (studentGrades, item) => {
-          return studentGrades.find(
-            (g) => g.gradableType === item.type && g.gradableItem.id === item.id
+        // 3. Fetch records
+        const reinfUrl = `/reinforcement/by-context?courseId=${courseId}&areaId=${area.id}&periodId=${periodoSelected.value}&year=${year.value}&studentId=${member.userId}&lessonType=reinforcement`;
+        const reinfResponse = await axios.get(reinfUrl, tokenHeader());
+        const assignedReinfLessonIds = new Set(reinfResponse.data.map(r => r.lesson?.id).filter(id => !!id));
+
+        const remedialUrl = `/reinforcement/by-context?courseId=${courseId}&areaId=${area.id}&periodId=${periodoSelected.value}&year=${year.value}&studentId=${member.userId}&lessonType=remedial`;
+        const remedialResponse = await axios.get(remedialUrl, tokenHeader());
+        const assignedRemedialLessonIds = new Set(remedialResponse.data.map(r => r.lesson?.id).filter(id => !!id));
+
+        // Processing helpers
+        const getStudentGradeForItem = (grades, item) => {
+          return grades.find(
+            (g) => g.gradableType === item.type && (String(g.gradableItem?.id) === String(item.id))
           );
         };
 
-        const mapToDisplayParamsWithMasterList = (
-          studentGrades,
-          masterList
-        ) => {
+        const mapToDisplayParamsWithMasterList = (grades, masterList) => {
           return masterList
             .map((masterItem) => {
-              const foundGrade = getStudentGradeForItem(
-                studentGrades,
-                masterItem
-              );
+              const foundGrade = getStudentGradeForItem(grades, masterItem);
               if (foundGrade) {
                 return {
                   id: foundGrade.id,
@@ -448,262 +541,211 @@ export default {
                 };
               }
             })
-            .sort(
-              (a, b) =>
-                new Date(a.gradableItem.lesson.date) -
-                new Date(b.gradableItem.lesson.date)
-            );
+            .sort((a, b) => new Date(a.gradableItem.lesson?.date) - new Date(b.gradableItem.lesson?.date));
         };
 
-        const calculateAverageFromMasterList = (studentGrades, masterList) => {
+        const calculateAverageFromMasterList = (grades, masterList) => {
           if (masterList.length === 0) return 0;
           let totalScore = 0;
           masterList.forEach((masterItem) => {
-            const foundGrade = getStudentGradeForItem(
-              studentGrades,
-              masterItem
-            );
-            if (foundGrade) {
-              totalScore += foundGrade.grade;
-            }
+            const foundGrade = getStudentGradeForItem(grades, masterItem);
+            if (foundGrade) totalScore += foundGrade.grade;
           });
-          return totalScore / masterList.length;
+          const avg = totalScore / masterList.length;
+          return Math.max(avg, 1.0);
         };
 
-        // Fetch reinforcements to identify students with reinforcement
-        const reinforcementsResponse = await axios.get(
-          `/reinforcement/by-context?courseId=${actualCurso.value.course.id}&areaId=&periodId=${periodoSelected.value}&year=${year.value}`,
-          tokenHeader()
-        );
-        const reinforcementStudents = new Set(
-          reinforcementsResponse.data.map((r) => r.student.id)
-        );
+        const areaMasterItems = Array.from(masterItemsMap.values());
+        const masterKnowledge = areaMasterItems.filter(i => i.classification === "knowledge");
+        const masterExecution = areaMasterItems.filter(i => i.classification === "execution");
+        const masterBehavior = areaMasterItems.filter(i => i.classification === "behavior");
 
-        const processedMembers = miembros.value.map((miembro) => {
-          const memberId = miembro.user.id;
-          const memberName = `${miembro.user.name} ${miembro.user.lastName}`;
-          const hasReinforcement = reinforcementStudents.has(memberId);
+        // Reg
+        const mKReg = masterKnowledge.filter(i => i.item.lesson?.type !== "reinforcement" && i.item.lesson?.type !== "remedial");
+        const mEReg = masterExecution.filter(i => i.item.lesson?.type !== "reinforcement" && i.item.lesson?.type !== "remedial");
+        const mBReg = masterBehavior.filter(i => i.item.lesson?.type !== "reinforcement" && i.item.lesson?.type !== "remedial");
 
-          const studentGrades = allGrades
-            .filter((grade) => grade.user.id === memberId)
-            .map((n) => ({ ...n, grade: formatGrade(n.grade) }));
+        const pKReg = calculateAverageFromMasterList(studentGrades, mKReg);
+        const pEReg = calculateAverageFromMasterList(studentGrades, mEReg);
+        const pBReg = calculateAverageFromMasterList(studentGrades, mBReg);
 
-          // Group items by area
-          const areaMap = new Map();
-          Array.from(masterItemsMap.values()).forEach((item) => {
-            const areaId = item.item.lesson.area.id;
-            const areaName = item.item.lesson.area.name;
-            if (!areaMap.has(areaId)) {
-              areaMap.set(areaId, {
-                id: areaId,
-                name: areaName,
-                masterKnowledge: [],
-                masterExecution: [],
-                masterBehavior: [],
-              });
-            }
-            const areaData = areaMap.get(areaId);
-            if (item.classification === "knowledge")
-              areaData.masterKnowledge.push(item);
-            else if (item.classification === "execution")
-              areaData.masterExecution.push(item);
-            else if (item.classification === "behavior")
-              areaData.masterBehavior.push(item);
-          });
+        const dimsReg = [mKReg.length > 0 ? pKReg : 0, mEReg.length > 0 ? pEReg : 0, mBReg.length > 0 ? pBReg : 0].filter(v => v > 0);
+        const avgReg = dimsReg.length > 0 ? dimsReg.reduce((a, b) => a + b, 0) / dimsReg.length : 0;
+        area.promedio = formatGradeValue(Math.max(avgReg, avgReg > 0 ? 1.0 : 0)).toFixed(1);
 
-          const areas = Array.from(areaMap.values()).map((areaData) => {
-            // --- REGULAR GRADES LOGIC ---
-            const masterKnowledgeRegular = areaData.masterKnowledge.filter(
-              (i) => i.item.lesson?.type !== "reinforcement"
-            );
-            const masterExecutionRegular = areaData.masterExecution.filter(
-              (i) => i.item.lesson?.type !== "reinforcement"
-            );
-            const masterBehaviorRegular = areaData.masterBehavior.filter(
-              (i) => i.item.lesson?.type !== "reinforcement"
-            );
+        // Reinf
+        const mKReinf = masterKnowledge.filter(i => i.item.lesson?.type === "reinforcement" && assignedReinfLessonIds.has(i.item.lesson?.id));
+        const mEReinf = masterExecution.filter(i => i.item.lesson?.type === "reinforcement" && assignedReinfLessonIds.has(i.item.lesson?.id));
+        const mBReinf = masterBehavior.filter(i => i.item.lesson?.type === "reinforcement" && assignedReinfLessonIds.has(i.item.lesson?.id));
 
-            const promSaberRegular = calculateAverageFromMasterList(
-              studentGrades,
-              masterKnowledgeRegular
-            );
-            const promHacerRegular = calculateAverageFromMasterList(
-              studentGrades,
-              masterExecutionRegular
-            );
-            const promSerRegular = calculateAverageFromMasterList(
-              studentGrades,
-              masterBehaviorRegular
-            );
+        area.hasReinforcement = (mKReinf.length + mEReinf.length + mBReinf.length) > 0;
+        if (area.hasReinforcement) {
+          const pKReinf = calculateAverageFromMasterList(studentGrades, mKReinf);
+          const pEReinf = calculateAverageFromMasterList(studentGrades, mEReinf);
+          const pBReinf = calculateAverageFromMasterList(studentGrades, mBReinf);
+          const dimsReinf = [mKReinf.length > 0 ? pKReinf : 0, mEReinf.length > 0 ? pEReinf : 0, mBReinf.length > 0 ? pBReinf : 0].filter(v => v > 0);
+          const avgReinf = dimsReinf.length > 0 ? dimsReinf.reduce((a, b) => a + b, 0) / dimsReinf.length : 0;
+          area.promedioReinf = formatGradeValue(Math.max(avgReinf, avgReinf > 0 ? 1.0 : 0)).toFixed(1);
+        }
 
-            const promedioFinalRegular =
-              (promSaberRegular + promHacerRegular + promSerRegular) / 3;
+        // Rem
+        const mKRem = masterKnowledge.filter(i => i.item.lesson?.type === "remedial" && assignedRemedialLessonIds.has(i.item.lesson?.id));
+        const mERem = masterExecution.filter(i => i.item.lesson?.type === "remedial" && assignedRemedialLessonIds.has(i.item.lesson?.id));
+        const mBRem = masterBehavior.filter(i => i.item.lesson?.type === "remedial" && assignedRemedialLessonIds.has(i.item.lesson?.id));
 
-            // --- REINFORCEMENT GRADES LOGIC (Only if hasReinforcement) ---
-            let promSaberReinf = 0,
-              promHacerReinf = 0,
-              promSerReinf = 0,
-              promedioFinalReinf = 0;
+        area.hasRemedial = (mKRem.length + mERem.length + mBRem.length) > 0;
+        if (area.hasRemedial) {
+          const pKRem = calculateAverageFromMasterList(studentGrades, mKRem);
+          const pERem = calculateAverageFromMasterList(studentGrades, mERem);
+          const pBRem = calculateAverageFromMasterList(studentGrades, mBRem);
+          const dimsRem = [mKRem.length > 0 ? pKRem : 0, mERem.length > 0 ? pERem : 0, mBRem.length > 0 ? pBRem : 0].filter(v => v > 0);
+          const avgRem = dimsRem.length > 0 ? dimsRem.reduce((a, b) => a + b, 0) / dimsRem.length : 0;
+          area.promedioRemedial = formatGradeValue(Math.max(avgRem, avgRem > 0 ? 1.0 : 0)).toFixed(1);
+        }
 
-            if (hasReinforcement) {
-              const masterKnowledgeReinf = areaData.masterKnowledge.filter(
-                (i) => i.item.lesson?.type === "reinforcement"
-              );
-              const masterExecutionReinf = areaData.masterExecution.filter(
-                (i) => i.item.lesson?.type === "reinforcement"
-              );
-              const masterBehaviorReinf = areaData.masterBehavior.filter(
-                (i) => i.item.lesson?.type === "reinforcement"
-              );
+        area.dimensiones = [
+          {
+            id: "knowledge",
+            name: "Saber",
+            promedio: formatGradeValue(mKReg.length > 0 ? pKReg : 0).toFixed(1),
+            notas: mapToDisplayParamsWithMasterList(studentGrades, mKReg),
+            promedioReinf: mKReinf.length > 0 ? formatGradeValue(calculateAverageFromMasterList(studentGrades, mKReinf)).toFixed(1) : null,
+            notasReinf: mapToDisplayParamsWithMasterList(studentGrades, mKReinf),
+            promedioRemedial: mKRem.length > 0 ? formatGradeValue(calculateAverageFromMasterList(studentGrades, mKRem)).toFixed(1) : null,
+            notasRemedial: mapToDisplayParamsWithMasterList(studentGrades, mKRem),
+          },
+          {
+            id: "execution",
+            name: "Hacer",
+            promedio: formatGradeValue(mEReg.length > 0 ? pEReg : 0).toFixed(1),
+            notas: mapToDisplayParamsWithMasterList(studentGrades, mEReg),
+            promedioReinf: mEReinf.length > 0 ? formatGradeValue(calculateAverageFromMasterList(studentGrades, mEReinf)).toFixed(1) : null,
+            notasReinf: mapToDisplayParamsWithMasterList(studentGrades, mEReinf),
+            promedioRemedial: mERem.length > 0 ? formatGradeValue(calculateAverageFromMasterList(studentGrades, mERem)).toFixed(1) : null,
+            notasRemedial: mapToDisplayParamsWithMasterList(studentGrades, mERem),
+          },
+          {
+            id: "behavior",
+            name: "Ser",
+            promedio: formatGradeValue(mBReg.length > 0 ? pBReg : 0).toFixed(1),
+            notas: mapToDisplayParamsWithMasterList(studentGrades, mBReg),
+            promedioReinf: mBReinf.length > 0 ? formatGradeValue(calculateAverageFromMasterList(studentGrades, mBReinf)).toFixed(1) : null,
+            notasReinf: mapToDisplayParamsWithMasterList(studentGrades, mBReinf),
+            promedioRemedial: mBRem.length > 0 ? formatGradeValue(calculateAverageFromMasterList(studentGrades, mBRem)).toFixed(1) : null,
+            notasRemedial: mapToDisplayParamsWithMasterList(studentGrades, mBRem),
+          },
+        ];
 
-              promSaberReinf = calculateAverageFromMasterList(
-                studentGrades,
-                masterKnowledgeReinf
-              );
-              promHacerReinf = calculateAverageFromMasterList(
-                studentGrades,
-                masterExecutionReinf
-              );
-              promSerReinf = calculateAverageFromMasterList(
-                studentGrades,
-                masterBehaviorReinf
-              );
+        area.loaded = true;
+      } catch (error) {
+        console.error("Error loading area details:", error);
+      } finally {
+        area.loading = false;
+      }
+    };
 
-              promedioFinalReinf =
-                (promSaberReinf + promHacerReinf + promSerReinf) / 3;
-            }
+    onIonViewWillEnter(async () => {
+      adminOProfesor.value = adminOprofesor();
+      year.value = Number.isNaN(parseInt(localStorage.getItem("year"), 10))
+        ? selectedYear()
+        : parseInt(localStorage.getItem("year"), 10);
 
-            // Build dimensions with regular/reinforcement split
-            const dimensiones = [
-              {
-                id: "knowledge",
-                name: "Saber",
-                promedio: formatGrade(promSaberRegular).toFixed(1),
-                notas: mapToDisplayParamsWithMasterList(
-                  studentGrades,
-                  masterKnowledgeRegular
-                ),
-                promedioReinf: hasReinforcement
-                  ? formatGrade(promSaberReinf).toFixed(1)
-                  : null,
-                notasReinf: hasReinforcement
-                  ? mapToDisplayParamsWithMasterList(
-                      studentGrades,
-                      areaData.masterKnowledge.filter(
-                        (i) => i.item.lesson?.type === "reinforcement"
-                      )
-                    )
-                  : [],
-              },
-              {
-                id: "execution",
-                name: "Hacer",
-                promedio: formatGrade(promHacerRegular).toFixed(1),
-                notas: mapToDisplayParamsWithMasterList(
-                  studentGrades,
-                  masterExecutionRegular
-                ),
-                promedioReinf: hasReinforcement
-                  ? formatGrade(promHacerReinf).toFixed(1)
-                  : null,
-                notasReinf: hasReinforcement
-                  ? mapToDisplayParamsWithMasterList(
-                      studentGrades,
-                      areaData.masterExecution.filter(
-                        (i) => i.item.lesson?.type === "reinforcement"
-                      )
-                    )
-                  : [],
-              },
-              {
-                id: "behavior",
-                name: "Ser",
-                promedio: formatGrade(promSerRegular).toFixed(1),
-                notas: mapToDisplayParamsWithMasterList(
-                  studentGrades,
-                  masterBehaviorRegular
-                ),
-                promedioReinf: hasReinforcement
-                  ? formatGrade(promSerReinf).toFixed(1)
-                  : null,
-                notasReinf: hasReinforcement
-                  ? mapToDisplayParamsWithMasterList(
-                      studentGrades,
-                      areaData.masterBehavior.filter(
-                        (i) => i.item.lesson?.type === "reinforcement"
-                      )
-                    )
-                  : [],
-              },
-            ];
+      usuario.value = usuarioGet();
+      periodos.value = periodosGet();
+      if (Array.isArray(periodos.value)) {
+        periodos.value.sort((a, b) => a.name.localeCompare(b.name));
+      }
 
-            return {
-              id: areaData.id,
-              name: areaData.name,
-              promedio: formatGrade(promedioFinalRegular).toFixed(1),
-              promedioReinf: hasReinforcement
-                ? formatGrade(promedioFinalReinf).toFixed(1)
-                : null,
-              dimensiones: dimensiones,
-            };
-          });
+      cursosUsuario.value = (await axios.get(`/users/${usuario.value.id}/courses`)).data;
+      actualCurso.value = cursosUsuario.value.find((curso) => curso.active);
 
-          return {
-            userId: memberId,
-            userName: memberName,
-            hasReinforcement: hasReinforcement,
-            areas: areas,
-          };
+      tokenHeader();
+
+      await axios.get(`/users/${usuario.value.id}/groups`).then((response) => {
+        grupoUsuario.value = response.data.filter((g) => g.active)[0]?.group ?? null;
+      });
+
+      if (grupoUsuario.value?.id) {
+        await axios.get(`/groups/${grupoUsuario.value.id}/${year.value}/users`).then((response) => {
+          miembros.value = response.data;
         });
-
-        groupMembersWithGrades.value = processedMembers;
-      };
-
-      watch(periodoSelected, getGradesForGroup);
+      }
 
       if (!periodoSelected.value && periodos.value?.length > 0) {
         periodoSelected.value = periodos.value[0].id;
       } else {
-        await getGradesForGroup();
+        await initializeGroupData();
       }
 
-      await axios
-        .get(`/groups?courseId=${actualCurso.value.course.id}`)
-        .then((response) => {
-          grupos.value = response.data;
-
-          if (grupoUsuario.value) {
-            grupos.value = grupos.value.filter((grupo) => {
-              return grupo.id != grupoUsuario.value.id ?? false;
-            });
-          }
-        });
+      await axios.get(`/groups?courseId=${actualCurso.value.course.id}`).then((response) => {
+        grupos.value = response.data;
+        if (grupoUsuario.value) {
+          grupos.value = grupos.value.filter((grupo) => grupo.id != grupoUsuario.value.id);
+        }
+      });
     });
 
-    return {
-      cursosUsuario,
-      actualCurso,
+    watch([periodoSelected, miembros], initializeGroupData);
+    watch(periodoSelected, (newVal) => {
+      const stored = localStorage.getItem("periodoSelected");
+      if (newVal && String(newVal) !== String(stored)) {
+        localStorage.setItem("periodoSelected", newVal);
+        location.reload();
+      }
+    });
 
+    const getGradeColorClass = (grade) => {
+      if (grade === null || isNaN(grade) || grade === 0) return "";
+      const numericGrade = parseFloat(grade);
+      if (numericGrade < 3.0) return "red-grade";
+      if (numericGrade >= 3.0 && numericGrade < 4.0) return "orange-grade";
+      if (numericGrade >= 4.0 && numericGrade < 4.5) return "light-green-grade";
+      if (numericGrade >= 4.5) return "dark-green-grade";
+      return "";
+    };
+
+    return {
+      usuario,
       adminOProfesor,
       finalPeriodo,
-      grupoUsuario,
-      grupos,
-      grupo,
-      code,
-      year,
-      usuario,
-      personOutline,
-      miembros,
-      modal,
-      presentModal() {},
-      swapHorizontalOutline,
-      cancel,
-      confirm,
-      groupMembersWithGrades,
-      easelOutline,
+      cursosUsuario,
       periodos,
       periodoSelected,
+      actualCurso,
+      year,
+      grupo,
+      modal,
+      code,
+      miembros,
+      groupMembersWithGrades,
+      grupos,
+      grupoUsuario,
+      cancel,
+      confirm,
+      presentModal,
+      easelOutline,
+      swapHorizontalOutline,
+      getGradeColorClass,
+      handleAreaExpand,
     };
   },
-};
+  };
 </script>
+<style scoped>
+.red-grade {
+  color: red !important;
+  font-weight: bold;
+}
+.orange-grade {
+  color: orange !important;
+  font-weight: bold;
+}
+.light-green-grade {
+  color: lightgreen !important;
+  font-weight: bold;
+}
+.dark-green-grade {
+  color: darkgreen !important;
+  font-weight: bold;
+}
+</style>

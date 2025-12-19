@@ -559,23 +559,15 @@ export default {
       allGrades,
       studentList,
       reinforcementStudents,
-      remedialStudents
+      remedialStudents,
+      reinforcementMap, // studentId -> Set of lessonIds
+      remedialMap // studentId -> Set of lessonIds
     ) => {
-      // 1. Build Master List of Gradable Items (excluding special types)
+      // 1. Build Master List of ALL Gradable Items (we will filter per type/student later)
       const masterItemsMap = new Map();
 
       allGrades.forEach((grade) => {
-        const isReinforcement =
-          grade.gradableItem?.lesson?.type === LessonType.REINFORCEMENT;
-        const isRemedial =
-          grade.gradableItem?.lesson?.type === LessonType.REMEDIAL;
-
-        if (
-          !isReinforcement &&
-          !isRemedial &&
-          grade.gradableItem &&
-          grade.gradableItem.id
-        ) {
+        if (grade.gradableItem && grade.gradableItem.id) {
           const uniqueKey = `${grade.gradableType}-${grade.gradableItem.id}`;
           if (!masterItemsMap.has(uniqueKey)) {
             masterItemsMap.set(uniqueKey, {
@@ -652,7 +644,8 @@ export default {
             foundGrade && foundGrade.grade !== null ? foundGrade.grade : 0;
         });
 
-        return itemsConsideredCount > 0 ? totalScore / itemsConsideredCount : 0;
+        const avg = itemsConsideredCount > 0 ? totalScore / itemsConsideredCount : 0;
+        return itemsConsideredCount > 0 ? Math.max(avg, 1.0) : 0;
       };
 
       const formatGrade = (grade) => {
@@ -701,6 +694,8 @@ export default {
           promSerReinf = 0,
           promedioFinalReinf = 0;
         if (hasReinforcement) {
+          // In NotasPage, areaId is fixed from route, and we already filtered the students by area
+          // So any reinforcement item in the master list for this area applies.
           const masterKnowledgeReinf = masterKnowledge.filter(
             (i) => i.item.lesson?.type === LessonType.REINFORCEMENT
           );
@@ -760,12 +755,12 @@ export default {
         }
 
         // Apply Hierarchy for the main student chip color: Remedial > Reinforcement > Regular
-        let finalPromedio = promedioFinalRegular;
+        let finalPromedio = Math.max(promedioFinalRegular, 1.0);
         if (hasReinforcement && promedioFinalReinf > 0) {
-          finalPromedio = Math.max(finalPromedio, promedioFinalReinf);
+          finalPromedio = Math.max(finalPromedio, Math.max(promedioFinalReinf, 1.0));
         }
         if (hasRemedial && promedioFinalRemedial > 0) {
-          finalPromedio = Math.max(finalPromedio, promedioFinalRemedial);
+          finalPromedio = Math.max(finalPromedio, Math.max(promedioFinalRemedial, 1.0));
         }
 
         const getGradesByLessonType = (grades, lessonTypeFilter) => {
@@ -810,6 +805,9 @@ export default {
           },
         ];
 
+        const studentReinforcementLessons = reinforcementMap.get(estudiante.id) || new Set();
+        const studentRemedialLessons = remedialMap.get(estudiante.id) || new Set();
+
         const dimensionesReinforcement = [
           {
             id: "knowledge",
@@ -818,7 +816,7 @@ export default {
             notas: mapToDisplayParamsWithMasterList(
               getGradesByLessonType(studentGrades, LessonType.REINFORCEMENT),
               masterKnowledge.filter(
-                (i) => i.item.lesson?.type === LessonType.REINFORCEMENT
+                (i) => i.item.lesson?.type === LessonType.REINFORCEMENT && studentReinforcementLessons.has(i.item.lesson?.id)
               )
             ),
           },
@@ -829,7 +827,7 @@ export default {
             notas: mapToDisplayParamsWithMasterList(
               getGradesByLessonType(studentGrades, LessonType.REINFORCEMENT),
               masterExecution.filter(
-                (i) => i.item.lesson?.type === LessonType.REINFORCEMENT
+                (i) => i.item.lesson?.type === LessonType.REINFORCEMENT && studentReinforcementLessons.has(i.item.lesson?.id)
               )
             ),
           },
@@ -840,7 +838,7 @@ export default {
             notas: mapToDisplayParamsWithMasterList(
               getGradesByLessonType(studentGrades, LessonType.REINFORCEMENT),
               masterBehavior.filter(
-                (i) => i.item.lesson?.type === LessonType.REINFORCEMENT
+                (i) => i.item.lesson?.type === LessonType.REINFORCEMENT && studentReinforcementLessons.has(i.item.lesson?.id)
               )
             ),
           },
@@ -854,7 +852,7 @@ export default {
             notas: mapToDisplayParamsWithMasterList(
               getGradesByLessonType(studentGrades, LessonType.REMEDIAL),
               masterKnowledge.filter(
-                (i) => i.item.lesson?.type === LessonType.REMEDIAL
+                (i) => i.item.lesson?.type === LessonType.REMEDIAL && studentRemedialLessons.has(i.item.lesson?.id)
               )
             ),
           },
@@ -865,7 +863,7 @@ export default {
             notas: mapToDisplayParamsWithMasterList(
               getGradesByLessonType(studentGrades, LessonType.REMEDIAL),
               masterExecution.filter(
-                (i) => i.item.lesson?.type === LessonType.REMEDIAL
+                (i) => i.item.lesson?.type === LessonType.REMEDIAL && studentRemedialLessons.has(i.item.lesson?.id)
               )
             ),
           },
@@ -876,7 +874,7 @@ export default {
             notas: mapToDisplayParamsWithMasterList(
               getGradesByLessonType(studentGrades, LessonType.REMEDIAL),
               masterBehavior.filter(
-                (i) => i.item.lesson?.type === LessonType.REMEDIAL
+                (i) => i.item.lesson?.type === LessonType.REMEDIAL && studentRemedialLessons.has(i.item.lesson?.id)
               )
             ),
           },
@@ -887,9 +885,9 @@ export default {
           promedio: formatGrade(finalPromedio)?.toFixed(1), // Keep for main chip color
           hasReinforcement: hasReinforcement,
           hasRemedial: hasRemedial,
-          promedioRegular: formatGrade(promedioFinalRegular)?.toFixed(1),
-          promedioRefuerzo: formatGrade(promedioFinalReinf)?.toFixed(1),
-          promedioNivelacion: formatGrade(promedioFinalRemedial)?.toFixed(1),
+          promedioRegular: formatGrade(Math.max(promedioFinalRegular, 1.0))?.toFixed(1),
+          promedioRefuerzo: hasReinforcement ? formatGrade(Math.max(promedioFinalReinf, 1.0))?.toFixed(1) : 0,
+          promedioNivelacion: hasRemedial ? formatGrade(Math.max(promedioFinalRemedial, 1.0))?.toFixed(1) : 0,
           dimensionesRegular,
           dimensionesReinforcement,
           dimensionesRemedial,
@@ -920,19 +918,31 @@ export default {
           .filter((estudiante) => estudiante.rol === "student")
           .map((estudiante) => estudiante.user);
 
-        // Fetch Reinforcements
+        // Fetch Reinforcements (all for course/period)
         const reinforcementsResponse = await axios.get(
           `/reinforcement/by-context?courseId=${cursoId}&areaId=${areaId}&periodId=${periodoSelected.value}&year=${year}&lessonType=${LessonType.REINFORCEMENT}`,
           tokenHeader()
         );
-        const reinforcementStudents = new Set(
-          reinforcementsResponse.data.map((r) => r.student.id)
-        );
+        // Map: studentId -> Set of reinforcement lessonIds
+        const reinforcementMap = new Map();
+        reinforcementsResponse.data.forEach((r) => {
+          if (!reinforcementMap.has(r.student.id)) reinforcementMap.set(r.student.id, new Set());
+          if (r.lesson?.id) reinforcementMap.get(r.student.id).add(r.lesson.id);
+        });
 
-        // Fetch Remedial Lessons
         const remedialResponse = await axios.get(
           `/reinforcement/by-context?courseId=${cursoId}&areaId=${areaId}&periodId=${periodoSelected.value}&year=${year}&lessonType=${LessonType.REMEDIAL}`,
           tokenHeader()
+        );
+        // Map: studentId -> Set of remedial lessonIds
+        const remedialMap = new Map();
+        remedialResponse.data.forEach((r) => {
+          if (!remedialMap.has(r.student.id)) remedialMap.set(r.student.id, new Set());
+          if (r.lesson?.id) remedialMap.get(r.student.id).add(r.lesson.id);
+        });
+
+        const reinforcementStudents = new Set(
+          reinforcementsResponse.data.map((r) => r.student.id)
         );
         const remedialStudents = new Set(
           remedialResponse.data.map((r) => r.student.id)
@@ -942,7 +952,9 @@ export default {
           allGrades,
           studentList,
           reinforcementStudents,
-          remedialStudents
+          remedialStudents,
+          reinforcementMap,
+          remedialMap
         ).sort((a, b) => {
           const lastNameA = a.lastName || "";
           const lastNameB = b.lastName || "";
