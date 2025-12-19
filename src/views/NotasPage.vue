@@ -1437,11 +1437,17 @@ export default {
         backdropDismiss: false,
       });
 
+      // Get the background color from the ion-content parent
+      const contentElement = reportElement.closest('ion-content');
+      const backgroundColor = contentElement
+        ? window.getComputedStyle(contentElement).getPropertyValue('--ion-background-color').trim()
+        : '#ffffff'; // Fallback to white if not found
+
       const canvas = await DomToImage.toPng(reportElement, {
         width: reportElement.offsetWidth * 2,
         height: reportElement.offsetHeight * 2,
+        bgcolor: backgroundColor || '#ffffff', // Ensure there's always a color
         style: {
-          background: "white",
           transform: "scale(2)",
           transformOrigin: "top left",
         },
