@@ -1,8 +1,16 @@
 <template>
   <ion-page>
     <ion-header>
-      <ion-toolbar>
-        <ion-title>Cursos</ion-title>
+      <ion-toolbar title="Notas">
+        <ion-buttons slot="start">
+          <ion-back-button default-href="/"></ion-back-button>
+        </ion-buttons>
+        <ion-title>Notas de Estudiantes</ion-title>
+        <ion-buttons slot="end">
+          <ion-button @click="abrirModalConfig">
+            <ion-icon :icon="documentTextOutline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -455,6 +463,139 @@
         </div>
       </ion-content>
     </ion-modal>
+    <!-- Modal de Configuración de Reporte -->
+    <ion-modal :is-open="mostrarModalConfig" @didDismiss="cerrarModalConfig">
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Configurar Reporte</ion-title>
+          <ion-buttons slot="end">
+            <ion-button @click="cerrarModalConfig">Cerrar</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <ion-list>
+          <ion-item>
+            <ion-label position="stacked">Condición</ion-label>
+            <ion-select v-model="reportConfig.condition" placeholder="Seleccione">
+              <ion-select-option value="lt">Menor a</ion-select-option>
+              <ion-select-option value="lte">Igual o menor a</ion-select-option>
+              <ion-select-option value="eq">Igual a</ion-select-option>
+              <ion-select-option value="gt">Mayor a</ion-select-option>
+              <ion-select-option value="gte">Igual o mayor a</ion-select-option>
+            </ion-select>
+          </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Valor (Nota)</ion-label>
+            <ion-input
+              v-model="reportConfig.value"
+              type="number"
+              step="0.1"
+              min="0"
+              max="5"
+              placeholder="Ej: 3.4"
+            ></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Tipo de Informe</ion-label>
+            <ion-segment v-model="reportConfig.format">
+              <ion-segment-button value="short">
+                <ion-label>Corto</ion-label>
+              </ion-segment-button>
+              <ion-segment-button value="detailed">
+                <ion-label>Detallado</ion-label>
+              </ion-segment-button>
+            </ion-segment>
+          </ion-item>
+        </ion-list>
+        <div class="ion-padding">
+          <ion-button expand="block" @click="generarReporte">Generar Reporte</ion-button>
+        </div>
+      </ion-content>
+    </ion-modal>
+
+    <!-- Modal de Visualización de Reporte -->
+    <ion-modal :is-open="mostrarModalReporte" @didDismiss="cerrarModalReporte">
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Reporte de Notas</ion-title>
+          <ion-buttons slot="end">
+            <ion-button @click="cerrarModalReporte">Cerrar</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <div class="report-header ion-padding">
+          <h3>Informe de Estudiantes</h3>
+          <p>
+            A continuación se listan los estudiantes con nota
+            {{ reportConditionText }} {{ reportConfig.value }}.
+          </p>
+        </div>
+
+        <!-- Tabla Corta -->
+        <div v-if="reportConfig.format === 'short'">
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>Apellido</th>
+                <th>Nombre</th>
+                <th>Promedio</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="est in estudiantesReporte" :key="est.id">
+                <td>{{ est.lastName }}</td>
+                <td>{{ est.name }}</td>
+                <td :class="getGradeColorClass(est.promedioRegular)">
+                  {{ est.promedioRegular }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tabla Detallada -->
+        <div v-else>
+          <div v-for="est in estudiantesReporte" :key="est.id" class="detailed-student">
+            <div class="student-info-header">
+              <strong>{{ est.lastName }} {{ est.name }}</strong>
+              <ion-chip :class="getGradeColorClass(est.promedioRegular)">
+                RG: {{ est.promedioRegular }}
+              </ion-chip>
+            </div>
+            <table class="report-table detailed">
+              <thead>
+                <tr>
+                  <th>Dimensión / Item</th>
+                  <th>Nota</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template v-for="dim in est.dimensionesRegular" :key="dim.id">
+                  <tr class="dimension-row">
+                    <td>
+                      <strong>{{ dim.name }}</strong>
+                    </td>
+                    <td>
+                      <strong :class="getGradeColorClass(dim.promedio)">{{ dim.promedio }}</strong>
+                    </td>
+                  </tr>
+                  <tr v-for="nota in dim.notas" :key="nota.id" class="item-row">
+                    <td class="item-name">
+                      {{ nota.gradableItem?.title }}
+                    </td>
+                    <td :class="getGradeColorClass(nota.grade)">
+                      {{ nota.grade !== null ? nota.grade : "Pendiente" }}
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </ion-content>
+    </ion-modal>
   </ion-page>
 </template>
 
@@ -491,6 +632,7 @@ import {
   IonChip,
   IonItemGroup,
   IonItemDivider,
+  IonBackButton,
 } from "@ionic/vue";
 import { useRoute } from "vue-router";
 import {
@@ -498,6 +640,7 @@ import {
   addOutline,
   pencilOutline,
   schoolOutline,
+  documentTextOutline,
 } from "ionicons/icons";
 import { LessonType } from "../globalService";
 export default {
@@ -527,6 +670,7 @@ export default {
     IonChip,
     IonItemGroup,
     IonItemDivider,
+    IonBackButton,
   },
   setup() {
     const mroute = useRoute();
@@ -554,6 +698,15 @@ export default {
       id: null,
       exist: false,
     });
+
+    const mostrarModalConfig = ref(false);
+    const mostrarModalReporte = ref(false);
+    const reportConfig = ref({
+      condition: "lt",
+      value: 3.5,
+      format: "short",
+    });
+    const estudiantesReporte = ref([]);
 
     const processStudentGrades = (
       allGrades,
@@ -1121,6 +1274,63 @@ export default {
       mostrarModal.value = false;
     };
 
+    const abrirModalConfig = () => {
+      mostrarModalConfig.value = true;
+    };
+
+    const cerrarModalConfig = () => {
+      mostrarModalConfig.value = false;
+    };
+
+    const cerrarModalReporte = () => {
+      mostrarModalReporte.value = false;
+    };
+
+    const generarReporte = () => {
+      const val = parseFloat(reportConfig.value.value);
+      if (isNaN(val)) return;
+
+      estudiantesReporte.value = usuariosEstudiantes.value.filter((est) => {
+        const prom = parseFloat(est.promedioRegular);
+        if (isNaN(prom)) return false;
+
+        switch (reportConfig.value.condition) {
+          case "lt":
+            return prom < val;
+          case "lte":
+            return prom <= val;
+          case "eq":
+            return prom === val;
+          case "gt":
+            return prom > val;
+          case "gte":
+            return prom >= val;
+          default:
+            return false;
+        }
+      });
+
+      mostrarModalConfig.value = false;
+      mostrarModalReporte.value = true;
+    };
+
+    const reportConditionText = computed(() => {
+      switch (reportConfig.value.condition) {
+        case "lt":
+          return "menor a";
+        case "lte":
+          return "igual o menor a";
+        case "eq":
+          return "igual a";
+        case "gt":
+          return "mayor a";
+        case "gte":
+          return "igual o mayor a";
+        default:
+          return "";
+      }
+    });
+
     const lessonName = computed(() => {
       if (!notaForm.value.lessonId) return "";
       const lesson = lessons.value.find(
@@ -1180,6 +1390,16 @@ export default {
       year,
       cursoId,
       getGradeColorClass,
+      mostrarModalConfig,
+      mostrarModalReporte,
+      reportConfig,
+      estudiantesReporte,
+      abrirModalConfig,
+      cerrarModalConfig,
+      cerrarModalReporte,
+      generarReporte,
+      reportConditionText,
+      documentTextOutline,
     };
   },
 };
@@ -1200,5 +1420,55 @@ export default {
 .dark-green-grade {
   color: darkgreen;
   font-weight: bold;
+}
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.report-table th,
+.report-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.report-table th {
+  background-color: #f2f2f2;
+}
+
+.detailed-student {
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.student-info-header {
+  background-color: #e9e9e9;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.report-table.detailed {
+  margin-top: 0;
+  border: none;
+}
+
+.dimension-row {
+  background-color: #fafafa;
+}
+
+.item-row td {
+  font-size: 0.9em;
+  padding-left: 20px;
+}
+
+.item-name {
+  color: #555;
 }
 </style>
