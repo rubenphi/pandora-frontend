@@ -211,6 +211,9 @@
               </ion-button>
             </div>
             <ion-list v-if="usersCourse.length > 0">
+              <ion-list-header>
+                <ion-label>Estudiantes y Profesores</ion-label>
+              </ion-list-header>
               <ion-item v-for="usuario in usersCourse" :key="usuario.id">
                 <ion-label class="ion-text-wrap">
                   <h6>{{ usuario.lastName + " " + usuario.name }}</h6>
@@ -242,6 +245,28 @@
                     "
                   ></ion-icon>
                 </div>
+              </ion-item>
+            </ion-list>
+
+            <!-- Sección de Áreas y Docentes -->
+            <ion-list v-if="(courseAreas?.length || 0) > 0 && isPrivilegedUser">
+              <ion-list-header color="light">
+                <ion-label>Asignación de Áreas y Docentes</ion-label>
+              </ion-list-header>
+              <ion-item v-for="area in courseAreas" :key="area.id">
+                <ion-icon slot="start" :icon="layersOutline"></ion-icon>
+                <ion-label>
+                  <h2>{{ area.name }}</h2>
+                  <p>
+                    Docente: 
+                    <span :color="getAssignedTeacher(area.id) ? 'primary' : 'danger'">
+                      {{ getAssignedTeacher(area.id) ? (getAssignedTeacher(area.id).lastName + ' ' + getAssignedTeacher(area.id).name) : 'Sin asignar' }}
+                    </span>
+                  </p>
+                </ion-label>
+                <ion-button slot="end" fill="clear" @click="openAreaTeacherPicker(area)">
+                  <ion-icon slot="icon-only" :icon="createOutline"></ion-icon>
+                </ion-button>
               </ion-item>
             </ion-list>
           </div>
@@ -327,6 +352,20 @@
               </ion-select>
             </ion-item>
 
+            <!-- Selección de Áreas -->
+            <div v-if="selectedCourseId && selectedCourseId != 0 && (rolSelected === 'teacher' || rolSelected === 'admin')">
+              <ion-list-header color="light">
+                <ion-label>Áreas que manejará</ion-label>
+              </ion-list-header>
+              <ion-item v-for="area in currentCourseAreas" :key="area.id">
+                <ion-checkbox
+                  slot="start"
+                  :checked="selectedAreas[area.id]"
+                  @ionChange="selectedAreas[area.id] = $event.detail.checked"
+                ></ion-checkbox>
+                <ion-label>{{ area.name }}</ion-label>
+              </ion-item>
+            </div>
             <ion-item v-if="rolSelected === 'student'">
               <ion-label>Grupo Destino</ion-label>
               <ion-select
@@ -520,7 +559,9 @@ import {
   swapHorizontalOutline,
   createOutline,
   downloadOutline,
-  trashOutline, // Import trashOutline
+  trashOutline,
+  layersOutline,
+  schoolOutline,
 } from "ionicons/icons";
 
 const AssignmentType = {
@@ -602,6 +643,12 @@ export default {
         rol: "admin",
       },
     ]);
+
+    const courseAreas = ref([]);
+    const courseAssignments = ref([]);
+    const allTeachers = ref([]);
+    const currentCourseAreas = ref([]); // Areas for the modal
+    const selectedAreas = ref({}); // Checked areas in modal
 
     const cursosInstituto = ref([
       {
@@ -752,11 +799,16 @@ export default {
 
     const openModal = (user) => {
       selectedUser.value = user;
+      selectedCourseId.value = null;
+      selectedGroupId.value = null;
+      selectedAreas.value = {};
+      currentCourseAreas.value = [];
       isModalOpen.value = true;
     };
 
     const closeModal = () => {
       isModalOpen.value = false;
+      selectedAreas.value = {};
     };
 
     const presentActionSheet = async (curso) => {
@@ -1033,6 +1085,29 @@ export default {
           );
         }
 
+        // Step 3: Assign to areas (if teacher/admin and areas selected)
+        if (
+          selectedCourseId.value != 0 &&
+          (rolSelected.value === "teacher" || rolSelected.value === "admin")
+        ) {
+          const areaAssignments = Object.entries(selectedAreas.value)
+            .filter(([ checked]) => checked)
+            .map(([areaId]) => ({
+              areaId: parseInt(areaId, 10),
+              teacherId: selectedUser.value.id,
+              year: parseInt(selectedYear.value, 10),
+              active: true,
+            }));
+
+          for (const assignment of areaAssignments) {
+            await axios.post(
+              `/courses/${selectedCourseId.value}/areas-teachers`,
+              assignment,
+              tokenHeader()
+            );
+          }
+        }
+
         // Success: close modal and reload
         closeModal();
         location.reload();
@@ -1101,8 +1176,99 @@ export default {
       if (abierto.value) {
         if (courseSelected.value?.id !== undefined) {
           getUsuarios(courseSelected.value.id, selectedYear.value);
+          fetchCourseAssignments(courseSelected.value.id);
         }
       }
+    };
+
+    const fetchCourseAssignments = async (courseId) => {
+      if (courseId === 0) {
+        courseAreas.value = [];
+        courseAssignments.value = [];
+        return;
+      }
+      try {
+        // Fetch course to get its linked areas
+        const courseRes = await axios.get(`/courses/${courseId}`, tokenHeader());
+        courseAreas.value = courseRes.data.areas;
+
+        // Fetch area-teacher assignments
+        const assignmentsRes = await axios.get(
+          `/courses/${courseId}/areas-teachers?year=${selectedYear.value}`,
+          tokenHeader()
+        );
+        courseAssignments.value = assignmentsRes.data;
+
+        // Fetch all teachers for selection if not already fetched
+        if (allTeachers.value.length === 0) {
+          const teachersRes = await axios.get(
+            `/users?instituteId=${usuario.value.institute.id}&rol=teacher,admin`,
+            tokenHeader()
+          );
+          allTeachers.value = teachersRes.data;
+        }
+      } catch (error) {
+        console.error("Error fetching course assignments:", error);
+      }
+    };
+
+    const getAssignedTeacher = (areaId) => {
+      const assignment = courseAssignments.value.find(
+        (a) => a.area.id === areaId && a.active
+      );
+      return assignment ? assignment.teacher : null;
+    };
+
+    const assignAreaTeacher = async (areaId, teacherId) => {
+      try {
+        await axios.post(
+          `/courses/${courseSelected.value.id}/areas-teachers`,
+          {
+            areaId,
+            teacherId,
+            year: parseInt(selectedYear.value, 10),
+            active: true,
+          },
+          tokenHeader()
+        );
+        fetchCourseAssignments(courseSelected.value.id);
+      } catch (error) {
+        console.error("Error assigning teacher to area:", error);
+      }
+    };
+
+    const openAreaTeacherPicker = async (area) => {
+      const currentTeacher = getAssignedTeacher(area.id);
+
+      const inputs = allTeachers.value.map((t) => ({
+        type: "radio",
+        label: `${t.lastName} ${t.name}`,
+        value: t.id,
+        checked: currentTeacher && currentTeacher.id === t.id,
+      }));
+
+      // Add "Sin asignar" option
+      inputs.unshift({
+        type: "radio",
+        label: "Sin Docente",
+        value: null,
+        checked: !currentTeacher,
+      });
+
+      const alert = await alertController.create({
+        header: `Asignar Docente a ${area.name}`,
+        inputs,
+        buttons: [
+          { text: "Cancelar", role: "cancel" },
+          {
+            text: "Asignar",
+            handler: (teacherId) => {
+              assignAreaTeacher(area.id, teacherId);
+            },
+          },
+        ],
+      });
+      await alert.present();
     };
 
     const getTeachers = async () => {
@@ -1254,19 +1420,35 @@ export default {
     };
 
     const getGruposCurso = async () => {
-      if (selectedCourseId.value) {
+      if (selectedCourseId.value !== null) {
+        if (selectedCourseId.value === 0) {
+          gruposCursoDestino.value = [];
+          currentCourseAreas.value = [];
+          selectedGroupId.value = null;
+          return;
+        }
+
         try {
-          const response = await axios.get(
+          // Fetch groups
+          const groupsResponse = await axios.get(
             `/courses/${selectedCourseId.value}/groups`,
             {
               headers: tokenHeader(),
             }
           );
-          gruposCursoDestino.value = response.data;
-          selectedGroupId.value = null; // Reset group selection when course changes
+          gruposCursoDestino.value = groupsResponse.data;
+          selectedGroupId.value = null;
+
+          // Fetch areas for the modal
+          const areasResponse = await axios.get(
+            `/courses/${selectedCourseId.value}/areas`,
+            tokenHeader()
+          );
+          currentCourseAreas.value = areasResponse.data;
         } catch (error) {
-          console.error("Error fetching groups:", error);
+          console.error("Error fetching course data:", error);
           gruposCursoDestino.value = [];
+          currentCourseAreas.value = [];
         }
       }
     };
@@ -1550,6 +1732,16 @@ export default {
       toggleTeachersSection,
       toggleArchivedCoursesSection,
       toggleNoCourseSection,
+
+      // Area-Teacher assignments
+      courseAreas,
+      courseAssignments,
+      getAssignedTeacher,
+      openAreaTeacherPicker,
+      layersOutline,
+      schoolOutline,
+      currentCourseAreas,
+      selectedAreas,
     };
   },
 };

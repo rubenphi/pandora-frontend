@@ -33,6 +33,16 @@
           <ion-icon slot="start" :icon="peopleCircleOutline"></ion-icon
           ><ion-label>Gestionar usuarios</ion-label>
         </ion-item>
+
+        <ion-item href="/admin/gestionar/areas">
+          <ion-icon slot="start" :icon="layersOutline"></ion-icon>
+          <ion-label>Gestionar Áreas</ion-label>
+        </ion-item>
+
+        <ion-item href="/admin/gestionar/cursos">
+          <ion-icon slot="start" :icon="schoolOutline"></ion-icon>
+          <ion-label>Gestionar Cursos</ion-label>
+        </ion-item>
       </ion-list>
     </ion-content>
   </ion-page>
@@ -49,6 +59,8 @@ import {
   personAddOutline,
   settingsOutline,
   scanOutline,
+  layersOutline,
+  schoolOutline,
 } from "ionicons/icons";
 
 import {
@@ -100,6 +112,8 @@ export default {
       personAddOutline,
       peopleCircleOutline,
       scanOutline,
+      layersOutline,
+      schoolOutline,
     };
   },
 };

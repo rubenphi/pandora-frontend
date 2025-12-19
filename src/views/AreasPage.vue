@@ -2,289 +2,169 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-title>Areas</ion-title>
+        <ion-buttons slot="start">
+          <ion-back-button default-href="/admin/panel"></ion-back-button>
+        </ion-buttons>
+        <ion-title>Gestionar Áreas</ion-title>
       </ion-toolbar>
     </ion-header>
-    <ion-content :fullscreen="true">
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">Areas</ion-title>
-        </ion-toolbar>
-      </ion-header>
-      <ion-item lines="none">
-        <ion-label slot="start" v-if="!adminOProfesor"
-          ><strong>Periodo:</strong></ion-label
-        >
-        <ion-select
-          v-if="adminOProfesor"
-          slot="start"
-          v-model="yearSelected"
-          @ionChange="changeYear($event)"
-          placeholder="Selecciona un año"
-        >
-          <ion-select-option v-for="year in years" :key="year" :value="year">
-            <strong>Año: </strong> {{ year }}
-          </ion-select-option>
-        </ion-select>
-
-        <ion-select
-          slot="end"
-          v-model="periodoSelected"
-          placeholder="Selecciona un periodo"
-          @ionChange="changePeriodo($event)"
-        >
-          <ion-select-option
-            v-for="periodo in periodos"
-            :key="periodo.id"
-            :value="periodo.id"
-          >
-            {{ periodo.name }}
-          </ion-select-option>
-        </ion-select>
-      </ion-item>
-      <ion-accordion-group>
-        <ion-accordion v-for="area in areas" :key="area.id" :value="area.id">
-          <ion-item slot="header" color="light" @click="handleHeaderClick($event)">
-            <ion-icon slot="start" :icon="libraryOutline"></ion-icon>
-            <ion-label>{{ area.name }}</ion-label>
-          </ion-item>
-          <div slot="content">
-            <ion-list>
-              <ion-item button @click="navigateToTab3(area.id, LessonType.STANDARD)">
-                <ion-label>Lecciones</ion-label>
-              </ion-item>
-              <ion-item 
-                v-if="adminOProfesor || hasReinforcement(area.id)" 
-                button 
-                @click="navigateToTab3(area.id, LessonType.REINFORCEMENT)"
-              >
-                <ion-label>Refuerzos</ion-label>
-              </ion-item>
-              <ion-item 
-                v-if="adminOProfesor || hasRemedial(area.id)" 
-                button 
-                @click="navigateToTab3(area.id, LessonType.REMEDIAL)"
-              >
-                <ion-label>Nivelaciones</ion-label>
-              </ion-item>
-            </ion-list>
+    <ion-content class="ion-padding">
+      <ion-button expand="block" @click="presentCreateAlert()">Crear Nueva Área</ion-button>
+      
+      <ion-list>
+        <ion-item v-for="area in areas" :key="area.id">
+          <ion-label>
+            <h2>{{ area.name }}</h2>
+            <p>Estado: {{ area.exist ? 'Activa' : 'Inactiva' }}</p>
+          </ion-label>
+          <div slot="end">
+            <ion-button fill="clear" @click="presentEditAlert(area)">
+              <ion-icon slot="icon-only" :icon="createOutline"></ion-icon>
+            </ion-button>
+            <ion-button fill="clear" color="danger" @click="confirmDelete(area)">
+              <ion-icon slot="icon-only" :icon="trashOutline"></ion-icon>
+            </ion-button>
           </div>
-        </ion-accordion>
-      </ion-accordion-group>
-      <ion-toast
-        :is-open="isOpen"
-        position="middle"
-        message="Por favor, seleccione un periodo antes de continuar."
-        :duration="3000"
-        @didDismiss="setOpen(false)"
-      >
-        <ion-icon slot="start" :icon="alertCircleOutline"></ion-icon>
-      </ion-toast>
+        </ion-item>
+      </ion-list>
     </ion-content>
   </ion-page>
 </template>
-<script>
-import { libraryOutline, alertCircleOutline } from "ionicons/icons";
-import axios from "axios";
-import router from "../router";
-import { ref, watch, computed } from "vue";
-import { useRoute } from "vue-router";
 
-import {
-  tokenHeader,
-  usuarioGet,
-  periodosGet,
-  adminOprofesor,
-  LessonType,
-} from "../globalService";
-import {
-  onIonViewWillEnter,
-  IonLabel,
-  IonItem,
-  IonIcon,
-  IonList,
-  IonPage,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonContent,
-  IonSelect,
-  IonSelectOption,
-  IonToast,
-  IonAccordion,
-  IonAccordionGroup,
-} from "@ionic/vue";
-export default {
-  components: {
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonContent,
-    IonPage,
-    IonList,
-    IonItem,
-    IonLabel,
-    IonIcon,
-    IonSelect,
-    IonSelectOption,
-    IonToast,
-    IonAccordion,
-    IonAccordionGroup,
-  },
-  setup() {
-    const mroute = useRoute();
-    const presentToast = async () => {
-      isOpen.value = true;
-    };
-    const setOpen = (state) => {
-      isOpen.value = state;
-    };
-    const adminOProfesor = ref(false);
-    const isStudent = computed(() => {
-      return usuario.value?.rol === "student" || usuario.value?.rol === "user";
-    });
-    const { id } = mroute.params;
-    const usuario = ref();
-    const areas = ref([]);
-    const isOpen = ref(false);
-    const assignmentsCount = ref({}); // { areaId: { reinforcement: 0, remedial: 0 } }
+<script setup>
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
+import { tokenHeader, usuarioGet } from '../globalService';
+import { 
+  IonPage, IonHeader, IonToolbar, IonTitle, IonContent, 
+  IonList, IonItem, IonLabel, IonButton, IonIcon, IonButtons, IonBackButton,
+  alertController
+} from '@ionic/vue';
+import { createOutline, trashOutline } from 'ionicons/icons';
 
-    const periodos = ref();
+const areas = ref([]);
+const usuario = usuarioGet();
 
-    const periodoSelected = ref();
-
-    const years = ref([]);
-    const yearSelected = ref();
-
-    onIonViewWillEnter(async () => {
-      adminOProfesor.value = adminOprofesor();
-      periodos.value = periodosGet();
-      periodoSelected.value = JSON.parse(
-        localStorage.getItem("periodoSelected")
-      );
-      //las 10 years
-      years.value = new Array(10)
-        .fill(0)
-        .map((_, i) => new Date().getFullYear() - i);
-      yearSelected.value =
-        localStorage.getItem("year") ?? new Date().getFullYear();
-      usuario.value = usuarioGet();
-      tokenHeader();
-      if (usuario.value.rol === "student" || usuario.value.rol === "user") {
-        // course with te bigest year
-        const courseSelected = JSON.parse(
-          localStorage.getItem("cursosUsuario")
-        ).sort((a, b) => b.year - a.year)[0];
-        if (!yearSelected.value) {
-          yearSelected.value = courseSelected.year;
-          localStorage.setItem("yearSelected", yearSelected.value);
-        }
-
-        localStorage.setItem("courseSelected", JSON.stringify(courseSelected));
-      }
-
-      await axios.get(`/courses/${id}/areas`).then((response) => {
-        areas.value = response.data;
-      });
-    });
-
-    watch([areas, periodoSelected], () => {
-      if (isStudent.value && areas.value.length > 0 && periodoSelected.value) {
-        fetchStudentAssignments();
-      }
-    });
-
-    const handleHeaderClick = (event) => {
-      if (!periodoSelected.value) {
-        event.stopPropagation();
-        event.preventDefault();
-        presentToast();
-      }
-    };
-
-    const fetchStudentAssignments = async () => {
-      try {
-        const counts = await Promise.all(
-          areas.value.flatMap((area) => [
-            axios.get("/reinforcement/count", {
-              params: {
-                studentId: usuario.value.id,
-                courseId: id,
-                areaId: area.id,
-                periodId: periodoSelected.value,
-                year: yearSelected.value,
-                lessonType: LessonType.REINFORCEMENT,
-              },
-            }),
-            axios.get("/reinforcement/count", {
-              params: {
-                studentId: usuario.value.id,
-                courseId: id,
-                areaId: area.id,
-                periodId: periodoSelected.value,
-                year: yearSelected.value,
-                lessonType: LessonType.REMEDIAL,
-              },
-            }),
-          ])
-        );
-
-        let idx = 0;
-        areas.value.forEach((area) => {
-          assignmentsCount.value[area.id] = {
-            reinforcement: counts[idx++].data,
-            remedial: counts[idx++].data,
-          };
-        });
-      } catch (error) {
-        console.error("Error fetching assignments:", error);
-      }
-    };
-    return {
-      changePeriodo: (event) => {
-        localStorage.setItem(
-          "periodoSelected",
-          JSON.stringify(event.detail.value)
-        );
-        periodoSelected.value = event.detail.value;
-      },
-
-      changeYear: (event) => {
-        localStorage.setItem("yearSelected", event.detail.value);
-        yearSelected.value = event.detail.value;
-      },
-
-      navigateToTab3: (areaId, type) => {
-        if (!periodoSelected.value) {
-          presentToast();
-          return;
-        }
-        router.push(
-          `/lecciones/${id}/${areaId}/${periodoSelected.value}/${yearSelected.value}/${type}`
-        );
-      },
-      hasReinforcement: (areaId) => {
-        return assignmentsCount.value[areaId]?.reinforcement > 0;
-      },
-      hasRemedial: (areaId) => {
-        return assignmentsCount.value[areaId]?.remedial > 0;
-      },
-      LessonType,
-      usuario,
-      adminOProfesor,
-      libraryOutline,
-      areas,
-      id,
-      periodos,
-      periodoSelected,
-      alertCircleOutline,
-      isOpen,
-      setOpen,
-      presentToast,
-      years,
-      yearSelected,
-      handleHeaderClick,
-    };
-  },
+const getAreas = async () => {
+  try {
+    const response = await axios.get(`/areas?instituteId=${usuario.institute.id}`, tokenHeader());
+    areas.value = response.data;
+  } catch (error) {
+    console.error("Error fetching areas:", error);
+  }
 };
+
+const presentCreateAlert = async () => {
+  const alert = await alertController.create({
+    header: 'Crear Nueva Área',
+    inputs: [
+      {
+        name: 'name',
+        type: 'text',
+        placeholder: 'Nombre de la área'
+      }
+    ],
+    buttons: [
+      {
+        text: 'Cancelar',
+        role: 'cancel'
+      },
+      {
+        text: 'Crear',
+        handler: async (data) => {
+          if (!data.name) return false;
+          try {
+            await axios.post('/areas', {
+              name: data.name,
+              instituteId: usuario.institute.id,
+              exist: true
+            }, tokenHeader());
+            getAreas();
+          } catch (error) {
+            console.error("Error creating area:", error);
+          }
+        }
+      }
+    ]
+  });
+  await alert.present();
+};
+
+const presentEditAlert = async (area) => {
+  const alert = await alertController.create({
+    header: 'Editar Área',
+    inputs: [
+      {
+        name: 'name',
+        type: 'text',
+        value: area.name,
+        placeholder: 'Nombre de la área'
+      },
+      {
+        name: 'exist',
+        type: 'checkbox',
+        label: 'Activa',
+        value: 'true',
+        checked: area.exist
+      }
+    ],
+    buttons: [
+      {
+        text: 'Cancelar',
+        role: 'cancel'
+      },
+      {
+        text: 'Guardar',
+        handler: async (data) => {
+          if (!data.name) return false;
+          try {
+             // In Ionic alert, checkbox data is usually an array if multiple, or value if single? 
+             // Actually for single checkbox it's an array for some reason in some versions.
+             const isActive = Array.isArray(data.exist) ? data.exist.includes('true') : data.exist === 'true';
+             
+            await axios.patch(`/areas/${area.id}`, {
+              name: data.name,
+              instituteId: usuario.institute.id,
+              exist: isActive
+            }, tokenHeader());
+            getAreas();
+          } catch (error) {
+            console.error("Error updating area:", error);
+          }
+        }
+      }
+    ]
+  });
+  await alert.present();
+};
+
+const confirmDelete = async (area) => {
+  const alert = await alertController.create({
+    header: 'Confirmar Eliminación',
+    message: `¿Estás seguro de que deseas eliminar la área "${area.name}"?`,
+    buttons: [
+      {
+        text: 'Cancelar',
+        role: 'cancel'
+      },
+      {
+        text: 'Eliminar',
+        role: 'destructive',
+        handler: async () => {
+          try {
+            await axios.delete(`/areas/${area.id}`, tokenHeader());
+            getAreas();
+          } catch (error) {
+            console.error("Error deleting area:", error);
+          }
+        }
+      }
+    ]
+  });
+  await alert.present();
+};
+
+onMounted(() => {
+  getAreas();
+});
 </script>

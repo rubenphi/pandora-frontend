@@ -111,6 +111,14 @@ const routes = [
         },
       },
       {
+        path: "admin/gestionar/cursos",
+        component: () => import("@/views/gestionUsuarios.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
         path: "admin/imprimir-lista-estudiantes",
         name: "PrintableStudentList",
         component: () => import("@/views/PrintableStudentList.vue"),
@@ -207,6 +215,14 @@ const routes = [
       {
         path: "cuestionario/importar/preguntas/variables/:id",
         component: () => import("@/views/ImportarPreguntaVariables.vue"),
+      },
+      {
+        path: "admin/gestionar/areas",
+        component: () => import("@/views/AreasPage.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
       },
       {
         path: "areas/:id",
