@@ -262,6 +262,26 @@ export default {
                 error.value.estatus = 0;
 
                 tokenHeader();
+
+                // Check if the logged-in user is a teacher
+                const userRole = usuarioGet().rol;
+                if (userRole === "teacher") {
+                  try {
+                    const teacherAssignmentsResponse = await axios.get(
+                      `/courses/teacher-assignments/${usuarioGet().id}`
+                    );
+                    localStorage.setItem(
+                      "teacherAssignments",
+                      JSON.stringify(teacherAssignmentsResponse.data)
+                    );
+                  } catch (assignmentError) {
+                    console.error(
+                      "Error fetching teacher assignments:",
+                      assignmentError
+                    );
+                    // Handle error, but don't block login
+                  }
+                }
               }
             })
             .then(async () => {
