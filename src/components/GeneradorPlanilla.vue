@@ -184,88 +184,176 @@ export default {
         await alert.present();
         return;
       }
-      console.log(JSON.stringify(jsonData));
 
-      const diToNumeroMap = new Map();
-      jsonData.forEach((row) => {
-        if (row.DI && row.Numero) {
-          const normalizedDi = normalizeString(row.DI);
-          diToNumeroMap.set(normalizedDi, Number(row.Numero));
+      // 1. Create maps for efficient lookup
+      const systemStudentsMap = new Map(
+        props.usuariosEstudiantes.map((s) => [normalizeString(s.code), s])
+      );
+      const excelStudentsMap = new Map(
+        jsonData.map((row) => [normalizeString(row.DI), row])
+      );
+
+      // 2. Determine the majority grade from matched students
+      const gradeCounts = {};
+      for (const student of props.usuariosEstudiantes) {
+        const excelStudent = excelStudentsMap.get(normalizeString(student.code));
+        if (excelStudent && excelStudent.Grado) {
+          gradeCounts[excelStudent.Grado] = (gradeCounts[excelStudent.Grado] || 0) + 1;
+        }
+      }
+
+      let majorityGrade = "";
+      let maxCount = 0;
+      for (const grade in gradeCounts) {
+        if (gradeCounts[grade] > maxCount) {
+          majorityGrade = grade;
+          maxCount = gradeCounts[grade];
+        }
+      }
+
+      if (!majorityGrade) {
+        const alert = await alertController.create({
+          header: "Advertencia",
+          message: "No se pudo determinar un grado mayoritario a partir de las coincidencias. No se pueden añadir estudiantes que no estén en el sistema.",
+          buttons: ["OK"],
+        });
+        await alert.present();
+        // Continue without adding excel-only students if no majority grade is found
+      }
+
+      // 3. Build the master list
+      const finalStudentList = [];
+      const systemStudentsFoundInExcel = new Set();
+
+      // Process all students from Excel
+      jsonData.forEach((excelRow) => {
+        const normalizedDi = normalizeString(excelRow.DI);
+        const systemStudent = systemStudentsMap.get(normalizedDi);
+        const isRetired = excelRow.Retirado && excelRow.Retirado.toUpperCase() === 'SI';
+
+        // Add student if they belong to the majority grade OR if they are in our system
+        if ((majorityGrade && excelRow.Grado === majorityGrade) || systemStudent) {
+          let studentData;
+          if (systemStudent) {
+            // Student exists in both systems
+            systemStudentsFoundInExcel.add(normalizedDi);
+            const def =
+              parseFloat(systemStudent.promedioRefuerzo) >
+                parseFloat(systemStudent.promedioRegular) &&
+              systemStudent.hasReinforcement
+                ? systemStudent.promedioRefuerzo
+                : systemStudent.promedioRegular;
+            const niv = systemStudent.hasRemedial ? systemStudent.promedioNivelacion : "";
+            const l1 = calculateL1Value(systemStudent);
+
+            studentData = {
+              ...systemStudent,
+              NOMBRE: `${systemStudent.lastName} ${systemStudent.name}`,
+              FALLAS: "",
+              DEF: def,
+              NIV: niv,
+              L1: l1,
+              L2: "",
+              numeroOrden: Number(excelRow.Numero),
+              inSystem: true,
+              inExcel: true,
+              isRetired: isRetired,
+            };
+          } else {
+            // Student only in Excel (and belongs to majority grade)
+            studentData = {
+              NOMBRE: `${excelRow.Apellidos || ''} ${excelRow.Nombres || ''}`.trim(), // Assuming columns are "Apellidos" and "Nombres"
+              FALLAS: "",
+              DEF: "",
+              NIV: "",
+              L1: "",
+              L2: "",
+              numeroOrden: Number(excelRow.Numero),
+              inSystem: false,
+              inExcel: true,
+              isRetired: isRetired,
+            };
+          }
+          finalStudentList.push(studentData);
         }
       });
 
-      const studentsWithOrder = [];
-      const studentsWithoutOrder = [];
+      // Identify and add students only in our system
+      const systemOnlyStudents = [];
+      props.usuariosEstudiantes.forEach(student => {
+        if (!systemStudentsFoundInExcel.has(normalizeString(student.code))) {
+          const def =
+            parseFloat(student.promedioRefuerzo) >
+              parseFloat(student.promedioRegular) &&
+            student.hasReinforcement
+              ? student.promedioRefuerzo
+              : student.promedioRegular;
+          const niv = student.hasRemedial ? student.promedioNivelacion : "";
+          const l1 = calculateL1Value(student);
 
-      props.usuariosEstudiantes.forEach((estudiante) => {
-        const studentCode = normalizeString(estudiante.code); // Corrected: use estudiante.code
-        if (diToNumeroMap.has(studentCode)) {
-          studentsWithOrder.push({
-            ...estudiante,
-            numeroOrden: diToNumeroMap.get(studentCode),
-            hasDiMatch: true,
+          systemOnlyStudents.push({
+            ...student,
+            NOMBRE: `${student.lastName} ${student.name}`,
+            FALLAS: "",
+            DEF: def,
+            NIV: niv,
+            L1: l1,
+            L2: "",
+            numeroOrden: Infinity, // To sort them at the end
+            inSystem: true,
+            inExcel: false,
+            isRetired: false,
           });
-        } else {
-          studentsWithoutOrder.push({ ...estudiante, hasDiMatch: false });
         }
       });
 
-      studentsWithOrder.sort((a, b) => a.numeroOrden - b.numeroOrden);
+      // 4. Sort and combine lists
+      finalStudentList.sort((a, b) => a.numeroOrden - b.numeroOrden);
+      const combinedList = [...finalStudentList, ...systemOnlyStudents];
 
-      const finalOrderedStudents = [
-        ...studentsWithOrder,
-        ...studentsWithoutOrder,
-      ];
-
-      const data = finalOrderedStudents.map((estudiante, index) => {
-        const def =
-          parseFloat(estudiante.promedioRefuerzo) >
-            parseFloat(estudiante.promedioRegular) &&
-          estudiante.hasReinforcement
-            ? estudiante.promedioRefuerzo
-            : estudiante.promedioRegular;
-
-        const niv = estudiante.hasRemedial ? estudiante.promedioNivelacion : "";
-
-        let l1 = calculateL1Value(estudiante); // Replaced with helper function
-
-        return {
-          NUM: index + 1,
-          NOMBRE: `${estudiante.lastName} ${estudiante.name}`,
-          FALLAS: "", // Always empty now
-          DEF: def,
-          NIV: niv,
-          L1: l1,
-          L2: "",
-        };
-      });
+      // 5. Generate data for the sheet
+      const data = combinedList.map((estudiante, index) => ({
+        NUM: index + 1,
+        NOMBRE: estudiante.NOMBRE,
+        FALLAS: estudiante.FALLAS,
+        DEF: estudiante.DEF,
+        NIV: estudiante.NIV,
+        L1: estudiante.L1,
+        L2: estudiante.L2,
+      }));
 
       const ws = XLSX.utils.json_to_sheet(data);
 
-      // Apply styling for students without DI match
-      finalOrderedStudents.forEach((estudiante, index) => {
-        if (!estudiante.hasDiMatch) {
-          const rowNum = index + 2; // +1 for 0-based index, +1 for header row
-          const range = XLSX.utils.decode_range(ws['!ref']); // Get the range of the sheet
+      // 6. Apply styling
+      const pinkStyle = { fill: { fgColor: { rgb: "FFFFC0CB" } } }; // Pink
+      const blueStyle = { fill: { fgColor: { rgb: "FFADD8E6" } } }; // Light Blue
 
-          for (let C = range.s.c; C <= range.e.c; ++C) { // Iterate through columns
-            const cellAddress = XLSX.utils.encode_cell({ r: rowNum - 1, c: C }); // r is 0-based
-            if (!ws[cellAddress]) ws[cellAddress] = {}; // Ensure cell object exists
-            ws[cellAddress].s = {
-              fill: {
-                fgColor: { rgb: "FFADD8E6" }, // Light blue background
-                patternType: "solid" // Ensure solid fill
-              }
-            };
+      combinedList.forEach((estudiante, index) => {
+        const rowNum = index + 2; // 1-based index + header row
+        let style = null;
+
+        if (estudiante.isRetired || !estudiante.inSystem) {
+          style = pinkStyle;
+        } else if (!estudiante.inExcel) {
+          style = blueStyle;
+        }
+
+        if (style) {
+          const range = XLSX.utils.decode_range(ws['!ref']);
+          for (let C = range.s.c; C <= range.e.c; ++C) {
+            const cellAddress = XLSX.utils.encode_cell({ r: rowNum - 1, c: C });
+            if (!ws[cellAddress]) ws[cellAddress] = {};
+            ws[cellAddress].s = style;
           }
         }
       });
 
+      // 7. Write and download file
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Planilla de Notas Ordenada");
       XLSX.writeFile(wb, "planilla_notas_plataforma.xlsx");
-      mostrarModalCargaExcel.value = false; // Close the upload modal
-      onClose(); // Close the main modal
+      mostrarModalCargaExcel.value = false;
+      onClose();
     };
 
     return {
