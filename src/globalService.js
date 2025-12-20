@@ -255,6 +255,15 @@ export function adminOdirectivo() {
   }
 }
 
+export function esAdmin() {
+  tokenHeader();
+  if (usuarioGet().rol == "admin") {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 export function defaultFile(name) {
   var retorno = "";
   switch (name) {

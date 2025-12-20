@@ -235,53 +235,92 @@ export default {
           allAreas.value[allCourses.value[index].id] = res.data;
         });
 
-        // Fetch user's current course assignments (UserToCourse)
-        // Note: Year is still used here as UserToCourse still has a year.
-        const userCoursesRes = await axios.get(
-          `/users/${
-            props.selectedUser.id
-          }/courses?year=${new Date().getFullYear()}`, // Keep year for UserToCourse
-          tokenHeader()
-        );
-        const userCourseData = {};
-        userCoursesRes.data.forEach((assignment) => {
-          if (assignment.active) {
-            userCourseData[assignment.course.id] = {
-              rol: assignment.rol,
-              active: true,
-              initialRol: assignment.rol, // Store initial role for comparison
-            };
-          }
-        });
-        courseAssignments.value = { ...userCourseData };
-        initialCourseAssignments.value = { ...userCourseData };
+        // Check if the selected user is the currently logged-in user
+        const isCurrentUser = currentUser.value.id === props.selectedUser.id;
+        let cachedTeacherAssignments = null;
 
-        // Fetch user's current area assignments (CourseAreaTeacher)
-        // Removed year from this API call
-        const allCourseAreaTeacherPromises = allCourses.value.map((course) =>
-          axios.get(`/courses/${course.id}/areas-teachers`, tokenHeader())
-        );
-        const allCourseAreaTeacherResponses = await Promise.all(
-          allCourseAreaTeacherPromises
-        );
+        if (isCurrentUser) {
+          const storedAssignments = localStorage.getItem("teacherAssignments");
+          if (storedAssignments) {
+            cachedTeacherAssignments = JSON.parse(storedAssignments);
+          }
+        }
+
+        const userCourseData = {};
         const userAreaAssignmentsData = {};
         const tempCourseAreaTeacherIds = {};
 
-        allCourseAreaTeacherResponses.forEach((res, courseIndex) => {
-          const courseId = allCourses.value[courseIndex].id;
-          userAreaAssignmentsData[courseId] = {};
-          tempCourseAreaTeacherIds[courseId] = {};
-          res.data.forEach((assignment) => {
-            if (assignment.teacher?.id === props.selectedUser.id) {
-              // Check for any assignment for this teacher
-              tempCourseAreaTeacherIds[courseId][assignment.area.id] =
-                assignment.id;
-              if (assignment.active) {
-                userAreaAssignmentsData[courseId][assignment.area.id] = true;
-              }
+        if (cachedTeacherAssignments) {
+          // Initialize from cached data
+          cachedTeacherAssignments.forEach((assignment) => {
+            const courseId = assignment.course.id;
+            const areaId = assignment.area.id;
+
+            // Course assignment
+            if (!userCourseData[courseId]) {
+              userCourseData[courseId] = {
+                rol: assignment.teacher.rol, // Assuming teacher's role in course is stored here
+                active: true,
+                initialRol: assignment.teacher.rol,
+              };
+            }
+
+            // Area assignment
+            if (!userAreaAssignmentsData[courseId]) {
+              userAreaAssignmentsData[courseId] = {};
+            }
+            userAreaAssignmentsData[courseId][areaId] = assignment.active;
+
+            // Store assignment ID
+            if (!tempCourseAreaTeacherIds[courseId]) {
+              tempCourseAreaTeacherIds[courseId] = {};
+            }
+            tempCourseAreaTeacherIds[courseId][areaId] = assignment.id;
+          });
+        } else {
+          // Fetch user's current course assignments (UserToCourse) from backend
+          const userCoursesRes = await axios.get(
+            `/users/${
+              props.selectedUser.id
+            }/courses?year=${new Date().getFullYear()}`, // Keep year for UserToCourse
+            tokenHeader()
+          );
+          userCoursesRes.data.forEach((assignment) => {
+            if (assignment.active) {
+              userCourseData[assignment.course.id] = {
+                rol: assignment.rol,
+                active: true,
+                initialRol: assignment.rol, // Store initial role for comparison
+              };
             }
           });
-        });
+
+          // Fetch user's current area assignments (CourseAreaTeacher) from backend
+          const allCourseAreaTeacherPromises = allCourses.value.map((course) =>
+            axios.get(`/courses/${course.id}/areas-teachers`, tokenHeader())
+          );
+          const allCourseAreaTeacherResponses = await Promise.all(
+            allCourseAreaTeacherPromises
+          );
+
+          allCourseAreaTeacherResponses.forEach((res, courseIndex) => {
+            const courseId = allCourses.value[courseIndex].id;
+            userAreaAssignmentsData[courseId] = {};
+            tempCourseAreaTeacherIds[courseId] = {};
+            res.data.forEach((assignment) => {
+              if (assignment.teacher?.id === props.selectedUser.id) {
+                tempCourseAreaTeacherIds[courseId][assignment.area.id] =
+                  assignment.id;
+                if (assignment.active) {
+                  userAreaAssignmentsData[courseId][assignment.area.id] = true;
+                }
+              }
+            });
+          });
+        }
+
+        courseAssignments.value = { ...userCourseData };
+        initialCourseAssignments.value = { ...userCourseData };
         areaAssignments.value = JSON.parse(
           JSON.stringify(userAreaAssignmentsData)
         ); // Deep copy

@@ -113,25 +113,39 @@ export default {
     const cursosUsuario = ref([]);
 
     onIonViewWillEnter(async () => {
-      usuario.value = usuarioGet();
-      await getCursoUsuario(selectedYear.value);
       tokenHeader();
+      usuario.value = usuarioGet();
+
+      await getCursoUsuario(selectedYear.value);
     });
     const getCursoUsuario = async (year) => {
       const response = await axios.get(
         //  /users/1/courses?year=2024'
-        `/users/${usuario.value.id}/courses?year=${year}`,
+        `/users/${usuario.value.id}/courses?year=${year}&active=true`,
         tokenHeader()
       );
+
+      const areAAssignments = await axios
+        .get(`/courses/teacher-assignments/${usuarioGet().id}`)
+        .then((response) => {
+          return response.data.filter(
+            (assignment) => assignment.active === true
+          );
+        });
 
       cursosUsuario.value = response.data.map((curso) => ({
         id: curso.course.id,
         name: curso.course.name,
-        areas: curso.course.courseAreas
-          .filter((asignacion) => asignacion.active === true)
-          .map((asignacion) => ({
-            ...asignacion.area,
-          })),
+        areas:
+          usuario.value.rol == "admin"
+            ? curso.course.courseAreas
+                .filter((a) => a.active == true)
+                .map((a) => {
+                  return a.area;
+                })
+            : areAAssignments
+                .filter((assignment) => assignment.course.id == curso.course.id)
+                .map((assignment) => assignment.area),
       }));
     };
     return {

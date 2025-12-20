@@ -15,26 +15,22 @@
           <ion-icon slot="start" :icon="lockOpenOutline"></ion-icon>
           <ion-label>Autorizaciones</ion-label>
         </ion-item>
-        <ion-item href="/omr-read">
-          <ion-icon slot="start" :icon="scanOutline"></ion-icon>
-          <ion-label>Lector OMR</ion-label>
-        </ion-item>
 
-        <ion-item>
+        <ion-item v-if="admin">
           <ion-icon slot="start" :icon="settingsOutline"></ion-icon
           ><ion-label>Configuraciones</ion-label>
         </ion-item>
-        <ion-item :href="'/admin/registro/usuarios'">
+        <ion-item v-if="admin" :href="'/admin/registro/usuarios'">
           <ion-icon slot="start" :icon="personAddOutline"></ion-icon
           ><ion-label>Añadir usuario</ion-label>
         </ion-item>
 
-        <ion-item :href="'/admin/gestionar/usuarios'">
+        <ion-item v-if="admin" :href="'/admin/gestionar/usuarios'">
           <ion-icon slot="start" :icon="peopleCircleOutline"></ion-icon
           ><ion-label>Gestionar usuarios</ion-label>
         </ion-item>
 
-        <ion-item href="/admin/gestion-academica">
+        <ion-item v-if="admin" href="/admin/gestion-academica">
           <ion-icon slot="start" :icon="schoolOutline"></ion-icon>
           <ion-label>Gestión Académica</ion-label>
         </ion-item>
@@ -45,7 +41,7 @@
 
 <script>
 import { ref } from "vue";
-import { tokenHeader, usuarioGet } from "../globalService";
+import { esAdmin, tokenHeader, usuarioGet } from "../globalService";
 
 import {
   helpCircleOutline,
@@ -90,6 +86,7 @@ export default {
   },
   setup() {
     const usuario = ref();
+    const admin = esAdmin();
 
     const cursos = ref([]);
     onIonViewWillEnter(async () => {
@@ -109,6 +106,7 @@ export default {
       scanOutline,
       layersOutline,
       schoolOutline,
+      admin,
     };
   },
 };

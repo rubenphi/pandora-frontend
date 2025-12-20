@@ -94,7 +94,9 @@ export default {
       tokenHeader();
 
       allUserCursos.value =
-        JSON.parse(localStorage.getItem("cursosUsuario")) || [];
+        JSON.parse(localStorage.getItem("cursosUsuario")).filter(
+          (c) => c.active
+        ) || [];
       selectedYear.value = JSON.parse(localStorage.getItem("year"));
 
       const years = allUserCursos.value.map((c) => c.year);

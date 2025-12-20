@@ -192,6 +192,23 @@ export default {
 
       await axios.get(`/courses/${id}/areas`).then((response) => {
         areas.value = response.data;
+        const teacherAssignments = JSON.parse(
+          localStorage.getItem("teacherAssignments")
+        ).filter((assignment) => {
+          return assignment.active;
+        });
+
+        if (usuario.value.rol === "teacher") {
+          areas.value = areas.value.filter((area) => {
+            return teacherAssignments.some((assignment) => {
+              return (
+                Number(assignment.area.id) === Number(area.id) &&
+                assignment.active &&
+                Number(assignment.course.id) === Number(id)
+              );
+            });
+          });
+        }
       });
     });
 

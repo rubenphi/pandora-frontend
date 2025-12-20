@@ -293,6 +293,7 @@ export default {
                     id: assignacion.course.id,
                     year: assignacion.year,
                     active: assignacion.active,
+                    rol: assignacion.rol,
                   }));
                   localStorage.setItem(
                     "cursosUsuario",

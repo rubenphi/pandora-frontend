@@ -4,11 +4,15 @@
       <ion-toolbar>
         <ion-title>Grupos - {{ curso?.name }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button @click="emptyAllGroups" color="danger">
+          <ion-button
+            @click="emptyAllGroups"
+            color="danger"
+            v-if="canManageGroups"
+          >
             <ion-icon :icon="trashOutline"></ion-icon>
             Vaciar Grupos
           </ion-button>
-          <ion-button @click="openCreateGroupModal">
+          <ion-button @click="openCreateGroupModal" v-if="canManageGroups">
             <ion-icon :icon="addCircleOutline"></ion-icon>
             Crear Grupo
           </ion-button>
@@ -27,7 +31,7 @@
             <IonItem slot="header" @click="getMembers(grupo?.id)">
               <ion-icon slot="start" :icon="peopleCircleOutline"></ion-icon>
               <IonLabel>{{ grupo?.name }}</IonLabel>
-              <ion-buttons slot="end" v-if="grupo?.id !== 0">
+              <ion-buttons slot="end" v-if="grupo?.id !== 0 && canManageGroups">
                 <ion-button @click.stop="openEditGroupModal(grupo)">
                   <ion-icon :icon="createOutline"></ion-icon>
                 </ion-button>
@@ -35,7 +39,7 @@
             </IonItem>
             <div class="ion-padding" slot="content">
               <ion-button
-                v-if="grupo?.id !== 0"
+                v-if="grupo?.id !== 0 && canManageGroups"
                 expand="block"
                 @click="openAddStudentModal(grupo.id)"
                 class="ion-margin-bottom"
@@ -55,7 +59,7 @@
                   >
 
                   <ion-icon
-                    v-if="grupo?.id != 0"
+                    v-if="grupo?.id != 0 && canManageGroups"
                     slot="end"
                     @click="openModal(miembro?.id)"
                     id="open-modal"
@@ -63,7 +67,7 @@
                   ></ion-icon>
 
                   <ion-icon
-                    v-if="grupo?.id == 0"
+                    v-if="grupo?.id == 0 && canManageGroups"
                     slot="end"
                     @click="openModal(miembro?.id)"
                     id="open-modal"
@@ -71,7 +75,7 @@
                   ></ion-icon>
 
                   <ion-icon
-                    v-if="grupo?.id != 0"
+                    v-if="grupo?.id != 0 && canManageGroups"
                     slot="end"
                     :icon="personRemoveOutline"
                     @click="removeMember(grupo.id, miembro?.id)"
@@ -268,7 +272,7 @@ ion-item ion-select {
 
 <script>
 import axios from "axios";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import {
   QuizSinNotas,
   periodosGet,
@@ -332,6 +336,24 @@ export default {
   },
   setup() {
     const mroute = useRoute();
+    const logedUser = usuarioGet();
+    const userCourses = JSON.parse(
+      localStorage.getItem("cursosUsuario") || "[]"
+    ); // Parse userCourses
+    const currentCourseId = parseInt(mroute.params.cursoId, 10);
+
+    const canManageGroups = computed(() => {
+      // Global admin roles
+      if (["admin", "director", "coordinator"].includes(logedUser.rol)) {
+        return true;
+      }
+
+      // Check if user is admin for the current course
+      const courseAssignment = userCourses.find(
+        (course) => course.id === currentCourseId && course.active
+      );
+      return courseAssignment && courseAssignment.rol === "admin";
+    });
     const modal = ref();
     const createGroupModal = ref();
     const editGroupModal = ref();
@@ -874,6 +896,9 @@ export default {
       confirmAddStudent,
       emptyAllGroups,
       trashOutline,
+      logedUser,
+      userCourses,
+      canManageGroups,
     };
   },
 };
