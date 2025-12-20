@@ -7,7 +7,7 @@
         </ion-buttons>
         <ion-title>Notas de Estudiantes </ion-title>
         <ion-buttons slot="end">
-          <ion-button @click="abrirModalConfig">
+          <ion-button @click="presentReportActionSheet">
             <ion-icon :icon="documentTextOutline" slot="icon-only"></ion-icon>
           </ion-button>
         </ion-buttons>
@@ -591,6 +591,18 @@
         </div>
       </ion-content>
     </ion-modal>
+
+    <!-- Modal Generador de Planilla -->
+    <generador-planilla
+      :is-open="mostrarModalGeneradorPlanilla"
+      :curso-id="cursoId"
+      :area-id="areaId"
+      :periodo-selected="periodoSelected"
+      :year="year"
+      :usuario="usuario"
+      :usuarios-estudiantes="usuariosEstudiantes"
+      @close="mostrarModalGeneradorPlanilla = false"
+    ></generador-planilla>
   </ion-page>
 </template>
 
@@ -643,6 +655,8 @@ import {
   shareOutline,
 } from "ionicons/icons";
 import { LessonType } from "../globalService";
+import GeneradorPlanilla from "../components/GeneradorPlanilla.vue";
+
 export default {
   components: {
     IonHeader,
@@ -671,6 +685,7 @@ export default {
     IonItemGroup,
     IonItemDivider,
     IonBackButton,
+    GeneradorPlanilla,
   },
   setup() {
     const mroute = useRoute();
@@ -704,6 +719,7 @@ export default {
 
     const mostrarModalConfig = ref(false);
     const mostrarModalReporte = ref(false);
+    const mostrarModalGeneradorPlanilla = ref(false);
     const reportConfig = ref({
       condition: "lt",
       value: 3.5,
@@ -1533,6 +1549,35 @@ export default {
       await actionSheet.present();
     };
 
+    const descargarPlanilla = async () => {
+      mostrarModalGeneradorPlanilla.value = true;
+    };
+
+    const presentReportActionSheet = async () => {
+      const actionSheet = await actionSheetController.create({
+        header: "Opciones de Reporte",
+        buttons: [
+          {
+            text: "Generar Reporte",
+            handler: () => {
+              abrirModalConfig();
+            },
+          },
+          {
+            text: "Descargar Planilla para Plataforma de Notas",
+            handler: () => {
+              descargarPlanilla();
+            },
+          },
+          {
+            text: "Cancelar",
+            role: "cancel",
+          },
+        ],
+      });
+      await actionSheet.present();
+    };
+
     return {
       usuario,
       usuariosEstudiantes,
@@ -1576,7 +1621,11 @@ export default {
       areaSelected,
       shareOutline,
       presentShareActionSheet,
+      presentReportActionSheet,
+      descargarPlanilla,
+      mostrarModalGeneradorPlanilla,
       reportContent,
+      areaId,
     };
   },
 };
