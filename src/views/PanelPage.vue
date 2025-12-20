@@ -34,14 +34,9 @@
           ><ion-label>Gestionar usuarios</ion-label>
         </ion-item>
 
-        <ion-item href="/admin/gestionar/areas">
-          <ion-icon slot="start" :icon="layersOutline"></ion-icon>
-          <ion-label>Gestionar Áreas</ion-label>
-        </ion-item>
-
-        <ion-item href="/admin/gestionar/cursos">
+        <ion-item href="/admin/gestion-academica">
           <ion-icon slot="start" :icon="schoolOutline"></ion-icon>
-          <ion-label>Gestionar Cursos</ion-label>
+          <ion-label>Gestión Académica</ion-label>
         </ion-item>
       </ion-list>
     </ion-content>

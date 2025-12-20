@@ -127,7 +127,11 @@ export default {
       cursosUsuario.value = response.data.map((curso) => ({
         id: curso.course.id,
         name: curso.course.name,
-        areas: curso.course.areas,
+        areas: curso.course.courseAreas
+          .filter((asignacion) => asignacion.active === true)
+          .map((asignacion) => ({
+            ...asignacion.area,
+          })),
       }));
     };
     return {

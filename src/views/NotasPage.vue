@@ -68,34 +68,6 @@
               </ion-chip>
             </ion-item>
             <div class="ion-padding" slot="content">
-              <ion-button
-                @click="mostrarModalNuevaNota(estudiante.id)"
-                fill="outline"
-                size="small"
-              >
-                <ion-icon :icon="addOutline" slot="start"></ion-icon>
-                Añadir Nota
-              </ion-button>
-              <ion-button
-                :href="`/create-special-lesson/${LessonType.REINFORCEMENT}/${estudiante.id}/${cursoId}/${periodoSelected}/${year}`"
-                fill="outline"
-                size="small"
-                class="ion-margin-start"
-              >
-                <ion-icon :icon="addOutline" slot="start"></ion-icon>
-                Refuerzo
-              </ion-button>
-              <ion-button
-                v-if="estudiante.promedio < 3.5"
-                :href="`/create-special-lesson/${LessonType.REMEDIAL}/${estudiante.id}/${cursoId}/${periodoSelected}/${year}`"
-                fill="outline"
-                size="small"
-                class="ion-margin-start"
-              >
-                <ion-icon :icon="schoolOutline" slot="start"></ion-icon>
-                Nivelación
-              </ion-button>
-
               <!-- Sub-acordeones para tipos de notas -->
               <ion-accordion-group class="ion-margin-top">
                 <!-- Notas Regulares -->
@@ -1438,15 +1410,18 @@ export default {
       });
 
       // Get the background color from the ion-content parent
-      const contentElement = reportElement.closest('ion-content');
+      const contentElement = reportElement.closest("ion-content");
       const backgroundColor = contentElement
-        ? window.getComputedStyle(contentElement).getPropertyValue('--ion-background-color').trim()
-        : '#ffffff'; // Fallback to white if not found
+        ? window
+            .getComputedStyle(contentElement)
+            .getPropertyValue("--ion-background-color")
+            .trim()
+        : "#ffffff"; // Fallback to white if not found
 
       const canvas = await DomToImage.toPng(reportElement, {
         width: reportElement.offsetWidth * 2,
         height: reportElement.offsetHeight * 2,
-        bgcolor: backgroundColor || '#ffffff', // Ensure there's always a color
+        bgcolor: backgroundColor || "#ffffff", // Ensure there's always a color
         style: {
           transform: "scale(2)",
           transformOrigin: "top left",

@@ -78,7 +78,9 @@
               <ion-label>{{ member.userName }}</ion-label>
             </ion-item>
             <div slot="content">
-              <ion-accordion-group @ionChange="handleAreaExpand($event, member)">
+              <ion-accordion-group
+                @ionChange="handleAreaExpand($event, member)"
+              >
                 <ion-accordion
                   v-for="area in member.areas"
                   :key="area.id"
@@ -88,33 +90,47 @@
                     <ion-label>
                       <h3>{{ area?.name }}</h3>
                     </ion-label>
-                    <div v-if="area.loaded" slot="end" style="display: flex; align-items: center">
+                    <div
+                      v-if="area.loaded"
+                      slot="end"
+                      style="display: flex; align-items: center"
+                    >
                       <ion-chip
                         :class="getGradeColorClass(area.promedio)"
-                        :style="{ opacity: area.hasReinforcement ? '0.6' : '1' }"
+                        :style="{
+                          opacity: area.hasReinforcement ? '0.6' : '1',
+                        }"
                       >
                         RG: {{ area.promedio }}
                       </ion-chip>
                       <span v-if="area.hasReinforcement">
                         /
                         <ion-chip
-                          :class="getGradeColorClass(area.promedioReinf || '1.0')"
+                          :class="
+                            getGradeColorClass(area.promedioReinf || '1.0')
+                          "
                           style="opacity: 1; font-weight: bold"
                         >
-                          RF: {{ area.promedioReinf || '1.0' }}
+                          RF: {{ area.promedioReinf || "1.0" }}
                         </ion-chip>
                       </span>
                       <span v-if="area.hasRemedial">
                         /
                         <ion-chip
-                          :class="getGradeColorClass(area.promedioRemedial || '1.0')"
+                          :class="
+                            getGradeColorClass(area.promedioRemedial || '1.0')
+                          "
                           style="opacity: 1; font-weight: bold"
                         >
-                          NV: {{ area.promedioRemedial || '1.0' }}
+                          NV: {{ area.promedioRemedial || "1.0" }}
                         </ion-chip>
                       </span>
                     </div>
-                    <ion-spinner v-else-if="area.loading" name="dots" slot="end"></ion-spinner>
+                    <ion-spinner
+                      v-else-if="area.loading"
+                      name="dots"
+                      slot="end"
+                    ></ion-spinner>
                   </ion-item>
 
                   <div class="ion-padding" slot="content">
@@ -125,34 +141,54 @@
                     <div v-else-if="area.loaded">
                       <!-- Main Details Accordion Group -->
                       <ion-accordion-group>
-                        
                         <!-- 1. Notas Regulares -->
                         <ion-accordion value="regulares">
                           <ion-item slot="header">
                             <ion-label color="primary">
                               <strong>Notas Regulares</strong>
-                              <ion-chip :class="getGradeColorClass(area.promedio)">
+                              <ion-chip
+                                :class="getGradeColorClass(area.promedio)"
+                              >
                                 {{ area.promedio }}
                               </ion-chip>
                             </ion-label>
                           </ion-item>
                           <div slot="content" class="ion-padding-start">
-                            <div v-for="dimension in area.dimensiones" :key="dimension.id">
+                            <div
+                              v-for="dimension in area.dimensiones"
+                              :key="dimension.id"
+                            >
                               <ion-item lines="none" class="dimension-header">
                                 <ion-label>
                                   <small>{{ dimension.name }}</small>
-                                  <ion-chip size="small" :class="getGradeColorClass(dimension.promedio)">
+                                  <ion-chip
+                                    size="small"
+                                    :class="
+                                      getGradeColorClass(dimension.promedio)
+                                    "
+                                  >
                                     {{ dimension.promedio }}
                                   </ion-chip>
                                 </ion-label>
                               </ion-item>
                               <ion-list lines="none" style="margin-top: -10px">
-                                <ion-item v-for="nota in dimension.notas" :key="nota?.id">
-                                  <ion-icon :icon="easelOutline" slot="start" size="small"></ion-icon>
+                                <ion-item
+                                  v-for="nota in dimension.notas"
+                                  :key="nota?.id"
+                                >
+                                  <ion-icon
+                                    :icon="easelOutline"
+                                    slot="start"
+                                    size="small"
+                                  ></ion-icon>
                                   <ion-label>
-                                    <h3>{{ nota?.gradableItem?.title || nota.title }}</h3>
+                                    <h3>
+                                      {{
+                                        nota?.gradableItem?.title || nota.title
+                                      }}
+                                    </h3>
                                     <p :class="getGradeColorClass(nota.grade)">
-                                      {{ nota.grade || 'Pendiente' }}
+                                      {{ nota.grade || "Pendiente" }}
                                     </p>
                                   </ion-label>
                                 </ion-item>
@@ -162,30 +198,64 @@
                         </ion-accordion>
 
                         <!-- 2. Notas de Refuerzo -->
-                        <ion-accordion v-if="area.hasReinforcement" value="refuerzo">
+                        <ion-accordion
+                          v-if="area.hasReinforcement"
+                          value="refuerzo"
+                        >
                           <ion-item slot="header">
                             <ion-label color="tertiary">
                               <strong>Notas de Refuerzo</strong>
-                              <ion-chip size="small" :class="getGradeColorClass(area.promedioReinf || '1.0')">
-                                RF: {{ area.promedioReinf || '1.0' }}
+                              <ion-chip
+                                size="small"
+                                :class="
+                                  getGradeColorClass(
+                                    area.promedioReinf || '1.0'
+                                  )
+                                "
+                              >
+                                RF: {{ area.promedioReinf || "1.0" }}
                               </ion-chip>
                             </ion-label>
                           </ion-item>
                           <div slot="content" class="ion-padding-start">
-                            <div v-for="dimension in area.dimensiones" :key="'reinf-'+dimension.id">
-                              <div v-if="dimension.notasReinf && dimension.notasReinf.length > 0">
+                            <div
+                              v-for="dimension in area.dimensiones"
+                              :key="'reinf-' + dimension.id"
+                            >
+                              <div
+                                v-if="
+                                  dimension.notasReinf &&
+                                  dimension.notasReinf.length > 0
+                                "
+                              >
                                 <ion-item lines="none" class="dimension-header">
                                   <ion-label color="tertiary">
-                                    <small>{{ dimension.name }} (RF: {{ dimension.promedioReinf }})</small>
+                                    <small
+                                      >{{ dimension.name }} (RF:
+                                      {{ dimension.promedioReinf }})</small
+                                    >
                                   </ion-label>
                                 </ion-item>
-                                <ion-list lines="none" style="margin-top: -10px">
-                                  <ion-item v-for="nota in dimension.notasReinf" :key="nota?.id">
-                                    <ion-icon :icon="easelOutline" slot="start" color="tertiary" size="small"></ion-icon>
+                                <ion-list
+                                  lines="none"
+                                  style="margin-top: -10px"
+                                >
+                                  <ion-item
+                                    v-for="nota in dimension.notasReinf"
+                                    :key="nota?.id"
+                                  >
+                                    <ion-icon
+                                      :icon="easelOutline"
+                                      slot="start"
+                                      color="tertiary"
+                                      size="small"
+                                    ></ion-icon>
                                     <ion-label>
                                       <h3>{{ nota?.gradableItem?.title }}</h3>
-                                      <p :class="getGradeColorClass(nota.grade)">
-                                        {{ nota.grade || 'Pendiente' }}
+                                      <p
+                                        :class="getGradeColorClass(nota.grade)"
+                                      >
+                                        {{ nota.grade || "Pendiente" }}
                                       </p>
                                     </ion-label>
                                   </ion-item>
@@ -196,30 +266,64 @@
                         </ion-accordion>
 
                         <!-- 3. Notas de Nivelación -->
-                        <ion-accordion v-if="area.hasRemedial" value="nivelacion">
+                        <ion-accordion
+                          v-if="area.hasRemedial"
+                          value="nivelacion"
+                        >
                           <ion-item slot="header">
                             <ion-label color="warning">
                               <strong>Notas de Nivelación</strong>
-                              <ion-chip size="small" :class="getGradeColorClass(area.promedioRemedial || '1.0')">
-                                NV: {{ area.promedioRemedial || '1.0' }}
+                              <ion-chip
+                                size="small"
+                                :class="
+                                  getGradeColorClass(
+                                    area.promedioRemedial || '1.0'
+                                  )
+                                "
+                              >
+                                NV: {{ area.promedioRemedial || "1.0" }}
                               </ion-chip>
                             </ion-label>
                           </ion-item>
                           <div slot="content" class="ion-padding-start">
-                            <div v-for="dimension in area.dimensiones" :key="'rem-'+dimension.id">
-                              <div v-if="dimension.notasRemedial && dimension.notasRemedial.length > 0">
+                            <div
+                              v-for="dimension in area.dimensiones"
+                              :key="'rem-' + dimension.id"
+                            >
+                              <div
+                                v-if="
+                                  dimension.notasRemedial &&
+                                  dimension.notasRemedial.length > 0
+                                "
+                              >
                                 <ion-item lines="none" class="dimension-header">
                                   <ion-label color="warning">
-                                    <small>{{ dimension.name }} (NV: {{ dimension.promedioRemedial }})</small>
+                                    <small
+                                      >{{ dimension.name }} (NV:
+                                      {{ dimension.promedioRemedial }})</small
+                                    >
                                   </ion-label>
                                 </ion-item>
-                                <ion-list lines="none" style="margin-top: -10px">
-                                  <ion-item v-for="nota in dimension.notasRemedial" :key="nota?.id">
-                                    <ion-icon :icon="easelOutline" slot="start" color="warning" size="small"></ion-icon>
+                                <ion-list
+                                  lines="none"
+                                  style="margin-top: -10px"
+                                >
+                                  <ion-item
+                                    v-for="nota in dimension.notasRemedial"
+                                    :key="nota?.id"
+                                  >
+                                    <ion-icon
+                                      :icon="easelOutline"
+                                      slot="start"
+                                      color="warning"
+                                      size="small"
+                                    ></ion-icon>
                                     <ion-label>
                                       <h3>{{ nota?.gradableItem?.title }}</h3>
-                                      <p :class="getGradeColorClass(nota.grade)">
-                                        {{ nota.grade || 'Pendiente' }}
+                                      <p
+                                        :class="getGradeColorClass(nota.grade)"
+                                      >
+                                        {{ nota.grade || "Pendiente" }}
                                       </p>
                                     </ion-label>
                                   </ion-item>
@@ -228,7 +332,6 @@
                             </div>
                           </div>
                         </ion-accordion>
-
                       </ion-accordion-group>
                     </div>
                     <div v-else style="text-align: center; color: gray">
@@ -301,10 +404,7 @@
   </ion-page>
 </template>
 <script>
-import {
-  easelOutline,
-  swapHorizontalOutline,
-} from "ionicons/icons";
+import { easelOutline, swapHorizontalOutline } from "ionicons/icons";
 import axios from "axios";
 import { ref, watch } from "vue";
 import {
@@ -454,11 +554,10 @@ export default {
         areaId = areaId.length > 0 ? areaId[areaId.length - 1] : null;
       }
 
-
       if (areaId === undefined || areaId === null || areaId === "") return;
 
       const area = member.areas.find((a) => String(a.id) === String(areaId));
-      
+
       if (!area || area.loaded || area.loading) {
         return;
       }
@@ -504,16 +603,22 @@ export default {
         // 3. Fetch records
         const reinfUrl = `/reinforcement/by-context?courseId=${courseId}&areaId=${area.id}&periodId=${periodoSelected.value}&year=${year.value}&studentId=${member.userId}&lessonType=reinforcement`;
         const reinfResponse = await axios.get(reinfUrl, tokenHeader());
-        const assignedReinfLessonIds = new Set(reinfResponse.data.map(r => r.lesson?.id).filter(id => !!id));
+        const assignedReinfLessonIds = new Set(
+          reinfResponse.data.map((r) => r.lesson?.id).filter((id) => !!id)
+        );
 
         const remedialUrl = `/reinforcement/by-context?courseId=${courseId}&areaId=${area.id}&periodId=${periodoSelected.value}&year=${year.value}&studentId=${member.userId}&lessonType=remedial`;
         const remedialResponse = await axios.get(remedialUrl, tokenHeader());
-        const assignedRemedialLessonIds = new Set(remedialResponse.data.map(r => r.lesson?.id).filter(id => !!id));
+        const assignedRemedialLessonIds = new Set(
+          remedialResponse.data.map((r) => r.lesson?.id).filter((id) => !!id)
+        );
 
         // Processing helpers
         const getStudentGradeForItem = (grades, item) => {
           return grades.find(
-            (g) => g.gradableType === item.type && (String(g.gradableItem?.id) === String(item.id))
+            (g) =>
+              g.gradableType === item.type &&
+              String(g.gradableItem?.id) === String(item.id)
           );
         };
 
@@ -541,7 +646,11 @@ export default {
                 };
               }
             })
-            .sort((a, b) => new Date(a.gradableItem.lesson?.date) - new Date(b.gradableItem.lesson?.date));
+            .sort(
+              (a, b) =>
+                new Date(a.gradableItem.lesson?.date) -
+                new Date(b.gradableItem.lesson?.date)
+            );
         };
 
         const calculateAverageFromMasterList = (grades, masterList) => {
@@ -556,51 +665,130 @@ export default {
         };
 
         const areaMasterItems = Array.from(masterItemsMap.values());
-        const masterKnowledge = areaMasterItems.filter(i => i.classification === "knowledge");
-        const masterExecution = areaMasterItems.filter(i => i.classification === "execution");
-        const masterBehavior = areaMasterItems.filter(i => i.classification === "behavior");
+        const masterKnowledge = areaMasterItems.filter(
+          (i) => i.classification === "knowledge"
+        );
+        const masterExecution = areaMasterItems.filter(
+          (i) => i.classification === "execution"
+        );
+        const masterBehavior = areaMasterItems.filter(
+          (i) => i.classification === "behavior"
+        );
 
         // Reg
-        const mKReg = masterKnowledge.filter(i => i.item.lesson?.type !== "reinforcement" && i.item.lesson?.type !== "remedial");
-        const mEReg = masterExecution.filter(i => i.item.lesson?.type !== "reinforcement" && i.item.lesson?.type !== "remedial");
-        const mBReg = masterBehavior.filter(i => i.item.lesson?.type !== "reinforcement" && i.item.lesson?.type !== "remedial");
+        const mKReg = masterKnowledge.filter(
+          (i) =>
+            i.item.lesson?.type !== "reinforcement" &&
+            i.item.lesson?.type !== "remedial"
+        );
+        const mEReg = masterExecution.filter(
+          (i) =>
+            i.item.lesson?.type !== "reinforcement" &&
+            i.item.lesson?.type !== "remedial"
+        );
+        const mBReg = masterBehavior.filter(
+          (i) =>
+            i.item.lesson?.type !== "reinforcement" &&
+            i.item.lesson?.type !== "remedial"
+        );
 
         const pKReg = calculateAverageFromMasterList(studentGrades, mKReg);
         const pEReg = calculateAverageFromMasterList(studentGrades, mEReg);
         const pBReg = calculateAverageFromMasterList(studentGrades, mBReg);
 
-        const dimsReg = [mKReg.length > 0 ? pKReg : 0, mEReg.length > 0 ? pEReg : 0, mBReg.length > 0 ? pBReg : 0].filter(v => v > 0);
-        const avgReg = dimsReg.length > 0 ? dimsReg.reduce((a, b) => a + b, 0) / dimsReg.length : 0;
-        area.promedio = formatGradeValue(Math.max(avgReg, avgReg > 0 ? 1.0 : 0)).toFixed(1);
+        const dimsReg = [
+          mKReg.length > 0 ? pKReg : 0,
+          mEReg.length > 0 ? pEReg : 0,
+          mBReg.length > 0 ? pBReg : 0,
+        ].filter((v) => v > 0);
+        const avgReg =
+          dimsReg.length > 0
+            ? dimsReg.reduce((a, b) => a + b, 0) / dimsReg.length
+            : 0;
+        area.promedio = formatGradeValue(
+          Math.max(avgReg, avgReg > 0 ? 1.0 : 0)
+        ).toFixed(1);
 
         // Reinf
-        const mKReinf = masterKnowledge.filter(i => i.item.lesson?.type === "reinforcement" && assignedReinfLessonIds.has(i.item.lesson?.id));
-        const mEReinf = masterExecution.filter(i => i.item.lesson?.type === "reinforcement" && assignedReinfLessonIds.has(i.item.lesson?.id));
-        const mBReinf = masterBehavior.filter(i => i.item.lesson?.type === "reinforcement" && assignedReinfLessonIds.has(i.item.lesson?.id));
+        const mKReinf = masterKnowledge.filter(
+          (i) =>
+            i.item.lesson?.type === "reinforcement" &&
+            assignedReinfLessonIds.has(i.item.lesson?.id)
+        );
+        const mEReinf = masterExecution.filter(
+          (i) =>
+            i.item.lesson?.type === "reinforcement" &&
+            assignedReinfLessonIds.has(i.item.lesson?.id)
+        );
+        const mBReinf = masterBehavior.filter(
+          (i) =>
+            i.item.lesson?.type === "reinforcement" &&
+            assignedReinfLessonIds.has(i.item.lesson?.id)
+        );
 
-        area.hasReinforcement = (mKReinf.length + mEReinf.length + mBReinf.length) > 0;
+        area.hasReinforcement =
+          mKReinf.length + mEReinf.length + mBReinf.length > 0;
         if (area.hasReinforcement) {
-          const pKReinf = calculateAverageFromMasterList(studentGrades, mKReinf);
-          const pEReinf = calculateAverageFromMasterList(studentGrades, mEReinf);
-          const pBReinf = calculateAverageFromMasterList(studentGrades, mBReinf);
-          const dimsReinf = [mKReinf.length > 0 ? pKReinf : 0, mEReinf.length > 0 ? pEReinf : 0, mBReinf.length > 0 ? pBReinf : 0].filter(v => v > 0);
-          const avgReinf = dimsReinf.length > 0 ? dimsReinf.reduce((a, b) => a + b, 0) / dimsReinf.length : 0;
-          area.promedioReinf = formatGradeValue(Math.max(avgReinf, avgReinf > 0 ? 1.0 : 0)).toFixed(1);
+          const pKReinf = calculateAverageFromMasterList(
+            studentGrades,
+            mKReinf
+          );
+          const pEReinf = calculateAverageFromMasterList(
+            studentGrades,
+            mEReinf
+          );
+          const pBReinf = calculateAverageFromMasterList(
+            studentGrades,
+            mBReinf
+          );
+          const dimsReinf = [
+            mKReinf.length > 0 ? pKReinf : 0,
+            mEReinf.length > 0 ? pEReinf : 0,
+            mBReinf.length > 0 ? pBReinf : 0,
+          ].filter((v) => v > 0);
+          const avgReinf =
+            dimsReinf.length > 0
+              ? dimsReinf.reduce((a, b) => a + b, 0) / dimsReinf.length
+              : 0;
+          area.promedioReinf = formatGradeValue(
+            Math.max(avgReinf, avgReinf > 0 ? 1.0 : 0)
+          ).toFixed(1);
         }
 
         // Rem
-        const mKRem = masterKnowledge.filter(i => i.item.lesson?.type === "remedial" && assignedRemedialLessonIds.has(i.item.lesson?.id));
-        const mERem = masterExecution.filter(i => i.item.lesson?.type === "remedial" && assignedRemedialLessonIds.has(i.item.lesson?.id));
-        const mBRem = masterBehavior.filter(i => i.item.lesson?.type === "remedial" && assignedRemedialLessonIds.has(i.item.lesson?.id));
+        const mKRem = masterKnowledge.filter(
+          (i) =>
+            i.item.lesson?.type === "remedial" &&
+            assignedRemedialLessonIds.has(i.item.lesson?.id)
+        );
+        const mERem = masterExecution.filter(
+          (i) =>
+            i.item.lesson?.type === "remedial" &&
+            assignedRemedialLessonIds.has(i.item.lesson?.id)
+        );
+        const mBRem = masterBehavior.filter(
+          (i) =>
+            i.item.lesson?.type === "remedial" &&
+            assignedRemedialLessonIds.has(i.item.lesson?.id)
+        );
 
-        area.hasRemedial = (mKRem.length + mERem.length + mBRem.length) > 0;
+        area.hasRemedial = mKRem.length + mERem.length + mBRem.length > 0;
         if (area.hasRemedial) {
           const pKRem = calculateAverageFromMasterList(studentGrades, mKRem);
           const pERem = calculateAverageFromMasterList(studentGrades, mERem);
           const pBRem = calculateAverageFromMasterList(studentGrades, mBRem);
-          const dimsRem = [mKRem.length > 0 ? pKRem : 0, mERem.length > 0 ? pERem : 0, mBRem.length > 0 ? pBRem : 0].filter(v => v > 0);
-          const avgRem = dimsRem.length > 0 ? dimsRem.reduce((a, b) => a + b, 0) / dimsRem.length : 0;
-          area.promedioRemedial = formatGradeValue(Math.max(avgRem, avgRem > 0 ? 1.0 : 0)).toFixed(1);
+          const dimsRem = [
+            mKRem.length > 0 ? pKRem : 0,
+            mERem.length > 0 ? pERem : 0,
+            mBRem.length > 0 ? pBRem : 0,
+          ].filter((v) => v > 0);
+          const avgRem =
+            dimsRem.length > 0
+              ? dimsRem.reduce((a, b) => a + b, 0) / dimsRem.length
+              : 0;
+          area.promedioRemedial = formatGradeValue(
+            Math.max(avgRem, avgRem > 0 ? 1.0 : 0)
+          ).toFixed(1);
         }
 
         area.dimensiones = [
@@ -609,30 +797,78 @@ export default {
             name: "Saber",
             promedio: formatGradeValue(mKReg.length > 0 ? pKReg : 0).toFixed(1),
             notas: mapToDisplayParamsWithMasterList(studentGrades, mKReg),
-            promedioReinf: mKReinf.length > 0 ? formatGradeValue(calculateAverageFromMasterList(studentGrades, mKReinf)).toFixed(1) : null,
-            notasReinf: mapToDisplayParamsWithMasterList(studentGrades, mKReinf),
-            promedioRemedial: mKRem.length > 0 ? formatGradeValue(calculateAverageFromMasterList(studentGrades, mKRem)).toFixed(1) : null,
-            notasRemedial: mapToDisplayParamsWithMasterList(studentGrades, mKRem),
+            promedioReinf:
+              mKReinf.length > 0
+                ? formatGradeValue(
+                    calculateAverageFromMasterList(studentGrades, mKReinf)
+                  ).toFixed(1)
+                : null,
+            notasReinf: mapToDisplayParamsWithMasterList(
+              studentGrades,
+              mKReinf
+            ),
+            promedioRemedial:
+              mKRem.length > 0
+                ? formatGradeValue(
+                    calculateAverageFromMasterList(studentGrades, mKRem)
+                  ).toFixed(1)
+                : null,
+            notasRemedial: mapToDisplayParamsWithMasterList(
+              studentGrades,
+              mKRem
+            ),
           },
           {
             id: "execution",
             name: "Hacer",
             promedio: formatGradeValue(mEReg.length > 0 ? pEReg : 0).toFixed(1),
             notas: mapToDisplayParamsWithMasterList(studentGrades, mEReg),
-            promedioReinf: mEReinf.length > 0 ? formatGradeValue(calculateAverageFromMasterList(studentGrades, mEReinf)).toFixed(1) : null,
-            notasReinf: mapToDisplayParamsWithMasterList(studentGrades, mEReinf),
-            promedioRemedial: mERem.length > 0 ? formatGradeValue(calculateAverageFromMasterList(studentGrades, mERem)).toFixed(1) : null,
-            notasRemedial: mapToDisplayParamsWithMasterList(studentGrades, mERem),
+            promedioReinf:
+              mEReinf.length > 0
+                ? formatGradeValue(
+                    calculateAverageFromMasterList(studentGrades, mEReinf)
+                  ).toFixed(1)
+                : null,
+            notasReinf: mapToDisplayParamsWithMasterList(
+              studentGrades,
+              mEReinf
+            ),
+            promedioRemedial:
+              mERem.length > 0
+                ? formatGradeValue(
+                    calculateAverageFromMasterList(studentGrades, mERem)
+                  ).toFixed(1)
+                : null,
+            notasRemedial: mapToDisplayParamsWithMasterList(
+              studentGrades,
+              mERem
+            ),
           },
           {
             id: "behavior",
             name: "Ser",
             promedio: formatGradeValue(mBReg.length > 0 ? pBReg : 0).toFixed(1),
             notas: mapToDisplayParamsWithMasterList(studentGrades, mBReg),
-            promedioReinf: mBReinf.length > 0 ? formatGradeValue(calculateAverageFromMasterList(studentGrades, mBReinf)).toFixed(1) : null,
-            notasReinf: mapToDisplayParamsWithMasterList(studentGrades, mBReinf),
-            promedioRemedial: mBRem.length > 0 ? formatGradeValue(calculateAverageFromMasterList(studentGrades, mBRem)).toFixed(1) : null,
-            notasRemedial: mapToDisplayParamsWithMasterList(studentGrades, mBRem),
+            promedioReinf:
+              mBReinf.length > 0
+                ? formatGradeValue(
+                    calculateAverageFromMasterList(studentGrades, mBReinf)
+                  ).toFixed(1)
+                : null,
+            notasReinf: mapToDisplayParamsWithMasterList(
+              studentGrades,
+              mBReinf
+            ),
+            promedioRemedial:
+              mBRem.length > 0
+                ? formatGradeValue(
+                    calculateAverageFromMasterList(studentGrades, mBRem)
+                  ).toFixed(1)
+                : null,
+            notasRemedial: mapToDisplayParamsWithMasterList(
+              studentGrades,
+              mBRem
+            ),
           },
         ];
 
@@ -656,19 +892,24 @@ export default {
         periodos.value.sort((a, b) => a.name.localeCompare(b.name));
       }
 
-      cursosUsuario.value = (await axios.get(`/users/${usuario.value.id}/courses`)).data;
+      cursosUsuario.value = (
+        await axios.get(`/users/${usuario.value.id}/courses`)
+      ).data;
       actualCurso.value = cursosUsuario.value.find((curso) => curso.active);
 
       tokenHeader();
 
       await axios.get(`/users/${usuario.value.id}/groups`).then((response) => {
-        grupoUsuario.value = response.data.filter((g) => g.active)[0]?.group ?? null;
+        grupoUsuario.value =
+          response.data.filter((g) => g.active)[0]?.group ?? null;
       });
 
       if (grupoUsuario.value?.id) {
-        await axios.get(`/groups/${grupoUsuario.value.id}/${year.value}/users`).then((response) => {
-          miembros.value = response.data;
-        });
+        await axios
+          .get(`/groups/${grupoUsuario.value.id}/${year.value}/users`)
+          .then((response) => {
+            miembros.value = response.data;
+          });
       }
 
       if (!periodoSelected.value && periodos.value?.length > 0) {
@@ -677,12 +918,16 @@ export default {
         await initializeGroupData();
       }
 
-      await axios.get(`/groups?courseId=${actualCurso.value.course.id}`).then((response) => {
-        grupos.value = response.data;
-        if (grupoUsuario.value) {
-          grupos.value = grupos.value.filter((grupo) => grupo.id != grupoUsuario.value.id);
-        }
-      });
+      await axios
+        .get(`/groups?courseId=${actualCurso.value.course.id}`)
+        .then((response) => {
+          grupos.value = response.data;
+          if (grupoUsuario.value) {
+            grupos.value = grupos.value.filter(
+              (grupo) => grupo.id != grupoUsuario.value.id
+            );
+          }
+        });
     });
 
     watch([periodoSelected, miembros], initializeGroupData);
@@ -729,7 +974,7 @@ export default {
       handleAreaExpand,
     };
   },
-  };
+};
 </script>
 <style scoped>
 .red-grade {

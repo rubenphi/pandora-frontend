@@ -111,6 +111,14 @@ const routes = [
         },
       },
       {
+        path: "admin/gestion-academica",
+        component: () => import("@/views/GestionAcademica.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
         path: "admin/gestionar/cursos",
         component: () => import("@/views/gestionUsuarios.vue"),
         beforeEnter: (to, from, next) => {
@@ -218,7 +226,7 @@ const routes = [
       },
       {
         path: "admin/gestionar/areas",
-        component: () => import("@/views/AreasPage.vue"),
+        component: () => import("@/views/GestionAreasPage.vue"),
         beforeEnter: (to, from, next) => {
           if (adminOprofesor()) next();
           else next({ path: "/inicio" });

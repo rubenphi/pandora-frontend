@@ -12,14 +12,6 @@
         </ion-toolbar>
       </ion-header>
 
-      <ion-button
-        expand="block"
-        @click="openCreateCourseModal()"
-        v-if="isPrivilegedUser"
-      >
-        Crear Nuevo Curso
-      </ion-button>
-
       <ion-list>
         <ion-item>
           <ion-label><strong>Año:</strong></ion-label>
@@ -203,12 +195,6 @@
               class="ion-text-center ion-padding"
             >
               <p>Este curso no tiene usuarios.</p>
-              <ion-button
-                v-if="isPrivilegedUser"
-                @click="openAssignTeacherModal(curso)"
-              >
-                Asignar Profesor
-              </ion-button>
             </div>
             <ion-list v-if="usersCourse.length > 0">
               <ion-list-header>
@@ -258,13 +244,27 @@
                 <ion-label>
                   <h2>{{ area.name }}</h2>
                   <p>
-                    Docente: 
-                    <span :color="getAssignedTeacher(area.id) ? 'primary' : 'danger'">
-                      {{ getAssignedTeacher(area.id) ? (getAssignedTeacher(area.id).lastName + ' ' + getAssignedTeacher(area.id).name) : 'Sin asignar' }}
+                    Docente:
+                    <span
+                      :color="
+                        getAssignedTeacher(area.id) ? 'primary' : 'danger'
+                      "
+                    >
+                      {{
+                        getAssignedTeacher(area.id)
+                          ? getAssignedTeacher(area.id).lastName +
+                            " " +
+                            getAssignedTeacher(area.id).name
+                          : "Sin asignar"
+                      }}
                     </span>
                   </p>
                 </ion-label>
-                <ion-button slot="end" fill="clear" @click="openAreaTeacherPicker(area)">
+                <ion-button
+                  slot="end"
+                  fill="clear"
+                  @click="openAreaTeacherPicker(area)"
+                >
                   <ion-icon slot="icon-only" :icon="createOutline"></ion-icon>
                 </ion-button>
               </ion-item>
@@ -295,24 +295,6 @@
           </ion-toolbar>
         </ion-header>
         <ion-content class="ion-padding">
-          <div v-if="!selectedUser">
-            <ion-searchbar
-              v-model="searchQuery"
-              placeholder="Buscar profesor"
-              @ionInput="searchTeachers"
-            ></ion-searchbar>
-            <ion-list>
-              <ion-item
-                v-for="teacher in teacherSearchResults"
-                :key="teacher.id"
-                button
-                @click="selectedUser = teacher"
-              >
-                <ion-label>{{ teacher.lastName }} {{ teacher.name }}</ion-label>
-              </ion-item>
-            </ion-list>
-          </div>
-
           <div v-if="selectedUser">
             <ion-item>
               <ion-label>
@@ -353,7 +335,13 @@
             </ion-item>
 
             <!-- Selección de Áreas -->
-            <div v-if="selectedCourseId && selectedCourseId != 0 && (rolSelected === 'teacher' || rolSelected === 'admin')">
+            <div
+              v-if="
+                selectedCourseId &&
+                selectedCourseId != 0 &&
+                (rolSelected === 'teacher' || rolSelected === 'admin')
+              "
+            >
               <ion-list-header color="light">
                 <ion-label>Áreas que manejará</ion-label>
               </ion-list-header>
@@ -452,69 +440,6 @@
           </ion-list>
         </ion-content>
       </ion-modal>
-
-      <!-- Modal para crear un nuevo curso -->
-      <ion-modal
-        :is-open="isCreateCourseModalOpen"
-        @didDismiss="closeCreateCourseModal"
-      >
-        <ion-header>
-          <ion-toolbar>
-            <ion-buttons slot="start">
-              <ion-button @click="closeCreateCourseModal">Cancelar</ion-button>
-            </ion-buttons>
-            <ion-title>Crear Nuevo Curso</ion-title>
-            <ion-buttons slot="end">
-              <ion-button :strong="true" @click="createCourse()">
-                Crear
-              </ion-button>
-            </ion-buttons>
-          </ion-toolbar>
-        </ion-header>
-        <ion-content class="ion-padding">
-          <ion-item>
-            <ion-label position="stacked">Nombre del Curso</ion-label>
-            <ion-input
-              v-model="newCourse.name"
-              placeholder="Ej: 1º Bachillerato A"
-            ></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-label>Activo</ion-label>
-            <ion-toggle v-model="newCourse.exist" slot="end"></ion-toggle>
-          </ion-item>
-        </ion-content>
-      </ion-modal>
-
-      <!-- Modal para editar un curso existente -->
-      <ion-modal
-        :is-open="isEditCourseModalOpen"
-        @didDismiss="closeEditCourseModal"
-      >
-        <ion-header>
-          <ion-toolbar>
-            <ion-buttons slot="start">
-              <ion-button @click="closeEditCourseModal">Cancelar</ion-button>
-            </ion-buttons>
-            <ion-title>Editar Curso</ion-title>
-            <ion-buttons slot="end">
-              <ion-button :strong="true" @click="editCourse()">
-                Guardar
-              </ion-button>
-            </ion-buttons>
-          </ion-toolbar>
-        </ion-header>
-        <ion-content class="ion-padding">
-          <ion-item>
-            <ion-label position="stacked">Nombre del Curso</ion-label>
-            <ion-input v-model="editedCourse.name"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-label>Activo</ion-label>
-            <ion-toggle v-model="editedCourse.exist" slot="end"></ion-toggle>
-          </ion-item>
-        </ion-content>
-      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
@@ -546,9 +471,6 @@ import {
   actionSheetController,
   alertController, // Import alertController
   IonCheckbox,
-  IonSearchbar,
-  IonInput, // New import
-  IonToggle, // New import
   IonGrid, // New import
   IonRow, // New import
   IonCol, // New import
@@ -588,9 +510,6 @@ export default {
     IonButtons,
     IonIcon,
     IonCheckbox,
-    IonSearchbar,
-    IonInput, // New component
-    IonToggle, // New component
     IonGrid, // New component
     IonRow, // New component
     IonCol, // New component
@@ -608,21 +527,7 @@ export default {
     const selectedGroupId = ref(null);
     const selectedUser = ref(null);
     const rolSelected = ref(null);
-    const isCreateCourseModalOpen = ref(false); // New ref
-    const newCourse = ref({
-      // New ref
-      name: "",
-      instituteId: null,
-      exist: true,
-    });
-    const isEditCourseModalOpen = ref(false); // New ref for edit modal
-    const editedCourse = ref({
-      // New ref for edited course data
-      id: null,
-      name: "",
-      instituteId: null,
-      exist: true,
-    });
+
     const archivedCourses = ref([]); // New ref for archived courses
     const showTeachersSection = ref(false); // New ref for teachers section visibility
     const showArchivedCoursesSection = ref(false); // New ref for archived courses section visibility
@@ -667,30 +572,6 @@ export default {
     const sourceCourseForBulk = ref(null);
     const teacherSearchResults = ref([]);
     const searchQuery = ref("");
-
-    const openAssignTeacherModal = (curso) => {
-      selectedCourseId.value = curso.id;
-      selectedUser.value = null;
-      teacherSearchResults.value = [];
-      searchQuery.value = "";
-      isModalOpen.value = true;
-    };
-
-    const searchTeachers = async () => {
-      if (searchQuery.value.length < 3) {
-        teacherSearchResults.value = [];
-        return;
-      }
-      try {
-        const response = await axios.get(
-          `/users?instituteId=${usuario.value.institute.id}&rol=teacher,admin&name=${searchQuery.value}`,
-          tokenHeader()
-        );
-        teacherSearchResults.value = response.data;
-      } catch (error) {
-        console.error("Error searching teachers:", error);
-      }
-    };
 
     const isPrivilegedUser = computed(() => {
       if (!usuario.value) return false;
@@ -813,12 +694,6 @@ export default {
 
     const presentActionSheet = async (curso) => {
       const buttons = [
-        {
-          text: "Editar Curso",
-          handler: () => {
-            openEditCourseModal(curso);
-          },
-        },
         {
           text: "Imprimir Lista",
           handler: () => {
@@ -1091,7 +966,7 @@ export default {
           (rolSelected.value === "teacher" || rolSelected.value === "admin")
         ) {
           const areaAssignments = Object.entries(selectedAreas.value)
-            .filter(([ checked]) => checked)
+            .filter(([checked]) => checked)
             .map(([areaId]) => ({
               areaId: parseInt(areaId, 10),
               teacherId: selectedUser.value.id,
@@ -1189,7 +1064,10 @@ export default {
       }
       try {
         // Fetch course to get its linked areas
-        const courseRes = await axios.get(`/courses/${courseId}`, tokenHeader());
+        const courseRes = await axios.get(
+          `/courses/${courseId}`,
+          tokenHeader()
+        );
         courseAreas.value = courseRes.data.areas;
 
         // Fetch area-teacher assignments
@@ -1471,102 +1349,6 @@ export default {
       ];
     };
 
-    const openCreateCourseModal = () => {
-      newCourse.value = {
-        name: "",
-        instituteId: usuario.value.institute.id, // Pre-fill instituteId
-        exist: true,
-      };
-      isCreateCourseModalOpen.value = true;
-    };
-
-    const closeCreateCourseModal = () => {
-      isCreateCourseModalOpen.value = false;
-    };
-
-    const createCourse = async () => {
-      if (!newCourse.value.name) {
-        const alert = await alertController.create({
-          header: "Error",
-          message: "El nombre del curso no puede estar vacío.",
-          buttons: ["OK"],
-        });
-        await alert.present();
-        return;
-      }
-
-      try {
-        await axios.post("/courses", newCourse.value, tokenHeader());
-        closeCreateCourseModal();
-        await getCurso(); // Refresh the course list
-        const alert = await alertController.create({
-          header: "Éxito",
-          message: "Curso creado exitosamente.",
-          buttons: ["OK"],
-        });
-        await alert.present();
-      } catch (error) {
-        console.error("Error creating course:", error);
-        const alert = await alertController.create({
-          header: "Error",
-          message: "Hubo un error al crear el curso.",
-          buttons: ["OK"],
-        });
-        await alert.present();
-      }
-    };
-
-    const openEditCourseModal = (curso) => {
-      editedCourse.value = { ...curso }; // Copy course data to editedCourse
-      isEditCourseModalOpen.value = true;
-    };
-
-    const closeEditCourseModal = () => {
-      isEditCourseModalOpen.value = false;
-    };
-
-    const editCourse = async () => {
-      if (!editedCourse.value.name) {
-        const alert = await alertController.create({
-          header: "Error",
-          message: "El nombre del curso no puede estar vacío.",
-          buttons: ["OK"],
-        });
-        await alert.present();
-        return;
-      }
-
-      try {
-        const payload = {
-          name: editedCourse.value.name,
-          instituteId: editedCourse.value.instituteId,
-          exist: editedCourse.value.exist,
-        };
-
-        await axios.patch(
-          `/courses/${editedCourse.value.id}`,
-          payload,
-          tokenHeader()
-        );
-        closeEditCourseModal();
-        await getCurso(); // Refresh the course list
-        const alert = await alertController.create({
-          header: "Éxito",
-          message: "Curso actualizado exitosamente.",
-          buttons: ["OK"],
-        });
-        await alert.present();
-      } catch (error) {
-        console.error("Error updating course:", error);
-        const alert = await alertController.create({
-          header: "Error",
-          message: "Hubo un error al actualizar el curso.",
-          buttons: ["OK"],
-        });
-        await alert.present();
-      }
-    };
-
     const getArchivedCourses = async () => {
       loading.value = true;
       try {
@@ -1701,24 +1483,9 @@ export default {
       availableCourses,
       isPrivilegedUser,
       getRoleLabel,
-      openAssignTeacherModal,
-      searchTeachers,
+
       teacherSearchResults,
       searchQuery,
-
-      // New Course Creation
-      isCreateCourseModalOpen,
-      newCourse,
-      openCreateCourseModal,
-      closeCreateCourseModal,
-      createCourse,
-
-      // Course Editing
-      isEditCourseModalOpen,
-      editedCourse,
-      openEditCourseModal,
-      closeEditCourseModal,
-      editCourse,
 
       // Archived Courses
       archivedCourses,
