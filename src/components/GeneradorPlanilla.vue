@@ -90,7 +90,11 @@ export default {
       const promNiv = parseFloat(estudiante.promedioNivelacion);
 
       // 1. Student has Reinforcement AND Reinforcement grade (promedioRefuerzo) > Regular grade (promedioRegular) AND promedioRefuerzo >= 3: L1 = 99
-      if (estudiante.hasReinforcement && promReinf > promReg && promReinf >= 3) {
+      if (
+        estudiante.hasReinforcement &&
+        promReinf > promReg &&
+        promReinf >= 3
+      ) {
         return 99;
       }
       // 2. Student has Remedial AND Remedial grade (promedioNivelacion) >= 3: L1 = 98
@@ -170,6 +174,51 @@ export default {
       const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Planilla de Notas");
+
+      // Add conventions sheet
+      const conventions = [
+        {
+          "Código L1": 91,
+          Significado: "El estudiante aprobó con un desempeño superior.",
+        },
+        {
+          "Código L1": 92,
+          Significado: "El estudiante aprobó con un desempeño alto.",
+        },
+        {
+          "Código L1": 93,
+          Significado: "El estudiante aprobó con un desempeño básico.",
+        },
+        {
+          "Código L1": 94,
+          Significado:
+            "A pesar de las actividades de nivelación, el estudiante no superó los desempeños esperados.",
+        },
+        {
+          "Código L1": 95,
+          Significado:
+            "A pesar de las actividades de refuerzo, el estudiante no superó los desempeños esperados.",
+        },
+        {
+          "Código L1": 96,
+          Significado:
+            "El estudiante logró los desempeños básicos con su nota regular, aunque no superó el refuerzo.",
+        },
+        {
+          "Código L1": 98,
+          Significado:
+            "El estudiante logrado cumplir con los desempeños esperado gracias a actividades de nivelación.",
+        },
+        {
+          "Código L1": 99,
+          Significado:
+            "El estudiante logró cumplir con los desempeños esperado gracias a actividades de refuerzo.",
+        },
+      ];
+
+      const wsConventions = XLSX.utils.json_to_sheet(conventions);
+      XLSX.utils.book_append_sheet(wb, wsConventions, "Convenciones");
+
       XLSX.writeFile(wb, "planilla_notas_alfabetico.xlsx");
       onClose();
     };
@@ -196,9 +245,12 @@ export default {
       // 2. Determine the majority grade from matched students
       const gradeCounts = {};
       for (const student of props.usuariosEstudiantes) {
-        const excelStudent = excelStudentsMap.get(normalizeString(student.code));
+        const excelStudent = excelStudentsMap.get(
+          normalizeString(student.code)
+        );
         if (excelStudent && excelStudent.Grado) {
-          gradeCounts[excelStudent.Grado] = (gradeCounts[excelStudent.Grado] || 0) + 1;
+          gradeCounts[excelStudent.Grado] =
+            (gradeCounts[excelStudent.Grado] || 0) + 1;
         }
       }
 
@@ -214,7 +266,8 @@ export default {
       if (!majorityGrade) {
         const alert = await alertController.create({
           header: "Advertencia",
-          message: "No se pudo determinar un grado mayoritario a partir de las coincidencias. No se pueden añadir estudiantes que no estén en el sistema.",
+          message:
+            "No se pudo determinar un grado mayoritario a partir de las coincidencias. No se pueden añadir estudiantes que no estén en el sistema.",
           buttons: ["OK"],
         });
         await alert.present();
@@ -229,10 +282,14 @@ export default {
       jsonData.forEach((excelRow) => {
         const normalizedDi = normalizeString(excelRow.DI);
         const systemStudent = systemStudentsMap.get(normalizedDi);
-        const isRetired = excelRow.Retirado && excelRow.Retirado.toUpperCase() === 'SI';
+        const isRetired =
+          excelRow.Retirado && excelRow.Retirado.toUpperCase() === "SI";
 
         // Add student if they belong to the majority grade OR if they are in our system
-        if ((majorityGrade && excelRow.Grado === majorityGrade) || systemStudent) {
+        if (
+          (majorityGrade && excelRow.Grado === majorityGrade) ||
+          systemStudent
+        ) {
           let studentData;
           if (systemStudent) {
             // Student exists in both systems
@@ -243,7 +300,9 @@ export default {
               systemStudent.hasReinforcement
                 ? systemStudent.promedioRefuerzo
                 : systemStudent.promedioRegular;
-            const niv = systemStudent.hasRemedial ? systemStudent.promedioNivelacion : "";
+            const niv = systemStudent.hasRemedial
+              ? systemStudent.promedioNivelacion
+              : "";
             const l1 = calculateL1Value(systemStudent);
 
             studentData = {
@@ -262,7 +321,9 @@ export default {
           } else {
             // Student only in Excel (and belongs to majority grade)
             studentData = {
-              NOMBRE: `${excelRow.Apellidos || ''} ${excelRow.Nombres || ''}`.trim(), // Assuming columns are "Apellidos" and "Nombres"
+              NOMBRE: `${excelRow.Apellidos || ""} ${
+                excelRow.Nombres || ""
+              }`.trim(), // Assuming columns are "Apellidos" and "Nombres"
               FALLAS: "",
               DEF: "",
               NIV: "",
@@ -280,12 +341,11 @@ export default {
 
       // Identify and add students only in our system
       const systemOnlyStudents = [];
-      props.usuariosEstudiantes.forEach(student => {
+      props.usuariosEstudiantes.forEach((student) => {
         if (!systemStudentsFoundInExcel.has(normalizeString(student.code))) {
           const def =
             parseFloat(student.promedioRefuerzo) >
-              parseFloat(student.promedioRegular) &&
-            student.hasReinforcement
+              parseFloat(student.promedioRegular) && student.hasReinforcement
               ? student.promedioRefuerzo
               : student.promedioRegular;
           const niv = student.hasRemedial ? student.promedioNivelacion : "";
@@ -339,7 +399,7 @@ export default {
         }
 
         if (style) {
-          const range = XLSX.utils.decode_range(ws['!ref']);
+          const range = XLSX.utils.decode_range(ws["!ref"]);
           for (let C = range.s.c; C <= range.e.c; ++C) {
             const cellAddress = XLSX.utils.encode_cell({ r: rowNum - 1, c: C });
             if (!ws[cellAddress]) ws[cellAddress] = {};
@@ -351,6 +411,50 @@ export default {
       // 7. Write and download file
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Planilla de Notas Ordenada");
+
+      // Add conventions sheet
+      const conventions = [
+        {
+          "Código L1": 91,
+          Significado: "El estudiante aprobó con un desempeño superior.",
+        },
+        {
+          "Código L1": 92,
+          Significado: "El estudiante aprobó con un desempeño alto.",
+        },
+        {
+          "Código L1": 93,
+          Significado: "El estudiante aprobó con un desempeño básico.",
+        },
+        {
+          "Código L1": 94,
+          Significado:
+            "A pesar de las actividades de nivelación, el estudiante no superó los desempeños esperados.",
+        },
+        {
+          "Código L1": 95,
+          Significado:
+            "A pesar de las actividades de refuerzo, el estudiante no superó los desempeños esperados.",
+        },
+        {
+          "Código L1": 96,
+          Significado:
+            "El estudiante logró los desempeños básicos con su nota regular, aunque no superó el refuerzo.",
+        },
+        {
+          "Código L1": 98,
+          Significado:
+            "El estudiante logrado cumplir con los desempeños esperado gracias a actividades de nivelación.",
+        },
+        {
+          "Código L1": 99,
+          Significado:
+            "El estudiante logró cumplir con los desempeños esperado gracias a actividades de refuerzo.",
+        },
+      ];
+      const wsConventions = XLSX.utils.json_to_sheet(conventions);
+      XLSX.utils.book_append_sheet(wb, wsConventions, "Convenciones");
+
       XLSX.writeFile(wb, "planilla_notas_plataforma.xlsx");
       mostrarModalCargaExcel.value = false;
       onClose();
