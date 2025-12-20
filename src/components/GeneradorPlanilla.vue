@@ -84,6 +84,47 @@ export default {
       mostrarModalCargaExcel.value = true;
     };
 
+    const calculateL1Value = (estudiante) => {
+      const promReg = parseFloat(estudiante.promedioRegular);
+      const promReinf = parseFloat(estudiante.promedioRefuerzo);
+      const promNiv = parseFloat(estudiante.promedioNivelacion);
+
+      // 1. Student has Reinforcement AND Reinforcement grade (promedioRefuerzo) > Regular grade (promedioRegular) AND promedioRefuerzo >= 3: L1 = 99
+      if (estudiante.hasReinforcement && promReinf > promReg && promReinf >= 3) {
+        return 99;
+      }
+      // 2. Student has Remedial AND Remedial grade (promedioNivelacion) >= 3: L1 = 98
+      if (estudiante.hasRemedial && promNiv >= 3) {
+        return 98;
+      }
+      // 3. Student has Reinforcement AND Regular grade (promedioRegular) > Reinforcement grade (promedioRefuerzo) AND promedioRegular >= 3: L1 = 96
+      if (estudiante.hasReinforcement && promReg > promReinf && promReg >= 3) {
+        return 96;
+      }
+      // 4. Student has Reinforcement AND (promedioRefuerzo < 3 AND promedioRegular < 3): L1 = 95
+      if (estudiante.hasReinforcement && promReinf < 3 && promReg < 3) {
+        return 95;
+      }
+      // 5. Student has Remedial AND Remedial grade (promedioNivelacion) < 3: L1 = 94
+      if (estudiante.hasRemedial && promNiv < 3) {
+        return 94;
+      }
+      // 6. Student has Regular grade (promedioRegular) >= 3 AND promedioRegular < 4: L1 = 93
+      if (promReg >= 3 && promReg < 4) {
+        return 93;
+      }
+      // 7. Student has Regular grade (promedioRegular) >= 4 AND promedioRegular < 4.5: L1 = 92
+      if (promReg >= 4 && promReg < 4.5) {
+        return 92;
+      }
+      // 8. Student has Regular grade (promedioRegular) >= 4.5: L1 = 91
+      if (promReg >= 4.5) {
+        return 91;
+      }
+
+      return ""; // Default or if no condition met
+    };
+
     const descargarPlanillaAlfabetico = async () => {
       if (
         !props.usuariosEstudiantes ||
@@ -113,12 +154,7 @@ export default {
 
         const niv = estudiante.hasRemedial ? estudiante.promedioNivelacion : "";
 
-        let l1 = "";
-        if (estudiante.hasReinforcement) {
-          l1 = 99;
-        } else if (estudiante.hasRemedial) {
-          l1 = 98;
-        }
+        let l1 = calculateL1Value(estudiante); // Replaced with helper function
 
         return {
           NUM: index + 1,
@@ -191,12 +227,7 @@ export default {
 
         const niv = estudiante.hasRemedial ? estudiante.promedioNivelacion : "";
 
-        let l1 = "";
-        if (estudiante.hasReinforcement) {
-          l1 = 99;
-        } else if (estudiante.hasRemedial) {
-          l1 = 98;
-        }
+        let l1 = calculateL1Value(estudiante); // Replaced with helper function
 
         return {
           NUM: index + 1,
