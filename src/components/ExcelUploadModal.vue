@@ -93,15 +93,22 @@ export default {
     const handleDrop = (event) => {
       isDragOver.value = false;
       const droppedFile = event.dataTransfer.files[0];
-      if (droppedFile && droppedFile.type.match("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|application/vnd.ms-excel")) {
+      if (
+        droppedFile &&
+        droppedFile.type.match(
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|application/vnd.ms-excel"
+        )
+      ) {
         file.value = droppedFile;
         fileName.value = droppedFile.name;
       } else {
-        alertController.create({
-          header: "Error",
-          message: "Por favor, sube un archivo Excel válido (.xlsx o .xls).",
-          buttons: ["OK"],
-        }).then(alert => alert.present());
+        alertController
+          .create({
+            header: "Error",
+            message: "Por favor, sube un archivo Excel válido (.xlsx o .xls).",
+            buttons: ["OK"],
+          })
+          .then((alert) => alert.present());
       }
     };
 
@@ -111,43 +118,146 @@ export default {
 
     const handleFileSelect = (event) => {
       const selectedFile = event.target.files[0];
-      if (selectedFile && selectedFile.type.match("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|application/vnd.ms-excel")) {
+      if (
+        selectedFile &&
+        selectedFile.type.match(
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|application/vnd.ms-excel"
+        )
+      ) {
         file.value = selectedFile;
         fileName.value = selectedFile.name;
       } else {
-        alertController.create({
-          header: "Error",
-          message: "Por favor, sube un archivo Excel válido (.xlsx o .xls).",
-          buttons: ["OK"],
-        }).then(alert => alert.present());
+        alertController
+          .create({
+            header: "Error",
+            message: "Por favor, sube un archivo Excel válido (.xlsx o .xls).",
+            buttons: ["OK"],
+          })
+          .then((alert) => alert.present());
       }
     };
 
     const processFile = async () => {
       if (!file.value) return;
 
-      const reader = new FileReader();
-      reader.onload = async (e) => {
+      const fileReaderArrayBuffer = new FileReader();
+      const fileReaderText = new FileReader();
+
+      const processAsExcel = (arrayBuffer) => {
         try {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: "array" });
+          const workbook = XLSX.read(arrayBuffer, { type: "array", cellDates: true });
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
           const json = XLSX.utils.sheet_to_json(worksheet);
-
-          // Emit the processed JSON data
-          emit("fileUploaded", json);
-          onClose();
-        } catch (error) {
-          console.error("Error processing Excel file:", error);
-          alertController.create({
-            header: "Error",
-            message: "No se pudo procesar el archivo Excel. Asegúrate de que sea un formato válido.",
-            buttons: ["OK"],
-          }).then(alert => alert.present());
+          return json;
+        } catch (excelError) {
+          console.error("Error processing as Excel:", excelError);
+          return null;
         }
       };
-      reader.readAsArrayBuffer(file.value);
+
+      const processAsHtml = (htmlString) => {
+        try {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(htmlString, "text/html");
+          const table = doc.querySelector("table");
+
+          if (!table) {
+            return null; // No table found in HTML
+          }
+
+          let headers = [];
+          let dataRows = Array.from(table.querySelectorAll("tr"));
+
+          // Try to find headers in the first few rows
+          for (let i = 0; i < Math.min(dataRows.length, 3); i++) { // Check first 3 rows for headers
+            const potentialHeaders = Array.from(dataRows[i].querySelectorAll("th, td")).map(cell => cell.textContent.trim());
+            if (potentialHeaders.some(h => h.length > 0)) { // If any cell in this row has content, assume it's a header row
+              headers = potentialHeaders;
+              dataRows = dataRows.slice(i + 1); // Data starts after this row
+              break;
+            }
+          }
+
+          if (headers.length === 0) {
+            // Fallback if no clear headers found, assume first row is data or try to infer
+            // For now, if no headers, we can't reliably parse, so return null
+            return null;
+          }
+
+          const jsonData = [];
+          dataRows.forEach((row) => {
+            const cells = Array.from(row.querySelectorAll("td"));
+            if (cells.length > 0) { // Only process rows with actual data cells
+              const rowData = {};
+              headers.forEach((header, index) => {
+                rowData[header] = cells[index] ? cells[index].textContent.trim() : "";
+              });
+              jsonData.push(rowData);
+            }
+          });
+          return jsonData;
+        } catch (htmlError) {
+          console.error("Error processing as HTML:", htmlError);
+          return null;
+        }
+      };
+
+      fileReaderArrayBuffer.onload = async (eArrayBuffer) => {
+        const arrayBuffer = eArrayBuffer.target.result;
+
+        // Read as text to detect HTML
+        fileReaderText.onload = async (eText) => {
+          const textContent = eText.target.result;
+          let jsonData = null;
+
+          // Check if it's an HTML table
+          if (textContent.toLowerCase().includes("<table")) {
+            jsonData = processAsHtml(textContent);
+            if (jsonData && jsonData.length > 0) {
+              emit("fileUploaded", jsonData);
+              onClose();
+              return;
+            }
+          }
+
+          // If not HTML or HTML parsing failed, try as Excel
+          jsonData = processAsExcel(arrayBuffer);
+
+          if (jsonData && jsonData.length > 0) {
+            emit("fileUploaded", jsonData);
+            onClose();
+          } else {
+            alertController
+              .create({
+                header: "Error",
+                message:
+                  "No se pudo procesar el archivo. Asegúrate de que sea un archivo Excel válido o una tabla HTML con datos.",
+                buttons: ["OK"],
+              })
+              .then((alert) => alert.present());
+          }
+        };
+        fileReaderText.onerror = (error) => {
+          console.error("FileReaderText error:", error);
+          alertController.create({
+            header: "Error de lectura",
+            message: "No se pudo leer el archivo como texto.",
+            buttons: ["OK"],
+          }).then(alert => alert.present());
+        };
+        fileReaderText.readAsText(file.value);
+      };
+
+      fileReaderArrayBuffer.onerror = (error) => {
+        console.error("FileReaderArrayBuffer error:", error);
+        alertController.create({
+          header: "Error de lectura",
+          message: "No se pudo leer el archivo como binario.",
+          buttons: ["OK"],
+        }).then(alert => alert.present());
+      };
+      fileReaderArrayBuffer.readAsArrayBuffer(file.value);
     };
 
     return {

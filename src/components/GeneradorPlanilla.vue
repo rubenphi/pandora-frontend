@@ -71,6 +71,11 @@ export default {
   setup(props, { emit }) {
     const mostrarModalCargaExcel = ref(false);
 
+    const normalizeString = (str) => {
+      if (str === null || str === undefined) return "";
+      return String(str).replace(/[.,\s]/g, ""); // Remove points, commas, and spaces
+    };
+
     const onClose = () => {
       emit("close");
     };
@@ -133,9 +138,83 @@ export default {
       onClose();
     };
 
-    const handleUploadedExcel = (jsonData) => {
-      console.log("Datos del Excel subido:", jsonData);
-      // Aquí irá la lógica para procesar los datos del Excel y generar la planilla en orden de plataforma
+    const handleUploadedExcel = async (jsonData) => {
+      if (!jsonData || jsonData.length === 0) {
+        const alert = await alertController.create({
+          header: "Error",
+          message: "El archivo Excel subido está vacío o no contiene datos.",
+          buttons: ["OK"],
+        });
+        await alert.present();
+        return;
+      }
+      console.log(JSON.stringify(jsonData));
+
+      const diToNumeroMap = new Map();
+      jsonData.forEach((row) => {
+        if (row.DI && row.Numero) {
+          const normalizedDi = normalizeString(row.DI);
+          diToNumeroMap.set(normalizedDi, Number(row.Numero));
+        }
+      });
+
+      const studentsWithOrder = [];
+      const studentsWithoutOrder = [];
+
+      props.usuariosEstudiantes.forEach((estudiante) => {
+        const studentCode = normalizeString(estudiante.code); // Corrected: use estudiante.code
+        if (diToNumeroMap.has(studentCode)) {
+          studentsWithOrder.push({
+            ...estudiante,
+            numeroOrden: diToNumeroMap.get(studentCode),
+            hasDiMatch: true,
+          });
+        } else {
+          studentsWithoutOrder.push({ ...estudiante, hasDiMatch: false });
+        }
+      });
+
+      studentsWithOrder.sort((a, b) => a.numeroOrden - b.numeroOrden);
+
+      const finalOrderedStudents = [
+        ...studentsWithOrder,
+        ...studentsWithoutOrder,
+      ];
+
+      const data = finalOrderedStudents.map((estudiante, index) => {
+        const def =
+          parseFloat(estudiante.promedioRefuerzo) >
+            parseFloat(estudiante.promedioRegular) &&
+          estudiante.hasReinforcement
+            ? estudiante.promedioRefuerzo
+            : estudiante.promedioRegular;
+
+        const niv = estudiante.hasRemedial ? estudiante.promedioNivelacion : "";
+
+        let l1 = "";
+        if (estudiante.hasReinforcement) {
+          l1 = 99;
+        } else if (estudiante.hasRemedial) {
+          l1 = 98;
+        }
+
+        return {
+          NUM: index + 1,
+          NOMBRE: `${estudiante.lastName} ${estudiante.name}`,
+          FALLAS: estudiante.hasDiMatch ? "" : "Sin DI en Excel", // Indicate students without DI match
+          DEF: def,
+          NIV: niv,
+          L1: l1,
+          L2: "",
+        };
+      });
+
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Planilla de Notas Ordenada");
+      XLSX.writeFile(wb, "planilla_notas_plataforma.xlsx");
+      mostrarModalCargaExcel.value = false; // Close the upload modal
+      onClose(); // Close the main modal
     };
 
     return {
