@@ -440,6 +440,17 @@
           </ion-list>
         </ion-content>
       </ion-modal>
+
+      <!-- New Teacher Assignment Modal -->
+      <TeacherAssignmentModal
+        :is-open="isTeacherAssignmentModalOpen"
+        :selected-user="selectedUser"
+        @didDismiss="isTeacherAssignmentModalOpen = false"
+        @confirm="
+          isTeacherAssignmentModalOpen = false;
+          location.reload();
+        "
+      ></TeacherAssignmentModal>
     </ion-content>
   </ion-page>
 </template>
@@ -447,6 +458,8 @@
 <script>
 import axios from "axios";
 import router from "../router";
+
+import TeacherAssignmentModal from "../components/TeacherAssignmentModal.vue";
 
 import { ref, computed, watch } from "vue";
 import { tokenHeader, usuarioGet } from "../globalService";
@@ -514,6 +527,7 @@ export default {
     IonRow, // New component
     IonCol, // New component
     IonListHeader, // New component
+    TeacherAssignmentModal, // New component
   },
   setup() {
     const usuario = ref();
@@ -527,6 +541,8 @@ export default {
     const selectedGroupId = ref(null);
     const selectedUser = ref(null);
     const rolSelected = ref(null);
+
+    const isTeacherAssignmentModalOpen = ref(false); // New ref for the new modal
 
     const archivedCourses = ref([]); // New ref for archived courses
     const showTeachersSection = ref(false); // New ref for teachers section visibility
@@ -554,6 +570,8 @@ export default {
     const allTeachers = ref([]);
     const currentCourseAreas = ref([]); // Areas for the modal
     const selectedAreas = ref({}); // Checked areas in modal
+    const initialSelectedAreas = ref({}); // To store initial state of selected areas
+    const initialAssignedTeachers = ref({}); // To store initial teacher assignments for areas
 
     const cursosInstituto = ref([
       {
@@ -680,16 +698,71 @@ export default {
 
     const openModal = (user) => {
       selectedUser.value = user;
-      selectedCourseId.value = null;
-      selectedGroupId.value = null;
-      selectedAreas.value = {};
-      currentCourseAreas.value = [];
-      isModalOpen.value = true;
+      if (user.rol === "teacher" || user.rol === "admin") {
+        isTeacherAssignmentModalOpen.value = true;
+      } else {
+        selectedCourseId.value = null;
+        selectedGroupId.value = null;
+        selectedAreas.value = {};
+        initialSelectedAreas.value = {}; // Reset initial state
+        initialAssignedTeachers.value = {}; // Reset initial state
+        currentCourseAreas.value = [];
+        isModalOpen.value = true;
+      }
     };
 
     const closeModal = () => {
       isModalOpen.value = false;
       selectedAreas.value = {};
+      initialSelectedAreas.value = {};
+      initialAssignedTeachers.value = {};
+    };
+
+    const fetchUserAreaAssignments = async (userId, courseId, year) => {
+      if (!userId || !courseId || courseId === 0) {
+        selectedAreas.value = {};
+        initialSelectedAreas.value = {};
+        initialAssignedTeachers.value = {};
+        return;
+      }
+      try {
+        const response = await axios.get(
+          `/courses/${courseId}/areas-teachers?year=${year}`,
+          tokenHeader()
+        );
+        const assignments = response.data;
+        const userAssignments = assignments.filter(
+          (assignment) =>
+            assignment.teacher &&
+            assignment.teacher.id === userId &&
+            assignment.active
+        );
+
+        const tempSelectedAreas = {};
+        const tempInitialSelectedAreas = {};
+        const tempInitialAssignedTeachers = {};
+
+        userAssignments.forEach((assignment) => {
+          tempSelectedAreas[assignment.area.id] = true;
+          tempInitialSelectedAreas[assignment.area.id] = true;
+        });
+
+        assignments.forEach((assignment) => {
+          if (assignment.teacher) {
+            tempInitialAssignedTeachers[assignment.area.id] =
+              assignment.teacher.id;
+          }
+        });
+
+        selectedAreas.value = tempSelectedAreas;
+        initialSelectedAreas.value = tempInitialSelectedAreas;
+        initialAssignedTeachers.value = tempInitialAssignedTeachers;
+      } catch (error) {
+        console.error("Error fetching user area assignments:", error);
+        selectedAreas.value = {};
+        initialSelectedAreas.value = {};
+        initialAssignedTeachers.value = {};
+      }
     };
 
     const presentActionSheet = async (curso) => {
@@ -960,24 +1033,23 @@ export default {
           );
         }
 
-        // Step 3: Assign to areas (if teacher/admin and areas selected)
+        // Step 3: Assign/Unassign to areas (if teacher/admin and areas selected)
         if (
           selectedCourseId.value != 0 &&
           (rolSelected.value === "teacher" || rolSelected.value === "admin")
         ) {
-          const areaAssignments = Object.entries(selectedAreas.value)
-            .filter(([checked]) => checked)
-            .map(([areaId]) => ({
-              areaId: parseInt(areaId, 10),
-              teacherId: selectedUser.value.id,
-              year: parseInt(selectedYear.value, 10),
-              active: true,
-            }));
+          for (const area of currentCourseAreas.value) {
+            const isCurrentlyChecked = selectedAreas.value[area.id];
 
-          for (const assignment of areaAssignments) {
+            // Send the desired state to the backend
             await axios.post(
               `/courses/${selectedCourseId.value}/areas-teachers`,
-              assignment,
+              {
+                areaId: area.id,
+                teacherId: selectedUser.value.id,
+                year: parseInt(selectedYear.value, 10),
+                active: isCurrentlyChecked, // Set active based on checkbox state
+              },
               tokenHeader()
             );
           }
@@ -985,7 +1057,7 @@ export default {
 
         // Success: close modal and reload
         closeModal();
-        location.reload();
+        router.go(0); // Use router.go(0) for full reload
       } catch (error) {
         console.error("Error al asignar el usuario:", error);
         // Optionally show an error alert to the user
@@ -1323,6 +1395,19 @@ export default {
             tokenHeader()
           );
           currentCourseAreas.value = areasResponse.data;
+
+          // If a user is selected and is a teacher/admin, fetch their area assignments for the selected course
+          if (
+            selectedUser.value &&
+            (selectedUser.value.rol === "teacher" ||
+              selectedUser.value.rol === "admin")
+          ) {
+            await fetchUserAreaAssignments(
+              selectedUser.value.id,
+              selectedCourseId.value,
+              selectedYear.value
+            );
+          }
         } catch (error) {
           console.error("Error fetching course data:", error);
           gruposCursoDestino.value = [];
@@ -1509,6 +1594,7 @@ export default {
       schoolOutline,
       currentCourseAreas,
       selectedAreas,
+      isTeacherAssignmentModalOpen,
     };
   },
 };
