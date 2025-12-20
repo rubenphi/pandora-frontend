@@ -21,59 +21,80 @@
       <div v-else>
         <ion-list>
           <ion-list-header>
-            <ion-label>Asignaciones de Cursos</ion-label>
+            <ion-label>Asignaciones de Cursos y Áreas</ion-label>
           </ion-list-header>
 
-          <ion-item v-for="course in allCourses" :key="course.id">
-            <ion-label>{{ course.name }}</ion-label>
-            <ion-checkbox
-              slot="start"
-              :checked="isCourseAssigned(course.id)"
-              @ionChange="
-                toggleCourseAssignment(course.id, $event.detail.checked)
-              "
-            ></ion-checkbox>
-            <ion-select
-              v-if="isCourseAssigned(course.id)"
-              v-model="courseAssignments[course.id].rol"
-              placeholder="Seleccionar Rol"
-              interface="popover"
-            >
-              <ion-select-option value="teacher">Profesor</ion-select-option>
-              <ion-select-option value="admin">Administrador</ion-select-option>
-            </ion-select>
-          </ion-item>
-        </ion-list>
-
-        <ion-list v-if="assignedCoursesWithAreas.length > 0">
-          <ion-list-header>
-            <ion-label>Asignación de Áreas por Curso</ion-label>
-          </ion-list-header>
           <ion-accordion-group>
-            <ion-accordion
-              v-for="course in assignedCoursesWithAreas"
-              :key="course.id"
-            >
+            <ion-accordion v-for="course in allCourses" :key="course.id">
               <ion-item slot="header">
                 <ion-label>{{ course.name }}</ion-label>
+                <ion-checkbox
+                  slot="start"
+                  :checked="isCourseAssigned(course.id)"
+                  @ionChange="
+                    toggleCourseAssignment(course.id, $event.detail.checked)
+                  "
+                ></ion-checkbox>
               </ion-item>
+
               <div class="ion-padding" slot="content">
-                <ion-item v-for="area in course.areas" :key="area.id">
-                  <ion-label>{{ area.name }}</ion-label>
-                  <ion-checkbox
-                    slot="start"
-                    :checked="isAreaAssigned(course.id, area.id)"
+                <ion-item>
+                  <ion-label>Rol en el curso</ion-label>
+                  <ion-select
+                    :value="courseAssignments[course.id]?.rol"
                     @ionChange="
-                      toggleAreaAssignment(
-                        course.id,
-                        area.id,
-                        $event.detail.checked
-                      )
+                      courseAssignments[course.id].rol = $event.detail.value
                     "
-                  ></ion-checkbox>
+                    placeholder="Seleccionar Rol"
+                    interface="popover"
+                    :disabled="!isCourseAssigned(course.id)"
+                  >
+                    <ion-select-option value="teacher"
+                      >Profesor</ion-select-option
+                    >
+                    <ion-select-option value="admin"
+                      >Director de Curso</ion-select-option
+                    >
+                  </ion-select>
                 </ion-item>
-                <div v-if="course.areas.length === 0">
-                  <p>No hay áreas disponibles para este curso.</p>
+
+                <ion-list
+                  v-if="
+                    isCourseAssigned(course.id) &&
+                    (courseAssignments[course.id]?.rol === 'teacher' ||
+                      courseAssignments[course.id]?.rol === 'admin')
+                  "
+                >
+                  <ion-list-header>
+                    <ion-label>Áreas de {{ course.name }}</ion-label>
+                  </ion-list-header>
+                  <ion-item v-for="area in allAreas[course.id]" :key="area.id">
+                    <ion-label>{{ area.name }}</ion-label>
+                    <ion-checkbox
+                      slot="start"
+                      :checked="isAreaAssigned(course.id, area.id)"
+                      @ionChange="
+                        toggleAreaAssignment(
+                          course.id,
+                          area.id,
+                          $event.detail.checked
+                        )
+                      "
+                    ></ion-checkbox>
+                  </ion-item>
+                  <div
+                    v-if="
+                      !allAreas[course.id] || allAreas[course.id].length === 0
+                    "
+                  >
+                    <p>No hay áreas disponibles para este curso.</p>
+                  </div>
+                </ion-list>
+                <div v-else-if="isCourseAssigned(course.id)">
+                  <p>
+                    Las áreas solo se pueden asignar a roles de Profesor o
+                    Administrador.
+                  </p>
                 </div>
               </div>
             </ion-accordion>
@@ -363,21 +384,21 @@ export default {
           }
         }
 
-        await Promise.all(promises).then(async () => {
-          const alert = await alertController.create({
-            header: "Éxito",
-            message: "Asignaciones actualizadas correctamente.",
-            buttons: [
-              {
-                text: "OK",
-                handler: () => {
-                  router.go(0);
-                },
+        await Promise.all(promises);
+
+        const alert = await alertController.create({
+          header: "Éxito",
+          message: "Asignaciones actualizadas correctamente.",
+          buttons: [
+            {
+              text: "OK",
+              handler: () => {
+                router.go(0); // Use router.go(0) for full reload
               },
-            ],
-          });
-          await alert.present();
+            },
+          ],
         });
+        await alert.present();
       } catch (error) {
         console.error("Error confirming changes:", error);
         const alert = await alertController.create({
