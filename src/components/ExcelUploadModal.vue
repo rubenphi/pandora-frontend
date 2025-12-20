@@ -49,7 +49,7 @@ import {
 } from "@ionic/vue";
 import { ref } from "vue";
 import { cloudUploadOutline } from "ionicons/icons";
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx-js-style";
 
 export default {
   name: "ExcelUploadModal",

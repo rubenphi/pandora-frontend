@@ -39,7 +39,7 @@ import {
   alertController,
 } from "@ionic/vue";
 import { ref } from "vue";
-import * as XLSX from "xlsx"; // Import the xlsx library
+import * as XLSX from "xlsx-js-style";
 import { cloudUploadOutline } from "ionicons/icons";
 import ExcelUploadModal from "./ExcelUploadModal.vue";
 
@@ -201,7 +201,7 @@ export default {
         return {
           NUM: index + 1,
           NOMBRE: `${estudiante.lastName} ${estudiante.name}`,
-          FALLAS: estudiante.hasDiMatch ? "" : "Sin DI en Excel", // Indicate students without DI match
+          FALLAS: "", // Always empty now
           DEF: def,
           NIV: niv,
           L1: l1,
@@ -210,6 +210,26 @@ export default {
       });
 
       const ws = XLSX.utils.json_to_sheet(data);
+
+      // Apply styling for students without DI match
+      finalOrderedStudents.forEach((estudiante, index) => {
+        if (!estudiante.hasDiMatch) {
+          const rowNum = index + 2; // +1 for 0-based index, +1 for header row
+          const range = XLSX.utils.decode_range(ws['!ref']); // Get the range of the sheet
+
+          for (let C = range.s.c; C <= range.e.c; ++C) { // Iterate through columns
+            const cellAddress = XLSX.utils.encode_cell({ r: rowNum - 1, c: C }); // r is 0-based
+            if (!ws[cellAddress]) ws[cellAddress] = {}; // Ensure cell object exists
+            ws[cellAddress].s = {
+              fill: {
+                fgColor: { rgb: "FFADD8E6" }, // Light blue background
+                patternType: "solid" // Ensure solid fill
+              }
+            };
+          }
+        }
+      });
+
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Planilla de Notas Ordenada");
       XLSX.writeFile(wb, "planilla_notas_plataforma.xlsx");
