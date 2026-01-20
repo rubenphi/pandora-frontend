@@ -34,7 +34,6 @@
             interfaceOptions="{ cssClass: 'my-custom-interface' }"
             placeholder="Selecciona un tipo de material"
             :value="materialForm.type"
-            interface="popover"
           >
             >
             <ion-select-option value="VIDEO">Video</ion-select-option>

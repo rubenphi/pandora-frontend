@@ -23,71 +23,135 @@
         >
           <ion-icon :icon="documentAttachOutline" size="large"></ion-icon>
           <p>Arrastra tu archivo Excel aquí o haz clic para seleccionarlo</p>
-          <input type="file" ref="fileInput" @change="handleFileInputChange" accept=".xlsx, .xls" style="display: none;" />
+          <input
+            type="file"
+            ref="fileInput"
+            @change="handleFileInputChange"
+            accept=".xlsx, .xls"
+            style="display: none"
+          />
         </div>
 
-        <ion-button expand="block" @click="generateSampleExcel" color="secondary">Generar Excel de Ejemplo</ion-button>
+        <ion-button
+          expand="block"
+          @click="generateSampleExcel"
+          color="secondary"
+          >Generar Excel de Ejemplo</ion-button
+        >
 
         <ion-accordion-group v-if="usersToImport.length > 0">
-          <ion-accordion v-for="(user, index) in usersToImport" :key="index" :value="`user-${index}`">
+          <ion-accordion
+            v-for="(user, index) in usersToImport"
+            :key="index"
+            :value="`user-${index}`"
+          >
             <ion-item slot="header" :color="user.hasError ? 'danger' : 'light'">
               <ion-label>{{ user.lastName }}, {{ user.name }}</ion-label>
             </ion-item>
             <div class="ion-padding" slot="content">
               <ion-item>
                 <ion-label position="stacked">Nombre</ion-label>
-                <ion-input v-model="user.name" @ionInput="validateUser(user)"></ion-input>
+                <ion-input
+                  v-model="user.name"
+                  @ionInput="validateUser(user)"
+                ></ion-input>
               </ion-item>
               <ion-item>
                 <ion-label position="stacked">Apellido</ion-label>
-                <ion-input v-model="user.lastName" @ionInput="validateUser(user)"></ion-input>
+                <ion-input
+                  v-model="user.lastName"
+                  @ionInput="validateUser(user)"
+                ></ion-input>
               </ion-item>
               <ion-item>
                 <ion-label position="stacked">Email</ion-label>
-                <ion-input v-model="user.email" @ionInput="validateUser(user)"></ion-input>
+                <ion-input
+                  v-model="user.email"
+                  @ionInput="validateUser(user)"
+                ></ion-input>
               </ion-item>
               <ion-item>
                 <ion-label position="stacked">Código</ion-label>
-                <ion-input :value="user.code" @ionInput="updateUserCode(user, $event.target.value)" @ionBlur="checkCodeUniqueness(user)"></ion-input>
+                <ion-input
+                  :value="user.code"
+                  @ionInput="updateUserCode(user, $event.target.value)"
+                  @ionBlur="checkCodeUniqueness(user)"
+                ></ion-input>
               </ion-item>
               <ion-item>
                 <ion-label position="stacked">Teléfono</ion-label>
-                <ion-input v-model="user.telephone" type="tel" inputmode="numeric" placeholder="Número de teléfono" @ionInput="validateUser(user)" @input="filterNumericInput($event, user, 'telephone')"></ion-input>
+                <ion-input
+                  v-model="user.telephone"
+                  type="tel"
+                  inputmode="numeric"
+                  placeholder="Número de teléfono"
+                  @ionInput="validateUser(user)"
+                  @input="filterNumericInput($event, user, 'telephone')"
+                ></ion-input>
               </ion-item>
               <ion-item>
                 <ion-label position="stacked">Contraseña</ion-label>
-                <ion-input v-model="user.password" type="password" @ionInput="validateUser(user)"></ion-input>
+                <ion-input
+                  v-model="user.password"
+                  type="password"
+                  @ionInput="validateUser(user)"
+                ></ion-input>
               </ion-item>
               <ion-item>
                 <ion-label position="stacked">Rol en Sistema</ion-label>
-                <ion-select v-model="user.systemRol" interface="popover" @ionChange="validateUser(user)">
-                  <ion-select-option value="student">Estudiante</ion-select-option>
-                  <ion-select-option value="teacher">Profesor</ion-select-option>
+                <ion-select
+                  v-model="user.systemRol"
+                  @ionChange="validateUser(user)"
+                >
+                  <ion-select-option value="student"
+                    >Estudiante</ion-select-option
+                  >
+                  <ion-select-option value="teacher"
+                    >Profesor</ion-select-option
+                  >
                 </ion-select>
               </ion-item>
               <ion-item>
                 <ion-label position="stacked">Curso</ion-label>
-                <ion-select v-model="user.course" interface="popover" :disabled="user.systemRol === 'teacher'" @ionChange="validateUser(user)">
-                  <ion-select-option :value="undefined">Sin Curso</ion-select-option>
-                  <ion-select-option v-for="curso in cursos" :key="curso.id" :value="curso.id">
+                <ion-select
+                  v-model="user.course"
+                  :disabled="user.systemRol === 'teacher'"
+                  @ionChange="validateUser(user)"
+                >
+                  <ion-select-option :value="undefined"
+                    >Sin Curso</ion-select-option
+                  >
+                  <ion-select-option
+                    v-for="curso in cursos"
+                    :key="curso.id"
+                    :value="curso.id"
+                  >
                     {{ curso.name }}
                   </ion-select-option>
                 </ion-select>
               </ion-item>
               <!-- Add other editable properties here -->
-              <ion-button color="danger" expand="block" @click="removeUser(index)">Eliminar Usuario</ion-button>
+              <ion-button
+                color="danger"
+                expand="block"
+                @click="removeUser(index)"
+                >Eliminar Usuario</ion-button
+              >
             </div>
           </ion-accordion>
         </ion-accordion-group>
 
-        <ion-button expand="block" @click="submitImport" :disabled="!canSubmit">Importar Usuarios</ion-button>
+        <ion-button expand="block" @click="submitImport" :disabled="!canSubmit"
+          >Importar Usuarios</ion-button
+        >
       </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script>
-import { defineComponent, ref, computed } from 'vue';
+import { defineComponent, ref, computed } from "vue";
+import { useRouter } from "vue-router";
 import {
   IonPage,
   IonHeader,
@@ -104,12 +168,12 @@ import {
   IonSelectOption,
   alertController,
   IonIcon, // Added IonIcon
-} from '@ionic/vue';
-import { documentAttachOutline } from 'ionicons/icons'; // Added documentAttachOutline icon
-import * as XLSX from 'xlsx';
-import axios from 'axios';
-import { onIonViewWillEnter } from '@ionic/vue';
-import { tokenHeader, usuarioGet } from '../globalService';
+} from "@ionic/vue";
+import { documentAttachOutline } from "ionicons/icons"; // Added documentAttachOutline icon
+import * as XLSX from "xlsx";
+import axios from "axios";
+import { onIonViewWillEnter } from "@ionic/vue";
+import { tokenHeader, usuarioGet } from "../globalService";
 
 /**
  * @typedef {object} UserImportData
@@ -126,7 +190,7 @@ import { tokenHeader, usuarioGet } from '../globalService';
  */
 
 export default defineComponent({
-  name: 'UserImportView',
+  name: "UserImportView",
   components: {
     IonPage,
     IonHeader,
@@ -144,6 +208,7 @@ export default defineComponent({
     IonIcon, // Added IonIcon
   },
   setup() {
+    const router = useRouter();
     /** @type {import('vue').Ref<UserImportData[]>} */
     const usersToImport = ref([]);
     const cursos = ref([]);
@@ -165,16 +230,27 @@ export default defineComponent({
         return;
       }
       try {
-        const response = await axios.get(`/users?instituteId=${usuario.value.institute.id}&code=${codesToCheck.join(',')}`, tokenHeader());
-        existingUserCodes.value = new Set(response.data.map(user => String(user.code)));
+        const response = await axios.get(
+          `/users?instituteId=${
+            usuario.value.institute.id
+          }&code=${codesToCheck.join(",")}`,
+          tokenHeader()
+        );
+        existingUserCodes.value = new Set(
+          response.data.map((user) => String(user.code))
+        );
       } catch (error) {
-        console.error('Error fetching existing user codes:', error);
+        console.error("Error fetching existing user codes:", error);
       }
     };
 
     const getCursos = async () => {
-      if (!usuario.value || !usuario.value.institute || !usuario.value.institute.id) {
-        console.warn('Institute ID not available for fetching courses.');
+      if (
+        !usuario.value ||
+        !usuario.value.institute ||
+        !usuario.value.institute.id
+      ) {
+        console.warn("Institute ID not available for fetching courses.");
         return;
       }
       try {
@@ -182,9 +258,11 @@ export default defineComponent({
           `/courses?instituteId=${usuario.value.institute.id}&exist=true`,
           tokenHeader()
         );
-        cursos.value = response.data.sort((a, b) => a.name.localeCompare(b.name));
+        cursos.value = response.data.sort((a, b) =>
+          a.name.localeCompare(b.name)
+        );
       } catch (error) {
-        console.error('Error fetching courses:', error);
+        console.error("Error fetching courses:", error);
       }
     };
 
@@ -213,10 +291,10 @@ export default defineComponent({
     const handleDrop = (event) => {
       isDragOver.value = false;
       const file = event.dataTransfer.files[0];
-      if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) {
+      if (file && (file.name.endsWith(".xlsx") || file.name.endsWith(".xls"))) {
         processFile(file);
       } else {
-        alert('Por favor, arrastra un archivo Excel válido (.xlsx o .xls).');
+        alert("Por favor, arrastra un archivo Excel válido (.xlsx o .xls).");
       }
     };
 
@@ -226,23 +304,25 @@ export default defineComponent({
 
       reader.onload = async (e) => {
         const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
+        const workbook = XLSX.read(data, { type: "array" });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const json = XLSX.utils.sheet_to_json(worksheet);
         inconsistentUsers.value = [];
 
-        const codesFromExcel = json.map(row => String(row.Codigo)).filter(code => code);
+        const codesFromExcel = json
+          .map((row) => String(row.Codigo))
+          .filter((code) => code);
         await getExistingUserCodes(codesFromExcel);
 
         usersToImport.value = json.map((row) => {
           let systemRol = undefined;
-          if (row['Rol en Sistema']) {
-            const lowerCaseRol = String(row['Rol en Sistema']).toLowerCase();
-            if (lowerCaseRol === 'estudiante') {
-              systemRol = 'student';
-            } else if (lowerCaseRol === 'profesor') {
-              systemRol = 'teacher';
+          if (row["Rol en Sistema"]) {
+            const lowerCaseRol = String(row["Rol en Sistema"]).toLowerCase();
+            if (lowerCaseRol === "estudiante") {
+              systemRol = "student";
+            } else if (lowerCaseRol === "profesor") {
+              systemRol = "teacher";
             }
           }
 
@@ -257,33 +337,41 @@ export default defineComponent({
           }
 
           const user = {
-            name: row.Nombre || '',
-            lastName: row.Apellido || '',
+            name: row.Nombre || "",
+            lastName: row.Apellido || "",
             email: row.Email || `${row.Codigo}@yopmail.com`,
-            code: row.Codigo || '',
-            telephone: row.Telefono || '', // Added telephone field
-            password: row.Contraseña || 'defaultpassword',
+            code: row.Codigo || "",
+            telephone: row.Telefono || "", // Added telephone field
+            password: row.Contraseña || "defaultpassword",
             exist: true,
             systemRol: systemRol,
-            course: systemRol === 'teacher' ? undefined : courseId,
+            course: systemRol === "teacher" ? undefined : courseId,
             hasError: false,
           };
 
           if (user.code && !/^\d+$/.test(user.code)) {
             user.hasError = true;
-            inconsistentUsers.value.push(`${user.lastName}, ${user.name} (Código "${user.code}" no es numérico)`);
+            inconsistentUsers.value.push(
+              `${user.lastName}, ${user.name} (Código "${user.code}" no es numérico)`
+            );
           } else if (user.code && existingUserCodes.value.has(user.code)) {
             user.hasError = true;
-            inconsistentUsers.value.push(`${user.lastName}, ${user.name} (Código "${user.code}" ya existe)`);
+            inconsistentUsers.value.push(
+              `${user.lastName}, ${user.name} (Código "${user.code}" ya existe)`
+            );
           }
 
-          if (user.systemRol === 'student' && user.course === undefined) {
+          if (user.systemRol === "student" && user.course === undefined) {
             user.hasError = true;
-            inconsistentUsers.value.push(`${user.lastName}, ${user.name} (Estudiante sin curso válido)`);
+            inconsistentUsers.value.push(
+              `${user.lastName}, ${user.name} (Estudiante sin curso válido)`
+            );
           }
           if (user.systemRol === undefined) {
             user.hasError = true;
-            inconsistentUsers.value.push(`${user.lastName}, ${user.name} (Rol en Sistema inválido: "${row['Rol en Sistema']}")`);
+            inconsistentUsers.value.push(
+              `${user.lastName}, ${user.name} (Rol en Sistema inválido: "${row["Rol en Sistema"]}")`
+            );
           }
 
           return user;
@@ -297,80 +385,104 @@ export default defineComponent({
     };
 
     const presentInconsistencyAlert = async () => {
-      const currentInconsistentUsers = usersToImport.value.filter(user => user.hasError);
+      const currentInconsistentUsers = usersToImport.value.filter(
+        (user) => user.hasError
+      );
       if (currentInconsistentUsers.length === 0) {
         return;
       }
 
-      const messages = currentInconsistentUsers.map(user => {
-        let msg = `${user.lastName}, ${user.name}`;
-        if (user.code && !/^\d+$/.test(user.code)) {
-          msg += ` (Código "${user.code}" no es numérico)`;
-        } else if (user.code && existingUserCodes.value.has(user.code)) {
-          msg += ` (Código "${user.code}" ya existe)`;
-        }
-        if (user.systemRol === undefined) {
-          msg += ` (Rol en Sistema inválido)`;
-        }
-        if (user.systemRol === 'student' && user.course === undefined) {
-          msg += ` (Estudiante sin curso válido)`;
-        }
-        if (user.telephone && !/^\d+$/.test(user.telephone)) {
-          msg += ` (Teléfono "${user.telephone}" no es numérico)`;
-        }
-        return `<li>${msg}</li>`;
-      }).join('');
+      const messages = currentInconsistentUsers
+        .map((user) => {
+          let msg = `${user.lastName}, ${user.name}`;
+          if (user.code && !/^\d+$/.test(user.code)) {
+            msg += ` (Código "${user.code}" no es numérico)`;
+          } else if (user.code && existingUserCodes.value.has(user.code)) {
+            msg += ` (Código "${user.code}" ya existe)`;
+          }
+          if (user.systemRol === undefined) {
+            msg += ` (Rol en Sistema inválido)`;
+          }
+          if (user.systemRol === "student" && user.course === undefined) {
+            msg += ` (Estudiante sin curso válido)`;
+          }
+          if (user.telephone && !/^\d+$/.test(user.telephone)) {
+            msg += ` (Teléfono "${user.telephone}" no es numérico)`;
+          }
+          return `<li>${msg}</li>`;
+        })
+        .join("");
 
       const alert = await alertController.create({
-        header: 'Inconsistencias en la Importación',
+        header: "Inconsistencias en la Importación",
         message: `Se encontraron las siguientes inconsistencias en el archivo Excel:<br><br><ul>${messages}</ul><br>Por favor, revise y corrija los datos antes de importar.`,
-        buttons: ['OK'],
+        buttons: ["OK"],
       });
       await alert.present();
     };
 
     const canSubmit = computed(() => {
-      return usersToImport.value.length > 0 && usersToImport.value.every(user => !user.hasError);
+      return (
+        usersToImport.value.length > 0 &&
+        usersToImport.value.every((user) => !user.hasError)
+      );
     });
 
     const generateSampleExcel = () => {
       const sampleData = [
         {
-          Nombre: 'Juan',
-          Apellido: 'Perez',
-          Email: 'juan.perez@example.com',
-          Codigo: '001',
-          Contraseña: 'password123',
-          'Rol en Sistema': 'estudiante',
-          Curso: 'Matematicas',
-          Telefono: '1122334455', // Added sample telephone
+          Nombre: "Juan",
+          Apellido: "Perez",
+          Email: "juan.perez@example.com",
+          Codigo: "001",
+          Contraseña: "password123",
+          "Rol en Sistema": "estudiante",
+          Curso: "Matematicas",
+          Telefono: "1122334455", // Added sample telephone
         },
         {
-          Nombre: 'Maria',
-          Apellido: 'Gomez',
-          Email: 'maria.gomez@example.com',
-          Codigo: '002',
-          Contraseña: 'password123',
-          'Rol en Sistema': 'estudiante',
-          Curso: 'Historia',
-          Telefono: '5544332211', // Added sample telephone
+          Nombre: "Maria",
+          Apellido: "Gomez",
+          Email: "maria.gomez@example.com",
+          Codigo: "002",
+          Contraseña: "password123",
+          "Rol en Sistema": "estudiante",
+          Curso: "Historia",
+          Telefono: "5544332211", // Added sample telephone
         },
         {
-          Nombre: 'Carlos',
-          Apellido: 'Ruiz',
-          Email: 'carlos.ruiz@example.com',
-          Codigo: '003',
-          Contraseña: 'password123',
-          'Rol en Sistema': 'profesor',
-          Curso: '',
-          Telefono: '9988776655', // Added sample telephone
+          Nombre: "Carlos",
+          Apellido: "Ruiz",
+          Email: "carlos.ruiz@example.com",
+          Codigo: "003",
+          Contraseña: "password123",
+          "Rol en Sistema": "profesor",
+          Curso: "",
+          Telefono: "9988776655", // Added sample telephone
         },
       ];
 
       const worksheet = XLSX.utils.json_to_sheet(sampleData);
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Usuarios');
-      XLSX.writeFile(workbook, 'usuarios_ejemplo.xlsx');
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Usuarios");
+      XLSX.writeFile(workbook, "usuarios_ejemplo.xlsx");
+    };
+
+    const presentSuccessAlert = async () => {
+      const alert = await alertController.create({
+        header: "Éxito",
+        message: "Usuarios importados exitosamente!",
+        buttons: [
+          {
+            text: "OK",
+            handler: () => {
+              usersToImport.value = [];
+              router.push("/admin/gestionar/usuarios");
+            },
+          },
+        ],
+      });
+      await alert.present();
     };
 
     const submitImport = async () => {
@@ -389,15 +501,18 @@ export default defineComponent({
           };
         });
 
-        console.log('Users being sent to backend:', usersToSend);
-
-        const response = await axios.post('/users/bulk', { users: usersToSend });
-        console.log('Bulk import successful:', response.data);
-        alert('Usuarios importados exitosamente!');
-        usersToImport.value = [];
+        await axios.post("/users/bulk", {
+          users: usersToSend,
+        });
+        await presentSuccessAlert();
       } catch (error) {
-        console.error('Error during bulk import:', error.response ? error.response.data : error.message);
-        alert('Error al importar usuarios. Por favor, revise la consola para más detalles.');
+        console.error(
+          "Error during bulk import:",
+          error.response ? error.response.data : error.message
+        );
+        alert(
+          "Error al importar usuarios. Por favor, revise la consola para más detalles."
+        );
       }
     };
 
@@ -411,22 +526,30 @@ export default defineComponent({
 
       if (user.code && !/^\d+$/.test(user.code)) {
         user.hasError = true;
-        currentInconsistencies.push(`${user.lastName}, ${user.name} (Código "${user.code}" no es numérico)`);
+        currentInconsistencies.push(
+          `${user.lastName}, ${user.name} (Código "${user.code}" no es numérico)`
+        );
       }
 
       if (user.systemRol === undefined) {
         user.hasError = true;
-        currentInconsistencies.push(`${user.lastName}, ${user.name} (Rol en Sistema inválido)`);
+        currentInconsistencies.push(
+          `${user.lastName}, ${user.name} (Rol en Sistema inválido)`
+        );
       }
 
-      if (user.systemRol === 'student' && user.course === undefined) {
+      if (user.systemRol === "student" && user.course === undefined) {
         user.hasError = true;
-        currentInconsistencies.push(`${user.lastName}, ${user.name} (Estudiante sin curso válido)`);
+        currentInconsistencies.push(
+          `${user.lastName}, ${user.name} (Estudiante sin curso válido)`
+        );
       }
       // Validate telephone is numeric if not empty
       if (user.telephone && !/^\d+$/.test(user.telephone)) {
         user.hasError = true;
-        currentInconsistencies.push(`${user.lastName}, ${user.name} (Teléfono "${user.telephone}" no es numérico)`);
+        currentInconsistencies.push(
+          `${user.lastName}, ${user.name} (Teléfono "${user.telephone}" no es numérico)`
+        );
       }
 
       return !user.hasError;
@@ -438,7 +561,10 @@ export default defineComponent({
       }
 
       try {
-        const response = await axios.get(`/users?instituteId=${usuario.value.institute.id}&code=${user.code}`, tokenHeader());
+        const response = await axios.get(
+          `/users?instituteId=${usuario.value.institute.id}&code=${user.code}`,
+          tokenHeader()
+        );
         const existingUsers = response.data;
 
         if (existingUsers.length > 0) {
@@ -449,7 +575,7 @@ export default defineComponent({
           }
         }
       } catch (error) {
-        console.error('Error checking code uniqueness:', error);
+        console.error("Error checking code uniqueness:", error);
         user.hasError = true;
       }
     };
@@ -462,9 +588,9 @@ export default defineComponent({
     const filterNumericInput = (event, item, field) => {
       let value = event.target.value;
       if (value === null || value === undefined) {
-        value = '';
+        value = "";
       }
-      const filteredValue = value.replace(/\D/g, ''); // Remove non-digits
+      const filteredValue = value.replace(/\D/g, ""); // Remove non-digits
       if (value !== filteredValue) {
         event.target.value = filteredValue; // Update the input element directly
         item[field] = filteredValue; // Update the v-model bound property
@@ -533,4 +659,3 @@ export default defineComponent({
   margin: 0;
 }
 </style>
-

@@ -125,10 +125,12 @@
               <strong>Grupo Activo:</strong> {{ activeGroup.name }}
             </div>
             <div class="ion-padding-top">
-              <strong>Respuestas Correctas:</strong> <span class="ion-text-success">{{ totalCorrectAnswers }}</span>
+              <strong>Respuestas Correctas:</strong>
+              <span class="ion-text-success">{{ totalCorrectAnswers }}</span>
             </div>
             <div>
-              <strong>Respuestas Incorrectas:</strong> <span class="ion-text-danger">{{ totalIncorrectAnswers }}</span>
+              <strong>Respuestas Incorrectas:</strong>
+              <span class="ion-text-danger">{{ totalIncorrectAnswers }}</span>
             </div>
           </div>
         </div>
@@ -168,15 +170,22 @@
           <IonItem
             v-for="answer in questionsForCurrentSection"
             :key="answer.id"
-            :class="{ 'answer-correct': answer.isCorrect, 'answer-incorrect': !answer.isCorrect && answer.selectedOption !== null }"
+            :class="{
+              'answer-correct': answer.isCorrect,
+              'answer-incorrect':
+                !answer.isCorrect && answer.selectedOption !== null,
+            }"
           >
             <IonLabel>{{ answer.questionTitle }} </IonLabel>
             <div class="select-with-correct-option">
               <ion-select
                 v-model="answer.selectedOption"
                 placeholder="Seleccione"
-                interface="popover"
-                :class="{ 'selected-option-correct': answer.isCorrect, 'selected-option-incorrect': !answer.isCorrect && answer.selectedOption !== null }"
+                :class="{
+                  'selected-option-correct': answer.isCorrect,
+                  'selected-option-incorrect':
+                    !answer.isCorrect && answer.selectedOption !== null,
+                }"
               >
                 <ion-select-option
                   v-for="option in answer.options"
@@ -187,7 +196,10 @@
                 </ion-select-option>
               </ion-select>
               <span class="correct-option-display">
-                Correcta: <span class="ion-text-success">{{ answer.correctOptionIdentifier }}</span>
+                Correcta:
+                <span class="ion-text-success">{{
+                  answer.correctOptionIdentifier
+                }}</span>
               </span>
             </div>
           </IonItem>
@@ -313,13 +325,17 @@ export default {
 
     const totalCorrectAnswers = computed(() => {
       return answersToSend.value.filter(
-        (answer) => answer.selectedOption !== null && answer.selectedOption === answer.correctOptionId
+        (answer) =>
+          answer.selectedOption !== null &&
+          answer.selectedOption === answer.correctOptionId
       ).length;
     });
 
     const totalIncorrectAnswers = computed(() => {
       return answersToSend.value.filter(
-        (answer) => answer.selectedOption !== null && answer.selectedOption !== answer.correctOptionId
+        (answer) =>
+          answer.selectedOption !== null &&
+          answer.selectedOption !== answer.correctOptionId
       ).length;
     });
 
@@ -595,7 +611,10 @@ export default {
           quizId: cuestionario.value.id,
           instituteId: cuestionario.value.instituteId,
           userId: student.value.id,
-          groupId: cuestionario.value.quizType === "group" ? activeGroup.value.id : null,
+          groupId:
+            cuestionario.value.quizType === "group"
+              ? activeGroup.value.id
+              : null,
           exist: true, // Assuming new answers are always 'exist: true'
         }));
 
@@ -660,25 +679,29 @@ export default {
       sectionValidity.value = Array(numberOfSections.value).fill(true);
 
       answersToSend.value = cuestionario.value.questions.map((question) => {
-        const correctOption = question.options.find(opt => opt.correct);
+        const correctOption = question.options.find((opt) => opt.correct);
         const correctOptionId = correctOption ? correctOption.id : null;
-        const correctOptionIdentifier = correctOption ? correctOption.identifier : 'N/A';
+        const correctOptionIdentifier = correctOption
+          ? correctOption.identifier
+          : "N/A";
 
         const questionReactive = reactive({
-            id: question.id,
-            questionTitle: question.title,
-            correctOptionId: correctOptionId,
-            options: question.options.map((option) => ({
-                id: option.id,
-                identifier: option.identifier,
-                correct: option.correct,
-            })),
-            selectedOption: null,
-            correctOptionIdentifier: correctOptionIdentifier,
+          id: question.id,
+          questionTitle: question.title,
+          correctOptionId: correctOptionId,
+          options: question.options.map((option) => ({
+            id: option.id,
+            identifier: option.identifier,
+            correct: option.correct,
+          })),
+          selectedOption: null,
+          correctOptionIdentifier: correctOptionIdentifier,
         });
 
-        questionReactive.isCorrect = computed(() =>
-            questionReactive.selectedOption !== null && questionReactive.selectedOption === questionReactive.correctOptionId
+        questionReactive.isCorrect = computed(
+          () =>
+            questionReactive.selectedOption !== null &&
+            questionReactive.selectedOption === questionReactive.correctOptionId
         );
 
         return questionReactive;

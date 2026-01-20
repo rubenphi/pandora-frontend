@@ -18,8 +18,8 @@
     </ion-header>
 
     <ion-content class="ion-padding">
-      <!-- Configuration Modal (Always open until confirmed) -->
-      <ion-modal :is-open="!configConfirmed" :backdrop-dismiss="false">
+      <!-- si se cancela el modal se regresa a /admin/gestionar/usuarios -->
+      <ion-modal :is-open="!configConfirmed" @didDismiss="cancelConfig">
         <ion-header>
           <ion-toolbar>
             <ion-title>Configurar Opciones</ion-title>
@@ -29,7 +29,7 @@
           <p>Seleccione el rango de letras para las opciones de respuesta.</p>
           <ion-item>
             <ion-label>Primera opción</ion-label>
-            <ion-select v-model="startLetter" interface="popover">
+            <ion-select v-model="startLetter">
               <ion-select-option v-for="l in alphabet" :key="l" :value="l">{{
                 l
               }}</ion-select-option>
@@ -37,7 +37,7 @@
           </ion-item>
           <ion-item>
             <ion-label>Última opción</ion-label>
-            <ion-select v-model="endLetter" interface="popover">
+            <ion-select v-model="endLetter">
               <ion-select-option
                 v-for="l in filteredEndAlphabet"
                 :key="l"
@@ -154,6 +154,7 @@ import { FileSharer } from "@byteowls/capacitor-filesharer";
 import { Capacitor } from "@capacitor/core";
 import html2pdf from "html2pdf.js";
 import QRCode from "qrcode";
+import router from "../router";
 
 export default {
   components: {
@@ -226,6 +227,10 @@ export default {
     const openSingleStudentQr = (student) => {
       selectedStudent.value = student;
       isStudentModalOpen.value = true;
+    };
+
+    const cancelConfig = () => {
+      router.push("/admin/gestionar/usuarios");
     };
 
     const generatePdfContent = async (studentsList, range) => {
@@ -514,6 +519,7 @@ export default {
       configConfirmed,
       startLetter,
       endLetter,
+      cancelConfig,
       alphabet,
       filteredEndAlphabet,
       confirmConfig,

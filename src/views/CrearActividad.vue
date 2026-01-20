@@ -23,10 +23,19 @@
 
         <ion-item>
           <ion-label position="stacked">Clasificación (Dimensión)</ion-label>
-          <ion-select v-model="activityForm.classification" placeholder="Seleccione dimensión">
-            <ion-select-option value="knowledge">Saber (Conocimiento)</ion-select-option>
-            <ion-select-option value="execution">Hacer (Ejecución)</ion-select-option>
-            <ion-select-option value="behavior">Ser (Comportamiento)</ion-select-option>
+          <ion-select
+            v-model="activityForm.classification"
+            placeholder="Seleccione dimensión"
+          >
+            <ion-select-option value="knowledge"
+              >Saber (Conocimiento)</ion-select-option
+            >
+            <ion-select-option value="execution"
+              >Hacer (Ejecución)</ion-select-option
+            >
+            <ion-select-option value="behavior"
+              >Ser (Comportamiento)</ion-select-option
+            >
           </ion-select>
         </ion-item>
 
@@ -101,7 +110,6 @@ import {
   IonLabel,
   IonInput,
   IonButton,
-
   IonButtons,
   IonIcon,
   IonSelect,
@@ -110,7 +118,6 @@ import {
 import { tokenHeader, usuarioGet } from "../globalService";
 import { arrowBackOutline } from "ionicons/icons";
 import { Editor, EditorContent } from "@tiptap/vue-3";
-import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 
 export default {
@@ -179,7 +186,8 @@ export default {
           activityForm.value.title = activityResponse.data.title;
           activityForm.value.title = activityResponse.data.title;
           activityForm.value.instructions = activityResponse.data.instructions;
-          activityForm.value.classification = activityResponse.data.classification || 'execution';
+          activityForm.value.classification =
+            activityResponse.data.classification || "execution";
           // Ensure lessonId and instituteId are correctly set from fetched data if needed
           activityForm.value.lessonId = activityResponse.data.lesson.id;
           activityForm.value.instituteId = activityResponse.data.institute.id;
@@ -191,7 +199,7 @@ export default {
       }
 
       editor.value = new Editor({
-        extensions: [StarterKit, Underline],
+        extensions: [StarterKit],
         autofocus: "start",
         editable: true,
         content: activityForm.value.instructions,

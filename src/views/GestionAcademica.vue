@@ -19,17 +19,18 @@
         <ion-segment-button value="areas">
           <ion-label>Áreas</ion-label>
         </ion-segment-button>
+        <ion-segment-button value="periods">
+          <ion-label>Periodos</ion-label>
+        </ion-segment-button>
       </ion-segment>
 
       <div v-if="selectedTab === 'courses'">
         <ion-button expand="block" @click="openCreateCourseModal()">
           Crear Nuevo Curso
         </ion-button>
-
         <ion-list-header color="primary">
           <ion-label>Cursos Activos</ion-label>
         </ion-list-header>
-
         <ion-list>
           <ion-item v-for="curso in cursosInstituto" :key="curso.id">
             <ion-label>{{ curso.name }}</ion-label>
@@ -49,11 +50,9 @@
         <ion-button expand="block" @click="openCreateAreaModal()">
           Crear Nueva Área
         </ion-button>
-
         <ion-list-header color="primary">
           <ion-label>Áreas Existentes</ion-label>
         </ion-list-header>
-
         <ion-list>
           <ion-item v-for="area in areas" :key="area.id">
             <ion-label>{{ area.name }}</ion-label>
@@ -62,6 +61,28 @@
                 <ion-icon :icon="createOutline"></ion-icon>
               </ion-button>
               <ion-button color="danger" @click="deleteArea(area)">
+                <ion-icon :icon="trashOutline"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+          </ion-item>
+        </ion-list>
+      </div>
+
+      <div v-if="selectedTab === 'periods'">
+        <ion-button expand="block" @click="openCreatePeriodModal()">
+          Crear Nuevo Periodo
+        </ion-button>
+        <ion-list-header color="primary">
+          <ion-label>Periodos Existentes</ion-label>
+        </ion-list-header>
+        <ion-list>
+          <ion-item v-for="period in periods" :key="period.id">
+            <ion-label>{{ period.name }}</ion-label>
+            <ion-buttons slot="end">
+              <ion-button @click="openEditPeriodModal(period)">
+                <ion-icon :icon="createOutline"></ion-icon>
+              </ion-button>
+              <ion-button color="danger" @click="deletePeriod(period)">
                 <ion-icon :icon="trashOutline"></ion-icon>
               </ion-button>
             </ion-buttons>
@@ -81,9 +102,9 @@
             </ion-buttons>
             <ion-title>Crear Nuevo Curso</ion-title>
             <ion-buttons slot="end">
-              <ion-button :strong="true" @click="createCourse()">
-                Crear
-              </ion-button>
+              <ion-button :strong="true" @click="createCourse()"
+                >Crear</ion-button
+              >
             </ion-buttons>
           </ion-toolbar>
         </ion-header>
@@ -114,9 +135,9 @@
             </ion-buttons>
             <ion-title>Editar Curso</ion-title>
             <ion-buttons slot="end">
-              <ion-button :strong="true" @click="editCourse()">
-                Guardar
-              </ion-button>
+              <ion-button :strong="true" @click="editCourse()"
+                >Guardar</ion-button
+              >
             </ion-buttons>
           </ion-toolbar>
         </ion-header>
@@ -129,7 +150,6 @@
             <ion-label>Activo</ion-label>
             <ion-toggle v-model="editedCourse.exist" slot="end"></ion-toggle>
           </ion-item>
-
           <ion-list-header>
             <ion-label>Áreas del Curso</ion-label>
           </ion-list-header>
@@ -156,9 +176,9 @@
             </ion-buttons>
             <ion-title>Crear Nueva Área</ion-title>
             <ion-buttons slot="end">
-              <ion-button :strong="true" @click="createArea()">
-                Crear
-              </ion-button>
+              <ion-button :strong="true" @click="createArea()"
+                >Crear</ion-button
+              >
             </ion-buttons>
           </ion-toolbar>
         </ion-header>
@@ -185,9 +205,9 @@
             </ion-buttons>
             <ion-title>Editar Área</ion-title>
             <ion-buttons slot="end">
-              <ion-button :strong="true" @click="editArea()">
-                Guardar
-              </ion-button>
+              <ion-button :strong="true" @click="editArea()"
+                >Guardar</ion-button
+              >
             </ion-buttons>
           </ion-toolbar>
         </ion-header>
@@ -195,6 +215,61 @@
           <ion-item>
             <ion-label position="stacked">Nombre del Área</ion-label>
             <ion-input v-model="editedArea.name"></ion-input>
+          </ion-item>
+        </ion-content>
+      </ion-modal>
+
+      <!-- Modal para crear un nuevo periodo -->
+      <ion-modal
+        :is-open="isCreatePeriodModalOpen"
+        @didDismiss="closeCreatePeriodModal"
+      >
+        <ion-header>
+          <ion-toolbar>
+            <ion-buttons slot="start">
+              <ion-button @click="closeCreatePeriodModal">Cancelar</ion-button>
+            </ion-buttons>
+            <ion-title>Crear Nuevo Periodo</ion-title>
+            <ion-buttons slot="end">
+              <ion-button :strong="true" @click="createPeriod()"
+                >Crear</ion-button
+              >
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding">
+          <ion-item>
+            <ion-label position="stacked">Nombre del Periodo</ion-label>
+            <ion-input
+              v-model="newPeriod.name"
+              placeholder="Ej: 1º Trimestre"
+            ></ion-input>
+          </ion-item>
+        </ion-content>
+      </ion-modal>
+
+      <!-- Modal para editar un periodo existente -->
+      <ion-modal
+        :is-open="isEditPeriodModalOpen"
+        @didDismiss="closeEditPeriodModal"
+      >
+        <ion-header>
+          <ion-toolbar>
+            <ion-buttons slot="start">
+              <ion-button @click="closeEditPeriodModal">Cancelar</ion-button>
+            </ion-buttons>
+            <ion-title>Editar Periodo</ion-title>
+            <ion-buttons slot="end">
+              <ion-button :strong="true" @click="editPeriod()"
+                >Guardar</ion-button
+              >
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding">
+          <ion-item>
+            <ion-label position="stacked">Nombre del Periodo</ion-label>
+            <ion-input v-model="editedPeriod.name"></ion-input>
           </ion-item>
         </ion-content>
       </ion-modal>
@@ -230,16 +305,21 @@ import {
 import { createOutline, trashOutline } from "ionicons/icons";
 
 const usuario = ref(null);
-const selectedTab = ref("courses"); // 'courses' or 'areas'
+const selectedTab = ref("courses");
 
 // --- Course Management ---
 const cursosInstituto = ref([]);
 const isCreateCourseModalOpen = ref(false);
 const newCourse = ref({ name: "", instituteId: null, exist: true });
 const isEditCourseModalOpen = ref(false);
-const editedCourse = ref({ id: null, name: "", instituteId: null, exist: true });
-const allAreas = ref([]); // All available areas for selection
-const editedCourseAreas = ref([]); // Areas currently assigned to the edited course (IDs)
+const editedCourse = ref({
+  id: null,
+  name: "",
+  instituteId: null,
+  exist: true,
+});
+const allAreas = ref([]);
+const editedCourseAreas = ref([]);
 
 const fetchCourses = async () => {
   try {
@@ -256,7 +336,11 @@ const fetchCourses = async () => {
 };
 
 const openCreateCourseModal = () => {
-  newCourse.value = { name: "", instituteId: usuario.value.institute.id, exist: true };
+  newCourse.value = {
+    name: "",
+    instituteId: usuario.value.institute.id,
+    exist: true,
+  };
   isCreateCourseModalOpen.value = true;
 };
 
@@ -297,10 +381,12 @@ const createCourse = async () => {
 
 const openEditCourseModal = async (course) => {
   editedCourse.value = { ...course };
-  // Fetch areas currently assigned to this course
   try {
-    const response = await axios.get(`/courses/${course.id}/areas`, tokenHeader());
-    editedCourseAreas.value = response.data.map(area => area.id);
+    const response = await axios.get(
+      `/courses/${course.id}/areas`,
+      tokenHeader()
+    );
+    editedCourseAreas.value = response.data.map((area) => area.id);
   } catch (error) {
     console.error("Error fetching course areas:", error);
     editedCourseAreas.value = [];
@@ -310,7 +396,7 @@ const openEditCourseModal = async (course) => {
 
 const closeEditCourseModal = () => {
   isEditCourseModalOpen.value = false;
-  editedCourseAreas.value = []; // Clear selected areas on close
+  editedCourseAreas.value = [];
 };
 
 const toggleAreaInCourse = (areaId, isChecked) => {
@@ -319,7 +405,9 @@ const toggleAreaInCourse = (areaId, isChecked) => {
       editedCourseAreas.value.push(areaId);
     }
   } else {
-    editedCourseAreas.value = editedCourseAreas.value.filter(id => id !== areaId);
+    editedCourseAreas.value = editedCourseAreas.value.filter(
+      (id) => id !== areaId
+    );
   }
 };
 
@@ -334,30 +422,44 @@ const editCourse = async () => {
     return;
   }
   try {
-    // Update course basic info
     const payload = {
       name: editedCourse.value.name,
-      instituteId: editedCourse.value.instituteId,
+      instituteId: editedCourse.value.institute.id,
       exist: editedCourse.value.exist,
     };
-    await axios.patch(`/courses/${editedCourse.value.id}`, payload, tokenHeader());
-
-    // Update course areas
-    // First, get current areas from backend to compare
-    const currentAreasResponse = await axios.get(`/courses/${editedCourse.value.id}/areas`, tokenHeader());
-    const currentAreaIds = currentAreasResponse.data.map(area => area.id);
-
-    const areasToAdd = editedCourseAreas.value.filter(id => !currentAreaIds.includes(id));
-    const areasToRemove = currentAreaIds.filter(id => !editedCourseAreas.value.includes(id));
-
+    await axios.patch(
+      `/courses/${editedCourse.value.id}`,
+      payload,
+      tokenHeader()
+    );
+    const currentAreasResponse = await axios.get(
+      `/courses/${editedCourse.value.id}/areas`,
+      tokenHeader()
+    );
+    const currentAreaIds = currentAreasResponse.data.map((area) => area.id);
+    const areasToAdd = editedCourseAreas.value.filter(
+      (id) => !currentAreaIds.includes(id)
+    );
+    const areasToRemove = currentAreaIds.filter(
+      (id) => !editedCourseAreas.value.includes(id)
+    );
     if (areasToAdd.length > 0) {
-      const addPayload = areasToAdd.map(areaId => ({ areaId, start_date: new Date().toISOString().split('T')[0] }));
-      await axios.post(`/courses/${editedCourse.value.id}/areas`, addPayload, tokenHeader());
+      const addPayload = areasToAdd.map((areaId) => ({
+        areaId,
+        start_date: new Date().toISOString().split("T")[0],
+      }));
+      await axios.post(
+        `/courses/${editedCourse.value.id}/areas`,
+        addPayload,
+        tokenHeader()
+      );
     }
     if (areasToRemove.length > 0) {
-      await axios.delete(`/courses/${editedCourse.value.id}/areas`, { data: areasToRemove, ...tokenHeader() });
+      await axios.delete(`/courses/${editedCourse.value.id}/areas`, {
+        data: areasToRemove,
+        ...tokenHeader(),
+      });
     }
-
     closeEditCourseModal();
     await fetchCourses();
     const alert = await alertController.create({
@@ -422,7 +524,7 @@ const fetchAreas = async () => {
   try {
     const response = await axios.get("/areas", tokenHeader());
     areas.value = response.data.sort((a, b) => a.name.localeCompare(b.name));
-    allAreas.value = areas.value; // Also update allAreas for course modal
+    allAreas.value = areas.value;
   } catch (error) {
     console.error("Error fetching areas:", error);
   }
@@ -488,7 +590,14 @@ const editArea = async () => {
     return;
   }
   try {
-    await axios.patch(`/areas/${editedArea.value.id}`, editedArea.value, tokenHeader());
+    await axios.patch(
+      `/areas/${editedArea.value.id}`,
+      {
+        name: editedArea.value.name,
+        instituteId: editedArea.value.institute.id,
+      },
+      tokenHeader()
+    );
     closeEditAreaModal();
     await fetchAreas();
     const alert = await alertController.create({
@@ -542,11 +651,153 @@ const deleteArea = async (area) => {
   await alert.present();
 };
 
+// --- Period Management ---
+const periods = ref([]);
+const isCreatePeriodModalOpen = ref(false);
+const newPeriod = ref({ name: "" });
+const isEditPeriodModalOpen = ref(false);
+const editedPeriod = ref({ id: null, name: "" });
+
+const fetchPeriods = async () => {
+  try {
+    const response = await axios.get("/periods", tokenHeader());
+    periods.value = response.data.sort((a, b) => a.name.localeCompare(b.name));
+  } catch (error) {
+    console.error("Error fetching periods:", error);
+  }
+};
+
+const openCreatePeriodModal = () => {
+  newPeriod.value = { name: "" };
+  isCreatePeriodModalOpen.value = true;
+};
+
+const closeCreatePeriodModal = () => {
+  isCreatePeriodModalOpen.value = false;
+};
+
+const createPeriod = async () => {
+  if (!newPeriod.value.name) {
+    const alert = await alertController.create({
+      header: "Error",
+      message: "El nombre del periodo no puede estar vacío.",
+      buttons: ["OK"],
+    });
+    await alert.present();
+    return;
+  }
+  try {
+    await axios.post("/periods", newPeriod.value, tokenHeader());
+    closeCreatePeriodModal();
+    await fetchPeriods();
+    const alert = await alertController.create({
+      header: "Éxito",
+      message: "Periodo creado exitosamente.",
+      buttons: ["OK"],
+    });
+    await alert.present();
+  } catch (error) {
+    console.error("Error creating period:", error);
+    const alert = await alertController.create({
+      header: "Error",
+      message: "Hubo un error al crear el periodo.",
+      buttons: ["OK"],
+    });
+    await alert.present();
+  }
+};
+
+const openEditPeriodModal = (period) => {
+  editedPeriod.value = {
+    id: period.id,
+    name: period.name,
+    instituteId: period.institute.id,
+  };
+  isEditPeriodModalOpen.value = true;
+};
+
+const closeEditPeriodModal = () => {
+  isEditPeriodModalOpen.value = false;
+};
+
+const editPeriod = async () => {
+  if (!editedPeriod.value.name) {
+    const alert = await alertController.create({
+      header: "Error",
+      message: "El nombre del periodo no puede estar vacío.",
+      buttons: ["OK"],
+    });
+    await alert.present();
+    return;
+  }
+  try {
+    await axios.patch(
+      `/periods/${editedPeriod.value.id}`,
+      {
+        name: editedPeriod.value.name,
+        instituteId: editedPeriod.value.institute.id,
+      },
+      tokenHeader()
+    );
+    closeEditPeriodModal();
+    await fetchPeriods();
+    const alert = await alertController.create({
+      header: "Éxito",
+      message: "Periodo actualizado exitosamente.",
+      buttons: ["OK"],
+    });
+    await alert.present();
+  } catch (error) {
+    console.error("Error updating period:", error);
+    const alert = await alertController.create({
+      header: "Error",
+      message: "Hubo un error al actualizar el periodo.",
+      buttons: ["OK"],
+    });
+    await alert.present();
+  }
+};
+
+const deletePeriod = async (period) => {
+  const alert = await alertController.create({
+    header: "Confirmar Eliminación",
+    message: `¿Estás seguro de que quieres eliminar el periodo "${period.name}"?`,
+    buttons: [
+      { text: "Cancelar", role: "cancel" },
+      {
+        text: "Eliminar",
+        handler: async () => {
+          try {
+            await axios.delete(`/periods/${period.id}`, tokenHeader());
+            await fetchPeriods();
+            const successAlert = await alertController.create({
+              header: "Éxito",
+              message: `El periodo "${period.name}" ha sido eliminado.`,
+              buttons: ["OK"],
+            });
+            await successAlert.present();
+          } catch (error) {
+            console.error("Error deleting period:", error);
+            const errorAlert = await alertController.create({
+              header: "Error",
+              message: "Hubo un error al eliminar el periodo.",
+              buttons: ["OK"],
+            });
+            await errorAlert.present();
+          }
+        },
+      },
+    ],
+  });
+  await alert.present();
+};
+
 onMounted(async () => {
   usuario.value = usuarioGet();
   if (usuario.value) {
     await fetchCourses();
     await fetchAreas();
+    await fetchPeriods();
   }
 });
 </script>

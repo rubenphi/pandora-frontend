@@ -265,7 +265,7 @@ export default {
 
                 // Check if the logged-in user is a teacher
                 const userRole = usuarioGet().rol;
-                if (userRole === "teacher") {
+                if (userRole === "teacher" || userRole === "admin") {
                   try {
                     const teacherAssignmentsResponse = await axios.get(
                       `/courses/teacher-assignments/${usuarioGet().id}`
@@ -300,23 +300,8 @@ export default {
                     JSON.stringify(cursosUsuario)
                   );
                   const currentYear = new Date().getFullYear();
-                  const coursesForCurrentYear = cursosUsuario.filter(
-                    (c) => c.year == currentYear
-                  );
 
-                  if (coursesForCurrentYear.length > 0) {
-                    // If there are courses for the current year, use the current year.
-                    localStorage.setItem("year", JSON.stringify(currentYear));
-                  } else if (cursosUsuario.length > 0) {
-                    // Otherwise, use the most recent year from the user's courses.
-                    const latestYear = cursosUsuario.sort(
-                      (a, b) => b.year - a.year
-                    )[0].year;
-                    localStorage.setItem("year", JSON.stringify(latestYear));
-                  } else {
-                    // If no courses at all, default to the current year.
-                    localStorage.setItem("year", JSON.stringify(currentYear));
-                  }
+                  localStorage.setItem("year", JSON.stringify(currentYear));
                 });
 
               await axios

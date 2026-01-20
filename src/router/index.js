@@ -200,6 +200,15 @@ const routes = [
         },
       },
       {
+        path: "evaluacion-grupal",
+        name: "EvaluacionGrupal",
+        component: () => import("@/views/EvaluacionGrupal.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
         path: "ver/revision/:id",
         component: () => import("@/views/VerRevision.vue"),
       },

@@ -270,10 +270,19 @@ ion-popover ion-item ion-label {
   --min-width: 250px; /* Ensure a reasonable minimum width */
 }
 
-
-
 /* FIX GLOBAL: IonModal recorta contenido largo */
 ion-modal::part(content) {
   padding-bottom: 10%;
 }
 
+ion-popover [popover]:not(:popover-open):not(dialog[open]) {
+  display: contents;
+}
+
+/*
+ * Fix for popover not closing on backdrop click.
+ * This forces the backdrop to be interactive.
+ */
+ion-popover::part(backdrop) {
+  pointer-events: auto;
+}

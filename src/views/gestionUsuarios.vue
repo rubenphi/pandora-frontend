@@ -58,6 +58,18 @@
             </ion-button>
           </ion-col>
         </ion-row>
+        <ion-row>
+          <ion-col>
+            <ion-button
+              expand="block"
+              color="primary"
+              @click="router.push('/admin/importar-usuarios')"
+            >
+              <ion-icon slot="start" :icon="personAddOutline"></ion-icon>
+              Importar Usuarios
+            </ion-button>
+          </ion-col>
+        </ion-row>
       </ion-grid>
 
       <!-- Sección de Profesores del Instituto -->
@@ -395,6 +407,21 @@
         </ion-header>
         <ion-content class="ion-padding">
           <ion-item>
+            <ion-label>Año Destino</ion-label>
+            <ion-select
+              v-model="selectedYearForBulk"
+              placeholder="Seleccione el año"
+            >
+              <ion-select-option
+                v-for="year in years"
+                :key="year"
+                :value="year"
+              >
+                {{ year }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+          <ion-item>
             <ion-label>Curso Destino</ion-label>
             <ion-select
               v-model="selectedCourseId"
@@ -497,6 +524,7 @@ import {
   trashOutline,
   layersOutline,
   schoolOutline,
+  personAddOutline,
 } from "ionicons/icons";
 
 const AssignmentType = {
@@ -583,6 +611,7 @@ export default {
       Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i)
     );
     const selectedYear = ref(new Date().getFullYear());
+    const selectedYearForBulk = ref(new Date().getFullYear());
 
     const isBulkAssignModalOpen = ref(false);
     const studentsForBulkAssign = ref([]);
@@ -812,6 +841,7 @@ export default {
       selectedCourseId.value = null;
       rolSelected.value = "student";
       selectedStudents.value = [];
+      selectedYearForBulk.value = selectedYear.value;
 
       // Re-use getUsuarios logic to fetch students
       loading.value = true;
@@ -858,7 +888,7 @@ export default {
 
       const assignments = selectedStudents.value.map((userId) => ({
         userId: userId,
-        year: parseInt(selectedYear.value, 10),
+        year: parseInt(selectedYearForBulk.value, 10),
         rol: "student",
       }));
 
@@ -1568,6 +1598,7 @@ export default {
       availableCourses,
       isPrivilegedUser,
       getRoleLabel,
+      selectedYearForBulk,
 
       teacherSearchResults,
       searchQuery,
@@ -1595,6 +1626,7 @@ export default {
       currentCourseAreas,
       selectedAreas,
       isTeacherAssignmentModalOpen,
+      personAddOutline,
     };
   },
 };

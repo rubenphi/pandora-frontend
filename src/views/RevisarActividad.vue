@@ -44,7 +44,7 @@
             <IonNote slot="end"
               >Nota:
               {{
-                studentGrades[student.id] !== null
+                studentGrades[student.id] != null
                   ? studentGrades[student.id].toFixed(2)
                   : "N/A"
               }}</IonNote
@@ -85,7 +85,7 @@
               :disabled="isSaving"
               >Guardar</ion-button
             >
-            <ion-list>
+            <ion-list v-if="evaluation[student.id]">
               <template v-for="criterion in criteria" :key="criterion.id">
                 <ion-item>
                   <ion-label>{{ criterion.description }}</ion-label>
@@ -164,86 +164,18 @@
         slot="fixed"
         v-if="selectedStudents.size > 0"
       >
-        <ion-fab-button @click="openBulkEvaluationModal">
+        <ion-fab-button @click="goToBulkEvaluation">
           Evaluar
         </ion-fab-button>
       </ion-fab>
 
-      <!-- Bulk Evaluation Modal -->
-      <ion-modal
-        :is-open="isBulkModalOpen"
-        @didDismiss="closeBulkEvaluationModal"
-        :initial-breakpoint="0.75"
-        :breakpoints="[0, 0.75, 1]"
-      >
-        <ion-header>
-          <ion-toolbar>
-            <ion-title>Evaluación Grupal</ion-title>
-            <ion-buttons slot="end">
-              <ion-button @click="closeBulkEvaluationModal">Cerrar</ion-button>
-            </ion-buttons>
-          </ion-toolbar>
-        </ion-header>
-        <ion-content class="ion-padding">
-          <p>
-            Asigne una puntuación a cada criterio. Se aplicará a los
-            {{ selectedStudents.size }} estudiantes seleccionados.
-          </p>
-          <ion-list>
-            <template v-for="criterion in criteria" :key="criterion.id">
-              <ion-item>
-                <ion-label>{{ criterion.description }}</ion-label>
-                <div class="range-wrapper">
-                  <div class="range-labels">
-                    <span class="range-label">0</span>
-                    <span class="range-label">{{ criterion.score }}</span>
-                  </div>
-                  <ion-range
-                    :value="bulkEvaluationTemplate[criterion.id]"
-                    @ionChange="
-                      bulkEvaluationTemplate[criterion.id] = $event.detail.value
-                    "
-                    min="0"
-                    :max="criterion.score"
-                    step="0.5"
-                    snaps="true"
-                    ticks="true"
-                    pin="true"
-                    :pin-formatter="(value) => value.toFixed(1)"
-                    class="small-range"
-                  >
-                  </ion-range>
-                </div>
-              </ion-item>
-            </template>
-          </ion-list>
-          <ion-grid>
-            <ion-row>
-              <ion-col>
-                <ion-button
-                  @click="closeBulkEvaluationModal"
-                  color="light"
-                  expand="block"
-                >
-                  Cancelar
-                </ion-button>
-              </ion-col>
-              <ion-col>
-                <ion-button @click="applyAndSaveChanges" expand="block">
-                  Aplicar y Guardar
-                </ion-button>
-              </ion-col>
-            </ion-row>
-          </ion-grid>
-        </ion-content>
-      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
 
 <script>
 import { ref, computed } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 import { tokenHeader, usuarioGet } from "../globalService";
 import {
@@ -271,7 +203,6 @@ import {
   IonCheckbox,
   IonFab,
   IonFabButton,
-  IonModal,
 } from "@ionic/vue";
 import { arrowBackOutline } from "ionicons/icons";
 
@@ -299,10 +230,10 @@ export default {
     IonCheckbox,
     IonFab,
     IonFabButton,
-    IonModal,
   },
   setup() {
     const mroute = useRoute();
+    const router = useRouter();
     const activityId = mroute.params.id;
     const usuario = ref(null);
     const periodId = ref(null);
@@ -315,8 +246,6 @@ export default {
     const currentlyOpenStudentId = ref(null); // Track the currently open student accordion
     const isSaving = ref(false);
     const selectedStudents = ref(new Set());
-    const isBulkModalOpen = ref(false);
-    const bulkEvaluationTemplate = ref({});
 
     const isSuccessToastOpen = ref(false);
     const setSuccessToastOpen = (val) => (isSuccessToastOpen.value = val);
@@ -331,6 +260,10 @@ export default {
     usuario.value = usuarioGet();
 
     const fetchActivityDetails = async () => {
+      // Force reset of evaluation state to prevent stale data on navigation
+      evaluation.value = {};
+      studentGrades.value = {};
+      
       try {
         const response = await axios.get(
           `/activities/${activityId}`,
@@ -764,60 +697,14 @@ export default {
       }
     };
 
-    const openBulkEvaluationModal = () => {
-      // Initialize template with 0
-      criteria.value.forEach((c) => {
-        bulkEvaluationTemplate.value[c.id] = 0;
+    const goToBulkEvaluation = () => {
+      router.push({
+        name: "EvaluacionGrupal",
+        state: {
+          activityId: activityId,
+          studentIds: Array.from(selectedStudents.value),
+        },
       });
-      isBulkModalOpen.value = true;
-    };
-
-    const closeBulkEvaluationModal = () => {
-      isBulkModalOpen.value = false;
-    };
-
-    const applyBulkEvaluation = () => {
-      const studentObjects = students.value.filter((s) =>
-        selectedStudents.value.has(s.id)
-      );
-
-      studentObjects.forEach((student) => {
-        for (const criterionId in bulkEvaluationTemplate.value) {
-          if (
-            evaluation.value[student.id] &&
-            evaluation.value[student.id][criterionId]
-          ) {
-            evaluation.value[student.id][criterionId].value =
-              bulkEvaluationTemplate.value[criterionId];
-          }
-        }
-        updateGrade(student); // Recalculate grade after applying
-      });
-    };
-
-    const saveBulkEvaluations = async () => {
-      const studentObjects = students.value.filter((s) =>
-        selectedStudents.value.has(s.id)
-      );
-      isSaving.value = true;
-      try {
-        await Promise.all(
-          studentObjects.map((student) => saveEvaluation(student))
-        );
-        setSuccessToastOpen(true); // Show success toast only after all are saved
-        await fetchStudentCriterionScores(activityId); // Re-fetch scores to update IDs
-      } catch (error) {
-        // Error toast is already handled in saveEvaluation
-        console.error("Una o más guardados fallaron.", error);
-      } finally {
-        isSaving.value = false;
-      }
-    };
-
-    const applyAndSaveChanges = async () => {
-      applyBulkEvaluation();
-      closeBulkEvaluationModal();
-      await saveBulkEvaluations();
     };
 
     return {
@@ -847,11 +734,7 @@ export default {
       handleStudentSelection,
       areAllSelected,
       toggleSelectAll,
-      isBulkModalOpen,
-      bulkEvaluationTemplate,
-      openBulkEvaluationModal,
-      closeBulkEvaluationModal,
-      applyAndSaveChanges,
+      goToBulkEvaluation,
     };
   },
 };

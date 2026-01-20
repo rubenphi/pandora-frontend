@@ -80,7 +80,6 @@ import {
   IonLabel,
   IonListHeader,
   IonModal,
-
   alertController,
   actionSheetController,
 } from "@ionic/vue";
@@ -152,7 +151,7 @@ export default {
       } else if (sheetsPerPage.value === 1) {
         scale = 0.2464;
       }
-      
+
       const scaledWidth = newImageWidth * scale;
       const scaledHeight = newImageHeight * scale;
 
@@ -436,10 +435,7 @@ export default {
       const relativeSrcRegex = /src="\/hoja50.jpg"/g;
 
       pagesHTML = pagesHTML.replace(originalSrcRegex, `${bgImageBase64}`);
-      pagesHTML = pagesHTML.replace(
-        relativeSrcRegex,
-        `src="${bgImageBase64}"`
-      );
+      pagesHTML = pagesHTML.replace(relativeSrcRegex, `src="${bgImageBase64}"`);
 
       const css = generateStyles(newImageWidth, newImageHeight, scale);
 
@@ -633,6 +629,11 @@ export default {
       const filename = `hoja_respuesta_${selectedStudent.value.code}.png`;
 
       if (Capacitor.isNativePlatform()) {
+        const nativeLoading = await alertController.create({
+          header: "Generando Hoja de Respuesta",
+          message: "Por favor espere...",
+          backdropDismiss: false,
+        });
         try {
           // Extraer la parte base64 (remover "data:image/png;base64,")
           const base64Data = imgSrc.split(",")[1];
@@ -641,15 +642,21 @@ export default {
             contentType: "image/png",
             base64Data: base64Data,
           });
-        } catch (error) {
-          // Ignorar errores de cancelación por parte del usuario
+        } catch (e) {
           if (
-            error?.message &&
-            !error.message.toLowerCase().includes("cancel") &&
-            !error.message.toLowerCase().includes("dismiss")
+            e?.message &&
+            !e.message.toLowerCase().includes("cancel") &&
+            !e.message.toLowerCase().includes("dismiss")
           ) {
-            console.error("Error al compartir el archivo:", error);
+            const errorAlert = await alertController.create({
+              header: "Error",
+              message: "Hubo un problema al compartir el PDF.",
+              buttons: ["OK"],
+            });
+            await errorAlert.present();
           }
+        } finally {
+          await nativeLoading.dismiss();
         }
       } else {
         // Lógica para web (descarga normal)
@@ -675,7 +682,6 @@ export default {
     };
   },
 };
-
 </script>
 
 <style>

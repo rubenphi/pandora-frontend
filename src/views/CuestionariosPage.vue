@@ -80,7 +80,9 @@ export default {
     const usuario = ref();
     const cursos = ref([]);
     const selectedYear = ref();
-    const availableYears = ref([]);
+    const availableYears = ref(
+      Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i)
+    );
     const allUserCursos = ref([]);
 
     const filterCoursesByYear = (year) => {
@@ -98,9 +100,6 @@ export default {
           (c) => c.active
         ) || [];
       selectedYear.value = JSON.parse(localStorage.getItem("year"));
-
-      const years = allUserCursos.value.map((c) => c.year);
-      availableYears.value = [...new Set(years)].sort((a, b) => b - a);
 
       filterCoursesByYear(selectedYear.value);
     });

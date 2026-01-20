@@ -19,94 +19,71 @@
     <ion-content class="ion-padding">
       <div v-if="loading">Cargando...</div>
       <div v-else>
-        <ion-list>
-          <ion-list-header>
-            <ion-label>Asignaciones de Cursos y Áreas</ion-label>
-          </ion-list-header>
+        <ion-card
+          v-for="course in allCourses"
+          :key="course.id"
+          class="ion-margin-bottom"
+        >
+          <ion-card-header>
+            <ion-item lines="none">
+              <ion-label>
+                <h2>{{ course.name }}</h2>
+              </ion-label>
+            </ion-item>
+          </ion-card-header>
 
-          <ion-accordion-group>
-            <ion-accordion v-for="course in allCourses" :key="course.id">
-              <ion-item slot="header">
-                <ion-label>{{ course.name }}</ion-label>
+          <ion-card-content>
+            <ion-item>
+              <ion-label>Rol en el curso</ion-label>
+              <ion-select
+                :value="courseAssignments[course.id]?.rol"
+                @ionChange="handleRoleChange(course.id, $event.detail.value)"
+                placeholder="Seleccionar Rol"
+                interface="popover"
+              >
+                <ion-select-option :value="null">Ninguno</ion-select-option>
+                <ion-select-option value="teacher">Profesor</ion-select-option>
+                <ion-select-option value="admin"
+                  >Director de Curso</ion-select-option
+                >
+              </ion-select>
+            </ion-item>
+
+            <ion-list>
+              <ion-list-header>
+                <ion-label>Áreas</ion-label>
+              </ion-list-header>
+              <ion-item v-for="area in allAreas[course.id]" :key="area.id">
+                <ion-label>{{ area.name }}</ion-label>
                 <ion-checkbox
                   slot="start"
-                  :checked="isCourseAssigned(course.id)"
+                  :checked="isAreaAssigned(course.id, area.id)"
                   @ionChange="
-                    toggleCourseAssignment(course.id, $event.detail.checked)
+                    toggleAreaAssignment(
+                      course.id,
+                      area.id,
+                      $event.detail.checked
+                    )
                   "
                 ></ion-checkbox>
               </ion-item>
-
-              <div class="ion-padding" slot="content">
-                <ion-item>
-                  <ion-label>Rol en el curso</ion-label>
-                  <ion-select
-                    :value="courseAssignments[course.id]?.rol"
-                    @ionChange="
-                      courseAssignments[course.id].rol = $event.detail.value
-                    "
-                    placeholder="Seleccionar Rol"
-                    interface="popover"
-                    :disabled="!isCourseAssigned(course.id)"
-                  >
-                    <ion-select-option value="teacher"
-                      >Profesor</ion-select-option
-                    >
-                    <ion-select-option value="admin"
-                      >Director de Curso</ion-select-option
-                    >
-                  </ion-select>
-                </ion-item>
-
-                <ion-list
-                  v-if="
-                    isCourseAssigned(course.id) &&
-                    (courseAssignments[course.id]?.rol === 'teacher' ||
-                      courseAssignments[course.id]?.rol === 'admin')
-                  "
+              <ion-item
+                v-if="!allAreas[course.id] || allAreas[course.id].length === 0"
+              >
+                <ion-label class="ion-text-wrap"
+                  >No hay áreas disponibles para este curso.</ion-label
                 >
-                  <ion-list-header>
-                    <ion-label>Áreas de {{ course.name }}</ion-label>
-                  </ion-list-header>
-                  <ion-item v-for="area in allAreas[course.id]" :key="area.id">
-                    <ion-label>{{ area.name }}</ion-label>
-                    <ion-checkbox
-                      slot="start"
-                      :checked="isAreaAssigned(course.id, area.id)"
-                      @ionChange="
-                        toggleAreaAssignment(
-                          course.id,
-                          area.id,
-                          $event.detail.checked
-                        )
-                      "
-                    ></ion-checkbox>
-                  </ion-item>
-                  <div
-                    v-if="
-                      !allAreas[course.id] || allAreas[course.id].length === 0
-                    "
-                  >
-                    <p>No hay áreas disponibles para este curso.</p>
-                  </div>
-                </ion-list>
-                <div v-else-if="isCourseAssigned(course.id)">
-                  <p>
-                    Las áreas solo se pueden asignar a roles de Profesor o
-                    Administrador.
-                  </p>
-                </div>
-              </div>
-            </ion-accordion>
-          </ion-accordion-group>
-        </ion-list>
+              </ion-item>
+            </ion-list>
+          </ion-card-content>
+        </ion-card>
       </div>
     </ion-content>
   </ion-modal>
 </template>
 
 <script>
-import { ref, watch, computed } from "vue";
+import { ref, watch } from "vue";
 import {
   IonModal,
   IonHeader,
@@ -122,8 +99,9 @@ import {
   IonCheckbox,
   IonSelect,
   IonSelectOption,
-  IonAccordionGroup,
-  IonAccordion,
+  IonCard,
+  IonCardHeader,
+  IonCardContent,
   alertController,
 } from "@ionic/vue";
 import axios from "axios";
@@ -146,8 +124,9 @@ export default {
     IonCheckbox,
     IonSelect,
     IonSelectOption,
-    IonAccordionGroup,
-    IonAccordion,
+    IonCard,
+    IonCardHeader,
+    IonCardContent,
   },
   props: {
     isOpen: Boolean,
@@ -170,28 +149,32 @@ export default {
     const initialAreaAssignments = ref({}); // To compare changes
     const courseAreaTeacherIds = ref({}); // Stores { courseId: { areaId: assignmentId } }
 
-    // const selectedYear = ref(new Date().getFullYear()); // Removed: Year is no longer relevant for CourseAreaTeacher
-
     const handleDidDismiss = () => {
       emit("didDismiss");
-    };
-
-    const isCourseAssigned = (courseId) => {
-      return courseAssignments.value[courseId]?.active === true;
     };
 
     const isAreaAssigned = (courseId, areaId) => {
       return areaAssignments.value[courseId]?.[areaId] === true;
     };
 
-    const toggleCourseAssignment = (courseId, isChecked) => {
-      if (isChecked) {
-        courseAssignments.value[courseId] = { rol: "teacher", active: true }; // Default to teacher
+    const handleRoleChange = (courseId, newRole) => {
+      if (!courseAssignments.value[courseId]) {
+        courseAssignments.value[courseId] = {
+          rol: newRole,
+          active: !!newRole,
+          initialRol: null,
+        };
       } else {
-        delete courseAssignments.value[courseId];
-        // Also remove area assignments for this course if the course is unassigned
+        courseAssignments.value[courseId].rol = newRole;
+      }
+
+      // Si selecciona "Ninguno", limpiar todas las áreas de este curso
+      if (!newRole) {
         if (areaAssignments.value[courseId]) {
-          delete areaAssignments.value[courseId];
+          // Desmarcar todas las áreas
+          Object.keys(areaAssignments.value[courseId]).forEach((areaId) => {
+            areaAssignments.value[courseId][areaId] = false;
+          });
         }
       }
     };
@@ -201,23 +184,25 @@ export default {
         areaAssignments.value[courseId] = {};
       }
       areaAssignments.value[courseId][areaId] = isChecked;
-    };
 
-    const assignedCoursesWithAreas = computed(() => {
-      return allCourses.value
-        .filter((course) => isCourseAssigned(course.id))
-        .map((course) => ({
-          ...course,
-          areas: allAreas.value[course.id] || [],
-        }));
-    });
+      // Auto-asignar rol "teacher" si no tiene rol y marca un área
+      if (isChecked && !courseAssignments.value[courseId]) {
+        courseAssignments.value[courseId] = {
+          rol: "teacher",
+          active: true,
+          initialRol: null,
+        };
+      }
+    };
 
     const fetchAllData = async () => {
       if (!props.selectedUser || !props.isOpen) return;
 
       loading.value = true;
+      let stage = "inicialización";
       try {
         // Fetch all courses
+        stage = "obteniendo cursos";
         const coursesRes = await axios.get(
           `/courses?instituteId=${currentUser.value.institute.id}&exist=true`,
           tokenHeader()
@@ -227,6 +212,7 @@ export default {
         );
 
         // Fetch all areas for all courses
+        stage = "obteniendo áreas para los cursos";
         const areaPromises = allCourses.value.map((course) =>
           axios.get(`/courses/${course.id}/areas`, tokenHeader())
         );
@@ -235,107 +221,87 @@ export default {
           allAreas.value[allCourses.value[index].id] = res.data;
         });
 
-        // Check if the selected user is the currently logged-in user
-        const isCurrentUser = currentUser.value.id === props.selectedUser.id;
-        let cachedTeacherAssignments = null;
-
-        if (isCurrentUser) {
-          const storedAssignments = localStorage.getItem("teacherAssignments");
-          if (storedAssignments) {
-            cachedTeacherAssignments = JSON.parse(storedAssignments);
-          }
-        }
-
         const userCourseData = {};
         const userAreaAssignmentsData = {};
         const tempCourseAreaTeacherIds = {};
 
-        if (cachedTeacherAssignments) {
-          // Initialize from cached data
-          cachedTeacherAssignments.forEach((assignment) => {
-            const courseId = assignment.course.id;
-            const areaId = assignment.area.id;
+        // Fetch user's current course assignments (UserToCourse) from backend
+        stage = "obteniendo asignaciones de cursos del usuario";
+        const userCoursesRes = await axios.get(
+          `/users/${
+            props.selectedUser.id
+          }/courses?year=${new Date().getFullYear()}`,
+          tokenHeader()
+        );
+        userCoursesRes.data.forEach((assignment) => {
+          if (assignment.active) {
+            userCourseData[assignment.course.id] = {
+              rol: assignment.rol,
+              active: true,
+              initialRol: assignment.rol,
+            };
+          }
+        });
 
-            // Course assignment
+        // Fetch user's current area assignments (CourseAreaTeacher) from backend
+        stage = "obteniendo asignaciones de áreas del usuario";
+        const allCourseAreaTeacherPromises = allCourses.value.map((course) =>
+          axios.get(`/courses/${course.id}/areas-teachers`, tokenHeader())
+        );
+        const allCourseAreaTeacherResponses = await Promise.all(
+          allCourseAreaTeacherPromises
+        );
+        allCourseAreaTeacherResponses.forEach((res, courseIndex) => {
+          const courseId = allCourses.value[courseIndex].id;
+          userAreaAssignmentsData[courseId] = {};
+          tempCourseAreaTeacherIds[courseId] = {};
+          res.data.forEach((assignment) => {
+            if (assignment.teacher?.id === props.selectedUser.id) {
+              tempCourseAreaTeacherIds[courseId][assignment.area.id] =
+                assignment.id;
+              if (assignment.active) {
+                userAreaAssignmentsData[courseId][assignment.area.id] = true;
+              }
+            }
+          });
+        });
+
+        stage = "reconciliando asignaciones de áreas y cursos";
+        for (const courseId in userAreaAssignmentsData) {
+          const hasActiveArea = Object.values(
+            userAreaAssignmentsData[courseId]
+          ).some((isActive) => isActive);
+          if (hasActiveArea && !userCourseData[courseId]?.active) {
             if (!userCourseData[courseId]) {
               userCourseData[courseId] = {
-                rol: assignment.teacher.rol, // Assuming teacher's role in course is stored here
+                rol: "teacher",
                 active: true,
-                initialRol: assignment.teacher.rol,
+                initialRol: "student",
               };
+            } else {
+              userCourseData[courseId].active = true;
             }
-
-            // Area assignment
-            if (!userAreaAssignmentsData[courseId]) {
-              userAreaAssignmentsData[courseId] = {};
-            }
-            userAreaAssignmentsData[courseId][areaId] = assignment.active;
-
-            // Store assignment ID
-            if (!tempCourseAreaTeacherIds[courseId]) {
-              tempCourseAreaTeacherIds[courseId] = {};
-            }
-            tempCourseAreaTeacherIds[courseId][areaId] = assignment.id;
-          });
-        } else {
-          // Fetch user's current course assignments (UserToCourse) from backend
-          const userCoursesRes = await axios.get(
-            `/users/${
-              props.selectedUser.id
-            }/courses?year=${new Date().getFullYear()}`, // Keep year for UserToCourse
-            tokenHeader()
-          );
-          userCoursesRes.data.forEach((assignment) => {
-            if (assignment.active) {
-              userCourseData[assignment.course.id] = {
-                rol: assignment.rol,
-                active: true,
-                initialRol: assignment.rol, // Store initial role for comparison
-              };
-            }
-          });
-
-          // Fetch user's current area assignments (CourseAreaTeacher) from backend
-          const allCourseAreaTeacherPromises = allCourses.value.map((course) =>
-            axios.get(`/courses/${course.id}/areas-teachers`, tokenHeader())
-          );
-          const allCourseAreaTeacherResponses = await Promise.all(
-            allCourseAreaTeacherPromises
-          );
-
-          allCourseAreaTeacherResponses.forEach((res, courseIndex) => {
-            const courseId = allCourses.value[courseIndex].id;
-            userAreaAssignmentsData[courseId] = {};
-            tempCourseAreaTeacherIds[courseId] = {};
-            res.data.forEach((assignment) => {
-              if (assignment.teacher?.id === props.selectedUser.id) {
-                tempCourseAreaTeacherIds[courseId][assignment.area.id] =
-                  assignment.id;
-                if (assignment.active) {
-                  userAreaAssignmentsData[courseId][assignment.area.id] = true;
-                }
-              }
-            });
-          });
+          }
         }
 
+        stage = "actualizando estado del componente";
         courseAssignments.value = { ...userCourseData };
         initialCourseAssignments.value = { ...userCourseData };
         areaAssignments.value = JSON.parse(
           JSON.stringify(userAreaAssignmentsData)
-        ); // Deep copy
+        );
         initialAreaAssignments.value = JSON.parse(
           JSON.stringify(userAreaAssignmentsData)
-        ); // Deep copy
+        );
         courseAreaTeacherIds.value = { ...tempCourseAreaTeacherIds };
       } catch (error) {
         console.error(
-          "Error fetching data for teacher assignment modal:",
+          `Error en la etapa '${stage}' al obtener datos para el modal de asignación:`,
           error
         );
         const alert = await alertController.create({
           header: "Error",
-          message: "No se pudieron cargar los datos de asignación.",
+          message: `No se pudieron cargar los datos de asignación (fallo en: ${stage}).`,
           buttons: ["OK"],
         });
         await alert.present();
@@ -347,38 +313,8 @@ export default {
     const confirmChanges = async () => {
       loading.value = true;
       try {
-        const promises = [];
-
-        // Process Course Assignments (UserToCourse)
-        for (const courseId of allCourses.value.map((c) => c.id)) {
-          const current = courseAssignments.value[courseId];
-          const initial = initialCourseAssignments.value[courseId];
-
-          // If there's a change in assignment status or role for this course
-          // The backend will find the existing UserToCourse record for this user/course/year
-          // and update its active status and role, or create a new one if none exists.
-          if (
-            initial?.active !== current?.active ||
-            (initial?.active && current?.active && initial.rol !== current.rol)
-          ) {
-            promises.push(
-              axios.post(
-                `/courses/${courseId}/users`,
-                [
-                  {
-                    userId: props.selectedUser.id,
-                    year: new Date().getFullYear(), // Keep year for UserToCourse
-                    rol: current?.rol || "student", // Default to student if unassigned
-                    active: current?.active || false, // Default to false if unassigned
-                  },
-                ],
-                tokenHeader()
-              )
-            );
-          }
-        }
-
-        // Process Area Assignments (CourseAreaTeacher)
+        // PASO 1: Guardar asignaciones de áreas
+        const areaPromises = [];
         for (const courseId in allAreas.value) {
           for (const area of allAreas.value[courseId]) {
             const isCurrentlyAssigned =
@@ -390,41 +326,67 @@ export default {
 
             if (isCurrentlyAssigned !== wasInitiallyAssigned) {
               if (assignmentId) {
-                // Case 1: Assignment existed and changed status (assigned -> unassigned or vice versa)
-                // Use PATCH to update its active status
-                promises.push(
+                // Actualizar asignación existente
+                areaPromises.push(
                   axios.patch(
                     `/courses/areas-teachers/${assignmentId}`,
-                    {
-                      active: isCurrentlyAssigned,
-                      // teacherId: props.selectedUser.id, // Not needed for PATCH if only active is changing
-                    },
+                    { active: isCurrentlyAssigned },
                     tokenHeader()
                   )
                 );
               } else if (isCurrentlyAssigned) {
-                // Case 2: Assignment did not exist and is now created (assigned)
-                // Use POST to create a new assignment (only if it's meant to be active)
-                promises.push(
+                // Crear nueva asignación
+                areaPromises.push(
                   axios.post(
                     `/courses/${courseId}/areas-teachers`,
                     {
                       areaId: area.id,
                       teacherId: props.selectedUser.id,
-                      active: true, // Always create as active
+                      active: true,
                     },
                     tokenHeader()
                   )
                 );
               }
-              // Case 3: Assignment did not exist and is now unassigned (no action needed)
-              // If !isCurrentlyAssigned and no assignmentId, there's nothing to do (no inactive record to create)
             }
           }
         }
 
-        await Promise.all(promises);
+        // Esperar a que se guarden todas las áreas
+        await Promise.all(areaPromises);
 
+        // PASO 2: Actualizar pertenencia a cursos DESPUÉS de guardar áreas
+        const coursePromises = [];
+        for (const courseId of allCourses.value.map((c) => c.id)) {
+          const current = courseAssignments.value[courseId];
+
+          // Verificar si tiene áreas asignadas ACTUALMENTE
+          const currentAreas = areaAssignments.value[courseId] || {};
+          const hasActiveAreas = Object.values(currentAreas).some((v) => v);
+          const currentRol = current?.rol;
+
+          // Usuario debe pertenecer al curso si tiene rol O áreas asignadas
+          const shouldBelongToCourse = !!currentRol || hasActiveAreas;
+
+          // SIEMPRE enviar actualización para este curso
+          // No importa el estado anterior, solo el estado actual
+          const payload = [
+            {
+              userId: props.selectedUser.id,
+              year: new Date().getFullYear(),
+              rol: currentRol || (hasActiveAreas ? "teacher" : "student"),
+              active: shouldBelongToCourse,
+            },
+          ];
+          coursePromises.push(
+            axios.post(`/courses/${courseId}/users`, payload, tokenHeader())
+          );
+        }
+
+        // Esperar a que se actualicen todas las pertenencias a cursos
+        await Promise.all(coursePromises);
+
+        // PASO 3: Mostrar mensaje de éxito y recargar SOLO después de que todo termine
         const alert = await alertController.create({
           header: "Éxito",
           message: "Asignaciones actualizadas correctamente.",
@@ -432,14 +394,14 @@ export default {
             {
               text: "OK",
               handler: () => {
-                router.go(0); // Use router.go(0) for full reload
+                router.go(0);
               },
             },
           ],
         });
         await alert.present();
       } catch (error) {
-        console.error("Error confirming changes:", error);
+        console.error("Error al guardar asignaciones:", error);
         const alert = await alertController.create({
           header: "Error",
           message: "Hubo un error al actualizar las asignaciones.",
@@ -467,13 +429,10 @@ export default {
       allAreas,
       courseAssignments,
       areaAssignments,
-      // selectedYear, // Removed from return
       handleDidDismiss,
-      isCourseAssigned,
       isAreaAssigned,
-      toggleCourseAssignment,
       toggleAreaAssignment,
-      assignedCoursesWithAreas,
+      handleRoleChange,
       confirmChanges,
     };
   },
