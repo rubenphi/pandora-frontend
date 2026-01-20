@@ -244,7 +244,8 @@ export function findAndLabelMarkers(
 }
 
 function getExpectedPositions(width, height) {
-  // Force a simple rectangular layout, assuming a portrait-like orientation
+  // Use consistent percentages that work for both orientations
+  // The acceptance threshold will handle variations
   return [
     { label: "TL", x: width * 0.25, y: height * 0.25 },
     { label: "TR", x: width * 0.75, y: height * 0.25 },
@@ -266,7 +267,9 @@ export function assignLabelToMarker(cx, cy, width, height) {
     }
   }
 
-  const acceptTh = Math.max(20, Math.min(width, height) / 6);
+  // Increase acceptance threshold to handle orientation variations
+  // Use 1/3 of the smaller dimension for more flexibility
+  const acceptTh = Math.max(40, Math.min(width, height) / 3);
   if (best && bestDist <= acceptTh) {
     return best.label;
   }
