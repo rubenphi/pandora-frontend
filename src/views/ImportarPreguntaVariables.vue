@@ -23,6 +23,10 @@
             <ion-label>Mezclar preguntas</ion-label>
             <ion-checkbox slot="end" v-model="mezclarPreguntas" />
           </ion-item>
+          <ion-item>
+            <ion-label>Mezclar opciones de respuesta</ion-label>
+            <ion-checkbox slot="end" v-model="mezclarOpciones" />
+          </ion-item>
           <!-- input for number of points  -->
           <ion-item>
             <ion-label position="stacked">Puntos</ion-label>
@@ -187,6 +191,7 @@ export default {
     const { pregunta } = mroute.params;
     const id = parseInt(mroute.params.id) || 0;
     const mezclarPreguntas = ref(true);
+    const mezclarOpciones = ref(true);
     const points = ref(10);
 
     const error = ref({
@@ -308,6 +313,7 @@ export default {
           {
             quizId: id ? id : 0,
             points: points.value,
+            shuffleOptions: mezclarOpciones.value,
             questions: objetosValidos.value,
           },
           {
@@ -377,6 +383,7 @@ export default {
     return {
       points,
       mezclarPreguntas,
+      mezclarOpciones,
       arrowBackOutline,
       pencil,
       trash,
