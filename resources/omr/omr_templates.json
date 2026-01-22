@@ -16,10 +16,10 @@
       "rows": 10,
       "cols": 10,
       "circles": {
-        "CTL": { "percent_x": 17.35, "percent_y": 7.9 },
-        "CTR": { "percent_x": 60.2, "percent_y": 7.9 },
-        "CBL": { "percent_x": 17.35, "percent_y": 43 },
-        "CBR": { "percent_x": 60.2, "percent_y": 43 }
+        "CTL": { "percent_x": 17.8, "percent_y": 7 },
+        "CTR": { "percent_x": 60.2, "percent_y": 7 },
+        "CBL": { "percent_x": 17.8, "percent_y": 42 },
+        "CBR": { "percent_x": 60.2, "percent_y": 42 }
       },
       "radius": 15
     },

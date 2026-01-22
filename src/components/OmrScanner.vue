@@ -146,6 +146,7 @@ export default {
         await CapacitorFlash.toggle();
         const { value } = await CapacitorFlash.isSwitchedOn();
         isFlashOn.value = value;
+        localStorage.setItem("omrFlashState", value);
       } catch (e) {
         console.error("Error toggling flash", e);
       }
@@ -395,6 +396,17 @@ export default {
       // Re-acquire camera stream if it was stopped
       if (!stream) {
         await startCamera();
+      }
+
+      // Restore flash state
+      try {
+        const storedFlash = localStorage.getItem("omrFlashState");
+        if (storedFlash === "true" && isFlashSupported.value) {
+          await CapacitorFlash.switchOn();
+          isFlashOn.value = true;
+        }
+      } catch (e) {
+        console.warn("Could not restore flash state:", e);
       }
 
       // Ensure the video is playing before restarting the processing loop

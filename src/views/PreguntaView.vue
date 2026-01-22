@@ -100,23 +100,19 @@
               </ion-item>
             </ion-radio-group>
           </div>
-          <div v-if="admin">
+          <div v-if="admin" class="ion-padding">
             <ion-item
               button
               lines="none"
               v-for="option in question.options"
               :key="option.id"
-              :href="'editar/opcion/' + option.id"
+          
             >
-              <ion-label class="ion-text-wrap"
+              <ion-label class="ion-text-wrap" :color="showCorrectAnswer && option.correct ? 'success' : ''"
                 ><b>{{ option.identifier }}. </b>
                 {{ option.sentence }}</ion-label
               >
-              <ion-icon
-                slot="start"
-                :color="showCorrectAnswer && option.correct ? 'success' : ''"
-                :icon="createOutline"
-              ></ion-icon>
+             
             </ion-item>
           </div>
         </ion-list>

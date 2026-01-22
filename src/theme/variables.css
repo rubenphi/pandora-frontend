@@ -271,8 +271,9 @@ ion-popover ion-item ion-label {
 }
 
 /* FIX GLOBAL: IonModal recorta contenido largo */
-ion-modal::part(content) {
-  padding-bottom: 10%;
+ion-modal ion-content {
+
+  --padding-bottom: 10%;
 }
 
 ion-popover [popover]:not(:popover-open):not(dialog[open]) {

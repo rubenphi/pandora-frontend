@@ -142,7 +142,7 @@
         </ion-button>
       </ion-buttons>
 
-      <!-- Modal para tipo de importacion  (desde pregunta, Json de Tipos (avanzado), Json de Opciones Variables (avanzado)) -->
+      <!-- Modal para tipo de importacion  (Desde Cuestionario, Json de Tipos (avanzado), Json de Opciones Variables (avanzado)) -->
 
       <ion-modal
         :is-open="isModalOpen"
@@ -170,7 +170,7 @@
             <ion-select
               label="Seleccione tipo de importación"
               v-model="tipoImportacionUrl"
-              placeholder="Si no sabe programar, seleccione 'Desde Pregunta'"
+              placeholder="Si no sabe programar, seleccione 'Desde Cuestionario'"
             >
               <ion-select-option
                 v-for="tipoEnLista in tiposIportacion"
@@ -282,7 +282,7 @@ export default {
     };
     const { id } = mroute.params;
     const tiposIportacion = ref([
-      { id: 1, url: "/cuestionario/importar/", name: "Desde Pregunta" },
+      { id: 1, url: "/cuestionario/importar/", name: "Desde Cuestionario" },
       {
         id: 2,
         url: "/cuestionario/importar/preguntas/tipo/",

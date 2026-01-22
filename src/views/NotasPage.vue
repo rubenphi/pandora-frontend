@@ -1110,7 +1110,7 @@ export default {
 
         const studentList = (
           await axios.get(
-            `/courses/${cursoId}/users?active=true&year=${year}`,
+            `/courses/${cursoId}/users?&year=${year}`,
             tokenHeader()
           )
         ).data

@@ -49,18 +49,6 @@
             <ion-col>
               <ion-button
                 expand="block"
-                @click="startScan"
-                :disabled="isSubmitting"
-              >
-                Escanear
-                <span v-if="numberOfSections > 1"
-                  >&nbsp;Sección {{ currentSection }}</span
-                >
-              </ion-button>
-            </ion-col>
-            <ion-col>
-              <ion-button
-                expand="block"
                 @click="submitAnswers"
                 :disabled="!student.id || isSubmitting"
                 :color="saveButtonColor"
@@ -68,6 +56,18 @@
                 <ion-spinner v-if="isSubmitting" name="crescent"></ion-spinner>
                 <ion-icon v-else :icon="saveOutline" slot="start"></ion-icon>
                 Guardar
+              </ion-button>
+            </ion-col>
+            <ion-col>
+              <ion-button
+                expand="block"
+                @click="startScan"
+                :disabled="isSubmitting"
+              >
+                Escanear
+                <span v-if="numberOfSections > 1"
+                  >&nbsp;Sección {{ currentSection }}</span
+                >
               </ion-button>
             </ion-col>
           </ion-row>
@@ -432,7 +432,14 @@ export default {
           message: `El código en la(s) sección(es) ${mismatchedSections.join(
             ", "
           )} no coincide con el de la primera sección (${referenceCode}). Por favor, vuelva a escanear las secciones incorrectas.`,
-          buttons: ["OK"],
+          buttons: [
+            {
+              text: "OK",
+              handler: () => {
+                setTimeout(() => startScan(), 300);
+              },
+            },
+          ],
         });
         await alert.present();
       }
@@ -455,7 +462,14 @@ export default {
           header: "Error de Red",
           message:
             "No se pudo verificar el código del estudiante. Verifique su conexión e inténtelo de nuevo.",
-          buttons: ["OK"],
+          buttons: [
+            {
+              text: "OK",
+              handler: () => {
+                setTimeout(() => startScan(), 300);
+              },
+            },
+          ],
         });
         await alert.present();
         return;
@@ -468,7 +482,14 @@ export default {
           const alert = await alertController.create({
             header: "Estudiante no encontrado",
             message: `No se encontró ningún estudiante con el código "${code}".`,
-            buttons: ["OK"],
+            buttons: [
+              {
+                text: "OK",
+                handler: () => {
+                  setTimeout(() => startScan(), 300);
+                },
+              },
+            ],
           });
           await alert.present();
         }
@@ -488,13 +509,20 @@ export default {
             const alert = await alertController.create({
               header: "Estudiante no Autorizado",
               message: `El estudiante ${student.value.name} ${student.value.lastName} no pertenece al curso activo de este cuestionario.`,
-              buttons: ["OK"],
+              buttons: [
+                {
+                  text: "OK",
+                  handler: () => {
+                    student.value = {};
+                    activeGroup.value = null;
+                    studentCodeInput.value = "";
+                    setTimeout(() => startScan(), 300);
+                  },
+                },
+              ],
             });
             await alert.present();
-            student.value = {};
-            activeGroup.value = null;
-            studentCodeInput.value = "";
-            return;
+            return; // Stop processing this student
           }
         } catch (error) {
           console.error("Error fetching student courses:", error);
@@ -502,11 +530,18 @@ export default {
             header: "Error de Verificación",
             message:
               "No se pudo verificar la inscripción del estudiante al curso. Por favor, inténtelo de nuevo.",
-            buttons: ["OK"],
+            buttons: [
+              {
+                text: "OK",
+                handler: () => {
+                  student.value = {};
+                  activeGroup.value = null;
+                  setTimeout(() => startScan(), 300);
+                },
+              },
+            ],
           });
           await alert.present();
-          student.value = {};
-          activeGroup.value = null;
           return;
         }
 
@@ -633,11 +668,29 @@ export default {
         await axios.post("/answers/bulk", answersPayload);
         const alert = await alertController.create({
           header: "Éxito",
-          message: "Las respuestas se han guardado correctamente.",
+          message: "¿Qué desea hacer a continuación?",
           buttons: [
             {
-              text: "OK",
-              handler: () => router.push(backUrl.value),
+              text: "Ver Resultados",
+              handler: () => {
+                router.push(backUrl.value);
+              },
+            },
+            {
+              text: "Escanear Nuevo",
+              handler: () => {
+                // Reset state
+                student.value = {};
+                studentCodeInput.value = "";
+                activeGroup.value = null;
+                sectionScanImageUrls.value.fill(null);
+                sectionStudentCodes.value.fill("");
+                sectionValidity.value.fill(true);
+                answersToSend.value.forEach((a) => (a.selectedOption = null));
+                currentSection.value = 1;
+                // Restart scan
+                setTimeout(() => startScan(), 300);
+              },
             },
           ],
         });

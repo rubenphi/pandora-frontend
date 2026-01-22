@@ -76,7 +76,7 @@ export default {
     const nameHeightPercent = (114 / originalImageHeight) * 100;
     const nameFontSizePx = 120; // Aumentado para resolución completa
 
-    const courseTopPercent = (330 / originalImageHeight) * 100;
+    const courseTopPercent = (600 / originalImageHeight) * 100;
     const courseLeftPercent = (600 / originalImageWidth) * 100;
     const courseWidthPercent = (1883 / originalImageWidth) * 100;
     const courseHeightPercent = (161 / originalImageHeight) * 100;

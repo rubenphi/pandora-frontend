@@ -12,6 +12,11 @@
             </ion-button>
           </ion-buttons>
           <ion-buttons slot="end" class="ion-margin-end">
+            <ion-button v-if="admin" @click="openStats">
+              <ion-icon :icon="statsChartOutline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+          <ion-buttons slot="end" class="ion-margin-end">
             <ion-button v-if="id" :href="'/ganadores/' + id">
               <ion-icon :icon="refreshOutline"></ion-icon>
             </ion-button>
@@ -193,6 +198,87 @@
           color="danger"
           @didDismiss="setErrorToastOpen(false)"
         ></ion-toast>
+
+        <!-- Statistics Modal -->
+        <ion-modal :is-open="showStatsModal" @didDismiss="showStatsModal = false">
+          <ion-header>
+            <ion-toolbar color="primary">
+              <ion-title>Análisis de Desempeño</ion-title>
+              <ion-buttons slot="end">
+                <ion-button @click="showStatsModal = false">Cerrar</ion-button>
+              </ion-buttons>
+            </ion-toolbar>
+            <ion-toolbar>
+              <ion-segment v-model="statsSegment">
+                <ion-segment-button value="challenging">
+                  <ion-label>Más Desafiantes</ion-label>
+                </ion-segment-button>
+                <ion-segment-button value="mastered">
+                  <ion-label>Más Dominadas</ion-label>
+                </ion-segment-button>
+              </ion-segment>
+            </ion-toolbar>
+          </ion-header>
+          <ion-content class="ion-padding">
+            <div v-if="loadingStats" class="ion-text-center ion-padding">
+              <ion-spinner name="crescent"></ion-spinner>
+              <p>Analizando respuestas...</p>
+            </div>
+            <div v-else>
+              <p class="ion-padding-horizontal" style="font-size: 0.9em; color: var(--ion-color-medium);">
+                <ion-icon :icon="informationCircleOutline" style="vertical-align: middle;"></ion-icon>
+                Este análisis permite identificar las preguntas con menor y mayor índice de aciertos.
+              </p>
+              
+              <ion-card v-for="(stat, index) in sortedStats" :key="stat.id" class="stats-card">
+                <ion-card-header>
+                  <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <ion-card-title style="font-size: 1.1em; font-weight: bold;">
+                      Pregunta {{ index + 1 }}
+                    </ion-card-title>
+                    <ion-badge :color="stat.successRate < 60 ? 'danger' : (stat.successRate < 80 ? 'warning' : 'success')">
+                      {{ Math.round(stat.successRate) }}% Éxito
+                    </ion-badge>
+                  </div>
+                </ion-card-header>
+                <ion-card-content>
+                  <p style="font-size: 1.1em; color: var(--ion-text-color); margin-bottom: 12px; font-weight: 500;">
+                    {{ stat.title }}
+                  </p>
+                  
+                  <div v-if="stat.sentence" class="question-sentence ion-padding" style="background: var(--ion-color-light); border-radius: 8px; margin-bottom: 12px;">
+                    <div v-html="stat.sentence"></div>
+                  </div>
+
+                  <div v-if="stat.photo" class="ion-margin-bottom">
+                    <img :src="stat.photo" style="border-radius: 8px; width: 100%; max-height: 200px; object-fit: contain;" />
+                  </div>
+
+                  <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px; padding: 12px; border-radius: 8px; background: rgba(var(--ion-color-primary-rgb), 0.05);">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <ion-icon :icon="checkmarkCircle" color="success"></ion-icon>
+                      <span style="font-weight: 600; font-size: 0.9em;">Respuesta correcta:</span>
+                      <span style="font-size: 0.9em;">{{ stat.correctOption?.sentence }}</span>
+                    </div>
+
+                    <div v-if="stat.mostSelectedOption" style="display: flex; align-items: center; gap: 8px;">
+                      <ion-icon :icon="stat.mostSelectedOption.correct ? checkmarkCircle : closeCircle" :color="stat.mostSelectedOption.correct ? 'success' : 'danger'"></ion-icon>
+                      <span style="font-weight: 600; font-size: 0.9em;">Opción más frecuente:</span>
+                      <span style="font-size: 0.9em;">{{ stat.mostSelectedOption.sentence }} ({{ stat.mostSelectedCount }} votos)</span>
+                    </div>
+                  </div>
+
+                  <div style="margin-top: 15px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.85em;">
+                      <span>{{ stat.correct }} aciertos de {{ stat.total }} respuestas</span>
+                    </div>
+                    <ion-progress-bar :value="stat.successRate / 100" :color="stat.successRate < 60 ? 'danger' : (stat.successRate < 80 ? 'warning' : 'success')"></ion-progress-bar>
+                  </div>
+                </ion-card-content>
+              </ion-card>
+            </div>
+          </ion-content>
+        </ion-modal>
       </ion-content>
     </div>
   </ion-page>
@@ -220,6 +306,12 @@ import {
   checkmarkCircleOutline,
   closeCircleOutline,
   qrCodeOutline,
+  statsChartOutline,
+  bulbOutline,
+  trendingDownOutline,
+  informationCircleOutline,
+  checkmarkCircle,
+  closeCircle,
 } from "ionicons/icons";
 
 import {
@@ -242,6 +334,15 @@ import {
   IonSpinner,
   IonToast,
   alertController,
+  IonModal,
+  IonSegment,
+  IonSegmentButton,
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardContent,
+  IonBadge,
+  IonProgressBar,
 } from "@ionic/vue";
 
 export default {
@@ -263,6 +364,15 @@ export default {
     IonAccordion,
     IonSpinner,
     IonToast,
+    IonModal,
+    IonSegment,
+    IonSegmentButton,
+    IonCard,
+    IonCardHeader,
+    IonCardTitle,
+    IonCardContent,
+    IonBadge,
+    IonProgressBar,
   },
   setup() {
     const usuario = ref();
@@ -304,6 +414,10 @@ export default {
     const scanResultPayload = ref(null);
     const scannedStudent = ref(null);
     const scannedAnswers = ref([]);
+    const showStatsModal = ref(false);
+    const statsSegment = ref("challenging");
+    const questionStats = ref([]);
+    const loadingStats = ref(false);
 
     const startScan = async () => {
       isShowingScanResult.value = false;
@@ -376,11 +490,89 @@ export default {
     };
 
     const submitScan = () => {
-      // Logic to submit the scanned answers will be implemented in the next step
       console.log("Submitting scan...", {
         student: scannedStudent.value,
         answers: scannedAnswers.value,
       });
+    };
+
+    const loadQuestionStats = async () => {
+      loadingStats.value = true;
+      try {
+        const response = await axios.get(`/quizzes/${id}/answers`);
+        const allAnswers = response.data;
+        const statsMap = {};
+
+        // Group quiz questions first to ensure all are represented
+        cuestionario.value.questions.forEach((q) => {
+          statsMap[q.id] = {
+            id: q.id,
+            title: q.title,
+            sentence: q.sentence,
+            photo: q.photo,
+            correctOption: q.options.find((o) => o.correct),
+            total: 0,
+            correct: 0,
+            optionFrequency: {},
+            options: q.options, // Store all options for reference
+          };
+        });
+
+        // Sum answers and track frequencies
+        allAnswers.forEach((ans) => {
+          const qStat = statsMap[ans.question.id];
+          if (qStat) {
+            qStat.total++;
+            if (ans.option.correct) {
+              qStat.correct++;
+            }
+            // Track frequency
+            const optId = ans.option.id;
+            qStat.optionFrequency[optId] = (qStat.optionFrequency[optId] || 0) + 1;
+          }
+        });
+
+        questionStats.value = Object.values(statsMap).map((s) => {
+          // Find most selected option
+          let mostSelectedId = null;
+          let maxFreq = -1;
+          
+          Object.entries(s.optionFrequency).forEach(([optId, freq]) => {
+            if (freq > maxFreq) {
+              maxFreq = freq;
+              mostSelectedId = parseInt(optId);
+            }
+          });
+
+          const mostSelectedOption = s.options.find(o => o.id === mostSelectedId);
+
+          return {
+            ...s,
+            successRate: s.total > 0 ? (s.correct / s.total) * 100 : 0,
+            mostSelectedOption: mostSelectedOption,
+            mostSelectedCount: maxFreq > 0 ? maxFreq : 0,
+          };
+        });
+      } catch (error) {
+        console.error("Error loading question stats:", error);
+        setErrorToastOpen(true, "Error al cargar estadísticas");
+      } finally {
+        loadingStats.value = false;
+      }
+    };
+
+    const sortedStats = computed(() => {
+      const stats = [...questionStats.value];
+      if (statsSegment.value === "challenging") {
+        return stats.sort((a, b) => a.successRate - b.successRate);
+      } else {
+        return stats.sort((a, b) => b.successRate - a.successRate);
+      }
+    });
+
+    const openStats = () => {
+      showStatsModal.value = true;
+      loadQuestionStats();
     };
 
     const handleAccordionChange = async (e) => {
@@ -612,7 +804,44 @@ export default {
       scannedStudent,
       scannedAnswers,
       submitScan,
+      showStatsModal,
+      statsSegment,
+      questionStats,
+      loadingStats,
+      loadQuestionStats,
+      sortedStats,
+      openStats,
+      statsChartOutline,
+      bulbOutline,
+      trendingDownOutline,
+      informationCircleOutline,
+      checkmarkCircle,
+      closeCircle,
     };
   },
 };
 </script>
+
+<style scoped>
+.stats-card {
+  margin-bottom: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--ion-color-light);
+}
+
+.question-sentence {
+  font-size: 0.95em;
+  line-height: 1.5;
+  color: var(--ion-color-step-700);
+}
+
+ion-segment {
+  --background: var(--ion-color-light);
+}
+
+ion-modal {
+  --height: 90%;
+  --border-radius: 16px;
+}
+</style>

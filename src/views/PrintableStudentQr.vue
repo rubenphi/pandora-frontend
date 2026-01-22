@@ -230,7 +230,9 @@ export default {
     };
 
     const cancelConfig = () => {
-      router.push("/admin/gestionar/usuarios");
+      if (!configConfirmed.value) {
+        router.push("/admin/gestionar/usuarios");
+      }
     };
 
     const generatePdfContent = async (studentsList, range) => {

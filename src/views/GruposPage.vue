@@ -514,6 +514,7 @@ export default {
           courseId: parseInt(cursoId, 10),
           instituteId: curso.value.institute.id,
           periodId: periodoId.value,
+          year: parseInt(selectedYear, 10),
           exist: true,
           active: true,
         };

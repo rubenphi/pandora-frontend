@@ -510,6 +510,7 @@ import {
   IonIcon,
   actionSheetController,
   alertController, // Import alertController
+  loadingController,
   IonCheckbox,
   IonGrid, // New import
   IonRow, // New import
@@ -886,13 +887,33 @@ export default {
         return;
       }
 
-      const assignments = selectedStudents.value.map((userId) => ({
-        userId: userId,
-        year: parseInt(selectedYearForBulk.value, 10),
-        rol: "student",
-      }));
+      // Show loading indicator
+      const loading = await loadingController.create({
+        message: "Procesando traslado de estudiantes...",
+      });
+      await loading.present();
 
       try {
+        // Step 1: Deactivate previous assignments for all selected students
+        const deactivationPromises = selectedStudents.value.map((userId) =>
+          axios.patch(
+            `/users/${userId}/deactivate-assignments`,
+            {
+              assignmentTypes: ["COURSE", "GROUP"],
+            },
+            tokenHeader()
+          )
+        );
+
+        await Promise.all(deactivationPromises);
+
+        // Step 2: Assign to new course
+        const assignments = selectedStudents.value.map((userId) => ({
+          userId: userId,
+          year: parseInt(selectedYearForBulk.value, 10),
+          rol: "student",
+        }));
+
         await axios.post(
           `/courses/${selectedCourseId.value}/users`,
           assignments,
@@ -901,13 +922,31 @@ export default {
           }
         );
 
+        await loading.dismiss();
         closeBulkAssignModal();
-        location.reload(); // Reload to see the changes
+        
+        // Show success message
+        const successAlert = await alertController.create({
+          header: "Éxito",
+          message: "Estudiantes trasladados correctamente.",
+          buttons: [
+            {
+              text: "OK",
+              handler: () => {
+                location.reload(); // Reload to see the changes
+              }
+            }
+          ],
+        });
+        await successAlert.present();
+
       } catch (error) {
+        await loading.dismiss();
         console.error("Error en la asignación múltiple:", error);
         const errorAlert = await alertController.create({
           header: "Error",
-          message: "Hubo un error al intentar asignar los estudiantes.",
+          message:
+            "Hubo un error al intentar trasladar los estudiantes. Por favor intente nuevamente.",
           buttons: ["OK"],
         });
         await errorAlert.present();
@@ -1028,6 +1067,30 @@ export default {
 
     const asignarUsuario = async () => {
       try {
+        // Step 0: Deactivate previous assignments if user is being moved from another active course
+        // This ensures they don't stay active in the old course/group
+        if (
+          courseSelected.value &&
+          courseSelected.value.id &&
+          courseSelected.value.id !== 0
+        ) {
+          try {
+            await axios.patch(
+              `/users/${selectedUser.value.id}/deactivate-assignments`,
+              {
+                assignmentTypes: [AssignmentType.COURSE, AssignmentType.GROUP],
+              },
+              tokenHeader()
+            );
+          } catch (deactivateError) {
+            console.warn(
+              "Warning: Could not deactivate previous assignments",
+              deactivateError
+            );
+            // We continue even if deactivation fails, but valid to log it
+          }
+        }
+
         // Step 1: Assign to course (skip if course is 0 - "Sin Curso")
         if (selectedCourseId.value != 0) {
           await axios.post(

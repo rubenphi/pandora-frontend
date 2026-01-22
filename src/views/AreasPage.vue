@@ -16,7 +16,7 @@
           ><strong>Periodo:</strong></ion-label
         >
         <ion-select
-          v-if="adminOProfesor"
+         
           slot="start"
           v-model="yearSelected"
           @ionChange="changeYear($event)"
@@ -173,19 +173,18 @@ export default {
       years.value = new Array(10)
         .fill(0)
         .map((_, i) => new Date().getFullYear() - i);
-      yearSelected.value =
-        localStorage.getItem("year") ?? new Date().getFullYear();
+      const storedYear = localStorage.getItem("year");
+      yearSelected.value = storedYear ? JSON.parse(storedYear) : new Date().getFullYear();
+
       usuario.value = usuarioGet();
       tokenHeader();
+
       if (usuario.value.rol === "student" || usuario.value.rol === "user") {
-        // course with te bigest year
-        const courseSelected = JSON.parse(
-          localStorage.getItem("cursosUsuario")
-        ).sort((a, b) => b.year - a.year)[0];
-        if (!yearSelected.value) {
-          yearSelected.value = courseSelected.year;
-          localStorage.setItem("yearSelected", yearSelected.value);
-        }
+        // Students always see the current year
+        yearSelected.value = new Date().getFullYear();
+        
+        const cursosUsuario = JSON.parse(localStorage.getItem("cursosUsuario")) || [];
+        const courseSelected = cursosUsuario.sort((a, b) => b.year - a.year)[0];
 
         localStorage.setItem("courseSelected", JSON.stringify(courseSelected));
       }
@@ -274,7 +273,7 @@ export default {
       },
 
       changeYear: (event) => {
-        localStorage.setItem("yearSelected", event.detail.value);
+        localStorage.setItem("year", JSON.stringify(event.detail.value));
         yearSelected.value = event.detail.value;
       },
 

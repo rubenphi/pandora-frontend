@@ -216,39 +216,24 @@ export default {
     const urlBackend = basedeURL();
     const router = useRouter();
     const mroute = useRoute();
-    const lessonId = parseInt(mroute.params.lessonId, 10);
-    let materialId = mroute.params.id ? parseInt(mroute.params.id, 10) : null;
-
-    const uploadedFileUrl = ref(null); // Moved declaration
-    const originalFileUrl = ref(null); // Moved declaration
-    const materialSaved = ref(false); // Moved declaration
+    const lessonId = ref(null);
+    const materialId = ref(null);
+    const usuario = ref(null);
+    const lessonDetails = ref(null);
+    const editor = ref(null);
+    const uploadedFileUrl = ref(null);
+    const originalFileUrl = ref(null);
+    const materialSaved = ref(false);
 
     const materialForm = ref({
-      id: materialId,
+      id: null,
       title: "",
       type: "PDF",
       content: "",
       url: "",
-      lessonId: lessonId,
+      lessonId: null,
       instituteId: null,
     });
-
-    // Check for copied material data from sessionStorage
-    const copiedMaterialString = sessionStorage.getItem("copiedMaterial");
-    if (copiedMaterialString) {
-      const copiedMaterial = JSON.parse(copiedMaterialString);
-      materialForm.value.title = copiedMaterial.title;
-      materialForm.value.type = copiedMaterial.type || "PDF"; // Default to PDF if type is not provided
-      materialForm.value.content = copiedMaterial.content || "";
-      materialForm.value.url = copiedMaterial.url || "";
-      materialForm.value.id = null; // Ensure it's a new material
-      materialId = null; // Ensure materialId is null for new creation
-      uploadedFileUrl.value = copiedMaterial.url || null; // Set for preview
-      sessionStorage.removeItem("copiedMaterial"); // Clear from sessionStorage
-    }
-    const usuario = ref(null);
-    const lessonDetails = ref(null);
-    const editor = ref(null);
 
     const previewSource = computed(() => {
       return uploadedFileUrl.value ? urlBackend + uploadedFileUrl.value : null;
@@ -257,7 +242,7 @@ export default {
     const backUrl = ref("");
 
     const pageTitle = computed(() => {
-      return materialId ? "Editar Material" : "Crear Material";
+      return materialId.value ? "Editar Material" : "Crear Material";
     });
 
     const isTextType = computed(() => {
@@ -290,19 +275,52 @@ export default {
     };
 
     onIonViewWillEnter(async () => {
+      // 1. Reset dynamic IDs from route
+      lessonId.value = parseInt(mroute.params.lessonId, 10);
+      materialId.value = mroute.params.id ? parseInt(mroute.params.id, 10) : null;
+
+      // 2. Reset form and states
+      materialForm.value = {
+        id: materialId.value,
+        title: "",
+        type: "PDF",
+        content: "",
+        url: "",
+        lessonId: lessonId.value,
+        instituteId: usuarioGet().institute.id,
+      };
+      uploadedFileUrl.value = null;
+      originalFileUrl.value = null;
+      materialSaved.value = false;
+
       usuario.value = usuarioGet();
-      materialForm.value.instituteId = usuario.value.institute.id;
 
       try {
-        const response = await axios.get(`/lessons/${lessonId}`, tokenHeader());
+        const response = await axios.get(`/lessons/${lessonId.value}`, tokenHeader());
         lessonDetails.value = response.data;
 
         const { course, area, period, year } = lessonDetails.value;
         backUrl.value = `/lecciones/${course.id}/${area.id}/${period.id}/${year}`;
 
-        if (materialId) {
+        // 3. Handle specific loading cases: Edit OR Copy
+        const copiedMaterialString = sessionStorage.getItem("copiedMaterial");
+
+        if (copiedMaterialString) {
+          // Case A: Copying an existing material
+          const copiedMaterial = JSON.parse(copiedMaterialString);
+          materialForm.value.title = copiedMaterial.title;
+          materialForm.value.type = copiedMaterial.type || "PDF";
+          materialForm.value.content = copiedMaterial.content || "";
+          materialForm.value.url = copiedMaterial.url || "";
+          materialForm.value.id = null;
+          materialId.value = null;
+          uploadedFileUrl.value = copiedMaterial.url || null;
+          sessionStorage.removeItem("copiedMaterial");
+ 
+        } else if (materialId.value) {
+          // Case B: Editing an existing material
           const materialResponse = await axios.get(
-            `/materials/${materialId}`,
+            `/materials/${materialId.value}`,
             tokenHeader()
           );
 
@@ -451,9 +469,9 @@ export default {
       };
 
       try {
-        if (materialId) {
+        if (materialId.value) {
           await axios.patch(
-            `/materials/${materialId}`,
+            `/materials/${materialId.value}`,
             materialData,
             tokenHeader()
           );
@@ -481,7 +499,7 @@ export default {
             text: "Eliminar",
             handler: async () => {
               try {
-                await axios.delete(`/materials/${materialId}`, tokenHeader());
+                await axios.delete(`/materials/${materialId.value}`, tokenHeader());
                 router.push(backUrl.value);
               } catch (error) {
                 console.error("Error deleting material:", error);

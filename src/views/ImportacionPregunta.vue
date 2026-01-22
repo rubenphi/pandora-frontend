@@ -110,7 +110,10 @@
                       v-for="pregunta in questionsByQuiz[quiz.id]?.questions || []"
                       :key="pregunta.id"
                     >
-                      <ion-checkbox v-model="pregunta.selected"></ion-checkbox>
+                      <ion-checkbox 
+                        v-model="pregunta.selected"
+                        @ionChange="toggleQuestionSelection(quiz.id, pregunta)"
+                      ></ion-checkbox>
                       <ion-label>{{ pregunta.title }}</ion-label>
                     </ion-item>
                   </div>
@@ -132,6 +135,26 @@
         <ion-button expand="block" @click="importarSeleccionadas">
           Importar preguntas seleccionadas
         </ion-button>
+
+        <!-- Resumen de selección -->
+        <div v-if="selectedQuestionsSummary.length > 0" class="ion-padding summary-section">
+          <h3>Resumen de selección</h3>
+          <ion-list>
+            <ion-item v-for="item in selectedQuestionsSummary" :key="item.quizId">
+              <ion-label>
+                <h2>{{ item.quizTitle }}</h2>
+                <p>{{ item.lessonTopic }} ({{ item.year }}) - {{ item.courseName }}</p>
+                <p><strong>{{ item.count }} preguntas seleccionadas</strong></p>
+              </ion-label>
+              <ion-button slot="end" fill="clear" color="danger" @click="removeQuizFromSelection(item.quizId)">
+                <ion-icon :icon="trashOutline"></ion-icon>
+              </ion-button>
+            </ion-item>
+          </ion-list>
+          <div class="ion-text-center">
+            <p><strong>Total: {{ totalSelectedCount }} preguntas</strong></p>
+          </div>
+        </div>
       </ion-list>
 
       <!-- Toasters -->
@@ -154,7 +177,7 @@
 </template>
 
 <script>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useRoute } from "vue-router";
 import {
   onIonViewWillEnter,
@@ -183,6 +206,7 @@ import {
   arrowBackOutline,
   downloadOutline,
   searchOutline,
+  trashOutline,
 } from "ionicons/icons";
 import { periodosGet, numerosOrdinales } from "../globalService";
 
@@ -221,6 +245,29 @@ export default {
     const periodos = ref(periodosGet());
     const lessons = ref([]); // Renamed from cuestionarios
     const questionsByQuiz = ref({}); // Renamed from preguntasPorLeccion
+    
+    // Global state to persist selection
+    const globalSelectedQuestions = ref({}); // { quizId: { quizData, questions: { questionId: questionData } } }
+
+    const totalSelectedCount = computed(() => {
+      let total = 0;
+      Object.values(globalSelectedQuestions.value).forEach(quiz => {
+        total += Object.keys(quiz.questions).length;
+      });
+      return total;
+    });
+
+    const selectedQuestionsSummary = computed(() => {
+      return Object.entries(globalSelectedQuestions.value).map(([quizId, data]) => ({
+        quizId,
+        quizTitle: data.quizTitle,
+        lessonTopic: data.lessonTopic,
+        year: data.year,
+        courseName: data.courseName,
+        count: Object.keys(data.questions).length
+      }));
+    });
+
     const modoOrden = ref("mix");
     const seleccionarTodas = ref(false);
 
@@ -256,27 +303,69 @@ export default {
       const quizzesRes = await axios.get(`/lessons/${lesson.id}/quizzes`);
       lesson.quizzes = quizzesRes.data; // Populate quizzes directly on the lesson object
 
-      for (const quiz of lesson.quizzes) { // Iterate over the newly populated quizzes
+      for (const quiz of lesson.quizzes) {
         const questionsRes = await axios.get(`/quizzes/${quiz.id}/questions`);
-        questionsRes.data.forEach((q) => (q.selected = false));
+        const sortedQuestions = questionsRes.data.sort((a, b) => a.id - b.id);
+        
+        // Sync with globalSelectedQuestions
+        sortedQuestions.forEach((q) => {
+          const isSelected = !!globalSelectedQuestions.value[quiz.id]?.questions[q.id];
+          q.selected = isSelected;
+        });
+
         questionsByQuiz.value[quiz.id] = {
-          name: quiz.title, // Use quiz title as name
-          questions: questionsRes.data,
+          name: quiz.title,
+          questions: sortedQuestions,
+          lessonData: lesson, // Keep lesson data for summary
+          quizData: quiz
         };
       }
     };
 
-    const toggleSeleccionTodas = (quizId, checked) => { // Modified to take quizId and checked status
+    const toggleQuestionSelection = (quizId, pregunta) => {
+      if (pregunta.selected) {
+        if (!globalSelectedQuestions.value[quizId]) {
+          const quizInfo = questionsByQuiz.value[quizId];
+          globalSelectedQuestions.value[quizId] = {
+            quizTitle: quizInfo.name,
+            lessonTopic: quizInfo.lessonData.topic,
+            year: quizInfo.lessonData.year,
+            courseName: cursoSelected.value.name,
+            questions: {}
+          };
+        }
+        globalSelectedQuestions.value[quizId].questions[pregunta.id] = pregunta;
+      } else {
+        if (globalSelectedQuestions.value[quizId]) {
+          delete globalSelectedQuestions.value[quizId].questions[pregunta.id];
+          if (Object.keys(globalSelectedQuestions.value[quizId].questions).length === 0) {
+            delete globalSelectedQuestions.value[quizId];
+          }
+        }
+      }
+    };
+
+    const toggleSeleccionTodas = (quizId, checked) => {
       if (questionsByQuiz.value[quizId]) {
-        questionsByQuiz.value[quizId].questions.forEach((q) => (q.selected = checked));
+        questionsByQuiz.value[quizId].questions.forEach((q) => {
+          q.selected = checked;
+          toggleQuestionSelection(quizId, q);
+        });
+      }
+    };
+
+    const removeQuizFromSelection = (quizId) => {
+      delete globalSelectedQuestions.value[quizId];
+      // Sync UI if the quiz is currently visible
+      if (questionsByQuiz.value[quizId]) {
+        questionsByQuiz.value[quizId].questions.forEach(q => q.selected = false);
       }
     };
 
     const importarSeleccionadas = async () => {
       let seleccionadas = [];
-      Object.values(questionsByQuiz.value).forEach(({ questions }) => {
-        // Iterate over questionsByQuiz
-        seleccionadas.push(...questions.filter((p) => p.selected));
+      Object.values(globalSelectedQuestions.value).forEach((quiz) => {
+        seleccionadas.push(...Object.values(quiz.questions));
       });
 
       if (seleccionadas.length === 0) {
@@ -287,6 +376,9 @@ export default {
 
       if (modoOrden.value === "mix") {
         seleccionadas = seleccionadas.sort(() => Math.random() - 0.5);
+      } else {
+        // Ensure consistent order by ID if not mixing
+        seleccionadas = seleccionadas.sort((a, b) => a.id - b.id);
       }
 
       try {
@@ -352,11 +444,17 @@ export default {
       periodoSelected,
       search,
       areasSearch,
-      questionsByQuiz, // Renamed
+      questionsByQuiz,
       modoOrden,
       seleccionarTodas,
       toggleSeleccionTodas,
-      loadQuizzesAndQuestions, // Renamed
+      loadQuizzesAndQuestions,
+      globalSelectedQuestions,
+      totalSelectedCount,
+      selectedQuestionsSummary,
+      toggleQuestionSelection,
+      removeQuizFromSelection,
+      trashOutline,
     };
   },
 };
@@ -365,5 +463,24 @@ export default {
 <style scoped>
 ion-checkbox {
   margin-right: 1rem;
+}
+
+.summary-section {
+  border-top: 1px solid var(--ion-color-step-200);
+  margin-top: 2rem;
+}
+
+.summary-section h3 {
+  margin-bottom: 1rem;
+  color: var(--ion-color-primary);
+}
+
+.summary-section ion-item {
+  --padding-start: 0;
+}
+
+.ion-text-center {
+  text-align: center;
+  margin-top: 1rem;
 }
 </style>

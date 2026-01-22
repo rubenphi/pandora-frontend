@@ -105,6 +105,7 @@ export default {
     });
 
     watch(selectedYear, (newYear) => {
+      localStorage.setItem("year", JSON.stringify(newYear));
       filterCoursesByYear(newYear);
     });
 

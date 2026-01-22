@@ -611,30 +611,15 @@ export function extractAndDrawResults(
       fractions.push(frac);
     }
 
-    cctx.fillStyle =
-      type === "numeric"
-        ? "rgba(64, 224, 208, 0.95)"
-        : "rgba(64, 224, 208, 0.95)";
-    for (let i = 0; i < dstData.length; i += 2) {
-      const gx = Math.round(dstData[i]),
-        gy = Math.round(dstData[i + 1]);
-      if (
-        gx < 0 ||
-        gy < 0 ||
-        gx >= correctedCanvas.width ||
-        gy >= correctedCanvas.height
-      )
-        continue;
-      cctx.beginPath();
-      cctx.arc(gx, gy, displayRadius, 0, Math.PI * 2);
-      cctx.fill();
-    }
+    // Identify "Winners" (Best candidate per group) AND Extract Data
+    const winnerIndices = new Set();
 
     if (type === "numeric") {
       const codeDigits = [];
+      // For numeric: Groups are Columns
       for (let c = 0; c < cols; c++) {
-        let bestRow = -1,
-          bestFrac = -1;
+        let bestRow = -1;
+        let bestFrac = -1;
         for (let r = 0; r < rows; r++) {
           const i = r * cols + c;
           if (detectedPoints[i] && fractions[i] > bestFrac) {
@@ -642,6 +627,10 @@ export function extractAndDrawResults(
             bestRow = r;
           }
         }
+        if (bestRow !== -1) {
+          winnerIndices.add(bestRow * cols + c);
+        }
+        // Data Extraction Logic
         codeDigits.push(
           bestRow !== -1 && bestRow !== rows - 1 ? bestRow + 1 : 0
         );
@@ -653,9 +642,10 @@ export function extractAndDrawResults(
       });
     } else if (type === "question") {
       const answers = [];
+      // For questions: Groups are Rows
       for (let r = 0; r < rows; r++) {
-        let bestCol = -1,
-          bestFrac = -1;
+        let bestCol = -1;
+        let bestFrac = -1;
         for (let c = 0; c < cols; c++) {
           const i = r * cols + c;
           if (detectedPoints[i] && fractions[i] > bestFrac) {
@@ -663,6 +653,10 @@ export function extractAndDrawResults(
             bestCol = c;
           }
         }
+        if (bestCol !== -1) {
+          winnerIndices.add(r * cols + bestCol);
+        }
+        // Data Extraction Logic
         answers.push({
           question: r + 1,
           answer:
@@ -678,21 +672,36 @@ export function extractAndDrawResults(
       });
     }
 
-    for (let i = 0; i < detectedPoints.length; i++) {
-      if (detectedPoints[i]) {
-        const px = Math.round(dstPts.data32F[i * 2]);
-        const py = Math.round(dstPts.data32F[i * 2 + 1]);
+    // DRAWING LOOP
+    for (let i = 0; i < dstData.length; i += 2) {
+      const gx = Math.round(dstData[i]);
+      const gy = Math.round(dstData[i + 1]);
+      if (
+        gx < 0 ||
+        gy < 0 ||
+        gx >= correctedCanvas.width ||
+        gy >= correctedCanvas.height
+      )
+        continue;
 
-        // Interpolate color based on fraction
-        const frac = fractions[i];
-        const red = Math.round(240 + frac * (128 - 240)); // From 240 (very light gray) to 128 (deep purple)
-        const green = Math.round(240 + frac * (0 - 240)); // From 240 (very light gray) to 0 (deep purple)
-        const blue = Math.round(240 + frac * (128 - 240)); // From 240 (very light gray) to 128 (deep purple)
+      const idx = i / 2;
+      const isWinner = winnerIndices.has(idx);
 
-        cctx.fillStyle = `rgba(${red}, ${green}, ${blue}, 0.95)`;
-        cctx.beginPath();
-        cctx.arc(px, py, displayRadius, 0, Math.PI * 2);
+      cctx.beginPath();
+      cctx.arc(gx, gy, displayRadius, 0, Math.PI * 2);
+
+      if (isWinner) {
+        // Winner: Filled Purple
+        cctx.fillStyle = "rgba(128, 0, 128, 0.8)"; // Purple fill
         cctx.fill();
+        cctx.strokeStyle = "rgba(128, 0, 128, 1)"; // Purple border
+        cctx.lineWidth = 2;
+        cctx.stroke();
+      } else {
+        // Others: Thin Purple Outline (Empty)
+        cctx.strokeStyle = "rgba(128, 0, 128, 0.6)"; // Lighter purple outline
+        cctx.lineWidth = 1;
+        cctx.stroke();
       }
     }
 
