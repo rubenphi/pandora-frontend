@@ -379,15 +379,26 @@ export default {
         }
       }
 
-      if (curso != cursosUsuario.value[0].id && !adminOprofesor()) {
-        router.push("/lecciones/" + cursosUsuario.value[0].id + "/" + area);
-      } else {
-        await axios
-          .get(
-            `/lessons?courseId=${curso}&areaId=${area}&periodId=${periodo}${
-              year ? "&year=" + year : ""
-            }&exist=true&type=${lessonType}`
-          )
+      const storedYear = localStorage.getItem("year") ? JSON.parse(localStorage.getItem("year")) : new Date().getFullYear();
+      const storedPeriodo = localStorage.getItem("periodoSelected") ? JSON.parse(localStorage.getItem("periodoSelected")) : null;
+
+      if (!adminOprofesor()) {
+        const currentCourse = cursosUsuario.value.find(c => c.id == curso);
+        const correctCourseForYear = cursosUsuario.value.find(c => c.year == (year || storedYear));
+
+        if (!currentCourse || (correctCourseForYear && currentCourse.id !== correctCourseForYear.id)) {
+          const targetCourseId = correctCourseForYear ? correctCourseForYear.id : cursosUsuario.value[0].id;
+          router.push(`/lecciones/${targetCourseId}/${area}/${periodo || storedPeriodo}/${year || storedYear}/${lessonType}`);
+          return;
+        }
+      }
+
+      await axios
+        .get(
+          `/lessons?courseId=${curso}&areaId=${area}&periodId=${periodo || storedPeriodo}${
+            (year || storedYear) ? "&year=" + (year || storedYear) : ""
+          }&exist=true&type=${lessonType}`
+        )
           .then((response) => {
             lecciones.value = response.data
               .map((leccion) => ({
@@ -407,7 +418,6 @@ export default {
         if (openedLessonId.value && openedSection.value === "materiales") {
           await materialesConsulta(openedLessonId.value);
         }
-      }
     });
 
     const cuestionarioConsulta = async (lessonId) => {

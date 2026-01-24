@@ -70,18 +70,17 @@ export default {
     const cursoEstudiante = ref();
     const adminOProfesor = ref();
     onIonViewWillEnter(async () => {
-      const year = localStorage.getItem("year");
+      const storedYear = localStorage.getItem("year");
+      const year = storedYear ? JSON.parse(storedYear) : new Date().getFullYear();
 
       adminOProfesor.value = adminOprofesor();
-      cursoEstudiante.value = JSON.parse(
-        localStorage.getItem("cursosUsuario")
-      ).find((course) => course.year == year);
+      const cursos = JSON.parse(localStorage.getItem("cursosUsuario")) || [];
+      
+      cursoEstudiante.value = cursos.find((course) => course.year == year);
 
-      //get the last course by year
-      if (!cursoEstudiante.value?.id) {
-        cursoEstudiante.value = JSON.parse(
-          localStorage.getItem("cursosUsuario")
-        ).sort((a, b) => b.year - a.year)[0];
+      // Default to the last course by year if no match for current selected year
+      if (!cursoEstudiante.value?.id && cursos.length > 0) {
+        cursoEstudiante.value = cursos.sort((a, b) => b.year - a.year)[0];
       }
     });
     return {

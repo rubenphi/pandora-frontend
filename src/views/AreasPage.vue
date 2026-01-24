@@ -162,7 +162,7 @@ export default {
 
     const years = ref([]);
     const yearSelected = ref();
-
+ 
     onIonViewWillEnter(async () => {
       adminOProfesor.value = adminOprofesor();
       periodos.value = periodosGet();
@@ -180,12 +180,21 @@ export default {
       tokenHeader();
 
       if (usuario.value.rol === "student" || usuario.value.rol === "user") {
-        // Students always see the current year
-        yearSelected.value = new Date().getFullYear();
-        
         const cursosUsuario = JSON.parse(localStorage.getItem("cursosUsuario")) || [];
-        const courseSelected = cursosUsuario.sort((a, b) => b.year - a.year)[0];
+        const sortedCourses = cursosUsuario.sort((a, b) => b.year - a.year);
+        
+        // Use stored year if valid for student, otherwise use most recent course year
+        const storedYearValue = storedYear ? JSON.parse(storedYear) : null;
+        const isValidStoredYear = sortedCourses.some(c => c.year == storedYearValue);
 
+        if (isValidStoredYear) {
+          yearSelected.value = storedYearValue;
+        } else if (sortedCourses.length > 0) {
+          yearSelected.value = sortedCourses[0].year;
+          localStorage.setItem("year", JSON.stringify(yearSelected.value));
+        }
+
+        const courseSelected = sortedCourses.find(c => c.year == yearSelected.value) || sortedCourses[0];
         localStorage.setItem("courseSelected", JSON.stringify(courseSelected));
       }
 
@@ -273,8 +282,21 @@ export default {
       },
 
       changeYear: (event) => {
-        localStorage.setItem("year", JSON.stringify(event.detail.value));
-        yearSelected.value = event.detail.value;
+        const selectedYearValue = event.detail.value;
+        localStorage.setItem("year", JSON.stringify(selectedYearValue));
+        yearSelected.value = selectedYearValue;
+
+        if (usuario.value.rol === "student" || usuario.value.rol === "user") {
+          const cursosUsuario = JSON.parse(localStorage.getItem("cursosUsuario")) || [];
+          const courseForYear = cursosUsuario.find(c => c.year == selectedYearValue);
+          if (courseForYear) {
+            localStorage.setItem("courseSelected", JSON.stringify(courseForYear));
+            // Trigger a potential reload or redirect if the route depends on courseId
+            if (id != courseForYear.id) {
+              router.push(`/areas/${courseForYear.id}`);
+            }
+          }
+        }
       },
 
       navigateToTab3: (areaId, type) => {
