@@ -43,15 +43,6 @@
             <ion-button
               expand="block"
               fill="outline"
-              @click="toggleArchivedCoursesSection()"
-            >
-              Cursos Archivados
-            </ion-button>
-          </ion-col>
-          <ion-col>
-            <ion-button
-              expand="block"
-              fill="outline"
               @click="toggleNoCourseSection()"
             >
               Usuarios Sin Curso
@@ -109,33 +100,6 @@
         </ion-item>
       </ion-list>
 
-      <!-- Sección de Cursos Archivados -->
-      <ion-list v-if="showArchivedCoursesSection && isPrivilegedUser">
-        <ion-list-header>
-          <ion-label>Cursos Archivados</ion-label>
-        </ion-list-header>
-        <div
-          v-if="archivedCourses.length === 0"
-          class="ion-text-center ion-padding"
-        >
-          <p>No hay cursos archivados.</p>
-        </div>
-        <ion-item v-else v-for="curso in archivedCourses" :key="curso.id">
-          <ion-label class="ion-text-wrap">
-            <h6>{{ curso.name }}</h6>
-            <p>ID: {{ curso.id }}</p>
-          </ion-label>
-          <div slot="end">
-            <ion-button
-              @click="reactivateCourse(curso)"
-              size="small"
-              color="success"
-            >
-              Reactivar
-            </ion-button>
-          </div>
-        </ion-item>
-      </ion-list>
 
       <!-- Sección de Usuarios Sin Curso -->
       <ion-list v-if="showNoCourseSection && isPrivilegedUser">
@@ -573,9 +537,7 @@ export default {
 
     const isTeacherAssignmentModalOpen = ref(false); // New ref for the new modal
 
-    const archivedCourses = ref([]); // New ref for archived courses
     const showTeachersSection = ref(false); // New ref for teachers section visibility
-    const showArchivedCoursesSection = ref(false); // New ref for archived courses section visibility
     const showNoCourseSection = ref(false); // New ref for no course section visibility
     const roles = ref([
       {
@@ -1528,68 +1490,7 @@ export default {
       ];
     };
 
-    const getArchivedCourses = async () => {
-      loading.value = true;
-      try {
-        const response = await axios.get(
-          `/courses?instituteId=${usuario.value.institute.id}&exist=false`,
-          tokenHeader()
-        );
-        archivedCourses.value = response.data.sort((a, b) =>
-          a.name.localeCompare(b.name)
-        );
-      } catch (error) {
-        console.error("Error fetching archived courses:", error);
-      } finally {
-        loading.value = false;
-      }
-    };
 
-    const reactivateCourse = async (course) => {
-      const alert = await alertController.create({
-        header: "Confirmar Reactivación",
-        message: `¿Estás seguro de que quieres reactivar el curso "${course.name}"?`,
-        buttons: [
-          {
-            text: "Cancelar",
-            role: "cancel",
-            cssClass: "secondary",
-          },
-          {
-            text: "Reactivar",
-            handler: async () => {
-              try {
-                const payload = {
-                  exist: true,
-                };
-                await axios.patch(
-                  `/courses/${course.id}`,
-                  payload,
-                  tokenHeader()
-                );
-                await getArchivedCourses(); // Refresh archived courses list
-                await getCurso(); // Refresh active courses list
-                const successAlert = await alertController.create({
-                  header: "Éxito",
-                  message: `El curso "${course.name}" ha sido reactivado.`,
-                  buttons: ["OK"],
-                });
-                await successAlert.present();
-              } catch (error) {
-                console.error("Error reactivating course:", error);
-                const errorAlert = await alertController.create({
-                  header: "Error",
-                  message: "Hubo un error al reactivar el curso.",
-                  buttons: ["OK"],
-                });
-                await errorAlert.present();
-              }
-            },
-          },
-        ],
-      });
-      await alert.present();
-    };
 
     const toggleTeachersSection = () => {
       showTeachersSection.value = !showTeachersSection.value;
@@ -1598,12 +1499,6 @@ export default {
       }
     };
 
-    const toggleArchivedCoursesSection = () => {
-      showArchivedCoursesSection.value = !showArchivedCoursesSection.value;
-      if (showArchivedCoursesSection.value) {
-        getArchivedCourses();
-      }
-    };
 
     const toggleNoCourseSection = async () => {
       showNoCourseSection.value = !showNoCourseSection.value;
@@ -1669,16 +1564,11 @@ export default {
       searchQuery,
 
       // Archived Courses
-      archivedCourses,
-      getArchivedCourses,
-      reactivateCourse,
 
       // Section Visibility
       showTeachersSection,
-      showArchivedCoursesSection,
       showNoCourseSection,
       toggleTeachersSection,
-      toggleArchivedCoursesSection,
       toggleNoCourseSection,
 
       // Area-Teacher assignments

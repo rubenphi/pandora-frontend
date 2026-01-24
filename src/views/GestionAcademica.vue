@@ -44,6 +44,26 @@
             </ion-buttons>
           </ion-item>
         </ion-list>
+
+        <ion-list-header color="medium">
+          <ion-label>Cursos Archivados</ion-label>
+        </ion-list-header>
+        <div
+          v-if="archivedCourses.length === 0"
+          class="ion-text-center ion-padding"
+        >
+          <p>No hay cursos archivados.</p>
+        </div>
+        <ion-list v-else>
+          <ion-item v-for="curso in archivedCourses" :key="curso.id">
+            <ion-label>{{ curso.name }}</ion-label>
+            <ion-buttons slot="end">
+              <ion-button color="success" fill="outline" @click="reactivateCourse(curso)">
+                Reactivar
+              </ion-button>
+            </ion-buttons>
+          </ion-item>
+        </ion-list>
       </div>
 
       <div v-if="selectedTab === 'areas'">
@@ -320,6 +340,7 @@ const editedCourse = ref({
 });
 const allAreas = ref([]);
 const editedCourseAreas = ref([]);
+const archivedCourses = ref([]);
 
 const fetchCourses = async () => {
   try {
@@ -332,6 +353,20 @@ const fetchCourses = async () => {
     );
   } catch (error) {
     console.error("Error fetching courses:", error);
+  }
+};
+
+const fetchArchivedCourses = async () => {
+  try {
+    const response = await axios.get(
+      `/courses?instituteId=${usuario.value.institute.id}&exist=false`,
+      tokenHeader()
+    );
+    archivedCourses.value = response.data.sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+  } catch (error) {
+    console.error("Error fetching archived courses:", error);
   }
 };
 
@@ -481,27 +516,71 @@ const editCourse = async () => {
 
 const deleteCourse = async (course) => {
   const alert = await alertController.create({
-    header: "Confirmar Eliminación",
-    message: `¿Estás seguro de que quieres eliminar el curso "${course.name}"?`,
+    header: "Confirmar Archivación",
+    message: `¿Estás seguro de que quieres archivar el curso "${course.name}"?`,
     buttons: [
       { text: "Cancelar", role: "cancel" },
       {
-        text: "Eliminar",
+        text: "Archivar",
         handler: async () => {
           try {
-            await axios.delete(`/courses/${course.id}`, tokenHeader());
+            await axios.patch(
+              `/courses/${course.id}`,
+              { exist: false },
+              tokenHeader()
+            );
             await fetchCourses();
+            await fetchArchivedCourses();
             const successAlert = await alertController.create({
               header: "Éxito",
-              message: `El curso "${course.name}" ha sido eliminado.`,
+              message: `El curso "${course.name}" ha sido archivado.`,
               buttons: ["OK"],
             });
             await successAlert.present();
           } catch (error) {
-            console.error("Error deleting course:", error);
+            console.error("Error archiving course:", error);
             const errorAlert = await alertController.create({
               header: "Error",
-              message: "Hubo un error al eliminar el curso.",
+              message: "Hubo un error al archivar el curso.",
+              buttons: ["OK"],
+            });
+            await errorAlert.present();
+          }
+        },
+      },
+    ],
+  });
+  await alert.present();
+};
+
+const reactivateCourse = async (course) => {
+  const alert = await alertController.create({
+    header: "Confirmar Reactivación",
+    message: `¿Estás seguro de que quieres reactivar el curso "${course.name}"?`,
+    buttons: [
+      { text: "Cancelar", role: "cancel" },
+      {
+        text: "Reactivar",
+        handler: async () => {
+          try {
+            await axios.patch(
+              `/courses/${course.id}`,
+              { exist: true },
+              tokenHeader()
+            );
+            await fetchCourses();
+            await fetchArchivedCourses();
+            const successAlert = await alertController.create({
+              header: "Éxito",
+              message: `El curso "${course.name}" ha sido reactivado.`,
+              buttons: ["OK"],
+            });
+            await successAlert.present();
+          } catch (error) {
+            console.error("Error reactivating course:", error);
+            const errorAlert = await alertController.create({
+              header: "Error",
+              message: "Hubo un error al reactivar el curso.",
               buttons: ["OK"],
             });
             await errorAlert.present();
@@ -796,6 +875,7 @@ onMounted(async () => {
   usuario.value = usuarioGet();
   if (usuario.value) {
     await fetchCourses();
+    await fetchArchivedCourses();
     await fetchAreas();
     await fetchPeriods();
   }
