@@ -336,11 +336,17 @@ export default {
               base64Data: base64Data,
             });
           } catch (e) {
-            if (
-              e?.message &&
-              !e.message.toLowerCase().includes("cancel") &&
-              !e.message.toLowerCase().includes("dismiss")
-            ) {
+            const msg = (e?.message || "").toLowerCase();
+            const isCancel =
+              msg.includes("cancelled") ||
+            msg.includes("user_cancelled") ||
+            msg.includes("dismiss") ||
+            msg.includes("user back") ||
+            msg.includes("back button");
+
+
+            if (!isCancel) {
+              console.error("Error sharing PDF:", e);
               const errorAlert = await alertController.create({
                 header: "Error",
                 message: "Hubo un problema al compartir el PDF.",
@@ -492,15 +498,16 @@ export default {
           link.click();
         }
       } catch (e) {
-        console.error("Error generating single QR image:", e);
         const msg = (e.message || "").toLowerCase();
-        if (
-          msg.includes("user canceled") ||
-          msg.includes("user cancelled") ||
-          msg.includes("cancelado")
-        ) {
-          console.log("User canceled share");
-        } else {
+        const isCancel =
+           msg.includes("cancelled") ||
+            msg.includes("user_cancelled") ||
+            msg.includes("dismiss") ||
+            msg.includes("user back") ||
+            msg.includes("back button");
+
+        if (!isCancel) {
+          console.error("Error generating single QR image:", e);
           const errorAlert = await alertController.create({
             header: "Error",
             message:

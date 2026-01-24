@@ -491,11 +491,15 @@ export default {
             base64Data: base64Data,
           });
         } catch (error) {
-          if (
-            error?.message &&
-            !error.message.toLowerCase().includes("cancel") &&
-            !error.message.toLowerCase().includes("dismiss")
-          ) {
+          const msg = (error?.message || "").toLowerCase();
+          const isCancel =
+            msg.includes("cancelled") ||
+            msg.includes("user_cancelled") ||
+            msg.includes("dismiss") ||
+            msg.includes("user back") ||
+            msg.includes("back button");
+
+          if (!isCancel) {
             console.error("Error generating/sharing PDF:", error);
             const errorAlert = await alertController.create({
               header: "Error",
@@ -643,14 +647,19 @@ export default {
             base64Data: base64Data,
           });
         } catch (e) {
-          if (
-            e?.message &&
-            !e.message.toLowerCase().includes("cancel") &&
-            !e.message.toLowerCase().includes("dismiss")
-          ) {
+          const msg = (e?.message || "").toLowerCase();
+          const isCancel =
+          msg.includes("cancelled") ||
+            msg.includes("user_cancelled") ||
+            msg.includes("dismiss") ||
+            msg.includes("user back") ||
+            msg.includes("back button");
+
+          if (!isCancel) {
+            console.error("Error sharing student sheet:", e);
             const errorAlert = await alertController.create({
               header: "Error",
-              message: "Hubo un problema al compartir el PDF.",
+              message: "Hubo un problema al compartir la hoja.",
               buttons: ["OK"],
             });
             await errorAlert.present();
