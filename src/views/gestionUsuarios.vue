@@ -453,7 +453,7 @@ import router from "../router";
 import TeacherAssignmentModal from "../components/TeacherAssignmentModal.vue";
 
 import { ref, computed, watch } from "vue";
-import { tokenHeader, usuarioGet, selectedYear as selectedYearService } from "../globalService";
+import { tokenHeader, usuarioGet, selectedYear as selectedYearService, currentServerYear } from "../globalService";
 import {
   onIonViewWillEnter,
   IonLabel,
@@ -570,12 +570,12 @@ export default {
         name: "Sin Curso",
       },
     ]);
-    const currentYear = selectedYearService();
+    const curServerYear = currentServerYear();
     const years = ref(
-      Array.from({ length: 10 }, (_, i) => currentYear - i)
+      Array.from({ length: 10 }, (_, i) => curServerYear - i)
     );
-    const selectedYear = ref(currentYear);
-    const selectedYearForBulk = ref(currentYear);
+    const selectedYear = ref(curServerYear);
+    const selectedYearForBulk = ref(curServerYear);
 
     const isBulkAssignModalOpen = ref(false);
     const studentsForBulkAssign = ref([]);
@@ -1486,7 +1486,7 @@ export default {
 
       cursosInstituto.value = [
         { id: 0, name: "Sin Curso" },
-        ...response.data.sort((a, b) => a.name.localeCompare(b.name)),
+        ...response.data.sort((a, b) => parseInt(a.name) - parseInt(b.name)),
       ];
     };
 

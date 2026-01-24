@@ -82,23 +82,80 @@ export function usuarioGet() {
   }
 }
 
+export function sortPeriods(periods) {
+  if (!periods || !Array.isArray(periods)) return periods;
+
+  const periodKeywords = {
+    1: ["primero", "primera", "primer", "uno", "1º", "1ra", "first"],
+    2: ["segundo", "segunda", "dos", "2º", "2da", "second"],
+    3: ["tercero", "tercera", "tercer", "tres", "3º", "3ra", "third"],
+    4: ["cuarto", "cuarta", "cuatro", "4º", "4ta", "fourth"],
+    5: ["quinto", "quinta", "cinco", "5º", "5ta", "fifth"],
+    6: ["sexto", "sexta", "seis", "6º", "6ta", "sixth"],
+    7: ["septimo", "septima", "setimo", "setima", "siete", "7º", "7ma", "seventh"],
+    8: ["octavo", "octava", "ocho", "8º", "8va", "eighth"],
+    9: ["noveno", "novena", "nueve", "9º", "9na", "ninth"],
+    10: ["decimo", "decima", "diez", "10º", "10ma", "tenth"],
+    11: ["undecimo", "undecima", "once", "11º", "11va", "eleventh"],
+    12: ["duodecimo", "duodecima", "doce", "12º", "12va", "twelfth"],
+  };
+
+  const getPeriodValue = (name) => {
+    if (!name) return Infinity;
+    const lowerName = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    
+    // 1. Prioritize digit extraction
+    const digitMatch = lowerName.match(/\d+/);
+    if (digitMatch) {
+      return parseInt(digitMatch[0], 10);
+    }
+
+    // 2. Check written words (1 to 12)
+    for (let i = 1; i <= 12; i++) {
+        const keywords = periodKeywords[i];
+        for (const keyword of keywords) {
+            const normalizedKeyword = keyword.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            // Use regex for word boundaries or non-alphanumeric surrounds
+            const regex = new RegExp(`(^|[^a-z0-9])${normalizedKeyword}([^a-z0-9]|$)`, 'i');
+            if (regex.test(lowerName)) {
+                return i;
+            }
+        }
+    }
+    
+    return Infinity; 
+  };
+
+  return [...periods].sort((a, b) => {
+    const valA = getPeriodValue(a.name);
+    const valB = getPeriodValue(b.name);
+    
+    if (valA !== valB) {
+      return valA - valB;
+    }
+    return a.name.localeCompare(b.name);
+  });
+}
+
 export function periodosGet() {
-  if (localStorage.getItem("periodos") == undefined) {
+  const stored = localStorage.getItem("periodos");
+  if (stored == undefined) {
     return false;
   } else {
-    //alphabetical order by name
-    return JSON.parse(localStorage.getItem("periodos")).sort((a, b) =>
-      a.name.localeCompare(b.name)
-    );
+    return sortPeriods(JSON.parse(stored));
   }
 }
 
 export function selectedYear() {
   if (localStorage.getItem("year") == undefined) {
-    return apiState.serverTime ? apiState.serverTime.year : new Date().getFullYear();
+    return currentServerYear();
   } else {
     return parseInt(JSON.parse(localStorage.getItem("year")), 10);
   }
+}
+
+export function currentServerYear() {
+  return apiState.serverTime ? apiState.serverTime.year : new Date().getFullYear();
 }
 
 export function selectedPeriod() {

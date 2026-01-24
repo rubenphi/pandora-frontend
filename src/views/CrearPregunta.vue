@@ -205,6 +205,7 @@ import {
   IonIcon,
   IonCardHeader,
   IonCardTitle,
+  alertController,
 } from "@ionic/vue";
 
 import {
@@ -372,23 +373,33 @@ export default {
     };
 
     const removeOption = async (index) => {
-      const optionToRemove = pregunta.value.options[index];
-      if (optionToRemove.id) {
-        // If it's an existing option, call delete API
-        try {
-          await axios.delete(`/options/${optionToRemove.id}`);
-          // Optionally, show a success message
-        } catch (err) {
-          console.error("Error deleting option:", err);
-          handleError(err);
-          return; // Don't remove from UI if delete fails
-        }
-      }
-      pregunta.value.options.splice(index, 1); // Remove from UI
-      // Re-assign identifiers to maintain alphabetical order
-      pregunta.value.options.forEach((option, idx) => {
-        option.identifier = getAlphabeticalIdentifier(idx);
+      const alert = await alertController.create({
+        header: "Confirmar eliminación",
+        message: "¿Estás seguro de que quieres eliminar esta opción?",
+        buttons: [
+          { text: "Cancelar", role: "cancel" },
+          {
+            text: "Eliminar",
+            handler: async () => {
+              const optionToRemove = pregunta.value.options[index];
+              if (optionToRemove.id) {
+                try {
+                  await axios.delete(`/options/${optionToRemove.id}`);
+                } catch (err) {
+                  console.error("Error deleting option:", err);
+                  handleError(err);
+                  return;
+                }
+              }
+              pregunta.value.options.splice(index, 1);
+              pregunta.value.options.forEach((option, idx) => {
+                option.identifier = getAlphabeticalIdentifier(idx);
+              });
+            },
+          },
+        ],
       });
+      await alert.present();
     };
 
     const handleCorrectOptionToggle = (toggledOption, event) => {
@@ -516,13 +527,27 @@ export default {
       },
 
       async eliminarPreguntaHard() {
-        try {
-          await axios.delete(`/questions/${mroute.params.id}`);
-          localStorage.setItem("error", "Pregunta eliminada exitosamente.");
-          router.push("/cuestionario/" + quizIdForRedirect.value); // Redirect to quiz page
-        } catch (err) {
-          handleError(err);
-        }
+        const alert = await alertController.create({
+          header: "Confirmar eliminación",
+          message: "¿Estás seguro de que quieres eliminar permanentemente esta pregunta?",
+          buttons: [
+            { text: "Cancelar", role: "cancel" },
+            {
+              text: "Eliminar",
+              role: "destructive",
+              handler: async () => {
+                try {
+                  await axios.delete(`/questions/${mroute.params.id}`);
+                  localStorage.setItem("error", "Pregunta eliminada exitosamente.");
+                  router.push("/cuestionario/" + quizIdForRedirect.value);
+                } catch (err) {
+                  handleError(err);
+                }
+              },
+            },
+          ],
+        });
+        await alert.present();
       },
 
       onFileChange(e) {
@@ -534,9 +559,22 @@ export default {
         };
         reader.value.readAsDataURL(file.value);
       },
-      borrarFoto() {
-        pregunta.value.photo = null;
-        src.value = defaultFile("thumbnail");
+      async borrarFoto() {
+        const alert = await alertController.create({
+          header: "Confirmar eliminación",
+          message: "¿Estás seguro de que quieres eliminar la imagen de esta pregunta?",
+          buttons: [
+            { text: "Cancelar", role: "cancel" },
+            {
+              text: "Eliminar",
+              handler: () => {
+                pregunta.value.photo = null;
+                src.value = defaultFile("thumbnail");
+              },
+            },
+          ],
+        });
+        await alert.present();
       },
       id,
       cuestionario,

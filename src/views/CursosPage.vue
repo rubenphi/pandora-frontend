@@ -71,7 +71,7 @@ import axios from "axios";
 import router from "../router";
 
 import { ref } from "vue";
-import { tokenHeader, usuarioGet, selectedYear as selectedYearService } from "../globalService";
+import { tokenHeader, usuarioGet, selectedYear as selectedYearService, currentServerYear } from "../globalService";
 import {
   onIonViewWillEnter,
   IonLabel,
@@ -107,7 +107,7 @@ export default {
     const usuario = ref();
     const currentYear = selectedYearService();
     const years = ref(
-      Array.from({ length: 10 }, (_, i) => currentYear - i)
+      Array.from({ length: 10 }, (_, i) => currentServerYear() - i)
     );
     const selectedYear = ref(currentYear);
 
@@ -148,6 +148,8 @@ export default {
                 .filter((assignment) => assignment.course.id == curso.course.id)
                 .map((assignment) => assignment.area),
       }));
+
+      cursosUsuario.value = cursosUsuario.value.sort((a, b) => parseInt(a.name) - parseInt(b.name));
     };
     return {
       usuario,

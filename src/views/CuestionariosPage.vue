@@ -36,7 +36,8 @@
 
 <script>
 import { ref, watch } from "vue";
-import { tokenHeader, usuarioGet, selectedYear as selectedYearService } from "../globalService";
+import axios from "axios";
+import { tokenHeader, usuarioGet, selectedYear as selectedYearService, currentServerYear } from "../globalService";
 
 import { peopleCircleOutline } from "ionicons/icons";
 
@@ -81,32 +82,45 @@ export default {
     const cursos = ref([]);
     const selectedYear = ref();
     const availableYears = ref(
-      Array.from({ length: 10 }, (_, i) => selectedYearService() - i)
+      Array.from({ length: 10 }, (_, i) => currentServerYear() - i)
     );
-    const allUserCursos = ref([]);
 
-    const filterCoursesByYear = (year) => {
-      cursos.value = allUserCursos.value
-        .filter((curso) => curso.year == year)
-        .sort((a, b) => a.name.localeCompare(b.name));
+    const fetchCursosUsuario = async (year) => {
+      if (!usuario.value?.id) return;
+      try {
+        const response = await axios.get(
+          `/users/${usuario.value.id}/courses?year=${year}&active=true`,
+          tokenHeader()
+        );
+
+        // Map the results to match what the template expects
+        cursos.value = response.data
+          .map((c) => ({
+            id: c.course.id,
+            name: c.course.name,
+            year: c.year,
+            active: c.active
+          })).
+          sort((a, b) => parseInt(a.name) - parseInt(b.name));
+      } catch (error) {
+        console.error("Error fetching courses for user:", error);
+        cursos.value = [];
+      }
     };
 
     onIonViewWillEnter(async () => {
       usuario.value = usuarioGet();
       tokenHeader();
 
-      allUserCursos.value =
-        JSON.parse(localStorage.getItem("cursosUsuario")).filter(
-          (c) => c.active
-        ) || [];
-      selectedYear.value = JSON.parse(localStorage.getItem("year"));
+      const storedYear = JSON.parse(localStorage.getItem("year"));
+      selectedYear.value = storedYear || selectedYearService();
 
-      filterCoursesByYear(selectedYear.value);
+      await fetchCursosUsuario(selectedYear.value);
     });
 
-    watch(selectedYear, (newYear) => {
+    watch(selectedYear, async (newYear) => {
       localStorage.setItem("year", JSON.stringify(newYear));
-      filterCoursesByYear(newYear);
+      await fetchCursosUsuario(newYear);
     });
 
     return {

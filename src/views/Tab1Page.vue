@@ -888,9 +888,6 @@ export default {
 
       usuario.value = usuarioGet();
       periodos.value = periodosGet();
-      if (Array.isArray(periodos.value)) {
-        periodos.value.sort((a, b) => a.name.localeCompare(b.name));
-      }
 
       cursosUsuario.value = (
         await axios.get(`/users/${usuario.value.id}/courses`)

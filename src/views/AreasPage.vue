@@ -102,7 +102,7 @@ import {
   periodosGet,
   adminOprofesor,
   LessonType,
-  selectedYear as selectedYearService,
+  currentServerYear,
 } from "../globalService";
 import {
   onIonViewWillEnter,
@@ -169,12 +169,12 @@ export default {
       periodoSelected.value = JSON.parse(
         localStorage.getItem("periodoSelected")
       );
-      const currentYear = selectedYearService();
+      const curServerYear = currentServerYear();
       years.value = new Array(10)
         .fill(0)
-        .map((_, i) => currentYear - i);
+        .map((_, i) => curServerYear - i);
       const storedYear = localStorage.getItem("year");
-      yearSelected.value = storedYear ? JSON.parse(storedYear) : currentYear;
+      yearSelected.value = storedYear ? JSON.parse(storedYear) : curServerYear;
 
       usuario.value = usuarioGet();
       tokenHeader();

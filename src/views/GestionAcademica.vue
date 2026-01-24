@@ -300,7 +300,7 @@
 <script setup>
 import axios from "axios";
 import { ref, onMounted } from "vue";
-import { tokenHeader, usuarioGet } from "../globalService";
+import { tokenHeader, usuarioGet, sortPeriods } from "../globalService";
 import {
   IonPage,
   IonHeader,
@@ -348,9 +348,7 @@ const fetchCourses = async () => {
       `/courses?instituteId=${usuario.value.institute.id}&exist=true`,
       tokenHeader()
     );
-    cursosInstituto.value = response.data.sort((a, b) =>
-      a.name.localeCompare(b.name)
-    );
+    cursosInstituto.value = response.data.sort((a, b) => parseInt(a.name) - parseInt(b.name));
   } catch (error) {
     console.error("Error fetching courses:", error);
   }
@@ -740,7 +738,7 @@ const editedPeriod = ref({ id: null, name: "" });
 const fetchPeriods = async () => {
   try {
     const response = await axios.get("/periods", tokenHeader());
-    periods.value = response.data.sort((a, b) => a.name.localeCompare(b.name));
+    periods.value = sortPeriods(response.data);
   } catch (error) {
     console.error("Error fetching periods:", error);
   }
@@ -814,7 +812,7 @@ const editPeriod = async () => {
       `/periods/${editedPeriod.value.id}`,
       {
         name: editedPeriod.value.name,
-        instituteId: editedPeriod.value.institute.id,
+        instituteId: editedPeriod.value.instituteId,
       },
       tokenHeader()
     );

@@ -201,7 +201,7 @@ import {
 import axios from "axios";
 import { arrowBackOutline, checkmarkOutline } from "ionicons/icons";
 import { ref } from "vue";
-import { adminOdirectivo, tokenHeader, selectedYear as selectedYearService } from "../globalService";
+import { adminOdirectivo, tokenHeader, selectedYear as selectedYearService, currentServerYear } from "../globalService";
 
 export default {
   components: {
@@ -232,7 +232,7 @@ export default {
     const selectedYearVal = selectedYearService();
     const selectedYear = ref(selectedYearVal);
     const years = ref(
-      Array.from({ length: 10 }, (_, i) => selectedYearVal - i)
+      Array.from({ length: 10 }, (_, i) => currentServerYear() - i)
     );
     const selectedRol = ref(null);
     const selectedCourseId = ref(null);
