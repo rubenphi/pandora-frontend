@@ -71,7 +71,7 @@ import axios from "axios";
 import router from "../router";
 
 import { ref } from "vue";
-import { tokenHeader, usuarioGet } from "../globalService";
+import { tokenHeader, usuarioGet, selectedYear as selectedYearService } from "../globalService";
 import {
   onIonViewWillEnter,
   IonLabel,
@@ -105,10 +105,11 @@ export default {
   },
   setup() {
     const usuario = ref();
+    const currentYear = selectedYearService();
     const years = ref(
-      Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i)
+      Array.from({ length: 10 }, (_, i) => currentYear - i)
     );
-    const selectedYear = ref(new Date().getFullYear());
+    const selectedYear = ref(currentYear);
 
     const cursosUsuario = ref([]);
 

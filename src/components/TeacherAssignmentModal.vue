@@ -105,7 +105,7 @@ import {
   alertController,
 } from "@ionic/vue";
 import axios from "axios";
-import { tokenHeader, usuarioGet } from "../globalService";
+import { tokenHeader, usuarioGet, selectedYear as selectedYearService } from "../globalService";
 import { useRouter } from "vue-router"; // Import useRouter
 
 export default {
@@ -230,7 +230,7 @@ export default {
         const userCoursesRes = await axios.get(
           `/users/${
             props.selectedUser.id
-          }/courses?year=${new Date().getFullYear()}`,
+          }/courses?year=${selectedYearService()}`,
           tokenHeader()
         );
         userCoursesRes.data.forEach((assignment) => {
@@ -373,7 +373,7 @@ export default {
           const payload = [
             {
               userId: props.selectedUser.id,
-              year: new Date().getFullYear(),
+              year: selectedYearService(),
               rol: currentRol || (hasActiveAreas ? "teacher" : "student"),
               active: shouldBelongToCourse,
             },

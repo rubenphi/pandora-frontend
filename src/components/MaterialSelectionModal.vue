@@ -140,7 +140,7 @@ import {
 } from "@ionic/vue";
 import { closeOutline } from "ionicons/icons";
 import axios from "axios";
-import { tokenHeader, usuarioGet } from "../globalService";
+import { tokenHeader, usuarioGet, selectedYear as selectedYearService } from "../globalService";
 
 export default {
   name: "MaterialSelectionModal",
@@ -174,7 +174,7 @@ export default {
     const availableCourses = ref([]);
     const selectedArea = ref(props.area); // Pre-select area from prop
     const availableAreas = ref([]);
-    const selectedYear = ref(new Date().getFullYear());
+    const selectedYear = ref(selectedYearService());
     const selectedPeriod = ref(null); // Default to "Todos los Periodos"
     const availableYears = ref([]);
     const availablePeriods = ref([]); // Will be fetched dynamically
@@ -186,7 +186,7 @@ export default {
     const usuario = ref(usuarioGet());
 
     const fetchAvailableYears = () => {
-      const currentYear = new Date().getFullYear();
+      const currentYear = selectedYearService();
       const years = [];
       for (let i = currentYear - 5; i <= currentYear + 1; i++) {
         years.push(i);

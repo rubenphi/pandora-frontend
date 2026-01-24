@@ -201,7 +201,7 @@ import {
 import axios from "axios";
 import { arrowBackOutline, checkmarkOutline } from "ionicons/icons";
 import { ref } from "vue";
-import { adminOdirectivo, tokenHeader } from "../globalService";
+import { adminOdirectivo, tokenHeader, selectedYear as selectedYearService } from "../globalService";
 
 export default {
   components: {
@@ -229,9 +229,10 @@ export default {
     const esAdmin = adminOdirectivo();
 
     // Nuevas referencias para la gestión de cursos
-    const selectedYear = ref(new Date().getFullYear());
+    const selectedYearVal = selectedYearService();
+    const selectedYear = ref(selectedYearVal);
     const years = ref(
-      Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i)
+      Array.from({ length: 10 }, (_, i) => selectedYearVal - i)
     );
     const selectedRol = ref(null);
     const selectedCourseId = ref(null);

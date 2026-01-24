@@ -489,7 +489,7 @@ import router from "../router";
 import TeacherAssignmentModal from "../components/TeacherAssignmentModal.vue";
 
 import { ref, computed, watch } from "vue";
-import { tokenHeader, usuarioGet } from "../globalService";
+import { tokenHeader, usuarioGet, selectedYear as selectedYearService } from "../globalService";
 import {
   onIonViewWillEnter,
   IonLabel,
@@ -608,11 +608,12 @@ export default {
         name: "Sin Curso",
       },
     ]);
+    const currentYear = selectedYearService();
     const years = ref(
-      Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i)
+      Array.from({ length: 10 }, (_, i) => currentYear - i)
     );
-    const selectedYear = ref(new Date().getFullYear());
-    const selectedYearForBulk = ref(new Date().getFullYear());
+    const selectedYear = ref(currentYear);
+    const selectedYearForBulk = ref(currentYear);
 
     const isBulkAssignModalOpen = ref(false);
     const studentsForBulkAssign = ref([]);
@@ -1622,7 +1623,8 @@ export default {
       usersCourse,
       courseSelected,
       changeCourse,
-      selectedYear,
+      selectedYear, 
+      selectedYearService,
       captarAbierto,
       getCurso,
       getUsuarios,

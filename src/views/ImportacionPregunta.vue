@@ -208,7 +208,7 @@ import {
   searchOutline,
   trashOutline,
 } from "ionicons/icons";
-import { periodosGet, numerosOrdinales } from "../globalService";
+import { periodosGet, numerosOrdinales, selectedYear as selectedYearService } from "../globalService";
 
 export default {
   components: {
@@ -413,12 +413,13 @@ export default {
           `/courses?instituteId=${userLoged.value.institute.id}&exist=true`
         )
       ).data;
+      const currentYear = selectedYearService();
       years.value = Array.from(
         { length: 10 },
-        (_, i) => new Date().getFullYear() - i
+        (_, i) => currentYear - i
       );
       yearSelected.value =
-        localStorage.getItem("year") || new Date().getFullYear();
+        localStorage.getItem("year") || currentYear;
     });
 
     return {

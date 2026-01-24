@@ -189,6 +189,7 @@ import {
   adminOprofesor,
   basedeURL,
   selectedPeriod,
+  selectedYear,
 } from "../globalService";
 import { useRoute } from "vue-router";
 import router from "../router";
@@ -379,7 +380,7 @@ export default {
         }
       }
 
-      const storedYear = localStorage.getItem("year") ? JSON.parse(localStorage.getItem("year")) : new Date().getFullYear();
+      const storedYear = selectedYear();
       const storedPeriodo = localStorage.getItem("periodoSelected") ? JSON.parse(localStorage.getItem("periodoSelected")) : null;
 
       if (!adminOprofesor()) {

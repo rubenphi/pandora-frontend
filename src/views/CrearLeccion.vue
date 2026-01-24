@@ -91,7 +91,7 @@ import { ref } from "vue";
 import { useRoute } from "vue-router";
 import router from "../router";
 
-import { usuarioGet, tokenHeader, periodosGet } from "../globalService";
+import { usuarioGet, tokenHeader, periodosGet, selectedYear } from "../globalService";
 import {
   onIonViewWillEnter,
   IonLabel,
@@ -202,7 +202,7 @@ export default {
             usuario.value.institute.id,
             10
           );
-          cuestionario.value.year = new Date().getFullYear();
+          cuestionario.value.year = selectedYear();
 
           await axios
             .post("/lessons", cuestionario.value)

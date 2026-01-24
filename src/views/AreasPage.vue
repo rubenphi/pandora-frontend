@@ -12,11 +12,10 @@
         </ion-toolbar>
       </ion-header>
       <ion-item lines="none">
-        <ion-label slot="start" v-if="!adminOProfesor"
-          ><strong>Periodo:</strong></ion-label
+        <ion-label slot="start" ><strong>Periodo:</strong></ion-label
         >
         <ion-select
-         
+         v-if="adminOProfesor"
           slot="start"
           v-model="yearSelected"
           @ionChange="changeYear($event)"
@@ -103,6 +102,7 @@ import {
   periodosGet,
   adminOprofesor,
   LessonType,
+  selectedYear as selectedYearService,
 } from "../globalService";
 import {
   onIonViewWillEnter,
@@ -169,12 +169,12 @@ export default {
       periodoSelected.value = JSON.parse(
         localStorage.getItem("periodoSelected")
       );
-      //las 10 years
+      const currentYear = selectedYearService();
       years.value = new Array(10)
         .fill(0)
-        .map((_, i) => new Date().getFullYear() - i);
+        .map((_, i) => currentYear - i);
       const storedYear = localStorage.getItem("year");
-      yearSelected.value = storedYear ? JSON.parse(storedYear) : new Date().getFullYear();
+      yearSelected.value = storedYear ? JSON.parse(storedYear) : currentYear;
 
       usuario.value = usuarioGet();
       tokenHeader();

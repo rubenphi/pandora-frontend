@@ -36,7 +36,7 @@
 
 <script>
 import { ref, watch } from "vue";
-import { tokenHeader, usuarioGet } from "../globalService";
+import { tokenHeader, usuarioGet, selectedYear as selectedYearService } from "../globalService";
 
 import { peopleCircleOutline } from "ionicons/icons";
 
@@ -81,7 +81,7 @@ export default {
     const cursos = ref([]);
     const selectedYear = ref();
     const availableYears = ref(
-      Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i)
+      Array.from({ length: 10 }, (_, i) => selectedYearService() - i)
     );
     const allUserCursos = ref([]);
 

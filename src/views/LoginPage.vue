@@ -158,7 +158,7 @@
 <script>
 import { ref } from "vue";
 import axios from "axios";
-import { basedeURL, tokenHeader, usuarioGet } from "../globalService";
+import { basedeURL, tokenHeader, usuarioGet, fetchServerTime } from "../globalService";
 import { Device } from "@capacitor/device"; // Import Device
 import {
   alertController,
@@ -285,34 +285,36 @@ export default {
               }
             })
             .then(async () => {
-              await axios
-                .get(`/users/${usuarioGet().id}/courses`)
-                .then((response) => {
-                  const cursosUsuario = response.data.map((assignacion) => ({
-                    name: assignacion.course.name,
-                    id: assignacion.course.id,
-                    year: assignacion.year,
-                    active: assignacion.active,
-                    rol: assignacion.rol,
-                  }));
-                  localStorage.setItem(
-                    "cursosUsuario",
-                    JSON.stringify(cursosUsuario)
-                  );
-                  const currentYear = new Date().getFullYear();
+              const coursesResponse = await axios.get(
+                `/users/${usuarioGet().id}/courses`
+              );
+              const cursosUsuario = coursesResponse.data.map((assignacion) => ({
+                name: assignacion.course.name,
+                id: assignacion.course.id,
+                year: assignacion.year,
+                active: assignacion.active,
+                rol: assignacion.rol,
+              }));
+              localStorage.setItem(
+                "cursosUsuario",
+                JSON.stringify(cursosUsuario)
+              );
 
-                  localStorage.setItem("year", JSON.stringify(currentYear));
-                });
+              const serverTime = await fetchServerTime();
+              const currentYear = serverTime
+                ? serverTime.year
+                : new Date().getFullYear();
 
-              await axios
-                .get(`/periods?instituteId=${usuarioGet().institute.id}`)
-                .then((response) => {
-                  const periodos = response.data.map((periodo) => ({
-                    name: periodo.name,
-                    id: periodo.id,
-                  }));
-                  localStorage.setItem("periodos", JSON.stringify(periodos));
-                });
+              localStorage.setItem("year", JSON.stringify(currentYear));
+
+              const periodsResponse = await axios.get(
+                `/periods?instituteId=${usuarioGet().institute.id}`
+              );
+              const periodos = periodsResponse.data.map((periodo) => ({
+                name: periodo.name,
+                id: periodo.id,
+              }));
+              localStorage.setItem("periodos", JSON.stringify(periodos));
 
               router.push("/inicio");
             })

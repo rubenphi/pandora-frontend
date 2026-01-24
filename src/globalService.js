@@ -7,6 +7,7 @@ import { Capacitor } from "@capacitor/core";
 export const apiState = reactive({
   isBaseUrlInitialized: false,
   baseUrl: null,
+  serverTime: null, // Add serverTime to apiState or export it separately
 });
 
 // 2. Función para establecer y guardar la nueva IP
@@ -51,6 +52,21 @@ export function basedeURL() {
   return apiState.baseUrl;
 }
 
+export async function fetchServerTime() {
+  try {
+    const response = await axios.get("/auth/server-time");
+    apiState.serverTime = response.data;
+    if (localStorage.getItem("year") === null) {
+      localStorage.setItem("year", JSON.stringify(apiState.serverTime.year));
+    }
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching server time:", error);
+    // Fallback if server is unreachable, but we should prioritize server time
+    return null;
+  }
+}
+
 // --- Se mantienen las otras funciones existentes ---
 
 export function tokenHeader() {
@@ -79,7 +95,7 @@ export function periodosGet() {
 
 export function selectedYear() {
   if (localStorage.getItem("year") == undefined) {
-    return new Date().getFullYear();
+    return apiState.serverTime ? apiState.serverTime.year : new Date().getFullYear();
   } else {
     return parseInt(JSON.parse(localStorage.getItem("year")), 10);
   }

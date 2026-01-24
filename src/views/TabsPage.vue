@@ -55,7 +55,7 @@ import {
   peopleOutline,
   personOutline,
 } from "ionicons/icons";
-import { adminOprofesor } from "../globalService";
+import { adminOprofesor, selectedYear } from "../globalService";
 export default {
   components: {
     IonLabel,
@@ -70,8 +70,7 @@ export default {
     const cursoEstudiante = ref();
     const adminOProfesor = ref();
     onIonViewWillEnter(async () => {
-      const storedYear = localStorage.getItem("year");
-      const year = storedYear ? JSON.parse(storedYear) : new Date().getFullYear();
+      const year = selectedYear();
 
       adminOProfesor.value = adminOprofesor();
       const cursos = JSON.parse(localStorage.getItem("cursosUsuario")) || [];
