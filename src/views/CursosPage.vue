@@ -120,34 +120,49 @@ export default {
       await getCursoUsuario(selectedYear.value);
     });
     const getCursoUsuario = async (year) => {
-      const response = await axios.get(
-        //  /users/1/courses?year=2024'
-        `/users/${usuario.value.id}/courses?year=${year}&active=true`,
-        tokenHeader()
-      );
+      const isAdminView = localStorage.getItem("adminView") === "true";
+      
+      if (usuario.value.rol === "admin" && isAdminView) {
+        // Mode: Show EVERYTHING
+        const response = await axios.get(
+          `/courses?instituteId=${usuario.value.institute.id}&exist=true`,
+          tokenHeader()
+        );
+        
+        cursosUsuario.value = response.data.map((curso) => ({
+          id: curso.id,
+          name: curso.name,
+          areas: (curso.courseAreas || [])
+            .filter((a) => a.active === true)
+            .map((a) => a.area),
+        }));
+      } else {
+        // Mode: Show only assignments
+        const response = await axios.get(
+          `/users/${usuario.value.id}/courses?year=${year}&active=true`,
+          tokenHeader()
+        );
 
-      const areAAssignments = await axios
-        .get(`/courses/teacher-assignments/${usuarioGet().id}`)
-        .then((response) => {
-          return response.data.filter(
-            (assignment) => assignment.active === true
-          );
-        });
+        const areAAssignments = await axios
+          .get(`/courses/teacher-assignments/${usuario.value.id}`)
+          .then((response) => {
+            return response.data.filter(
+              (assignment) => assignment.active === true
+            );
+          });
 
-      cursosUsuario.value = response.data.map((curso) => ({
-        id: curso.course.id,
-        name: curso.course.name,
-        areas:
-          usuario.value.rol == "admin"
-            ? curso.course.courseAreas
+        cursosUsuario.value = response.data.map((curso) => ({
+          id: curso.course.id,
+          name: curso.course.name,
+          areas: isAdminView 
+            ? (curso.course.courseAreas || [])
                 .filter((a) => a.active == true)
-                .map((a) => {
-                  return a.area;
-                })
+                .map((a) => a.area)
             : areAAssignments
                 .filter((assignment) => assignment.course.id == curso.course.id)
                 .map((assignment) => assignment.area),
-      }));
+        }));
+      }
 
       cursosUsuario.value = cursosUsuario.value.sort((a, b) => parseInt(a.name) - parseInt(b.name));
     };

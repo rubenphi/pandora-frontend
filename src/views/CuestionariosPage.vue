@@ -88,22 +88,40 @@ export default {
     const fetchCursosUsuario = async (year) => {
       if (!usuario.value?.id) return;
       try {
-        const response = await axios.get(
-          `/users/${usuario.value.id}/courses?year=${year}&active=true`,
-          tokenHeader()
-        );
-
-        // Map the results to match what the template expects
-        cursos.value = response.data
-          .map((c) => ({
-            id: c.course.id,
-            name: c.course.name,
-            year: c.year,
-            active: c.active
-          })).
-          sort((a, b) => parseInt(a.name) - parseInt(b.name));
+        const isAdminView = localStorage.getItem("adminView") === "true";
+        let response;
+        
+        if (usuario.value.rol === "admin" && isAdminView) {
+          // Fetch ALL institute courses
+          response = await axios.get(
+            `/courses?instituteId=${usuario.value.institute.id}&exist=true`,
+            tokenHeader()
+          );
+          cursos.value = response.data
+            .map((c) => ({
+              id: c.id,
+              name: c.name,
+              year: year, // Assume selected year
+              active: true
+            }))
+            .sort((a, b) => parseInt(a.name) - parseInt(b.name));
+        } else {
+          // Fetch only assigned courses
+          response = await axios.get(
+            `/users/${usuario.value.id}/courses?year=${year}&active=true`,
+            tokenHeader()
+          );
+          cursos.value = response.data
+            .map((c) => ({
+              id: c.course.id,
+              name: c.course.name,
+              year: c.year,
+              active: c.active
+            }))
+            .sort((a, b) => parseInt(a.name) - parseInt(b.name));
+        }
       } catch (error) {
-        console.error("Error fetching courses for user:", error);
+        console.error("Error fetching courses:", error);
         cursos.value = [];
       }
     };

@@ -16,7 +16,7 @@
           <ion-label>Autorizaciones</ion-label>
         </ion-item>
 
-        <ion-item v-if="admin">
+        <ion-item v-if="admin" :href="'/admin/configuraciones'">
           <ion-icon slot="start" :icon="settingsOutline"></ion-icon
           ><ion-label>Configuraciones</ion-label>
         </ion-item>

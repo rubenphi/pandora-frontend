@@ -95,6 +95,14 @@ const routes = [
         },
       },
       {
+        path: "admin/configuraciones",
+        component: () => import("@/views/ConfiguracionesPage.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
         path: "admin/panel",
         component: () => import("@/views/PanelPage.vue"),
         beforeEnter: (to, from, next) => {

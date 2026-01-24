@@ -198,26 +198,42 @@ export default {
         localStorage.setItem("courseSelected", JSON.stringify(courseSelected));
       }
 
-      await axios.get(`/courses/${id}/areas`).then((response) => {
-        areas.value = response.data;
-        const teacherAssignments = JSON.parse(
-          localStorage.getItem("teacherAssignments")
-        ).filter((assignment) => {
-          return assignment.active;
-        });
+      // Fetch all areas for the course
+      const allCourseAreas = await axios.get(`/courses/${id}/areas`).then(res => res.data);
+      
+      // Fetch all teacher assignments for this course
+      const courseAssignments = await axios.get(`/courses/${id}/areas-teachers`).then(res => res.data);
 
-        if (usuario.value.rol === "teacher") {
-          areas.value = areas.value.filter((area) => {
-            return teacherAssignments.some((assignment) => {
-              return (
-                Number(assignment.area.id) === Number(area.id) &&
-                assignment.active &&
-                Number(assignment.course.id) === Number(id)
-              );
-            });
+      const isAdminView = localStorage.getItem("adminView") === "true";
+
+      if (usuario.value.rol === "admin" && isAdminView) {
+        // System admin with admin view ON: sees everything active
+        areas.value = allCourseAreas;
+      } else if (usuario.value.rol === "teacher" || usuario.value.rol === "director" || usuario.value.rol === "coordinator" || (usuario.value.rol === "admin" && !isAdminView)) {
+        // Teachers / Course directors / Admins with admin view OFF: only see their assigned areas
+        areas.value = allCourseAreas.filter((area) => {
+          return courseAssignments.some((assignment) => {
+            return (
+              assignment.active &&
+              Number(assignment.area.id) === Number(area.id) &&
+              Number(assignment.teacher?.id) === Number(usuario.value.id)
+            );
           });
-        }
-      });
+        });
+      } else if (isStudent.value) {
+        // Students only see areas that have at least one active teacher assignment
+        areas.value = allCourseAreas.filter((area) => {
+          return courseAssignments.some((assignment) => {
+            return (
+              assignment.active &&
+              Number(assignment.area.id) === Number(area.id) &&
+              assignment.teacher // Must have a teacher assigned
+            );
+          });
+        });
+      } else {
+        areas.value = allCourseAreas;
+      }
     });
 
     watch([areas, periodoSelected], () => {
