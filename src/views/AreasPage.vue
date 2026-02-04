@@ -12,8 +12,8 @@
         </ion-toolbar>
       </ion-header>
       <ion-item lines="none">
-        <ion-label slot="start" ><strong>Periodo:</strong></ion-label
-        >
+   
+
         <ion-select
          v-if="adminOProfesor"
           slot="start"
@@ -37,7 +37,7 @@
             :key="periodo.id"
             :value="periodo.id"
           >
-            {{ periodo.name }}
+           <strong>Periodo: </strong> {{ periodo.name }}
           </ion-select-option>
         </ion-select>
       </ion-item>
@@ -194,7 +194,7 @@ export default {
           localStorage.setItem("year", JSON.stringify(yearSelected.value));
         }
 
-        const courseSelected = sortedCourses.find(c => c.year == yearSelected.value) || sortedCourses[0];
+        const courseSelected = sortedCourses.find(c => c.year == yearSelected.value && c.active == true) || sortedCourses[0];
         localStorage.setItem("courseSelected", JSON.stringify(courseSelected));
       }
 

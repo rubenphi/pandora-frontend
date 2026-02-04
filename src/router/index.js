@@ -379,6 +379,40 @@ const routes = [
           else next({ path: "/inicio" });
         },
       },
+     
+      {
+        path: "materials/edit/:id",
+        component: () => import("@/views/CrearMaterial.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
+        path: "admin/herramientas",
+        component: () => import("@/views/HerramientasPage.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
+        path: "admin/herramientas/tingo-tango",
+        component: () => import("@/views/TingoTangoPage.vue"),
+        beforeEnter: (to, from, next) => {
+           // Assuming similar auth requirements as other admin tools
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
+        path: "admin/herramientas/ruleta",
+        component: () => import("@/views/RuletaPage.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
     ],
   },
 ];

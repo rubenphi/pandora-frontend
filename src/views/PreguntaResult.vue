@@ -90,7 +90,7 @@
                 (respuesta.user && usuario?.id == respuesta.user.id)
               "
               color="warning"
-              ><h6>Respuesta: {{ respuesta.option.identifier }}</h6></ion-text
+              ><h6>Respuesta: {{ respuesta.option.sentence }}</h6></ion-text
             >
             <ion-text v-else color="primary"><h6>Respuesta: ?</h6></ion-text>
           </ion-note>
@@ -222,11 +222,11 @@ export default {
 
     const ordenarPorNombre = () => {
       respuestas.value.sort((a, b) => {
-        if (a.user && b.user) {
+        if (pregunta.value.quiz?.quizType === "individual") {
           const nameA = a.user.name + " " + a.user.lastName;
           const nameB = b.user.name + " " + b.user.lastName;
           return nameA.localeCompare(nameB);
-        } else if (a.group && b.group) {
+        } else if (pregunta.value.quiz?.quizType === "group") {
           const regex = /(\D+)(\d+)/;
           const [, textA, numberA] = a.group.name.match(regex) || [
             null,
@@ -333,7 +333,7 @@ export default {
       refreshOutline,
       happyOutline,
       sadOutline,
-
+usuario,
       lockClosedOutline,
       pregunta,
       helpCircleOutline,

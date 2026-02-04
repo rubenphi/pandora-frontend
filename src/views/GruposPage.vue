@@ -270,6 +270,26 @@ ion-item ion-select {
 }
 </style>
 
+<style>
+/* These styles are not scoped to allow them to affect the ion-select pop-up (alert) */
+.select-alert .alert-radio-label {
+  white-space: normal !important;
+  flex: 1;
+}
+
+.select-alert .alert-radio-inner {
+  /* Aligns the radio button to the top when text wraps */
+  align-self: flex-start;
+  margin-top: 12px;
+}
+
+.select-alert .alert-tappable.sc-ion-alert-md {
+    /* Ensures the container item can grow */
+    height: auto;
+    min-height: 50px;
+}
+</style>
+
 <script>
 import axios from "axios";
 import { ref, computed } from "vue";
@@ -673,9 +693,23 @@ export default {
           `/courses/${cursoId}/users?year=${selectedYear}`,
           { headers: tokenHeader() }
         );
-        allStudents.value = response.data
+        const students = response.data
           .filter((u) => u.rol === "student")
           .map((u) => u.user);
+
+        // Sort students alphabetically
+        students.sort((a, b) => {
+          const lastNameA = a.lastName || "";
+          const lastNameB = b.lastName || "";
+          if (lastNameA !== lastNameB) {
+            return lastNameA.localeCompare(lastNameB);
+          }
+          const nameA = a.name || "";
+          const nameB = b.name || "";
+          return nameA.localeCompare(nameB);
+        });
+
+        allStudents.value = students;
       } catch (error) {
         console.error("Error fetching all students:", error);
       }
@@ -686,7 +720,7 @@ export default {
         await axios.patch(
           `/groups/${groupId}/users`,
           {
-            userIdToRemove: miembroId,
+            userIdToUpdate: miembroId,
             active: false,
           },
           {

@@ -109,6 +109,9 @@ export default {
       clahe: null,
       circleTemplate: [],
       matrixTemplate: {},
+      // NEW: store clipLimit/gamma for reinit & processing
+      contrastClipLimit: 2.0,
+      gamma: 1.0,
       contrastValue: 1.0,
     });
 
@@ -116,12 +119,35 @@ export default {
       const value = event.detail.value;
       contrastSliderValue.value = value;
 
-      // Rango estable para CLAHE
-      const clipLimit = 1.0 + (value / 100) * 4.0; // 1.0 → 5.0
+      // LESS AGGRESSIVE mapping:
+      // clipLimit: 1.0 -> 3.0  (anteriormente 1.0 -> 5.0)
+      const clipLimit = 1.0 + (value / 200) * 2.0; // 1.0 → 3.0
+      OMR_STATE.contrastClipLimit = clipLimit;
+
+      // Gamma mapping for gentle mid-tone control:
+      // value 0..200 -> gamma 0.6 .. 1.6 (1.0 is neutral)
+      const gamma = 0.6 + (value / 200) * 1.0;
+      OMR_STATE.gamma = gamma;
+
+      // Keep legacy field for compatibility
       OMR_STATE.contrastValue = clipLimit;
 
-      if (OMR_STATE.clahe) {
-        OMR_STATE.clahe.setClipLimit(clipLimit);
+      // If CLAHE exists, try to update its clip limit, otherwise re-create in reinitialize
+      try {
+        if (OMR_STATE.clahe && typeof OMR_STATE.clahe.setClipLimit === "function") {
+          OMR_STATE.clahe.setClipLimit(clipLimit);
+        } else if (OMR_STATE.cv) {
+          // recreate
+          if (OMR_STATE.clahe) {
+            try { OMR_STATE.clahe.delete(); } catch (e) {
+              console.log(e);
+              
+            }
+          }
+          OMR_STATE.clahe = markRaw(new OMR_STATE.cv.CLAHE(clipLimit, new OMR_STATE.cv.Size(8, 8)));
+        }
+      } catch (e) {
+        console.warn("Could not update CLAHE clipLimit:", e);
       }
 
       try {
@@ -206,9 +232,21 @@ export default {
           OMR_STATE.cv.CV_8UC1
         )
       );
-      OMR_STATE.clahe = markRaw(
-        new OMR_STATE.cv.CLAHE(2.0, new OMR_STATE.cv.Size(8, 8))
-      );
+      // create CLAHE using current clipLimit
+      try {
+        if (OMR_STATE.clahe) {
+          try { OMR_STATE.clahe.delete(); } catch (e) {
+            console.log(e);
+            
+          }
+        }
+        OMR_STATE.clahe = markRaw(
+          new OMR_STATE.cv.CLAHE(OMR_STATE.contrastClipLimit || 2.0, new OMR_STATE.cv.Size(8, 8))
+        );
+      } catch (e) {
+        console.warn("Could not create CLAHE:", e);
+        OMR_STATE.clahe = null;
+      }
     };
 
     const initialize = () => {
@@ -267,17 +305,62 @@ export default {
 
       cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
 
-      // CLAHE primero
-      clahe.apply(gray, gray);
+      // CLAHE (contrast limited adaptive histogram equalization)
+      if (clahe) {
+        try {
+          clahe.apply(gray, gray);
+        } catch (e) {
+          // If apply fails, ignore and continue
+          console.warn("CLAHE apply failed:", e);
+        }
+      }
 
-      const MAX_GRAY = 230; // ajustable (220–235)
-      cv.threshold(gray, gray, MAX_GRAY, MAX_GRAY, cv.THRESH_TRUNC);
+      // Apply gentle gamma correction (controlled by slider)
+      try {
+        const gamma = OMR_STATE.gamma || 1.0;
+        if (Math.abs(gamma - 1.0) > 0.001) {
+          // create LUT for gamma correction
+          let lut = new cv.Mat(1, 256, cv.CV_8UC1);
+          for (let i = 0; i < 256; i++) {
+            // use 1/gamma to make slider intuitive (higher slider -> brighter)
+            const v = Math.pow(i / 255.0, 1.0 / gamma) * 255.0;
+            lut.ucharPtr(0, i)[0] = Math.min(255, Math.max(0, Math.round(v)));
+          }
+          cv.LUT(gray, lut, gray);
+          lut.delete();
+        }
+      } catch (e) {
+        console.warn("Gamma LUT failed:", e);
+      }
 
-      // Suavizado ligero
+      // Slight blur to reduce noise
       cv.GaussianBlur(gray, gray, new cv.Size(3, 3), 0);
 
-      // Umbral adaptativo u Otsu
-      cv.threshold(gray, bw, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
+      // Use adaptive threshold (more stable) instead of global Otsu + truncation.
+      // Map slider into blockSize and C (offset)
+      let blockSize = 15 + Math.floor((contrastSliderValue.value / 200) * 30); // 15..45
+      if (blockSize % 2 === 0) blockSize += 1; // must be odd
+      // C: small positive/negative offset to fine-tune darkness (value near 100 -> C=0)
+      const C = Math.round((100 - contrastSliderValue.value) / 50); // -2..2 approx
+
+      try {
+        cv.adaptiveThreshold(
+          gray,
+          bw,
+          255,
+          cv.ADAPTIVE_THRESH_GAUSSIAN_C,
+          cv.THRESH_BINARY,
+          blockSize,
+          C
+        );
+      } catch (e) {
+        // fallback to Otsu if adaptiveThreshold fails for some reason
+        try {
+          cv.threshold(gray, bw, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
+        } catch (e2) {
+          console.error("Thresholding failed:", e2);
+        }
+      }
 
       let contours = new cv.MatVector();
       let hierarchy = new cv.Mat();
@@ -377,7 +460,11 @@ export default {
         if (storedContrast !== null) {
           const value = parseInt(storedContrast, 10);
           contrastSliderValue.value = value;
-          OMR_STATE.contrastValue = parseFloat(value) / 50.0;
+          // update clip/gamma mapping to match slider
+          const clipLimit = 1.0 + (value / 200) * 2.0;
+          const gamma = 0.6 + (value / 200) * 1.0;
+          OMR_STATE.contrastClipLimit = clipLimit;
+          OMR_STATE.gamma = gamma;
         }
       } catch (e) {
         console.warn("Could not read contrast from localStorage.");

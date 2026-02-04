@@ -16,12 +16,12 @@
       "rows": 10,
       "cols": 10,
       "circles": {
-        "CTL": { "percent_x": 17.8, "percent_y": 7 },
-        "CTR": { "percent_x": 60.2, "percent_y": 7 },
-        "CBL": { "percent_x": 17.8, "percent_y": 42 },
-        "CBR": { "percent_x": 60.2, "percent_y": 42 }
+        "CTL": { "percent_x": 16, "percent_y": 8 },
+        "CTR": { "percent_x": 60, "percent_y": 8 },
+        "CBL": { "percent_x": 16, "percent_y": 42.7 },
+        "CBR": { "percent_x": 60, "percent_y": 42.7 }
       },
-      "radius": 15
+      "radius": 12
     },
     {
       "type": "question",
@@ -29,12 +29,12 @@
       "rows": 10,
       "cols": 8,
       "circles": {
-        "CTL": { "percent_x": 10.8, "percent_y": 52.77 },
-        "CTR": { "percent_x": 46, "percent_y": 52.77 },
-        "CBL": { "percent_x": 10.8, "percent_y": 89.87 },
-        "CBR": { "percent_x": 46, "percent_y": 89.87 }
+        "CTL": { "percent_x": 9.1, "percent_y": 53},
+        "CTR": { "percent_x": 45.6, "percent_y": 53 },
+        "CBL": { "percent_x": 9.1, "percent_y": 90 },
+        "CBR": { "percent_x": 45.6, "percent_y": 90 }
       },
-      "radius": 15
+      "radius": 12
     },
     {
       "type": "question",
@@ -47,7 +47,7 @@
         "CBL": { "percent_x": 57.3, "percent_y": 89.87 },
         "CBR": { "percent_x": 94.5, "percent_y": 89.87 }
       },
-      "radius": 15
+      "radius": 12
     }
   ]
 }

@@ -269,9 +269,14 @@ export default {
     const getGruposCurso = async () => {
       if (selectedCourseId.value) {
         try {
+          tokenHeader();
           const response = await axios.get(
             `/courses/${selectedCourseId.value}/groups`,
-            tokenHeader()
+            {
+              params: {
+                year: selectedYear.value
+              }
+            }
           );
           gruposCursoDestino.value = response.data;
           selectedGroupId.value = null;
@@ -345,27 +350,35 @@ export default {
     async asignarUsuarioACurso(userId) {
       try {
         // Asignar usuario al curso
-        await axios.post(
-          `/courses/${this.selectedCourseId}/users`,
-          [
-            {
-              userId: userId,
-              year: this.selectedYear,
-              rol: this.selectedRol,
-            },
-          ],
-          tokenHeader()
-        );
+        if (this.selectedCourseId) {
+          await axios.post(
+            `/courses/${this.selectedCourseId}/users`,
+            [
+              {
+                userId: userId,
+                year: this.selectedYear,
+                rol: this.selectedRol,
+                active: true,
+              },
+            ],
+            tokenHeader()
+          );
+        }
 
         // Si hay grupo seleccionado, asignar usuario al grupo
         if (this.selectedGroupId) {
-          axios.post(`/users/${userId}/groups`, {
-            groupId: this.selectedGroupId,
-            userId: userId,
-            code: "admin",
-            year: this.selectedYear,
-            active: true,
-          });
+          await axios.post(
+            `/groups/${this.selectedGroupId}/users`,
+            [
+              {
+                userId: userId,
+                periodId: 1, // Default period
+                year: this.selectedYear,
+                active: true,
+              },
+            ],
+            tokenHeader()
+          );
         }
       } catch (error) {
         console.error("Error al asignar usuario:", error);
@@ -382,10 +395,15 @@ export default {
       }
 
       try {
+        // Set the authorization header if available to allow admin overrides
+        tokenHeader();
+        
         const response = await axios.post("/users", this.formData, {
           headers: {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
+            // Authorization header is set by tokenHeader() in axios defaults, 
+            // but ensuring it's there for this specific request if needed by global config
           },
         });
 

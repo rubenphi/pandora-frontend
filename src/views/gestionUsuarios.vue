@@ -281,6 +281,21 @@
               </ion-label>
             </ion-item>
             <ion-item>
+              <ion-label>Año de Asignación</ion-label>
+              <ion-select
+                v-model="selectedYearForAssignment"
+                placeholder="Seleccione el año"
+              >
+                <ion-select-option
+                  v-for="year in years"
+                  :key="year"
+                  :value="year"
+                >
+                  {{ year }}
+                </ion-select-option>
+              </ion-select>
+            </ion-item>
+            <ion-item>
               <ion-label>Curso Destino</ion-label>
               <ion-select
                 v-model="selectedCourseId"
@@ -576,6 +591,7 @@ export default {
     );
     const selectedYear = ref(curServerYear);
     const selectedYearForBulk = ref(curServerYear);
+    const selectedYearForAssignment = ref(curServerYear);
 
     const isBulkAssignModalOpen = ref(false);
     const studentsForBulkAssign = ref([]);
@@ -700,6 +716,7 @@ export default {
         initialSelectedAreas.value = {}; // Reset initial state
         initialAssignedTeachers.value = {}; // Reset initial state
         currentCourseAreas.value = [];
+        selectedYearForAssignment.value = selectedYear.value;
         isModalOpen.value = true;
       }
     };
@@ -1030,13 +1047,9 @@ export default {
 
     const asignarUsuario = async () => {
       try {
-        // Step 0: Deactivate previous assignments if user is being moved from another active course
-        // This ensures they don't stay active in the old course/group
-        if (
-          courseSelected.value &&
-          courseSelected.value.id &&
-          courseSelected.value.id !== 0
-        ) {
+        // Step 0: Deactivate previous assignments ONLY IF the user is a student.
+        // This ensures they don't have multiple active assignments across years or courses.
+        if (rolSelected.value === 'student') {
           try {
             await axios.patch(
               `/users/${selectedUser.value.id}/deactivate-assignments`,
@@ -1047,10 +1060,10 @@ export default {
             );
           } catch (deactivateError) {
             console.warn(
-              "Warning: Could not deactivate previous assignments",
+              "Warning: Could not deactivate previous assignments for student",
               deactivateError
             );
-            // We continue even if deactivation fails, but valid to log it
+            // We can continue, but it's important to log this. The backend might leave multiple active assignments.
           }
         }
 
@@ -1061,8 +1074,9 @@ export default {
             [
               {
                 userId: selectedUser.value.id,
-                year: parseInt(selectedYear.value, 10),
+                year: parseInt(selectedYearForAssignment.value, 10),
                 rol: rolSelected.value || "student",
+                active: true, // Make sure the new assignment is active
               },
             ],
             {
@@ -1079,7 +1093,7 @@ export default {
               {
                 userId: selectedUser.value.id,
                 periodId: 1,
-                year: parseInt(selectedYear.value, 10),
+                year: parseInt(selectedYearForAssignment.value, 10),
                 active: true,
               },
             ],
@@ -1103,7 +1117,7 @@ export default {
               {
                 areaId: area.id,
                 teacherId: selectedUser.value.id,
-                year: parseInt(selectedYear.value, 10),
+                year: parseInt(selectedYearForAssignment.value, 10),
                 active: isCurrentlyChecked, // Set active based on checkbox state
               },
               tokenHeader()
@@ -1417,6 +1431,18 @@ export default {
         return combinedUsers.find((u) => u.id === id);
       });
 
+      // 4. Sort the combined list alphabetically
+      uniqueUsers.sort((a, b) => {
+        const lastNameA = a.lastName || "";
+        const lastNameB = b.lastName || "";
+        if (lastNameA !== lastNameB) {
+          return lastNameA.localeCompare(lastNameB);
+        }
+        const nameA = a.name || "";
+        const nameB = b.name || "";
+        return nameA.localeCompare(nameB);
+      });
+
       usersCourse.value = uniqueUsers;
       loading.value = false;
     };
@@ -1518,7 +1544,8 @@ export default {
       usersCourse,
       courseSelected,
       changeCourse,
-      selectedYear, 
+      selectedYear,
+      selectedYearForAssignment,
       selectedYearService,
       captarAbierto,
       getCurso,
