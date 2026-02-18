@@ -15,7 +15,6 @@
    
 
         <ion-select
-         v-if="adminOProfesor"
           slot="start"
           v-model="yearSelected"
           @ionChange="changeYear($event)"

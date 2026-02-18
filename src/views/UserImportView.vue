@@ -340,9 +340,9 @@ export default defineComponent({
             name: row.Nombre || "",
             lastName: row.Apellido || "",
             email: row.Email || `${row.Codigo}@yopmail.com`,
-            code: row.Codigo || "",
-            telephone: row.Telefono || "", // Added telephone field
-            password: row.Contraseña || "defaultpassword",
+            code: row.Codigo ? String(row.Codigo) : "",
+            telephone: row.Telefono ? String(row.Telefono) : "", // Added telephone field
+            password: row.Contraseña ? String(row.Contraseña) : "defaultpassword",
             exist: true,
             systemRol: systemRol,
             course: systemRol === "teacher" ? undefined : courseId,
@@ -492,12 +492,12 @@ export default defineComponent({
             name: user.name,
             lastName: user.lastName,
             email: user.email,
-            code: user.code,
-            password: user.password,
+            code: String(user.code || ""),
+            password: String(user.password || ""),
             exist: user.exist,
             systemRol: user.systemRol,
             courseId: user.course,
-            telephone: user.telephone, // Added telephone field
+            telephone: String(user.telephone || ""), // Added telephone field
           };
         });
 

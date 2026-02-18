@@ -143,13 +143,17 @@ export default {
       const newImageWidth = 3313;
       const newImageHeight = 4919;
 
-      let scale = 0.0843; // Valor por defecto
+      // [AGREGADO] Variable para controlar la separación entre hojas (para corte)
+      // Ajuste este valor en píxeles. Si aumenta mucho, reduzca el "scale" abajo.
+      const sheetSpacing = 30; 
+
+      let scale = 0.0800; // [MODIFICADO] Reducido de 0.0843 para dar espacio a la separación
       if (sheetsPerPage.value === 6) {
-        scale = 0.0843;
+        scale = 0.0800; // Ajustar según necesidad
       } else if (sheetsPerPage.value === 4) {
-        scale = 0.1232;
+        scale = 0.1180; // Ajustado (antes ~0.1232)
       } else if (sheetsPerPage.value === 1) {
-        scale = 0.2464;
+        scale = 0.2350; // Ajustado (antes ~0.2464)
       }
 
       const scaledWidth = newImageWidth * scale;
@@ -278,8 +282,13 @@ export default {
         pageStudents.forEach((student) => {
           sheetsHTML += `
         <div class="grid-item">
-          <div style="width: ${scaledWidth}px; height: ${scaledHeight}px; position: relative; overflow: hidden;">
-            ${generateSheetCode(student)}
+          <!-- Contenedor que agrupa hoja y línea de corte -->
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <div style="width: ${scaledWidth}px; height: ${scaledHeight}px; position: relative; overflow: hidden; box-sizing: border-box;">
+              ${generateSheetCode(student)}
+            </div>
+            <!-- Línea de corte separada para asegurar visibilidad en PDF -->
+            <div style="width: ${scaledWidth}px; height: 1px; border-top: 1px dashed black; margin-top: 5px;"></div>
           </div>
         </div>
       `;
@@ -298,10 +307,11 @@ export default {
         newImageHeight,
         newImageWidth,
         scale,
+        sheetSpacing, // Retornamos para usar en estilos
       };
     };
 
-    const generateStyles = (newImageWidth, newImageHeight, scale) => {
+    const generateStyles = (newImageWidth, newImageHeight, scale, sheetSpacing) => {
       return `
         * {
           margin: 0;
@@ -334,6 +344,9 @@ export default {
         
         .grid-container {
           display: grid;
+          row-gap: ${sheetSpacing}px; /* [MODIFICADO] Solo espacio entre filas (margen inferior visual) */
+          column-gap: 0;
+          padding: 0;
           grid-template-columns: ${
             sheetsPerPage.value === 1 ? "1fr" : "repeat(2, 1fr)"
           };
@@ -350,7 +363,7 @@ export default {
         
         .grid-item {
           position: relative;
-          overflow: hidden;
+          /* overflow: hidden;  <-- [REMOVIDO] Para asegurar que los bordes/outlines no se corten innecesariamente */
           width: 100%;
           height: 100%;
           display: flex;
@@ -388,9 +401,9 @@ export default {
     };
 
     const generatePrintHTML = () => {
-      const { pagesHTML, newImageWidth, newImageHeight, scale } =
+      const { pagesHTML, newImageWidth, newImageHeight, scale, sheetSpacing } =
         generateSheetContentHTML();
-      const css = generateStyles(newImageWidth, newImageHeight, scale);
+      const css = generateStyles(newImageWidth, newImageHeight, scale, sheetSpacing);
 
       return `
     <!DOCTYPE html>
@@ -425,7 +438,7 @@ export default {
       const bgImageBase64 = await getBase64ImageFromUrl(`${domain}/hoja50.jpg`);
 
       // 2. Generate HTML (we'll replace the image source manually)
-      let { pagesHTML, newImageWidth, newImageHeight, scale } =
+      let { pagesHTML, newImageWidth, newImageHeight, scale, sheetSpacing } =
         generateSheetContentHTML();
 
       // Replace the image url with the base64 data
@@ -437,7 +450,7 @@ export default {
       pagesHTML = pagesHTML.replace(originalSrcRegex, `${bgImageBase64}`);
       pagesHTML = pagesHTML.replace(relativeSrcRegex, `src="${bgImageBase64}"`);
 
-      const css = generateStyles(newImageWidth, newImageHeight, scale);
+      const css = generateStyles(newImageWidth, newImageHeight, scale, sheetSpacing);
 
       // 3. Create a detached container (matches the working Android implementation)
       // We do NOT append this to the body, avoiding z-index/viewport issues.
@@ -743,6 +756,8 @@ export default {
   #printable-area {
     background: #f0f0f0;
     padding: 20px;
+    margin: 20px auto;
+
   }
   .print-page {
     width: 216mm;

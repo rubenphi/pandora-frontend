@@ -608,7 +608,11 @@ const fetchAreas = async () => {
 };
 
 const openCreateAreaModal = () => {
-  newArea.value = { name: "" };
+  newArea.value = {
+    name: "",
+    instituteId: usuario.value.institute.id,
+    exist: true,
+  };
   isCreateAreaModalOpen.value = true;
 };
 
@@ -745,7 +749,10 @@ const fetchPeriods = async () => {
 };
 
 const openCreatePeriodModal = () => {
-  newPeriod.value = { name: "" };
+  newPeriod.value = {
+    name: "",
+    instituteId: usuario.value.institute.id,
+  };
   isCreatePeriodModalOpen.value = true;
 };
 
