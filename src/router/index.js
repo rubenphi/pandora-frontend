@@ -389,7 +389,7 @@ const routes = [
         },
       },
       {
-        path: "admin/herramientas",
+        path: "/herramientas",
         component: () => import("@/views/HerramientasPage.vue"),
         beforeEnter: (to, from, next) => {
           if (adminOprofesor()) next();
@@ -397,7 +397,7 @@ const routes = [
         },
       },
       {
-        path: "admin/herramientas/tingo-tango",
+        path: "/herramientas/tingo-tango",
         component: () => import("@/views/TingoTangoPage.vue"),
         beforeEnter: (to, from, next) => {
            // Assuming similar auth requirements as other admin tools
@@ -406,12 +406,29 @@ const routes = [
         },
       },
       {
-        path: "admin/herramientas/ruleta",
+        path: "/herramientas/ruleta",
         component: () => import("@/views/RuletaPage.vue"),
         beforeEnter: (to, from, next) => {
           if (adminOprofesor()) next();
           else next({ path: "/inicio" });
         },
+      },
+      // Encuestas Routes
+      {
+        path: "encuestas",
+        component: () => import("@/views/EncuestasPage.vue"),
+      },
+      {
+        path: "encuestas/crear",
+        component: () => import("@/views/CrearEncuesta.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
+        path: "encuestas/:id",
+        component: () => import("@/views/EncuestaView.vue"),
       },
     ],
   },

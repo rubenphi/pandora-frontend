@@ -34,7 +34,7 @@
           <ion-icon slot="start" :icon="schoolOutline"></ion-icon>
           <ion-label>Gestión Académica</ion-label>
         </ion-item>
-            <ion-item :href="'/admin/herramientas'">
+            <ion-item :href="'/herramientas'">
           <ion-icon slot="start" :icon="constructOutline"></ion-icon>
           <ion-label>Herramientas</ion-label>
         </ion-item>

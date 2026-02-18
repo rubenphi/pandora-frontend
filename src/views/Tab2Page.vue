@@ -25,7 +25,12 @@
             siguiente código QR
           </p>
           <canvas id="qr-code-canvas" style="width: 90%"></canvas>
+          
         </div>
+        <ion-button href="/herramientas" align-self-center>
+            <ion-icon slot="start" :icon="constructOutline"></ion-icon>
+           Herramientas
+          </ion-button>
       </div>
     </ion-content>
   </ion-page>
@@ -46,7 +51,7 @@ import {
 import { ref, onMounted, watch } from "vue"; // Import watch
 import { tokenHeader } from "../globalService";
 import router from "../router";
-import { exitOutline } from "ionicons/icons";
+import { exitOutline, constructOutline } from "ionicons/icons";
 import QRCode from "qrcode";
 import axios from "axios";
 import { Capacitor } from "@capacitor/core";
@@ -136,6 +141,7 @@ export default {
         router.push("/login");
       },
       exitOutline,
+      constructOutline,
     };
   },
 };

@@ -18,7 +18,7 @@
       <ion-grid>
         <ion-row>
           <ion-col size="12" size-md="6">
-            <ion-card @click="navigateTo('/admin/herramientas/tingo-tango')" class="tool-card">
+            <ion-card @click="navigateTo('//herramientas/tingo-tango')" class="tool-card">
               <ion-card-content class="tool-content">
                 <ion-icon :icon="timeOutline" class="tool-icon" color="primary"></ion-icon>
                 <ion-label>
@@ -30,12 +30,24 @@
           </ion-col>
 
           <ion-col size="12" size-md="6">
-            <ion-card @click="navigateTo('/admin/herramientas/ruleta')" class="tool-card">
+            <ion-card @click="navigateTo('//herramientas/ruleta')" class="tool-card">
               <ion-card-content class="tool-content">
                 <ion-icon :icon="discOutline" class="tool-icon" color="secondary"></ion-icon>
                 <ion-label>
                   <h2>Ruleta</h2>
                   <p>Selección de estudiantes al azar</p>
+                </ion-label>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+
+          <ion-col size="12" size-md="6">
+            <ion-card @click="navigateTo('/encuestas')" class="tool-card">
+              <ion-card-content class="tool-content">
+                <ion-icon :icon="barChartOutline" class="tool-icon" color="tertiary"></ion-icon>
+                <ion-label>
+                  <h2>Encuestas en Vivo</h2>
+                  <p>Crea y gestiona encuestas para tu grupo</p>
                 </ion-label>
               </ion-card-content>
             </ion-card>
@@ -66,7 +78,7 @@ import {
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import { useRouter } from "vue-router";
-import { timeOutline, discOutline } from "ionicons/icons";
+import { timeOutline, discOutline, barChartOutline } from "ionicons/icons";
 
 export default defineComponent({
   name: "HerramientasPage",
@@ -96,6 +108,7 @@ export default defineComponent({
     return {
       timeOutline,
       discOutline,
+      barChartOutline,
       navigateTo,
     };
   },
