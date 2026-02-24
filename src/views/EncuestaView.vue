@@ -7,7 +7,10 @@
         </ion-buttons>
         <ion-title>{{ poll ? poll.title : "Encuesta" }}</ion-title>
         <!-- Close poll button for teachers -->
-        <ion-buttons slot="end" v-if="esProfesor && poll && poll.active">
+        <ion-buttons slot="end" v-if="esProfesor && poll ">
+          <ion-button @click="editPoll(poll.id)">
+            <ion-icon slot="icon-only" :icon="createOutline"></ion-icon>
+          </ion-button>
           <ion-button color="danger" @click="closePoll" :disabled="closing">
             <ion-spinner v-if="closing" name="crescent" slot="start"></ion-spinner>
             Cerrar
@@ -145,8 +148,8 @@ import {
   alertController,
 } from "@ionic/vue";
 import { ref } from "vue";
-import { useRoute } from "vue-router";
-import { checkmarkCircleOutline } from "ionicons/icons";
+import { useRoute, useRouter } from "vue-router";
+import { createOutline, checkmarkCircleOutline } from "ionicons/icons";
 import axios from "axios";
 import { adminOprofesor, tokenHeader } from "../globalService";
 
@@ -170,9 +173,11 @@ export default {
     IonSpinner,
     IonIcon,
     IonText,
+
   },
   setup() {
     const route = useRoute();
+    const router = useRouter();
     const poll = ref(null);
     const myVote = ref(null);
     const results = ref(null);
@@ -266,6 +271,10 @@ export default {
       await alert.present();
     };
 
+    const editPoll = (pollId) => {
+      router.push(`/encuestas/editar/${pollId}`);
+    };
+
     onIonViewWillEnter(() => {
       esProfesor.value = !!adminOprofesor();
       loadPoll();
@@ -283,7 +292,9 @@ export default {
       esProfesor,
       castVote,
       closePoll,
+      editPoll, // Added editPoll here
       checkmarkCircleOutline,
+      createOutline, // Added createOutline here
     };
   },
 };

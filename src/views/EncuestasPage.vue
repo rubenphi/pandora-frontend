@@ -5,7 +5,7 @@
         <ion-buttons slot="start">
           <ion-back-button default-href="//herramientas"></ion-back-button>
         </ion-buttons>
-        <ion-title>Encuestas en Vivo</ion-title>
+        <ion-title>Encuestas</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -15,6 +15,48 @@
           <ion-title size="large">Encuestas en Vivo</ion-title>
         </ion-toolbar>
       </ion-header>
+
+      <ion-item lines="none">
+        <ion-select
+          slot="start"
+          v-model="yearSelected"
+          @ionChange="changeYear($event)"
+          placeholder="Selecciona un año"
+     
+        >
+          <ion-select-option v-for="year in years" :key="year" :value="year">
+            <strong>Año: </strong> {{ year }}
+          </ion-select-option>
+        </ion-select>
+
+        <ion-select
+          slot="end"
+          v-model="periodoSelected"
+          placeholder="Selecciona un periodo"
+          @ionChange="changePeriodo($event)"
+      
+        >
+          <ion-select-option
+            v-for="periodo in periodos"
+            :key="periodo.id"
+            :value="periodo.id"
+          >
+            <strong>Periodo: </strong> {{ periodo.name }}
+          </ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <ion-item lines="none" v-if="!isStudent">
+        <ion-select
+          v-model="courseSelected"
+          @ionChange="changeCourse($event)"
+          placeholder="Selecciona un curso"
+        >
+          <ion-select-option v-for="course in courses" :key="course.id" :value="course.id">
+            <strong>Curso: </strong> {{ course.name }}
+          </ion-select-option>
+        </ion-select>
+      </ion-item>
 
       <!-- Loading -->
       <div v-if="loading" class="ion-text-center ion-padding">
@@ -76,13 +118,15 @@ import {
   IonIcon,
   IonFab,
   IonFabButton,
+  IonSelect,
+  IonSelectOption,
   onIonViewWillEnter,
 } from "@ionic/vue";
-import { ref } from "vue";
+import { ref, computed, watch } from "vue";
 import { useRouter } from "vue-router";
 import { barChartOutline, addOutline } from "ionicons/icons";
 import axios from "axios";
-import { adminOprofesor, tokenHeader} from "../globalService";
+import { adminOprofesor, tokenHeader, usuarioGet, periodosGet, currentServerYear } from "../globalService";
 
 export default {
   name: "EncuestasPage",
@@ -102,6 +146,8 @@ export default {
     IonIcon,
     IonFab,
     IonFabButton,
+    IonSelect,
+    IonSelectOption,
   },
   setup() {
     const router = useRouter();
@@ -109,50 +155,41 @@ export default {
     const loading = ref(false);
     const esProfesor = ref(false);
 
+    const usuario = ref(null);
+    const isStudent = computed(() => {
+      return usuario.value?.rol === "student" || usuario.value?.rol === "user";
+    });
+
+    const years = ref([]);
+    const yearSelected = ref(null);
+    const periodos = ref([]);
+    const periodoSelected = ref(null);
+    const courses = ref([]); // List of courses for privileged users
+    const courseSelected = ref(null);
+
     const fetchPolls = async () => {
       loading.value = true;
       try {
         tokenHeader();
         polls.value = [];
-        
 
-        if (esProfesor.value) {
-            // Teacher: fetch all polls for current year/period
-            // If backend supports filtering by just year/period (which it should now), great.
-            // But my backend service logic for findAll only uses query params if present.
-            // If I send ONLY periodId and year, it returns polls for ALL courses? Yes.
-            // Is that okay? Teachers usually want to see polls for THEIR courses. 
-            // But simple implementation: list all polls for the period.
-            const response = await axios.get("/polls");
+        const params = {};
+        if (courseSelected.value) {
+          params.courseId = courseSelected.value;
+        }
+        if (periodoSelected.value) {
+          params.periodId = periodoSelected.value;
+        }
+        if (yearSelected.value) {
+          params.year = yearSelected.value;
+        }
+
+        // Only fetch if all required filters are present for privileged users, or if it's a student
+        if (isStudent.value || (courseSelected.value && periodoSelected.value && yearSelected.value)) {
+            const response = await axios.get("/polls", { params });
             polls.value = response.data;
         } else {
-            // Student: need to fetch polls for MY courses.
-            // 1. Get my courses via profile (assuming it returns courses relation)
-            const profileRes = await axios.get("/auth/profile");
-            const user = profileRes.data;
-            let myCourses = [];
-            
-            if (user.courses && user.courses.length > 0) {
-              // user.courses is UserToCourse[], so map to course
-              myCourses = user.courses
-                .map(utc => utc.course)
-                .filter(c => c && (c.active || c.exist));
-            } else {
-              // Fallback: try to get from /courses/student/:id (if exists) or local storage
-              // But if profile fails to return courses, we can't do much.
-              // Assuming profile returns user with relations or at least we should try.
-              console.warn("No courses found in profile for student.");
-            }
-            
-            // 2. Fetch polls for each course
-            for (const course of myCourses) {
-                const response = await axios.get("/polls", {
-                    params: {
-                        courseId: course.id,
-                    }
-                });
-                polls.value.push(...response.data);
-            }
+            polls.value = []; // Clear polls if filters are incomplete for privileged users
         }
       } catch (error) {
         console.error("Error fetching polls:", error);
@@ -165,9 +202,103 @@ export default {
       router.push(`/encuestas/${poll.id}`);
     };
 
-    onIonViewWillEnter(() => {
-      esProfesor.value = !!adminOprofesor();
-      fetchPolls();
+    const changeYear = (event) => {
+      yearSelected.value = event.detail.value;
+      localStorage.setItem("year", JSON.stringify(yearSelected.value));
+      // If student, update courseSelected based on new year
+      if (isStudent.value) {
+        const cursosUsuario = JSON.parse(localStorage.getItem("cursosUsuario")) || [];
+        const courseForYear = cursosUsuario.find(c => c.year == yearSelected.value && (c.active || c.exist));
+        if (courseForYear) {
+          courseSelected.value = courseForYear.id;
+          localStorage.setItem("courseSelected", JSON.stringify(courseForYear));
+        } else {
+          courseSelected.value = null;
+          localStorage.removeItem("courseSelected");
+        }
+      }
+    };
+
+    const changePeriodo = (event) => {
+      periodoSelected.value = event.detail.value;
+      localStorage.setItem("periodoSelected", JSON.stringify(periodoSelected.value));
+    };
+
+    const changeCourse = (event) => {
+      courseSelected.value = event.detail.value;
+      localStorage.setItem("courseSelected", JSON.stringify({ id: courseSelected.value })); // Store just ID for simplicity
+    };
+
+    onIonViewWillEnter(async () => {
+      usuario.value = usuarioGet();
+      esProfesor.value = adminOprofesor();
+
+      periodos.value = periodosGet();
+      periodoSelected.value = JSON.parse(localStorage.getItem("periodoSelected"));
+
+      const curServerYear = currentServerYear();
+      years.value = new Array(10).fill(0).map((_, i) => curServerYear - i);
+      yearSelected.value = JSON.parse(localStorage.getItem("year")) || curServerYear;
+
+      if (isStudent.value) {
+        const cursosUsuario = JSON.parse(localStorage.getItem("cursosUsuario")) || [];
+        const sortedCourses = cursosUsuario.sort((a, b) => b.year - a.year);
+        
+        // Try to find a course for the selected year, otherwise use the most recent
+        let activeCourse = sortedCourses.find(c => c.year == yearSelected.value && (c.active || c.exist));
+        if (!activeCourse && sortedCourses.length > 0) {
+            activeCourse = sortedCourses[0];
+            yearSelected.value = activeCourse.year; // Update yearSelected to match the active course
+            localStorage.setItem("year", JSON.stringify(yearSelected.value));
+        }
+
+        if (activeCourse) {
+          courseSelected.value = activeCourse.id;
+          localStorage.setItem("courseSelected", JSON.stringify(activeCourse));
+          // Ensure periodoSelected is set for the student's context
+          if (!periodoSelected.value && periodos.value.length > 0) {
+            periodoSelected.value = periodos.value[0].id; // Default to first period if not set
+            localStorage.setItem("periodoSelected", JSON.stringify(periodoSelected.value));
+          }
+        } else {
+          // No active course found for student
+          courseSelected.value = null;
+          periodoSelected.value = null;
+          yearSelected.value = null;
+          polls.value = []; // Clear polls
+          loading.value = false;
+          return; // Stop further execution if no course for student
+        }
+        courses.value = activeCourse ? [activeCourse] : []; // Student only sees their course
+      } else {
+        // Privileged user: fetch all courses
+        try {
+          const response = await axios.get("/courses");
+          courses.value = response.data;
+          // Initialize courseSelected if not already set or if stored course is not in the list
+          const storedCourse = JSON.parse(localStorage.getItem("courseSelected"));
+          if (storedCourse && courses.value.some(c => c.id === storedCourse.id)) {
+            courseSelected.value = storedCourse.id;
+          } else if (courses.value.length > 0) {
+            courseSelected.value = courses.value[0].id;
+            localStorage.setItem("courseSelected", JSON.stringify(courses.value[0]));
+          }
+        } catch (error) {
+          console.error("Error fetching courses:", error);
+          courses.value = [];
+        }
+      }
+      
+      fetchPolls(); // Initial fetch with determined filters
+    });
+
+    watch([yearSelected, periodoSelected, courseSelected], () => {
+      if (yearSelected.value && periodoSelected.value && (courseSelected.value || isStudent.value)) {
+        fetchPolls();
+      } else if (!isStudent.value) {
+        // For privileged users, clear polls if filters are incomplete
+        polls.value = [];
+      }
     });
 
     return {
@@ -178,6 +309,16 @@ export default {
       openPoll,
       barChartOutline,
       addOutline,
+      isStudent,
+      years,
+      yearSelected,
+      periodos,
+      periodoSelected,
+      courses,
+      courseSelected,
+      changeYear,
+      changePeriodo,
+      changeCourse,
     };
   },
 };

@@ -46,8 +46,8 @@
               <ion-card-content class="tool-content">
                 <ion-icon :icon="barChartOutline" class="tool-icon" color="tertiary"></ion-icon>
                 <ion-label>
-                  <h2>Encuestas en Vivo</h2>
-                  <p>Crea y gestiona encuestas para tu grupo</p>
+                  <h2>Encuestas</h2>
+                  <p>Crea y gestiona encuestas para tu curso</p>
                 </ion-label>
               </ion-card-content>
             </ion-card>

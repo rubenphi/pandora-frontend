@@ -391,10 +391,7 @@ const routes = [
       {
         path: "/herramientas",
         component: () => import("@/views/HerramientasPage.vue"),
-        beforeEnter: (to, from, next) => {
-          if (adminOprofesor()) next();
-          else next({ path: "/inicio" });
-        },
+       
       },
       {
         path: "/herramientas/tingo-tango",
@@ -420,6 +417,14 @@ const routes = [
       },
       {
         path: "encuestas/crear",
+        component: () => import("@/views/CrearEncuesta.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
+        path: "encuestas/editar/:id", // NEW ROUTE
         component: () => import("@/views/CrearEncuesta.vue"),
         beforeEnter: (to, from, next) => {
           if (adminOprofesor()) next();
