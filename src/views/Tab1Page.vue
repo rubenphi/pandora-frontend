@@ -696,17 +696,9 @@ export default {
         const pEReg = calculateAverageFromMasterList(studentGrades, mEReg);
         const pBReg = calculateAverageFromMasterList(studentGrades, mBReg);
 
-        const dimsReg = [
-          mKReg.length > 0 ? pKReg : 0,
-          mEReg.length > 0 ? pEReg : 0,
-          mBReg.length > 0 ? pBReg : 0,
-        ].filter((v) => v > 0);
-        const avgReg =
-          dimsReg.length > 0
-            ? dimsReg.reduce((a, b) => a + b, 0) / dimsReg.length
-            : 0;
+        const avgReg = (pKReg + pEReg + pBReg) / 3;
         area.promedio = formatGradeValue(
-          Math.max(avgReg, avgReg > 0 ? 1.0 : 0)
+          Math.max(avgReg, 1.0)
         ).toFixed(1);
 
         // Reinf
@@ -741,17 +733,10 @@ export default {
             studentGrades,
             mBReinf
           );
-          const dimsReinf = [
-            mKReinf.length > 0 ? pKReinf : 0,
-            mEReinf.length > 0 ? pEReinf : 0,
-            mBReinf.length > 0 ? pBReinf : 0,
-          ].filter((v) => v > 0);
-          const avgReinf =
-            dimsReinf.length > 0
-              ? dimsReinf.reduce((a, b) => a + b, 0) / dimsReinf.length
-              : 0;
+          
+          const avgReinf = (pKReinf + pEReinf + pBReinf) / 3;
           area.promedioReinf = formatGradeValue(
-            Math.max(avgReinf, avgReinf > 0 ? 1.0 : 0)
+            Math.max(avgReinf, 1.0)
           ).toFixed(1);
         }
 
@@ -777,17 +762,10 @@ export default {
           const pKRem = calculateAverageFromMasterList(studentGrades, mKRem);
           const pERem = calculateAverageFromMasterList(studentGrades, mERem);
           const pBRem = calculateAverageFromMasterList(studentGrades, mBRem);
-          const dimsRem = [
-            mKRem.length > 0 ? pKRem : 0,
-            mERem.length > 0 ? pERem : 0,
-            mBRem.length > 0 ? pBRem : 0,
-          ].filter((v) => v > 0);
-          const avgRem =
-            dimsRem.length > 0
-              ? dimsRem.reduce((a, b) => a + b, 0) / dimsRem.length
-              : 0;
+          
+          const avgRem = (pKRem + pERem + pBRem) / 3;
           area.promedioRemedial = formatGradeValue(
-            Math.max(avgRem, avgRem > 0 ? 1.0 : 0)
+            Math.max(avgRem, 1.0)
           ).toFixed(1);
         }
 
