@@ -319,6 +319,8 @@ export default {
           presentToast();
           return;
         }
+      
+        
         router.push(
           `/lecciones/${id}/${areaId}/${periodoSelected.value}/${yearSelected.value}/${type}`
         );

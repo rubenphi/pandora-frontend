@@ -12,23 +12,43 @@
     </ion-header>
     <ion-content>
       <ion-list>
-        <!-- Selección de filtros -->
+        <!-- Búsqueda por Nombre -->
         <ion-item>
-          <ion-label position="stacked">Curso</ion-label>
-          <ion-select
-            v-model="cursoSelected"
-            placeholder="Selecciona un curso"
-            @ionChange="areasSearch"
-          >
-            <ion-select-option
-              v-for="curso in cursos"
-              :key="curso.id"
-              :value="curso"
-            >
-              {{ curso.name }}
-            </ion-select-option>
-          </ion-select>
+          <ion-searchbar
+            v-model="searchQuery"
+            placeholder="Buscar cuestionario por tema..."
+            animated="true"
+            @keyup.enter="search"
+            show-clear-button="focus"
+          ></ion-searchbar>
+          <ion-button slot="end" @click="search">
+            <ion-icon :icon="searchOutline"></ion-icon>
+          </ion-button>
         </ion-item>
+
+        <!-- Selección de filtros tradicionales -->
+        <ion-accordion-group :multiple="true">
+          <ion-accordion value="filters">
+            <ion-item slot="header" color="light">
+              <ion-label>Filtros Avanzados (Curso, Área, etc.)</ion-label>
+            </ion-item>
+            <div class="ion-padding" slot="content">
+              <ion-item>
+                <ion-label position="stacked">Curso</ion-label>
+                <ion-select
+                  v-model="cursoSelected"
+                  placeholder="Selecciona un curso"
+                  @ionChange="areasSearch"
+                >
+                  <ion-select-option
+                    v-for="curso in cursos"
+                    :key="curso.id"
+                    :value="curso"
+                  >
+                    {{ curso.name }}
+                  </ion-select-option>
+                </ion-select>
+              </ion-item>
 
         <ion-item>
           <ion-label position="stacked">Área</ion-label>
@@ -44,40 +64,48 @@
         </ion-item>
 
         <ion-item>
-          <ion-select
-            slot="start"
-            v-model="yearSelected"
-            placeholder="Selecciona un año"
-          >
-            <ion-select-option v-for="year in years" :key="year" :value="year">
-              <strong>Año: </strong> {{ year }}
-            </ion-select-option>
-          </ion-select>
-          <ion-select
-            slot="end"
-            v-model="periodoSelected"
-            placeholder="Selecciona un período"
-          >
-            <ion-select-option
-              v-for="periodo in periodos"
-              :key="periodo.id"
-              :value="periodo"
-            >
-              {{ periodo.name }}
-            </ion-select-option>
-          </ion-select>
-          <ion-buttons slot="end">
-            <ion-button @click="search">
-              <ion-icon :icon="searchOutline"></ion-icon>
-            </ion-button>
-          </ion-buttons>
-        </ion-item>
+                <ion-select
+                  slot="start"
+                  v-model="yearSelected"
+                  placeholder="Selecciona un año"
+                >
+                  <ion-select-option v-for="year in years" :key="year" :value="year">
+                    <strong>Año: </strong> {{ year }}
+                  </ion-select-option>
+                </ion-select>
+                <ion-select
+                  slot="end"
+                  v-model="periodoSelected"
+                  placeholder="Selecciona un período"
+                >
+                  <ion-select-option
+                    v-for="periodo in periodos"
+                    :key="periodo.id"
+                    :value="periodo"
+                  >
+                    {{ periodo.name }}
+                  </ion-select-option>
+                </ion-select>
+                <ion-buttons slot="end">
+                  <ion-button @click="search">
+                    <ion-icon :icon="searchOutline"></ion-icon>
+                  </ion-button>
+                </ion-buttons>
+              </ion-item>
+            </div>
+          </ion-accordion>
+        </ion-accordion-group>
 
         <!-- Lecciones y preguntas -->
         <ion-accordion-group :multiple="true">
           <ion-accordion v-for="lesson in lessons" :key="lesson.id">
             <ion-item slot="header" @click="loadQuizzesAndQuestions(lesson)">
-              <ion-label>{{ lesson.topic }}</ion-label>
+              <ion-label>
+                {{ lesson.topic }}
+                <p v-if="searchQuery && searchQuery.trim() !== '' && lesson.course">
+                  <ion-badge color="medium">{{ lesson.course.name }}</ion-badge>
+                </p>
+              </ion-label>
               <!-- The badge logic will need to be updated if we want to show total questions across all quizzes in a lesson -->
             </ion-item>
 
@@ -199,6 +227,7 @@ import {
   IonAccordionGroup,
   IonAccordion,
   IonBadge,
+  IonSearchbar,
 } from "@ionic/vue";
 
 import axios from "axios";
@@ -230,6 +259,7 @@ export default {
     IonAccordionGroup,
     IonAccordion,
     IonBadge,
+    IonSearchbar,
   },
   setup() {
     const route = useRoute();
@@ -245,6 +275,8 @@ export default {
     const periodos = ref(periodosGet());
     const lessons = ref([]); // Renamed from cuestionarios
     const questionsByQuiz = ref({}); // Renamed from preguntasPorLeccion
+    const searchQuery = ref("");
+    const filtersAccordionState = ref("filters");
     
     // Global state to persist selection
     const globalSelectedQuestions = ref({}); // { quizId: { quizData, questions: { questionId: questionData } } }
@@ -280,17 +312,44 @@ export default {
     const setErrorToastOpen = (val) => (isErrorToastOpen.value = val);
 
     const search = async () => {
-      if (
-        !cursoSelected.value ||
-        !areaSelected.value ||
-        !periodoSelected.value ||
-        !yearSelected.value
-      )
-        return;
-      const res = await axios.get(
-        `/lessons?courseId=${cursoSelected.value.id}&areaId=${areaSelected.value.id}&periodId=${periodoSelected.value.id}&year=${yearSelected.value}&instituteId=${userLoged.value.institute.id}&exist=true`
-      );
-      lessons.value = res.data.filter((c) => c.id != idCuestionario); // Use lessons.value
+      let url = "";
+
+      if (searchQuery.value && searchQuery.value.trim() !== "") {
+        // Búsqueda por palabra clave globalmente
+        url = `/lessons?topic=${encodeURIComponent(
+          searchQuery.value.trim()
+        )}&instituteId=${userLoged.value.institute.id}&exist=true`;
+      } else {
+        // Búsqueda por filtros tradicionales
+        if (
+          !cursoSelected.value ||
+          !areaSelected.value ||
+          !periodoSelected.value ||
+          !yearSelected.value
+        ) {
+          errorMessage.value =
+            "Seleccione los filtros o ingrese un tema para buscar.";
+          setErrorToastOpen(true);
+          return;
+        }
+        url = `/lessons?courseId=${cursoSelected.value.id}&areaId=${areaSelected.value.id}&periodId=${periodoSelected.value.id}&year=${yearSelected.value}&instituteId=${userLoged.value.institute.id}&exist=true`;
+      }
+
+      try {
+        const res = await axios.get(url);
+        lessons.value = res.data.filter((c) => c.id != idCuestionario);
+        if (searchQuery.value && searchQuery.value.trim() !== "") {
+          filtersAccordionState.value = undefined; // Close accordion after text search
+        }
+        if (lessons.value.length === 0) {
+          errorMessage.value = "No se encontraron cuestionarios.";
+          setErrorToastOpen(true);
+        }
+      } catch (e) {
+        errorMessage.value =
+          e.response?.data?.message || "Error al buscar lecciones";
+        setErrorToastOpen(true);
+      }
     };
 
     const areasSearch = async () => {
@@ -330,7 +389,7 @@ export default {
             quizTitle: quizInfo.name,
             lessonTopic: quizInfo.lessonData.topic,
             year: quizInfo.lessonData.year,
-            courseName: cursoSelected.value.name,
+            courseName: quizInfo.lessonData?.course?.name || cursoSelected.value?.name || "Varios",
             questions: {}
           };
         }
@@ -456,6 +515,8 @@ export default {
       toggleQuestionSelection,
       removeQuizFromSelection,
       trashOutline,
+      searchQuery,
+      filtersAccordionState,
     };
   },
 };

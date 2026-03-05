@@ -75,7 +75,7 @@ export default {
       adminOProfesor.value = adminOprofesor();
       const cursos = JSON.parse(localStorage.getItem("cursosUsuario")) || [];
       
-      cursoEstudiante.value = cursos.find((course) => course.year == year);
+      cursoEstudiante.value = cursos.find((course) => course.year == year && course.active == true);
 
       // Default to the last course by year if no match for current selected year
       if (!cursoEstudiante.value?.id && cursos.length > 0) {

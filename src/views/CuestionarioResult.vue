@@ -4,7 +4,7 @@
       <ion-header>
         <ion-toolbar>
           <ion-title size="large" class="ion-text-center"
-            >{{ cuestionario.topic }}
+            >{{ cuestionario ? cuestionario.topic : 'Cargando...' }}
           </ion-title>
           <ion-buttons slot="start" class="ion-margin-start">
             <ion-button v-if="id" :href="'/cuestionario/' + id">
@@ -65,7 +65,7 @@
               <ion-note slot="end">
                 <ion-text
                   v-if="
-                    index === 0 && cuestionario.evaluationType === 'relative'
+                    index === 0 && cuestionario?.evaluationType === 'relative'
                   "
                   color="warning"
                 >
@@ -504,19 +504,21 @@ export default {
         const statsMap = {};
 
         // Group quiz questions first to ensure all are represented
-        cuestionario.value.questions.forEach((q) => {
-          statsMap[q.id] = {
-            id: q.id,
-            title: q.title,
-            sentence: q.sentence,
-            photo: q.photo,
-            correctOption: q.options.find((o) => o.correct),
-            total: 0,
-            correct: 0,
-            optionFrequency: {},
-            options: q.options, // Store all options for reference
-          };
-        });
+        if (cuestionario.value && cuestionario.value.questions) {
+          cuestionario.value.questions.forEach((q) => {
+            statsMap[q.id] = {
+              id: q.id,
+              title: q.title,
+              sentence: q.sentence,
+              photo: q.photo,
+              correctOption: q.options.find((o) => o.correct),
+              total: 0,
+              correct: 0,
+              optionFrequency: {},
+              options: q.options, // Store all options for reference
+            };
+          });
+        }
 
         // Sum answers and track frequencies
         allAnswers.forEach((ans) => {
@@ -637,14 +639,15 @@ export default {
             e.points = parseFloat(e.points);
 
             // New logic based on evaluationType
-            if (cuestionario.value.evaluationType === "absolute") {
+            const evalType = cuestionario.value?.evaluationType || "relative";
+
+            if (evalType === "absolute") {
               e.nota = e.points !== 0 ? (e.points * 5) / quizPoints.value : 0;
-            } else if (cuestionario.value.evaluationType === "relative") {
+            } else if (evalType === "relative") {
               e.nota =
                 e.points !== 0 ? (e.points * 5) / response.data[0].points : 0;
             } else {
               // Fallback to relative if evaluationType is not explicitly set or unknown
-              // This should ideally not happen if backend defaults are correctly applied
               console.warn(
                 "Unknown evaluationType, defaulting to relative grading."
               );
@@ -652,16 +655,29 @@ export default {
                 e.points !== 0 ? (e.points * 5) / response.data[0].points : 0;
             }
 
-            e.nota = e.nota < 0 ? 0 : e.nota;
+              e.nota = e.nota < 0 ? 0 : e.nota;
             return e;
           });
         })
 
         .then(() => {
-          respuestaMAyor.value = respuestas.value.sort(
-            (a, b) => b.points - a.points
-          )[0];
+          if (respuestas.value.length > 0) {
+            respuestaMAyor.value = respuestas.value.sort(
+              (a, b) => b.points - a.points
+            )[0];
+          }
         });
+        
+      if (!cuestionario.value) {
+        try {
+          const response = await axios.get(`/quizzes/${id}`, tokenHeader());
+          cuestionario.value = response.data;
+          localStorage.setItem("quizSelected", JSON.stringify(cuestionario.value));
+        } catch (error) {
+          console.error("Error fetching quiz data:", error);
+          setErrorToastOpen(true, "Error al cargar los datos del cuestionario");
+        }
+      }
     });
 
     const loadRespuestas = async (targetId) => {
@@ -671,7 +687,7 @@ export default {
         const answers = await getRespuestas(
           targetId,
           id,
-          cuestionario.value.lesson.institute.id
+          cuestionario.value?.lesson?.institute?.id || 1 // Fallback if missing
         );
         respuestaDetallada.value = answers
           .map((answer, index) => {
@@ -686,7 +702,7 @@ export default {
     };
 
     async function registrarNotas() {
-      if (!cuestionario.value || !cuestionario.value.lesson.year) {
+      if (!cuestionario.value || !cuestionario.value.lesson?.year) {
         setErrorToastOpen(true, "Faltan datos del cuestionario.");
         return;
       }
@@ -746,7 +762,7 @@ export default {
       ) {
         let queryParams = `?quizId=${quizId}&instituteId=${instituteId}`;
 
-        if (cuestionario.value.quizType === "individual") {
+        if (cuestionario.value?.quizType === "individual") {
           queryParams += `&userId=${targetId}`;
         } else {
           queryParams += `&groupId=${targetId}`;

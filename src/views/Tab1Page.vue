@@ -175,6 +175,8 @@
                                 <ion-item
                                   v-for="nota in dimension.notas"
                                   :key="nota?.id"
+                                  @click="goToResult(nota)"
+                                  style="cursor: pointer"
                                 >
                                   <ion-icon
                                     :icon="easelOutline"
@@ -243,6 +245,8 @@
                                   <ion-item
                                     v-for="nota in dimension.notasReinf"
                                     :key="nota?.id"
+                                    @click="goToResult(nota)"
+                                    style="cursor: pointer"
                                   >
                                     <ion-icon
                                       :icon="easelOutline"
@@ -311,6 +315,8 @@
                                   <ion-item
                                     v-for="nota in dimension.notasRemedial"
                                     :key="nota?.id"
+                                    @click="goToResult(nota)"
+                                    style="cursor: pointer"
                                   >
                                     <ion-icon
                                       :icon="easelOutline"
@@ -440,6 +446,7 @@ import {
   IonChip,
   IonSpinner,
 } from "@ionic/vue";
+import { useRouter } from "vue-router";
 
 export default {
   components: {
@@ -469,6 +476,7 @@ export default {
   },
 
   setup() {
+    const router = useRouter();
     const usuario = ref();
     const adminOProfesor = ref();
     const finalPeriodo = ref(false);
@@ -924,6 +932,15 @@ export default {
       return "";
     };
 
+    const goToResult = (nota) => {
+      if (nota.isPending) return;
+      if (nota.gradableType === "quiz") {
+        router.push(`/ganadores/${nota.gradableItem.id}`);
+      } else if (nota.gradableType === "activity") {
+        router.push(`/ver/revision/${nota.gradableItem.id}`);
+      }
+    };
+
     return {
       usuario,
       adminOProfesor,
@@ -947,6 +964,7 @@ export default {
       swapHorizontalOutline,
       getGradeColorClass,
       handleAreaExpand,
+      goToResult,
     };
   },
 };

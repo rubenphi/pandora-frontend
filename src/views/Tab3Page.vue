@@ -28,7 +28,7 @@
         <ion-item lines="none">
           <div>
             <ion-card-header>
-              <ion-card-subtitle>{{ cursoSelected.name }}</ion-card-subtitle>
+              <ion-card-subtitle>{{ cursoActual?.name }}</ion-card-subtitle>
 
               <ion-card-title>{{ leccion.topic }}</ion-card-title>
             </ion-card-header>
@@ -247,9 +247,6 @@ export default {
     const { year, periodo, lessonType: lessonTypeParam } = mroute.params;
     const lessonType = lessonTypeParam || LessonType.STANDARD;
     const backendUrl = basedeURL();
-    const cursoSelected = ref(
-      JSON.parse(localStorage.getItem("courseSelected"))
-    );
     const cursosUsuario = ref(
       JSON.parse(localStorage.getItem("cursosUsuario"))
     );
@@ -282,6 +279,13 @@ export default {
       if (lessonType === LessonType.REINFORCEMENT) return "Crear Refuerzo";
       if (lessonType === LessonType.REMEDIAL) return "Crear Nivelación";
       return "Crear Lección";
+    });
+
+    const cursoActual = computed(() => {
+      if (cursosUsuario.value && curso) {
+        return cursosUsuario.value.find(c => c.id == curso);
+      }
+      return null;
     });
 
     const pageTitle = computed(() => {
@@ -384,15 +388,33 @@ export default {
       const storedPeriodo = localStorage.getItem("periodoSelected") ? JSON.parse(localStorage.getItem("periodoSelected")) : null;
 
       if (!adminOprofesor()) {
-        const currentCourse = cursosUsuario.value.find(c => c.id == curso);
-        const correctCourseForYear = cursosUsuario.value.find(c => c.year == (year || storedYear));
+        // Find the course specified in the URL within the user's list of courses
+        const currentCourseFromUrl = cursosUsuario.value.find(c => c.id == curso);
 
-        if (!currentCourse || (correctCourseForYear && currentCourse.id !== correctCourseForYear.id)) {
-          const targetCourseId = correctCourseForYear ? correctCourseForYear.id : cursosUsuario.value[0].id;
-          router.push(`/lecciones/${targetCourseId}/${area}/${periodo || storedPeriodo}/${year || storedYear}/${lessonType}`);
-          return;
+        // If the user is not enrolled in this course or the enrollment is not active, redirect them.
+        if (!currentCourseFromUrl || !currentCourseFromUrl.active) {
+          const storedYear = selectedYear();
+          // Find an active course for the current year to redirect to.
+          let targetCourse = cursosUsuario.value.find(c => c.year == (year || storedYear) && c.active);
+
+          // If no active course is found for the current year, fall back to the first active course available.
+          if (!targetCourse) {
+            targetCourse = cursosUsuario.value.find(c => c.active);
+          }
+
+         
+          
+
+          // If a valid active course is found, perform the redirection.
+          if (targetCourse) {
+            router.push(`/lecciones/${targetCourse.id}/${area}/${periodo || storedPeriodo}/${year || storedYear}/${lessonType}`);
+          }
+
+           
+       
         }
       }
+
 
       await axios
         .get(
@@ -554,7 +576,6 @@ export default {
       addOutline,
       arrowBackOutline,
       usuario,
-      cursoSelected,
       lecciones,
       leccionesConCuestionariosPendientes,
       leccionesConActividadesPendientes,
@@ -579,6 +600,7 @@ export default {
       createLabel,
       pageTitle,
       backendUrl,
+      cursoActual, // Add cursoActual to the return object
     };
   },
 };
