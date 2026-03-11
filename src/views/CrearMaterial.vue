@@ -455,6 +455,9 @@ export default {
       // If it's not a text type and a file was uploaded, set the URL
       if (!isTextType.value && uploadedFileUrl.value) {
         materialForm.value.url = uploadedFileUrl.value;
+      } else if (!isTextType.value && !uploadedFileUrl.value) {
+        materialForm.value.type = "TEXT_RICH";
+        materialForm.value.url = null;
       }
 
       // Prepare data as JSON

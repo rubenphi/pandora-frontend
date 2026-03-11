@@ -69,35 +69,41 @@
       <ion-list>
         <template v-for="criterion in criteria" :key="criterion.id">
           <ion-item>
-            <ion-label>{{ criterion.description }}</ion-label>
-            <div class="range-wrapper">
-              <div class="range-labels">
-                <span class="range-label">0</span>
-                <span class="range-label">{{ criterion.score }}</span>
+            <div style="width: 100%; padding-top: 10px; padding-bottom: 10px;">
+              <ion-label class="ion-text-wrap" style="margin-bottom: 10px; font-weight: 500;">
+                {{ criterion.description }}
+              </ion-label>
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div class="range-wrapper" style="width: 100%; flex: 1;">
+                  <div class="range-labels">
+                    <span class="range-label" style="text-align: left;">0</span>
+                    <span class="range-label" style="text-align: right;">{{ criterion.score }}</span>
+                  </div>
+                  <ion-range
+                    :value="bulkEvaluationTemplate[criterion.id]"
+                    @ionChange="
+                      bulkEvaluationTemplate[criterion.id] = $event.detail.value
+                    "
+                    min="0"
+                    :max="criterion.score"
+                    step="0.5"
+                    snaps="true"
+                    ticks="true"
+                    pin="true"
+                    :pin-formatter="(value) => value.toFixed(1)"
+                    style="width: 100%;"
+                  >
+                  </ion-range>
+                </div>
+                <ion-note style="min-width: 50px; text-align: right; font-size: 1.1em; font-weight: bold;">
+                  {{
+                    bulkEvaluationTemplate[criterion.id] != null
+                      ? bulkEvaluationTemplate[criterion.id].toFixed(1)
+                      : "-"
+                  }}
+                </ion-note>
               </div>
-              <ion-range
-                :value="bulkEvaluationTemplate[criterion.id]"
-                @ionChange="
-                  bulkEvaluationTemplate[criterion.id] = $event.detail.value
-                "
-                min="0"
-                :max="criterion.score"
-                step="0.5"
-                snaps="true"
-                ticks="true"
-                pin="true"
-                :pin-formatter="(value) => value.toFixed(1)"
-                class="small-range"
-              >
-              </ion-range>
             </div>
-            <ion-note slot="end" style="min-width: 40px; text-align: center">
-              {{
-                bulkEvaluationTemplate[criterion.id] != null
-                  ? bulkEvaluationTemplate[criterion.id].toFixed(1)
-                  : "-"
-              }}
-            </ion-note>
           </ion-item>
         </template>
       </ion-list>
@@ -356,7 +362,6 @@ export default {
 
 <style scoped>
 .range-wrapper {
-  width: 30%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -367,16 +372,11 @@ export default {
   justify-content: space-between;
   width: 100%;
   padding: 0 5px;
-  font-size: 0.6em;
+  font-size: 0.8em;
   margin-bottom: 5px;
 }
 
 .range-label {
-  text-align: center;
   flex: 1;
-}
-
-.small-range {
-  width: 70%;
 }
 </style>

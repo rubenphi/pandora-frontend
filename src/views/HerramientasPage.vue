@@ -18,7 +18,7 @@
       <ion-grid>
         <ion-row>
           <ion-col size="12" size-md="6">
-            <ion-card @click="navigateTo('//herramientas/tingo-tango')" class="tool-card">
+            <ion-card @click="navigateTo('/herramientas/tingo-tango')" class="tool-card">
               <ion-card-content class="tool-content">
                 <ion-icon :icon="timeOutline" class="tool-icon" color="primary"></ion-icon>
                 <ion-label>
@@ -30,7 +30,7 @@
           </ion-col>
 
           <ion-col size="12" size-md="6">
-            <ion-card @click="navigateTo('//herramientas/ruleta')" class="tool-card">
+            <ion-card @click="navigateTo('/herramientas/ruleta')" class="tool-card">
               <ion-card-content class="tool-content">
                 <ion-icon :icon="discOutline" class="tool-icon" color="secondary"></ion-icon>
                 <ion-label>
