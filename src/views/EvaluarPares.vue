@@ -9,13 +9,7 @@
         </ion-buttons>
         <ion-title>Ver Revisión</ion-title>
         <ion-buttons slot="primary">
-          <ion-item>
-            <ion-label>Sel. Todos</ion-label>
-            <ion-checkbox
-              :checked="areAllSelected"
-              @ionChange="toggleSelectAll"
-            ></ion-checkbox>
-          </ion-item>
+        
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -27,12 +21,7 @@
           @ionChange="handleAccordionChange($event, student)"
         >
           <IonItem slot="header">
-            <ion-checkbox
-              slot="start"
-              :checked="selectedStudents.has(student.id)"
-              @ionChange="handleStudentSelection(student.id, $event.detail.checked)"
-              @click.stop
-            ></ion-checkbox>
+           
             <IonLabel>{{ student.lastName + " " + student.name }}</IonLabel>
             <IonNote slot="end"
               >Nota:
@@ -265,7 +254,7 @@ import {
   IonCol,
   IonToast,
   IonNote,
-  IonCheckbox,
+
   IonFab,
   IonFabButton,
   IonModal,
@@ -296,7 +285,7 @@ export default {
     IonCol,
     IonToast,
     IonNote,
-    IonCheckbox,
+  
     IonFab,
     IonFabButton,
     IonModal,

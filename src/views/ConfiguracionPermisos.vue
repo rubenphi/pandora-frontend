@@ -155,7 +155,7 @@
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import axios from "axios";
-import { tokenHeader } from "../globalService";
+import { currentServerYear, tokenHeader } from "../globalService";
 import {
   IonPage,
   IonHeader,
@@ -207,6 +207,7 @@ export default {
     IonCol,
   },
   setup() {
+    const selectedYear = currentServerYear()
     const route = useRoute();
     const activityId = ref(route.params.id);
     const selectedTab = ref("grupos");
@@ -265,10 +266,9 @@ export default {
     const fetchGroups = async () => {
       if (!courseId.value) return;
       try {
-        const response = await axios.get(
-          `/courses/${courseId.value}/groups`,
-          tokenHeader()
-        );
+       const response =  await axios.get(`/courses/${courseId.value}/groups?year=${selectedYear}`, {
+          headers: tokenHeader(),
+        })
         groups.value = response.data.filter(
           (group) =>
             group.usersToGroup &&

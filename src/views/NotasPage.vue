@@ -740,7 +740,7 @@ export default {
 
       allGrades.forEach((grade) => {
         if (grade.gradableItem && grade.gradableItem.id) {
-          const uniqueKey = `${grade.gradableType}-${grade.gradableItem.id}`;
+          const uniqueKey = `${grade.gradableType}-${grade.gradableItem.id}-${grade.classification}`;
           if (!masterItemsMap.has(uniqueKey)) {
             masterItemsMap.set(uniqueKey, {
               id: grade.gradableItem.id,
@@ -769,7 +769,8 @@ export default {
             const foundGrade = studentGrades.find(
               (g) =>
                 g.gradableType === masterItem.type &&
-                g.gradableItem.id === masterItem.id
+                g.gradableItem.id === masterItem.id &&
+                g.classification === masterItem.classification
             );
             if (foundGrade) {
               return {
@@ -1300,15 +1301,18 @@ export default {
           classification: notaForm.value.classification,
           periodId: notaForm.value.periodId,
           grade: parseFloat(notaForm.value.grade),
-          instituteId: notaForm.value.institute.id,
+          instituteId: usuario.value.institute.id
         };
-        if (modoEdicion.value && notaForm.value.id) {
+
+        
+        
+        if (modoEdicion.value && notaForm.value?.id) {
           await axios.patch(
-            `/grades/${notaForm.value.id}`,
+            `/grades/${notaForm.value?.id}`,
             { ...payload, exist: true },
             tokenHeader()
           );
-        } else if (modoEdicion.value && !notaForm.value.id) {
+        } else if (modoEdicion.value && !notaForm.value?.id) {
           await axios.post(
             "/grades",
             { ...payload, exist: true },
@@ -1321,6 +1325,7 @@ export default {
         cerrarModal();
       } catch (error) {
         console.error("Error al guardar la nota:", error);
+        alert(error)
       }
     };
 

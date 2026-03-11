@@ -45,8 +45,8 @@
             :key="index"
             :value="`user-${index}`"
           >
-            <ion-item slot="header" :color="user.hasError ? 'danger' : 'light'">
-              <ion-label>{{ user.lastName }}, {{ user.name }}</ion-label>
+            <ion-item slot="header" :color="user.hasError ? 'danger' : user.isUpdate ? 'warning' : 'light'">
+              <ion-label>{{ user.lastName }}, {{ user.name }}<span v-if="user.isUpdate"> (Actualizar)</span></ion-label>
             </ion-item>
             <div class="ion-padding" slot="content">
               <ion-item>
@@ -185,8 +185,9 @@ import { tokenHeader, usuarioGet } from "../globalService";
  * @property {boolean} exist
  * @property {('student'|'teacher'|undefined)} systemRol
  * @property {string} [course]
- * @property {string} [telephone] // Added telephone field
+ * @property {string} [telephone]
  * @property {boolean} [hasError]
+ * @property {boolean} [isUpdate] - true if the code already exists and will be updated
  */
 
 export default defineComponent({
@@ -341,12 +342,13 @@ export default defineComponent({
             lastName: row.Apellido || "",
             email: row.Email || `${row.Codigo}@yopmail.com`,
             code: row.Codigo ? String(row.Codigo) : "",
-            telephone: row.Telefono ? String(row.Telefono) : "", // Added telephone field
+            telephone: row.Telefono ? String(row.Telefono) : "",
             password: row.Contraseña ? String(row.Contraseña) : "defaultpassword",
             exist: true,
             systemRol: systemRol,
             course: systemRol === "teacher" ? undefined : courseId,
             hasError: false,
+            isUpdate: false,
           };
 
           if (user.code && !/^\d+$/.test(user.code)) {
@@ -355,10 +357,8 @@ export default defineComponent({
               `${user.lastName}, ${user.name} (Código "${user.code}" no es numérico)`
             );
           } else if (user.code && existingUserCodes.value.has(user.code)) {
-            user.hasError = true;
-            inconsistentUsers.value.push(
-              `${user.lastName}, ${user.name} (Código "${user.code}" ya existe)`
-            );
+            // Mark as update, NOT as error
+            user.isUpdate = true;
           }
 
           if (user.systemRol === "student" && user.course === undefined) {
@@ -397,8 +397,6 @@ export default defineComponent({
           let msg = `${user.lastName}, ${user.name}`;
           if (user.code && !/^\d+$/.test(user.code)) {
             msg += ` (Código "${user.code}" no es numérico)`;
-          } else if (user.code && existingUserCodes.value.has(user.code)) {
-            msg += ` (Código "${user.code}" ya existe)`;
           }
           if (user.systemRol === undefined) {
             msg += ` (Rol en Sistema inválido)`;
@@ -485,7 +483,7 @@ export default defineComponent({
       await alert.present();
     };
 
-    const submitImport = async () => {
+    const doImport = async () => {
       try {
         const usersToSend = usersToImport.value.map((user) => {
           return {
@@ -497,7 +495,7 @@ export default defineComponent({
             exist: user.exist,
             systemRol: user.systemRol,
             courseId: user.course,
-            telephone: String(user.telephone || ""), // Added telephone field
+            telephone: String(user.telephone || ""),
           };
         });
 
@@ -513,6 +511,35 @@ export default defineComponent({
         alert(
           "Error al importar usuarios. Por favor, revise la consola para más detalles."
         );
+      }
+    };
+
+    const submitImport = async () => {
+      const usersToUpdate = usersToImport.value.filter((u) => u.isUpdate);
+
+      if (usersToUpdate.length > 0) {
+        const names = usersToUpdate
+          .map((u) => `${u.lastName}, ${u.name}`)
+          .join("<br>");
+        const confirmAlert = await alertController.create({
+          header: "Usuarios existentes",
+          message: `Los siguientes ${usersToUpdate.length} usuario(s) ya existen en el sistema y sus datos serán actualizados:<br><br>${names}<br><br>¿Deseas continuar?`,
+          buttons: [
+            {
+              text: "Cancelar",
+              role: "cancel",
+            },
+            {
+              text: "Actualizar y continuar",
+              handler: () => {
+                doImport();
+              },
+            },
+          ],
+        });
+        await confirmAlert.present();
+      } else {
+        await doImport();
       }
     };
 
@@ -568,11 +595,11 @@ export default defineComponent({
         const existingUsers = response.data;
 
         if (existingUsers.length > 0) {
-          user.hasError = true;
+          // Code exists: flag as update, not error
+          user.isUpdate = true;
+          user.hasError = false;
         } else {
-          if (!user.hasError) {
-            user.hasError = false;
-          }
+          user.isUpdate = false;
         }
       } catch (error) {
         console.error("Error checking code uniqueness:", error);

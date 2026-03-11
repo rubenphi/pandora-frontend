@@ -22,10 +22,13 @@
         </ion-item>
 
         <ion-item>
-          <ion-label position="stacked">Clasificación (Dimensión)</ion-label>
+          <ion-label position="stacked">Clasificaciones (Dimensiones)</ion-label>
           <ion-select
-            v-model="activityForm.classification"
-            placeholder="Seleccione dimensión"
+            v-model="activityForm.classifications"
+            multiple="true"
+            placeholder="Seleccione dimensiones"
+            ok-text="Aceptar"
+            cancel-text="Cancelar"
           >
             <ion-select-option value="knowledge"
               >Saber (Conocimiento)</ion-select-option
@@ -148,7 +151,7 @@ export default {
       id: activityId, // Initialize with activityId
       title: "",
       instructions: "",
-      classification: "execution", // Default
+      classifications: ["execution"], // Default
       lessonId: lessonId,
       instituteId: null,
     });
@@ -186,8 +189,9 @@ export default {
           activityForm.value.title = activityResponse.data.title;
           activityForm.value.title = activityResponse.data.title;
           activityForm.value.instructions = activityResponse.data.instructions;
-          activityForm.value.classification =
-            activityResponse.data.classification || "execution";
+          activityForm.value.classifications = activityResponse.data.classifications?.length
+            ? activityResponse.data.classifications
+            : ["execution"];
           // Ensure lessonId and instituteId are correctly set from fetched data if needed
           activityForm.value.lessonId = activityResponse.data.lesson.id;
           activityForm.value.instituteId = activityResponse.data.institute.id;

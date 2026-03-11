@@ -4,23 +4,14 @@
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-button
-            v-if="curso"
-            :href="
-              '/lecciones/' +
-              curso +
-              '/' +
-              area +
-              '/' +
-              periodoSelected +
-              '/' +
-              year
+            :href="id 
+              ? '/lecciones/' + cuestionario.courseId + '/' + cuestionario.areaId + '/' + cuestionario.periodId + '/' + cuestionario.year
+              : '/lecciones/' + curso + '/' + area + '/' + periodoSelected + '/' + year
             "
           >
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
-          <ion-button v-if="id" :href="'/cuestionario/' + id">
-            <ion-icon :icon="arrowBackOutline"></ion-icon>
-          </ion-button>
+        
         </ion-buttons>
         <ion-buttons slot="end">
           <ion-button @click="crearCuestionario">

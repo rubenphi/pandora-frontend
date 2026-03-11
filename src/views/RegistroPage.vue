@@ -263,6 +263,14 @@ export default {
         cursosInstituto.value = response.data.sort((a, b) =>
           a.name.localeCompare(b.name)
         );
+        
+        // Ensure groups are updated or cleared if year changes
+        if (selectedCourseId.value) {
+          getGruposCurso();
+        } else {
+          gruposCursoDestino.value = [];
+          selectedGroupId.value = null;
+        }
       }
     };
 
@@ -271,19 +279,33 @@ export default {
         try {
           tokenHeader();
           const response = await axios.get(
-            `/courses/${selectedCourseId.value}/groups`,
-            {
-              params: {
-                year: selectedYear.value
-              }
-            }
+            `/courses/${selectedCourseId.value}/groups?year=${selectedYear.value}`
           );
-          gruposCursoDestino.value = response.data;
-          selectedGroupId.value = null;
+          
+          let gruposFiltrados = response.data;
+          
+          if (Array.isArray(gruposFiltrados)) {
+            gruposFiltrados = gruposFiltrados.filter(
+              (grupo) => 
+                grupo.year === parseInt(selectedYear.value, 10) && 
+                grupo.exist !== false && 
+                grupo.active !== false
+            );
+          }
+          
+          gruposCursoDestino.value = gruposFiltrados;
+          // Clear current group selection if it does not exist in the new filtered array
+          if (selectedGroupId.value && !gruposCursoDestino.value.find(g => g.id === selectedGroupId.value)) {
+            selectedGroupId.value = null;
+          }
         } catch (error) {
           console.error("Error fetching groups:", error);
           gruposCursoDestino.value = [];
+          selectedGroupId.value = null;
         }
+      } else {
+        gruposCursoDestino.value = [];
+        selectedGroupId.value = null;
       }
     };
 
