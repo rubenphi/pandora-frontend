@@ -400,50 +400,33 @@ export default {
           revisedType
         ) => {
           for (const reviserId in permissionsMap) {
-            const initialPermission = initialPermissions.value.find(
+            // Find ALL active permissions for this reviser
+            const oldPermissions = initialPermissions.value.filter(
               (p) => p.reviserId == reviserId && p.reviserType === reviserType
             );
             const newRevisedId = permissionsMap[reviserId];
 
-            if (initialPermission && !newRevisedId) {
-              // DELETE -> Expire the old permission
-              promises.push(
-                axios.patch(
-                  `/student-criterion-scores/permissions/${initialPermission.id}`,
-                  { expired: true },
-                  tokenHeader()
-                )
-              );
-            } else if (
-              initialPermission &&
-              newRevisedId !== initialPermission.revisedId
-            ) {
-              // UPDATE -> Expire the old and create a new one
-              // 1. Expire old
-              promises.push(
-                axios.patch(
-                  `/student-criterion-scores/permissions/${initialPermission.id}`,
-                  { expired: true },
-                  tokenHeader()
-                )
-              );
-              // 2. Create new
-              promises.push(
-                axios.post(
-                  `/student-criterion-scores/permissions`,
-                  {
-                    reviserId: parseInt(reviserId),
-                    reviserType: reviserType,
-                    revisedId: newRevisedId,
-                    revisedType: revisedType,
-                    activityId: currentActivityId,
-                    expired: false,
-                  },
-                  tokenHeader()
-                )
-              );
-            } else if (!initialPermission && newRevisedId) {
-              // CREATE
+            let exactMatchFound = false;
+
+            // Go through all old permissions and expire the ones that don't match the new selection exactly
+            for (const oldPermission of oldPermissions) {
+              if (newRevisedId && oldPermission.revisedId === newRevisedId) {
+                // If the user's new selection precisely matches this old permission, keep it
+                exactMatchFound = true;
+              } else {
+                // Otherwise (they chose 'None' or they chose a different revisedId), expire the old permission
+                promises.push(
+                  axios.patch(
+                    `/student-criterion-scores/permissions/${oldPermission.id}`,
+                    { expired: true },
+                    tokenHeader()
+                  )
+                );
+              }
+            }
+
+            // If they chose a revisedId AND we didn't already have exactly that permission active, create it
+            if (newRevisedId && !exactMatchFound) {
               promises.push(
                 axios.post(
                   `/student-criterion-scores/permissions`,
