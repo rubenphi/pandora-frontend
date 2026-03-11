@@ -27,12 +27,20 @@
             <ion-label>Grupo revisor</ion-label>
             <ion-label>Grupo a ser revisado</ion-label>
           </ion-list-header>
-          <ion-button
-            expand="block"
-            @click="assignAllSelfEvaluation"
-            class="ion-margin"
-            >Asignar Autoevaluación a Todos</ion-button
-          >
+          <ion-grid class="ion-no-padding ion-margin-bottom">
+            <ion-row class="ion-padding-horizontal">
+              <ion-col>
+                <ion-button expand="block" color="primary" fill="outline" @click="assignAllSelfEvaluation">
+                  Autoevaluar
+                </ion-button>
+              </ion-col>
+              <ion-col>
+                <ion-button expand="block" color="secondary" fill="outline" @click="assignRandomly">
+                  Aleatorio
+                </ion-button>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
           <ion-item v-for="group in groups" :key="group.id">
             <ion-label>{{ group.name }}</ion-label>
             <ion-select
@@ -61,12 +69,20 @@
             <ion-label>Estudiante revisor</ion-label>
             <ion-label>Estudiante a ser revisado</ion-label>
           </ion-list-header>
-          <ion-button
-            expand="block"
-            @click="assignAllSelfEvaluation"
-            class="ion-margin"
-            >Asignar Autoevaluación a Todos</ion-button
-          >
+          <ion-grid class="ion-no-padding ion-margin-bottom">
+            <ion-row class="ion-padding-horizontal">
+              <ion-col>
+                <ion-button expand="block" color="primary" fill="outline" @click="assignAllSelfEvaluation">
+                  Autoevaluar
+                </ion-button>
+              </ion-col>
+              <ion-col>
+                <ion-button expand="block" color="secondary" fill="outline" @click="assignRandomly">
+                  Aleatorio
+                </ion-button>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
           <ion-item v-for="student in students" :key="student.id">
             <ion-label>{{ student.name }} {{ student.lastName }}</ion-label>
             <ion-select
@@ -162,6 +178,7 @@ import {
   IonGrid,
   IonRow,
   IonCol,
+  alertController,
 } from "@ionic/vue";
 import { arrowBackOutline } from "ionicons/icons";
 
@@ -334,6 +351,42 @@ export default {
       }
     };
 
+    const assignRandomly = async () => {
+      let items = [];
+      let permissionsMap = {};
+      let typeLabel = "";
+      
+      if (selectedTab.value === "grupos") {
+        items = groups.value;
+        permissionsMap = groupPermissions.value;
+        typeLabel = "grupos";
+      } else if (selectedTab.value === "individuales") {
+        items = students.value;
+        permissionsMap = individualPermissions.value;
+        typeLabel = "estudiantes";
+      }
+
+      if (items.length < 2) {
+        const errorAlert = await alertController.create({
+          header: "Atención",
+          message: `No hay suficientes ${typeLabel} para una asignación aleatoria cruzada (mínimo 2).`,
+          buttons: ["OK"],
+        });
+        await errorAlert.present();
+        return;
+      }
+
+      // Mezclar la lista aleatoriamente
+      const shuffled = [...items].sort(() => Math.random() - 0.5);
+      
+      // Asignar en anillo: el actual evalúa al siguiente
+      for (let i = 0; i < shuffled.length; i++) {
+        const currentId = shuffled[i].id;
+        const nextId = shuffled[(i + 1) % shuffled.length].id;
+        permissionsMap[currentId] = nextId;
+      }
+    };
+
     const savePermissions = async () => {
       isLoading.value = true;
       try {
@@ -450,6 +503,7 @@ export default {
       setErrorToastOpen,
       removeAllPermissions,
       assignAllSelfEvaluation,
+      assignRandomly,
     };
   },
 };
