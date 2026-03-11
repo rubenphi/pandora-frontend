@@ -62,6 +62,11 @@
             Importar desde JSON
           </ion-button>
         </ion-item>
+        <ion-item>
+          <ion-button expand="full" @click="openActivityImportModal" color="secondary">
+            Importar desde Actividad
+          </ion-button>
+        </ion-item>
       </ion-list>
       <import-criteria-modal
         :is-open="isImportModalOpen"
@@ -78,6 +83,7 @@ import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { tokenHeader, usuarioGet } from "../globalService";
 import ImportCriteriaModal from "../components/ImportCriteriaModal.vue";
+import ActivityCriterionSelectionModal from "../components/ActivityCriterionSelectionModal.vue";
 
 import {
   onIonViewWillEnter,
@@ -96,6 +102,7 @@ import {
   alertController,
   IonReorderGroup,
   IonReorder,
+  modalController,
 } from "@ionic/vue";
 
 import { arrowBackOutline, checkmarkOutline } from "ionicons/icons";
@@ -150,6 +157,31 @@ export default {
 
     const closeImportModal = () => {
       isImportModalOpen.value = false;
+    };
+
+    const openActivityImportModal = async () => {
+      const modal = await modalController.create({
+        component: ActivityCriterionSelectionModal,
+      });
+
+      modal.onDidDismiss().then((result) => {
+        if (result.role !== "backdrop" && result.data && result.data.criteria) {
+          handleActivityImport(result.data.criteria);
+        }
+      });
+
+      return await modal.present();
+    };
+
+    const handleActivityImport = (importedCriteria) => {
+      importedCriteria.forEach((criterion) => {
+        criteriaForms.value.push({
+          description: criterion.description,
+          score: criterion.score,
+          activityId: parseInt(activityId, 10),
+          instituteId: usuario.value.institute.id,
+        });
+      });
     };
 
     const handleImport = (importedCriteria) => {
@@ -307,6 +339,7 @@ export default {
       isImportModalOpen,
       openImportModal,
       closeImportModal,
+      openActivityImportModal,
       handleImport,
       handleReorder,
     };
