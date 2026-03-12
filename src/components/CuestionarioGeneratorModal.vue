@@ -26,6 +26,17 @@
         </ion-select>
       </ion-item>
 
+      <ion-item>
+        <ion-label position="stacked">Cantidad de Preguntas (Máx: {{ localQuestions.length }})</ion-label>
+        <ion-input
+          type="number"
+          v-model="questionsLimit"
+          @ionChange="generateQuestionnaire"
+          :min="1"
+          :max="localQuestions.length"
+        ></ion-input>
+      </ion-item>
+
       <ion-button expand="block" @click="exportData" class="ion-margin-top">
         <ion-icon slot="start" :icon="downloadOutline"></ion-icon>
         Exportar
@@ -66,6 +77,7 @@ import {
   IonSelect,
   IonSelectOption,
   IonIcon,
+  IonInput,
   actionSheetController,
   alertController,
 } from "@ionic/vue";
@@ -88,6 +100,7 @@ export default defineComponent({
     IonSelect,
     IonSelectOption,
     IonIcon,
+    IonInput,
   },
   props: {
     isOpen: Boolean,
@@ -97,6 +110,7 @@ export default defineComponent({
   },
   setup(props, { emit }) {
     const questionnaireType = ref("variable");
+    const questionsLimit = ref(0);
     const generatedHtml = ref("");
     const localQuestions = ref([]);
 
@@ -106,6 +120,7 @@ export default defineComponent({
       (newQuestions) => {
         if (newQuestions) {
           localQuestions.value = JSON.parse(JSON.stringify(newQuestions));
+          questionsLimit.value = localQuestions.value.length;
         }
       },
       { immediate: true }
@@ -119,11 +134,12 @@ export default defineComponent({
 
       let htmlOutput = `<h2>${props.lessonData.topic} - ${props.title}</h2><h3>Grado: ${props.lessonData.course.name}</h3>`;
       const type = questionnaireType.value;
+      const limitedQuestions = localQuestions.value.slice(0, questionsLimit.value);
 
       if (type === "fixed") {
-        htmlOutput += `<p>Responda la pregunta 1 a la ${localQuestions.value.length} teniendo como opciones de respuesta las siguientes:</p>`;
+        htmlOutput += `<p>Responda la pregunta 1 a la ${limitedQuestions.length} teniendo como opciones de respuesta las siguientes:</p>`;
         htmlOutput += `<div class="fixed-options-container">`;
-        localQuestions.value[0].options
+        limitedQuestions[0].options
           .sort((a, b) => a.identifier.localeCompare(b.identifier))
           .forEach((opt) => {
             htmlOutput += `<div class="fixed-option-item">${opt.identifier}. ${opt.sentence}</div>`;
@@ -131,7 +147,7 @@ export default defineComponent({
         htmlOutput += `</div>`;
       }
 
-      localQuestions.value.forEach((question, index) => {
+      limitedQuestions.forEach((question, index) => {
         let processedSentence = question.sentence;
 
         // If the sentence starts with <p>, remove only the opening and closing <p> tags
@@ -214,18 +230,31 @@ export default defineComponent({
         // Forzar generación del HTML antes de exportar
         generateQuestionnaire();
 
-        // Estilos ultra-simples y seguros (siguiendo patrones de éxito en el proyecto)
-        const styles = `
-          <style>
-            .pdf-page { padding: 15mm; font-family: Arial, sans-serif; color: black; background: white; width: 100%; box-sizing: border-box; }
-            .pdf-header { text-align: center; margin-bottom: 8mm; border-bottom: 1px solid #000; padding-bottom: 2mm; }
-            .pdf-content { width: 100%; }
-            p { margin-bottom: 4mm; display: block; page-break-inside: avoid; clear: both; }
-            .fixed-options-container { display: block; margin-bottom: 5mm; }
-            .fixed-option-item { display: block; margin-bottom: 1mm; }
-            h2, h3 { margin: 0 0 2mm 0; }
-          </style>
-        `;
+        // Estilos diferenciados por modo
+        const styles = isStandard
+          ? `
+            <style>
+              .pdf-page { padding: 10mm; font-family: Arial, sans-serif; color: black; background: white; width: 190mm; box-sizing: border-box; }
+              .pdf-header { text-align: center; margin-bottom: 8mm; border-bottom: 1px solid #000; padding-bottom: 2mm; width: 100%; }
+              .pdf-content { width: 100%; column-count: 2; column-gap: 10mm; }
+              .pdf-content p { margin-bottom: 4mm; display: block; break-inside: avoid-column; page-break-inside: avoid; }
+              .fixed-options-container { display: flex; flex-wrap: wrap; gap: 5mm; margin-bottom: 5mm; column-span: all; }
+              .fixed-option-item { flex: 0 0 calc(50% - 5mm); }
+              h2, h3 { margin: 0 0 2mm 0; }
+            </style>
+          `
+          : `
+            <style>
+              .pdf-page { padding: 4mm; font-family: Arial, sans-serif; color: black; background: white; width: 72mm; box-sizing: border-box; font-size: 9pt; }
+              .pdf-header { text-align: center; margin-bottom: 4mm; border-bottom: 1px dotted #000; padding-bottom: 2mm; width: 100%; }
+              .pdf-content { width: 100%; }
+              .pdf-content p { margin-bottom: 3mm; display: block; page-break-inside: avoid; }
+              .fixed-options-container { display: block; margin-bottom: 4mm; }
+              .fixed-option-item { display: block; margin-bottom: 1mm; }
+              h2 { font-size: 11pt; margin: 0 0 1mm 0; }
+              h3 { font-size: 10pt; margin: 0 0 2mm 0; }
+            </style>
+          `;
 
         const htmlContent = `
           ${styles}
@@ -243,29 +272,29 @@ export default defineComponent({
         const element = document.createElement("div");
         element.innerHTML = htmlContent;
 
-        const opt = {
-          margin: 0,
-          filename: filename,
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { 
-            scale: 2, 
-            useCORS: true, 
-            logging: false,
-            letterRendering: true 
-          },
-          jsPDF: { unit: "mm", format: "legal", orientation: "portrait" },
-        };
+        const opt = isStandard
+          ? {
+              margin: 0,
+              filename: filename,
+              image: { type: "jpeg", quality: 0.98 },
+              html2canvas: { scale: 2, useCORS: true, logging: false },
+              jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+            }
+          : {
+              margin: 0,
+              filename: filename,
+              image: { type: "jpeg", quality: 0.98 },
+              html2canvas: { scale: 2, useCORS: true, logging: false },
+              jsPDF: { unit: "mm", format: [80, 400], orientation: "portrait" }, // 80mm width, long height
+            };
 
         const worker = html2pdf().from(element).set(opt);
 
         if (Capacitor.isNativePlatform()) {
-          // Android: generar base64 y compartir
           const pdfDataUri = await worker.outputPdf("datauristring");
-          
           if (!pdfDataUri || pdfDataUri.length < 1000) {
             throw new Error("El PDF generado parece estar vacío.");
           }
-
           const base64Data = pdfDataUri.split(",")[1];
           await FileSharer.share({
             filename: filename,
@@ -273,7 +302,6 @@ export default defineComponent({
             base64Data: base64Data,
           });
         } else {
-          // Web: descarga directa
           await worker.save();
         }
       } catch (e) {
@@ -317,8 +345,9 @@ export default defineComponent({
 
     const generateAnswerKeyCsv = () => {
       let csvContent = '"Q No","KEY"\n';
+      const limitedQuestions = localQuestions.value.slice(0, questionsLimit.value);
 
-      localQuestions.value.forEach((question, index) => {
+      limitedQuestions.forEach((question, index) => {
         const correctOption = question.options.find((option) => option.correct);
         csvContent += `"${index + 1}","${
           correctOption ? correctOption.identifier : ""
@@ -401,7 +430,9 @@ export default defineComponent({
 
     return {
       questionnaireType,
+      questionsLimit,
       generatedHtml,
+      localQuestions,
       generateQuestionnaire,
       exportData,
       printView,
