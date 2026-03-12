@@ -305,13 +305,24 @@ export default defineComponent({
           await worker.save();
         }
       } catch (e) {
-        console.error("PDF EXPORT ERROR:", e);
-        const errorAlert = await alertController.create({
-          header: "Error al exportar",
-          message: e.message || "Ocurrió un error inesperado al generar el PDF.",
-          buttons: ["OK"],
-        });
-        await errorAlert.present();
+        const msg = (e.message || "").toLowerCase();
+        const isCancel =
+          msg.includes("cancelled") ||
+          msg.includes("user_cancelled") ||
+          msg.includes("dismiss") ||
+          msg.includes("user back") ||
+          msg.includes("back button") ||
+          msg.includes("share was suppressed");
+
+        if (!isCancel) {
+          console.error("PDF EXPORT ERROR:", e);
+          const errorAlert = await alertController.create({
+            header: "Error al exportar",
+            message: e.message || "Ocurrió un error inesperado al generar el PDF.",
+            buttons: ["OK"],
+          });
+          await errorAlert.present();
+        }
       } finally {
         await loading.dismiss();
       }
