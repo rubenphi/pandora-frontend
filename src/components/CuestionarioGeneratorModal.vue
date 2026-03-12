@@ -41,13 +41,9 @@
         <ion-icon slot="start" :icon="downloadOutline"></ion-icon>
         Exportar
       </ion-button>
-      <ion-button expand="block" @click="printView" fill="outline">
+      <ion-button expand="block" @click="printData" fill="outline" v-if="!isNative">
         <ion-icon slot="start" :icon="printOutline"></ion-icon>
-        Imprimir (Estándar)
-      </ion-button>
-      <ion-button expand="block" @click="printThermal" fill="outline" color="medium">
-        <ion-icon slot="start" :icon="printOutline"></ion-icon>
-        Imprimir (Térmica 80mm)
+        Imprimir
       </ion-button>
 
       <div
@@ -134,12 +130,21 @@ export default defineComponent({
 
       let htmlOutput = `<h2>${props.lessonData.topic} - ${props.title}</h2><h3>Grado: ${props.lessonData.course.name}</h3>`;
       const type = questionnaireType.value;
-      const limitedQuestions = localQuestions.value.slice(0, questionsLimit.value);
+      
+      let limit = parseInt(questionsLimit.value);
+      if (isNaN(limit) || limit < 1) limit = 1;
+      if (limit > localQuestions.value.length) limit = localQuestions.value.length;
 
-      if (type === "fixed") {
+      const limitedQuestions = localQuestions.value.slice(0, limit);
+
+      if (type === "fixed" && limitedQuestions.length > 0) {
         htmlOutput += `<p>Responda la pregunta 1 a la ${limitedQuestions.length} teniendo como opciones de respuesta las siguientes:</p>`;
         htmlOutput += `<div class="fixed-options-container">`;
-        limitedQuestions[0].options
+        
+        const firstQuestionOptions = limitedQuestions[0].options || [];
+        
+        firstQuestionOptions
+          .slice() // clonar para no mutar el original
           .sort((a, b) => a.identifier.localeCompare(b.identifier))
           .forEach((opt) => {
             htmlOutput += `<div class="fixed-option-item">${opt.identifier}. ${opt.sentence}</div>`;
@@ -356,7 +361,12 @@ export default defineComponent({
 
     const generateAnswerKeyCsv = () => {
       let csvContent = '"Q No","KEY"\n';
-      const limitedQuestions = localQuestions.value.slice(0, questionsLimit.value);
+      
+      let limit = parseInt(questionsLimit.value);
+      if (isNaN(limit) || limit < 1) limit = 1;
+      if (limit > localQuestions.value.length) limit = localQuestions.value.length;
+
+      const limitedQuestions = localQuestions.value.slice(0, limit);
 
       limitedQuestions.forEach((question, index) => {
         const correctOption = question.options.find((option) => option.correct);
@@ -397,10 +407,6 @@ export default defineComponent({
       printWindow.document.write("</body></html>");
       printWindow.document.close();
       printWindow.focus();
-      /*  printWindow.onload = function () {
-        printWindow.print();
-        printWindow.close();
-      }; */
     };
 
     const printThermal = () => {
@@ -430,6 +436,29 @@ export default defineComponent({
       printWindow.focus();
     };
 
+    const printData = async () => {
+      const actionSheet = await actionSheetController.create({
+        header: "Imprimir cuestionario",
+        buttons: [
+          {
+            text: "Formato Estándar (A4)",
+            handler: () => printView(),
+          },
+          {
+            text: "Formato Térmico (80mm)",
+            handler: () => printThermal(),
+          },
+          {
+            text: "Cancelar",
+            role: "cancel",
+          },
+        ],
+      });
+      await actionSheet.present();
+    };
+
+    const isNative = Capacitor.isNativePlatform();
+
     watch(
       () => props.isOpen,
       (newVal) => {
@@ -444,10 +473,10 @@ export default defineComponent({
       questionsLimit,
       generatedHtml,
       localQuestions,
+      isNative,
       generateQuestionnaire,
       exportData,
-      printView,
-      printThermal,
+      printData,
       downloadOutline,
       printOutline,
       emit, // Make emit available in the template
