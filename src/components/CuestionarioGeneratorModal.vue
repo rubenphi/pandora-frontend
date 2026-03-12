@@ -32,7 +32,11 @@
       </ion-button>
       <ion-button expand="block" @click="printView" fill="outline">
         <ion-icon slot="start" :icon="printOutline"></ion-icon>
-        Imprimir
+        Imprimir (Estándar)
+      </ion-button>
+      <ion-button expand="block" @click="printThermal" fill="outline" color="medium">
+        <ion-icon slot="start" :icon="printOutline"></ion-icon>
+        Imprimir (Térmica 80mm)
       </ion-button>
 
       <div
@@ -62,8 +66,13 @@ import {
   IonSelect,
   IonSelectOption,
   IonIcon,
+  actionSheetController,
+  alertController,
 } from "@ionic/vue";
 import { downloadOutline, printOutline } from "ionicons/icons";
+import html2pdf from "html2pdf.js";
+import { FileSharer } from "@byteowls/capacitor-filesharer";
+import { Capacitor } from "@capacitor/core";
 export default defineComponent({
   name: "CuestionarioGeneratorModal",
   components: {
@@ -190,12 +199,120 @@ export default defineComponent({
       generatedHtml.value = htmlOutput;
     };
 
-    const exportData = () => {
+    const exportPDF = async (mode) => {
+      const isStandard = mode === "standard";
+      const filename = `${props.title || "cuestionario"}_${isStandard ? "estandar" : "thermal"}.pdf`;
+
+      const loading = await alertController.create({
+        header: "Generando PDF",
+        message: "Por favor espere...",
+        backdropDismiss: false,
+      });
+      await loading.present();
+
+      try {
+        // Forzar generación del HTML antes de exportar
+        generateQuestionnaire();
+
+        // Estilos ultra-simples y seguros (siguiendo patrones de éxito en el proyecto)
+        const styles = `
+          <style>
+            .pdf-page { padding: 15mm; font-family: Arial, sans-serif; color: black; background: white; width: 100%; box-sizing: border-box; }
+            .pdf-header { text-align: center; margin-bottom: 8mm; border-bottom: 1px solid #000; padding-bottom: 2mm; }
+            .pdf-content { width: 100%; }
+            p { margin-bottom: 4mm; display: block; page-break-inside: avoid; clear: both; }
+            .fixed-options-container { display: block; margin-bottom: 5mm; }
+            .fixed-option-item { display: block; margin-bottom: 1mm; }
+            h2, h3 { margin: 0 0 2mm 0; }
+          </style>
+        `;
+
+        const htmlContent = `
+          ${styles}
+          <div class="pdf-page">
+            <div class="pdf-header">
+              <h2>${props.title || "CUESTIONARIO"}</h2>
+              <h3>${props.lessonData?.topic || ""} - Curso: ${props.lessonData?.course?.name || ""}</h3>
+            </div>
+            <div class="pdf-content">
+              ${generatedHtml.value || "No se pudo recuperar el contenido del cuestionario."}
+            </div>
+          </div>
+        `;
+
+        const element = document.createElement("div");
+        element.innerHTML = htmlContent;
+
+        const opt = {
+          margin: 0,
+          filename: filename,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { 
+            scale: 2, 
+            useCORS: true, 
+            logging: false,
+            letterRendering: true 
+          },
+          jsPDF: { unit: "mm", format: "legal", orientation: "portrait" },
+        };
+
+        const worker = html2pdf().from(element).set(opt);
+
+        if (Capacitor.isNativePlatform()) {
+          // Android: generar base64 y compartir
+          const pdfDataUri = await worker.outputPdf("datauristring");
+          
+          if (!pdfDataUri || pdfDataUri.length < 1000) {
+            throw new Error("El PDF generado parece estar vacío.");
+          }
+
+          const base64Data = pdfDataUri.split(",")[1];
+          await FileSharer.share({
+            filename: filename,
+            contentType: "application/pdf",
+            base64Data: base64Data,
+          });
+        } else {
+          // Web: descarga directa
+          await worker.save();
+        }
+      } catch (e) {
+        console.error("PDF EXPORT ERROR:", e);
+        const errorAlert = await alertController.create({
+          header: "Error al exportar",
+          message: e.message || "Ocurrió un error inesperado al generar el PDF.",
+          buttons: ["OK"],
+        });
+        await errorAlert.present();
+      } finally {
+        await loading.dismiss();
+      }
+    };
+
+    const exportData = async () => {
       if (questionnaireType.value === "csv") {
         generateAnswerKeyCsv();
-      } else {
-        printView(); // Use printView for PDF generation
+        return;
       }
+
+      const actionSheet = await actionSheetController.create({
+        header: "Exportar como PDF",
+        buttons: [
+          {
+            text: "PDF Estándar (A4)",
+            handler: () => exportPDF("standard"),
+          },
+          {
+            text: "PDF Térmica (80mm)",
+            handler: () => exportPDF("thermal"),
+          },
+          {
+            text: "Cancelar",
+            role: "cancel",
+          },
+        ],
+      });
+      await actionSheet.present();
     };
 
     const generateAnswerKeyCsv = () => {
@@ -246,6 +363,33 @@ export default defineComponent({
       }; */
     };
 
+    const printThermal = () => {
+      const printWindow = window.open("", "", "height=600,width=320");
+      printWindow.document.write(
+        `<html><head><title>${props.lessonData.course.name}:${props.lessonData.topic} - ${props.title}</title>`
+      );
+      printWindow.document.write(
+        `<style>
+          @page { size: 80mm auto; margin: 4mm; }
+          body { font-family: Arial, sans-serif; width: 72mm; margin: 0; padding: 0; font-size: 9pt; line-height: 1.3; }
+          h2 { font-size: 10pt; margin: 2mm 0 1mm 0; text-align: center; }
+          h3 { font-size: 9pt; margin: 1mm 0; text-align: center; }
+          #printable-content { column-count: 1; }
+          #printable-content p { margin: 1mm 0; break-inside: avoid; }
+          .fixed-options-container { display: block; }
+          .fixed-option-item { display: block; margin: 1mm 0; }
+          strong { font-weight: bold; }
+        </style>`
+      );
+      printWindow.document.write("</head><body>");
+      printWindow.document.write(
+        `<div id="printable-content">${generatedHtml.value}</div>`
+      );
+      printWindow.document.write("</body></html>");
+      printWindow.document.close();
+      printWindow.focus();
+    };
+
     watch(
       () => props.isOpen,
       (newVal) => {
@@ -261,6 +405,7 @@ export default defineComponent({
       generateQuestionnaire,
       exportData,
       printView,
+      printThermal,
       downloadOutline,
       printOutline,
       emit, // Make emit available in the template
