@@ -588,6 +588,25 @@
               </table>
             </div>
           </div>
+
+          <!-- Warning: recently enrolled students -->
+          <div
+            v-if="estudiantesNuevos.length > 0"
+            class="new-students-warning ion-padding"
+          >
+            <p><strong>⚠️ Aviso – Estudiantes de ingreso reciente</strong></p>
+            <p>
+              Los siguientes estudiantes fueron asignados al curso hace menos de
+              un mes. Su nota baja puede deberse a que no cuentan con las
+              actividades anteriores a su llegada:
+            </p>
+            <ul>
+              <li v-for="est in estudiantesNuevos" :key="est.id">
+                {{ est.lastName }}, {{ est.name }}
+                <em>(ingresó el {{ est.enrolledAt }})</em>
+              </li>
+            </ul>
+          </div>
         </div>
       </ion-content>
     </ion-modal>
@@ -726,6 +745,7 @@ export default {
       format: "short",
     });
     const estudiantesReporte = ref([]);
+    const estudiantesNuevos = ref([]); // Students in report enrolled < 1 month ago
 
     const processStudentGrades = (
       allGrades,
@@ -1345,7 +1365,7 @@ export default {
       mostrarModalReporte.value = false;
     };
 
-    const generarReporte = () => {
+    const generarReporte = async () => {
       const val = parseFloat(reportConfig.value.value);
       if (isNaN(val)) return;
 
@@ -1368,6 +1388,35 @@ export default {
             return false;
         }
       });
+
+      // For "lower than" conditions, detect recently enrolled students (< 1 month)
+      estudiantesNuevos.value = [];
+      if (reportConfig.value.condition === "lt" || reportConfig.value.condition === "lte") {
+        try {
+          const enrollmentResponse = await axios.get(
+            `/courses/${cursoId}/users?year=${year}&active=true`,
+            tokenHeader()
+          );
+          const oneMonthAgo = new Date();
+          oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+          const reportIds = new Set(estudiantesReporte.value.map((e) => e.id));
+          estudiantesNuevos.value = enrollmentResponse.data
+            .filter((enrollment) => {
+              if (!reportIds.has(enrollment.user?.id)) return false;
+              const enrolledAt = new Date(enrollment.createdAt);
+              return enrolledAt > oneMonthAgo;
+            })
+            .map((enrollment) => ({
+              id: enrollment.user.id,
+              name: enrollment.user.name,
+              lastName: enrollment.user.lastName,
+              enrolledAt: new Date(enrollment.createdAt).toLocaleDateString(),
+            }));
+        } catch (error) {
+          console.error("Error fetching enrollment dates:", error);
+        }
+      }
 
       mostrarModalConfig.value = false;
       mostrarModalReporte.value = true;
@@ -1616,6 +1665,7 @@ export default {
       mostrarModalReporte,
       reportConfig,
       estudiantesReporte,
+      estudiantesNuevos,
       abrirModalConfig,
       cerrarModalConfig,
       cerrarModalReporte,
@@ -1688,5 +1738,22 @@ export default {
 .item-row td {
   font-size: 0.9em;
   padding-left: 20px;
+}
+
+.new-students-warning {
+  margin-top: 20px;
+  border: 2px solid #f0a500;
+  border-radius: 8px;
+  background-color: #fff8e1;
+  color: #5a3e00;
+}
+
+.new-students-warning p {
+  margin: 4px 0;
+}
+
+.new-students-warning ul {
+  margin: 8px 0 4px 16px;
+  padding: 0;
 }
 </style>

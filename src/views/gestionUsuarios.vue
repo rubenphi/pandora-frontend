@@ -112,9 +112,9 @@
         >
           <p>No hay usuarios sin curso.</p>
         </div>
-        <ion-item v-else v-for="usuario in usersCourse" :key="usuario.id">
+        <ion-item v-else v-for="(usuario, index) in usersCourse" :key="usuario.id">
           <ion-label class="ion-text-wrap">
-            <h6>{{ usuario.lastName + " " + usuario.name }}</h6>
+            <h6>{{index + 1}}. {{ usuario.lastName + " " + usuario.name }}</h6>
             <p>
               {{ getRoleLabel(usuario) }}<br />
               {{ usuario.code }}
@@ -176,11 +176,11 @@
               <ion-list-header>
                 <ion-label>Estudiantes y Profesores</ion-label>
               </ion-list-header>
-              <ion-item v-for="usuario in usersCourse" :key="usuario.id">
+              <ion-item v-for="(usuario, index) in usersCourse" :key="usuario.id">
                 <ion-label class="ion-text-wrap">
                   <h6>{{ usuario.lastName + " " + usuario.name }}</h6>
                   <p>
-                    {{ getRoleLabel(usuario) }}<br />
+                    {{ index + 1 }}. {{ getRoleLabel(usuario) }}<br />
                     {{ usuario.code }}
                   </p>
                 </ion-label>
