@@ -261,6 +261,13 @@
           </ion-item>
         </ion-content>
       </ion-modal>
+
+      <!-- Botón flotante para asignar aleatoriamente estudiantes sin grupo -->
+      <ion-fab slot="fixed" vertical="bottom" horizontal="end" v-if="canManageGroups">
+        <ion-fab-button @click="shuffleAssignStudents" color="primary">
+          <ion-icon :icon="shuffleOutline"></ion-icon>
+        </ion-fab-button>
+      </ion-fab>
     </ion-content>
   </ion-page>
 </template>
@@ -321,6 +328,8 @@ import {
   IonButton,
   IonButtons,
   IonInput,
+  IonFab,
+  IonFabButton,
   alertController,
 } from "@ionic/vue";
 
@@ -333,6 +342,7 @@ import {
   personRemoveOutline,
   swapHorizontalOutline,
   trashOutline,
+  shuffleOutline,
 } from "ionicons/icons";
 
 export default {
@@ -355,6 +365,8 @@ export default {
     IonButton,
     IonButtons,
     IonInput,
+    IonFab,
+    IonFabButton,
   },
   setup() {
     const mroute = useRoute();
@@ -797,6 +809,79 @@ export default {
       await alert.present();
     };
 
+    const shuffleAssignStudents = async () => {
+      const validGroups = grupos.value.filter(g => g.id !== 0);
+      if (validGroups.length === 0) {
+        window.alert("No existen grupos para asignar estudiantes.");
+        return;
+      }
+
+      const confirmAlert = await alertController.create({
+        header: "Asignación Aleatoria",
+        message: "¿Desea asignar a los estudiantes sin grupo de forma aleatoria y equitativa entre los grupos existentes?",
+        buttons: [
+          { text: "Cancelar", role: "cancel" },
+          {
+            text: "Asignar",
+            role: "confirm",
+            handler: async () => {
+              try {
+                const res = await axios.get(
+                  `/courses/${cursoId}/usersNoGroup?year=${selectedYear}`,
+                  { headers: tokenHeader() }
+                );
+                
+                const studentsToAssign = res.data
+                  .map(miembro => miembro.user)
+                  .filter(u => u.rol === "student" || u.rol === "user");
+
+                if (studentsToAssign.length === 0) {
+                  window.alert("No hay estudiantes sin grupo para asignar.");
+                  return;
+                }
+
+                // Barajar estudiantes
+                const shuffledStudents = [...studentsToAssign].sort(() => 0.5 - Math.random());
+
+                // Obtener recuentos actuales
+                const groupSizes = await Promise.all(validGroups.map(async (group) => {
+                  try {
+                    const groupMembersRes = await axios.get(`/groups/${group.id}/${selectedYear}/users`, { headers: tokenHeader() });
+                    return { id: group.id, count: groupMembersRes.data.length };
+                  } catch (e) {
+                    return { id: group.id, count: 0 };
+                  }
+                }));
+
+                // Asignar equitablemente
+                for (const student of shuffledStudents) {
+                  groupSizes.sort((a, b) => a.count - b.count);
+                  const targetGroup = groupSizes[0];
+
+                  const data = {
+                    groupId: targetGroup.id,
+                    userId: student.id,
+                    code: "admin",
+                    year: parseInt(selectedYear, 10),
+                    active: true,
+                  };
+
+                  await axios.post(`/users/${student.id}/groups`, data, { headers: tokenHeader() });
+                  targetGroup.count++;
+                }
+
+                location.reload();
+              } catch (error) {
+                console.error("Error en asignación aleatoria:", error);
+                window.alert("Ocurrió un error al asignar los estudiantes.");
+              }
+            }
+          }
+        ]
+      });
+      await confirmAlert.present();
+    };
+
     const presentAlert = async () => {
       const alert = await alertController.create({
         header: mensajeAlerta.value.header || "Default Header",
@@ -942,6 +1027,8 @@ export default {
       logedUser,
       userCourses,
       canManageGroups,
+      shuffleOutline,
+      shuffleAssignStudents,
     };
   },
 };
