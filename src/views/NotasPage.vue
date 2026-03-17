@@ -740,8 +740,8 @@ export default {
     const mostrarModalReporte = ref(false);
     const mostrarModalGeneradorPlanilla = ref(false);
     const reportConfig = ref({
-      condition: "lt",
-      value: 3.5,
+      condition: "lte",
+      value: 3.3,
       format: "short",
     });
     const estudiantesReporte = ref([]);
@@ -1200,6 +1200,7 @@ export default {
       periodoSelected.value = storedPeriod
         ? JSON.parse(storedPeriod)
         : periodos.value[0]?.id || null;
+
       await getNotas();
     });
 
@@ -1500,7 +1501,7 @@ export default {
         loading.dismiss();
       });
 
-      const fileName = `reporte-notas-${Date.now()}.png`;
+      const fileName = `reporte-notas-${cursoSelected.value.name}-${JSON.parse(localStorage.getItem("periodos")).find((p) => p.id === periodoSelected.value)?.name}-${year}.png`;
 
       if (Capacitor.isNativePlatform()) {
         try {
@@ -1541,7 +1542,7 @@ export default {
 
         loading.dismiss();
 
-        const fileName = `reporte-notas-${Date.now()}.docx`;
+        const fileName = `reporte-notas-${cursoSelected.value.name}-${JSON.parse(localStorage.getItem("periodos")).find((p) => p.id === periodoSelected.value)?.name}-${year}.docx`;
         const blob = new Blob([fileBuffer], {
           type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         });

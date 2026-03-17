@@ -245,17 +245,19 @@ export default {
             `/student-criterion-scores/permissions?reviserId=${usuario.value.id}&activityId=${actividad.value.id}&expired=false`,
             tokenHeader()
           );
-          const permisosGrupales = await axios.get(
-            `/student-criterion-scores/permissions?reviserId=${grupoUsuario.value.id}&activityId=${actividad.value.id}&expired=false`,
-            tokenHeader()
-          );
+          if (grupoUsuario.value != null) {
+            const permisosGrupales = await axios.get(
+              `/student-criterion-scores/permissions?reviserId=${grupoUsuario.value?.id}&activityId=${actividad.value.id}&expired=false`,
+              tokenHeader()
+            );
+            userPermissions.value.push(...permisosGrupales.data);
+          }
           userPermissions.value = response.data;
-
-          userPermissions.value.push(...permisosGrupales.data);
           tienePermiso.value = userPermissions.value.length > 0;
         }
       } catch (error) {
         console.error("Error fetching student permissions:", error);
+        alert("Error al obtener los permisos de los estudiantes: " + error);
       }
     };
 

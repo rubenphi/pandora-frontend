@@ -344,13 +344,15 @@ export default {
           `/student-criterion-scores/permissions?reviserId=${usuario.value.id}&activityId=${activityId.value}&expired=false`,
           tokenHeader()
         );
-        const permisosGrupales = await axios.get(
-          `/student-criterion-scores/permissions?reviserId=${grupoUsuario.value.id}&activityId=${activityId.value}&expired=false`,
-          tokenHeader()
-        );
+        if (grupoUsuario.value != null) {
+          const permisosGrupales = await axios.get(
+            `/student-criterion-scores/permissions?reviserId=${grupoUsuario.value.id}&activityId=${activityId.value}&expired=false`,
+            tokenHeader()
+          );
+          userPermissions.value.push(...permisosGrupales.data);
+        }
         userPermissions.value = permisosIndividuales.data;
 
-        userPermissions.value.push(...permisosGrupales.data);
         await fetchStudentsToReview(courseId, year);
       } catch (error) {
         console.error("Error fetching student permissions:", error);
@@ -418,7 +420,7 @@ export default {
         const response = await axios.get(
           `/student-criterion-scores/getAll?activityId=${activityId.value}`,
           tokenHeader()
-        );
+        ); 
         const fetchedScores = response.data;
 
         fetchedScores.forEach((score) => {

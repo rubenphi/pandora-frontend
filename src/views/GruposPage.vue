@@ -189,10 +189,12 @@
         </ion-header>
         <ion-content class="ion-padding">
           <ion-item>
-            <ion-label position="floating">Nombre del grupo</ion-label>
+            <ion-label position="floating">Cantidad de grupos a crear</ion-label>
             <ion-input
-              v-model="newGroupName"
-              placeholder="Ingrese el nombre del grupo"
+              type="number"
+              min="1"
+              v-model="numberOfGroupsToCreate"
+              placeholder="Ingrese la cantidad de grupos"
             ></ion-input>
           </ion-item>
           <ion-item>
@@ -393,7 +395,7 @@ export default {
     const isEditGroupModalOpen = ref(false);
     const grupoId = ref();
     const userId = ref();
-    const newGroupName = ref("");
+    const numberOfGroupsToCreate = ref(1);
     const editGroupName = ref("");
     const currentEditingGroup = ref(null);
     const periodos = periodosGet();
@@ -497,7 +499,7 @@ export default {
             role: "confirm",
             handler: () => {
               isCreateGroupModalOpen.value = true;
-              newGroupName.value = "";
+              numberOfGroupsToCreate.value = 1;
             },
           },
         ];
@@ -507,7 +509,7 @@ export default {
       }
 
       isCreateGroupModalOpen.value = true;
-      newGroupName.value = "";
+      numberOfGroupsToCreate.value = 1;
     };
 
     const closeCreateGroupModal = () => {
@@ -522,30 +524,36 @@ export default {
     };
 
     const confirmCreateGroup = async () => {
-      if (!newGroupName.value.trim()) {
-        alert("Por favor ingrese un nombre para el grupo");
+      const numGroups = parseInt(numberOfGroupsToCreate.value, 10);
+      if (isNaN(numGroups) || numGroups < 1) {
+        alert("Por favor ingrese una cantidad válida mayor a 0");
         return;
       }
 
       try {
-        // Crear el nuevo grupo con los datos requeridos
-        const data = {
-          name: newGroupName.value.trim(),
-          courseId: parseInt(cursoId, 10),
-          instituteId: curso.value.institute.id,
-          periodId: periodoId.value,
-          year: parseInt(selectedYear, 10),
-          exist: true,
-          active: true,
-        };
+        const baseGroupCount = grupos.value.filter((g) => g.id !== 0).length;
 
-        await axios.post("/groups", data, {
-          headers: tokenHeader(),
-        });
+        for (let i = 0; i < numGroups; i++) {
+          const groupName = `Grupo ${baseGroupCount + i + 1}`;
+          
+          const data = {
+            name: groupName,
+            courseId: parseInt(cursoId, 10),
+            instituteId: curso.value.institute.id,
+            periodId: periodoId.value,
+            year: parseInt(selectedYear, 10),
+            exist: true,
+            active: true,
+          };
+
+          await axios.post("/groups", data, {
+            headers: tokenHeader(),
+          });
+        }
 
         // Cerrar el modal y actualizar la lista de grupos
         if (createGroupModal.value && createGroupModal.value.$el) {
-          createGroupModal.value.$el.dismiss(data, "confirm");
+          createGroupModal.value.$el.dismiss(null, "confirm");
         }
         closeCreateGroupModal();
 
@@ -553,7 +561,7 @@ export default {
         location.reload();
       } catch (error) {
         console.error("Error creating group:", error);
-        alert("Error al crear el grupo. Por favor intente nuevamente.");
+        alert("Error al crear los grupos. Por favor intente nuevamente.");
       }
     };
 
@@ -766,7 +774,7 @@ export default {
                     await axios.patch(
                       `/groups/${group.id}/users`,
                       {
-                        userIdToRemove: member.user.id,
+                        userIdToUpdate: member.user.id,
                         active: false,
                       },
                       { headers: tokenHeader() }
@@ -912,7 +920,7 @@ export default {
       userId,
       studentToAddId,
       targetGroupId,
-      newGroupName,
+      numberOfGroupsToCreate,
       editGroupName,
       currentEditingGroup,
       openModal,
