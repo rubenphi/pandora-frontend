@@ -35,6 +35,9 @@
                 <ion-button @click.stop="openEditGroupModal(grupo)">
                   <ion-icon :icon="createOutline"></ion-icon>
                 </ion-button>
+                <ion-button @click.stop="deleteGroup(grupo)" color="danger">
+                  <ion-icon :icon="trashOutline"></ion-icon>
+                </ion-button>
               </ion-buttons>
             </IonItem>
             <div class="ion-padding" slot="content">
@@ -882,6 +885,81 @@ export default {
       await confirmAlert.present();
     };
 
+    const deleteGroup = async (group) => {
+      if ((await QuizSinNotas(cursoId, usuario)).length > 0) {
+        mensajeAlerta.value.header = "Hay cuestionarios grupales sin calificar";
+        mensajeAlerta.value.subHeader = "¿Seguro que desea eliminar el grupo?";
+        mensajeAlerta.value.message = `<strong>Los cuestionarios sin calificar son:  <br></strong> <ul> <li>${(
+          await QuizSinNotas(cursoId, usuario)
+        )
+          .map((quiz) => quiz.title)
+          .join("<br> </li></ul> <ul> <li>")}`;
+
+        mensajeAlerta.value.buttons = [
+          {
+            text: "Cancelar",
+            role: "cancel",
+          },
+          {
+            text: "Eliminar",
+            role: "confirm",
+            handler: () => {
+              confirmDeleteGroup(group);
+            },
+          },
+        ];
+        mensajeAlerta.value.active = true;
+        await presentAlert();
+        return;
+      }
+
+      confirmDeleteGroup(group);
+    };
+
+    const confirmDeleteGroup = async (group) => {
+      const alert = await alertController.create({
+        header: "Eliminar Grupo",
+        message: `¿Está seguro de que desea eliminar el grupo "${group.name}"? Los estudiantes asignados a este volverán a no tener grupo.`,
+        buttons: [
+          {
+            text: "Cancelar",
+            role: "cancel",
+          },
+          {
+            text: "Eliminar",
+            role: "destructive",
+            handler: async () => {
+              try {
+                // Primero: Obtener y remover todos los miembros del grupo
+                const membersRes = await axios.get(`/groups/${group.id}/${selectedYear}/users`, { headers: tokenHeader() });
+                const members = membersRes.data;
+
+                for (const member of members) {
+                  await axios.patch(`/groups/${group.id}/users`, {
+                    userIdToUpdate: member.user.id,
+                    active: false,
+                  }, { headers: tokenHeader() });
+                }
+
+                // Segundo: Inactivar (borrado lógico) del grupo
+                await axios.patch(`/groups/${group.id}`, {
+                  active: false
+                }, { headers: tokenHeader() });
+
+                // Recargar para aplicar cambios en UI
+                location.reload();
+              } catch (error) {
+                console.error("Error deleting group:", error);
+                window.alert("Ocurrió un error al intentar eliminar el grupo.");
+              }
+            }
+          }
+        ]
+      });
+
+      await alert.present();
+    };
+
     const presentAlert = async () => {
       const alert = await alertController.create({
         header: mensajeAlerta.value.header || "Default Header",
@@ -1029,6 +1107,7 @@ export default {
       canManageGroups,
       shuffleOutline,
       shuffleAssignStudents,
+      deleteGroup,
     };
   },
 };
