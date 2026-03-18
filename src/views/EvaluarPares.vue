@@ -344,6 +344,9 @@ export default {
           `/student-criterion-scores/permissions?reviserId=${usuario.value.id}&activityId=${activityId.value}&expired=false`,
           tokenHeader()
         );
+
+        userPermissions.value = [...permisosIndividuales.data];
+
         if (grupoUsuario.value != null) {
           const permisosGrupales = await axios.get(
             `/student-criterion-scores/permissions?reviserId=${grupoUsuario.value.id}&activityId=${activityId.value}&expired=false`,
@@ -351,7 +354,6 @@ export default {
           );
           userPermissions.value.push(...permisosGrupales.data);
         }
-        userPermissions.value = permisosIndividuales.data;
 
         await fetchStudentsToReview(courseId, year);
       } catch (error) {
@@ -383,11 +385,14 @@ export default {
           );
           groupUsersResponse.data.forEach((u) => {
             if (u.user) {
-              const isAlreadyAdded = allStudents.some(
+              const existingStudent = allStudents.find(
                 (student) => student.id === u.user.id
               );
-              if (!isAlreadyAdded) {
+              if (!existingStudent) {
+                u.user._allowedByGroupId = permission.revisedId;
                 allStudents.push(u.user);
+              } else {
+                existingStudent._allowedByGroupId = permission.revisedId;
               }
             }
           });
@@ -507,7 +512,7 @@ export default {
             const permission = userPermissions.value.find((p) => {
               if (p.revisedType === "User") return p.revisedId === student.id;
               if (p.revisedType === "Group") {
-                return true; // Simplified, backend will validate membership
+                return p.revisedId === student._allowedByGroupId;
               }
               return false;
             });

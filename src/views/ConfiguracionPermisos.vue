@@ -47,6 +47,7 @@
               v-model="groupPermissions[group.id]"
               placeholder="Seleccionar revisado"
             >
+              <ion-select-option :value="-1">Ninguno</ion-select-option>
               <ion-select-option :value="group.id"
                 >{{ group.name }} (Autoevaluación)</ion-select-option
               >
@@ -89,7 +90,7 @@
               v-model="individualPermissions[student.id]"
               placeholder="¿a quién revisa?"
             >
-              <ion-select-option :value="null">Ninguno</ion-select-option>
+              <ion-select-option :value="-1">Ninguno</ion-select-option>
               <ion-select-option :value="student.id">
                 {{ student.lastName }}
                 {{ student.name }}(Autoevaluación)</ion-select-option
@@ -277,7 +278,7 @@ export default {
             )
         );
         groups.value.forEach((group) => {
-          groupPermissions.value[group.id] = null;
+          groupPermissions.value[group.id] = -1;
         });
       } catch (error) {
         console.error("Error fetching groups:", error);
@@ -300,7 +301,7 @@ export default {
           }));
 
         students.value.forEach((student) => {
-          individualPermissions.value[student.id] = null;
+          individualPermissions.value[student.id] = -1;
         });
       } catch (error) {
         console.error("Error fetching students:", error);
@@ -330,11 +331,11 @@ export default {
     const removeAllPermissions = () => {
       if (selectedTab.value === "grupos") {
         for (const key in groupPermissions.value) {
-          groupPermissions.value[key] = null;
+          groupPermissions.value[key] = -1;
         }
       } else if (selectedTab.value === "individuales") {
         for (const key in individualPermissions.value) {
-          individualPermissions.value[key] = null;
+          individualPermissions.value[key] = -1;
         }
       }
     };
@@ -404,7 +405,7 @@ export default {
             const oldPermissions = initialPermissions.value.filter(
               (p) => p.reviserId == reviserId && p.reviserType === reviserType
             );
-            const newRevisedId = permissionsMap[reviserId];
+            const newRevisedId = permissionsMap[reviserId] === -1 ? null : permissionsMap[reviserId];
 
             let exactMatchFound = false;
 

@@ -200,22 +200,7 @@
               placeholder="Ingrese la cantidad de grupos"
             ></ion-input>
           </ion-item>
-          <ion-item>
-            <ion-select
-              v-model="periodoId"
-              label="Seleccione el periodo"
-              placeholder="Seleccione el periodo"
-            >
-              <ion-select-option
-                v-for="periodo in periodos"
-                :key="periodo.id"
-                :value="periodo.id"
-              >
-                {{ periodo.name }}
-              </ion-select-option>
-            </ion-select>
-          </ion-item>
-        </ion-content>
+            </ion-content>
       </ion-modal>
 
       <!-- Modal para editar grupo -->
@@ -246,21 +231,6 @@
               v-model="editGroupName"
               placeholder="Ingrese el nuevo nombre del grupo"
             ></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-select
-              v-model="periodoId"
-              label="Seleccione el periodo"
-              placeholder="Seleccione el periodo"
-            >
-              <ion-select-option
-                v-for="periodo in periodos"
-                :key="periodo.id"
-                :value="periodo.id"
-              >
-                {{ periodo.name }}
-              </ion-select-option>
-            </ion-select>
           </ion-item>
         </ion-content>
       </ion-modal>
@@ -307,7 +277,6 @@ import axios from "axios";
 import { ref, computed } from "vue";
 import {
   QuizSinNotas,
-  periodosGet,
   tokenHeader,
   usuarioGet,
 } from "../globalService";
@@ -413,8 +382,6 @@ export default {
     const numberOfGroupsToCreate = ref(1);
     const editGroupName = ref("");
     const currentEditingGroup = ref(null);
-    const periodos = periodosGet();
-    const periodoId = ref(0);
     const mensajeAlerta = ref({
       header: "",
       subHeader: "",
@@ -555,7 +522,6 @@ export default {
             name: groupName,
             courseId: parseInt(cursoId, 10),
             instituteId: curso.value.institute.id,
-            periodId: periodoId.value,
             year: parseInt(selectedYear, 10),
             exist: true,
             active: true,
@@ -602,7 +568,6 @@ export default {
             handler: () => {
               isEditGroupModalOpen.value = true;
               editGroupName.value = grupo.name;
-              periodoId.value = grupo.periodId || 0; // Asegurarse de que el periodo esté definido
             },
           },
         ];
@@ -647,7 +612,6 @@ export default {
           name: editGroupName.value.trim(),
           courseId: parseInt(cursoId, 10),
           instituteId: curso.value.institute.id,
-          periodId: periodoId.value,
           exist: true,
           active: true,
         };
@@ -1049,8 +1013,6 @@ export default {
 
     return {
       alertController,
-      periodoId,
-      periodos,
       mroute,
       usuario,
       grupos,
