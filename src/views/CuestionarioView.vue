@@ -13,7 +13,8 @@
               '/' +
               cuestionario?.lesson?.period?.id +
               '/' +
-              cuestionario?.lesson?.year
+              cuestionario?.lesson?.year +
+              (cuestionario?.lesson?.type ? '/' + cuestionario.lesson.type : '')
             "
           >
             <ion-icon :icon="arrowBackOutline"></ion-icon>

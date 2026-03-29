@@ -13,7 +13,8 @@
               '/' +
               actividad?.lesson?.period?.id +
               '/' +
-              actividad?.lesson?.year
+              actividad?.lesson?.year +
+              (actividad?.lesson?.type ? '/' + actividad.lesson.type : '')
             "
           >
             <ion-icon :icon="arrowBackOutline"></ion-icon>
