@@ -278,12 +278,26 @@ export default {
       const finalStudentList = [];
       const systemStudentsFoundInExcel = new Set();
 
+      const studentOccurrences = {};
+      jsonData.forEach((row) => {
+        const di = normalizeString(row.DI);
+        if (di) {
+          studentOccurrences[di] = (studentOccurrences[di] || 0) + 1;
+        }
+      });
+
       // Process all students from Excel
       jsonData.forEach((excelRow) => {
         const normalizedDi = normalizeString(excelRow.DI);
         const systemStudent = systemStudentsMap.get(normalizedDi);
         const isRetired =
           excelRow.Retirado && excelRow.Retirado.toUpperCase() === "SI";
+        const appearsMultipleTimes = (studentOccurrences[normalizedDi] || 0) > 1;
+
+        // Skip if retired, multiple appearances, and NOT majority grade
+        if (appearsMultipleTimes && isRetired && majorityGrade && excelRow.Grado !== majorityGrade) {
+          return;
+        }
 
         // Add student if they belong to the majority grade OR if they are in our system
         if (
@@ -294,16 +308,25 @@ export default {
           if (systemStudent) {
             // Student exists in both systems
             systemStudentsFoundInExcel.add(normalizedDi);
-            const def =
-              parseFloat(systemStudent.promedioRefuerzo) >
-                parseFloat(systemStudent.promedioRegular) &&
-              systemStudent.hasReinforcement
-                ? systemStudent.promedioRefuerzo
-                : systemStudent.promedioRegular;
-            const niv = systemStudent.hasRemedial
-              ? systemStudent.promedioNivelacion
-              : "";
-            const l1 = calculateL1Value(systemStudent);
+
+            let def = "";
+            let niv = "";
+            let l1 = "";
+
+            const shouldPutGrades = !(appearsMultipleTimes && isRetired);
+
+            if (shouldPutGrades) {
+              def =
+                parseFloat(systemStudent.promedioRefuerzo) >
+                  parseFloat(systemStudent.promedioRegular) &&
+                systemStudent.hasReinforcement
+                  ? systemStudent.promedioRefuerzo
+                  : systemStudent.promedioRegular;
+              niv = systemStudent.hasRemedial
+                ? systemStudent.promedioNivelacion
+                : "";
+              l1 = calculateL1Value(systemStudent);
+            }
 
             studentData = {
               ...systemStudent,
