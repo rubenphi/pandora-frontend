@@ -168,10 +168,10 @@
           <ion-item v-if="adminOProfesor">
             <ion-button
               expand="full"
-              :router-link="`/crear/actividad/${leccion.id}`"
+              @click="presentActivityCreationOptions(leccion.id)"
             >
               <ion-icon :icon="addOutline"></ion-icon>
-              <ion-label>Crear Actividad</ion-label>
+              <ion-label>Opciones de Actividad</ion-label>
             </ion-button>
           </ion-item>
         </ion-list>
@@ -196,6 +196,7 @@ import router from "../router";
 import { addOutline, arrowBackOutline, createOutline, alertCircleOutline } from "ionicons/icons";
 import MaterialModal from "../components/MaterialModal.vue";
 import MaterialSelectionModal from "../components/MaterialSelectionModal.vue"; // Import the new modal
+import ImportActivityModal from "../components/ImportActivityModal.vue";
 import { actionSheetController } from "@ionic/vue";
 import { LessonType } from "../globalService"; // Import LessonType
 
@@ -557,6 +558,42 @@ export default {
       await actionSheet.present();
     };
 
+    const presentActivityCreationOptions = async (lessonId) => {
+      const actionSheet = await actionSheetController.create({
+        header: "Opciones de Actividad",
+        buttons: [
+          {
+            text: "Crear Actividad Nueva",
+            handler: () => {
+              router.push(`/crear/actividad/${lessonId}`);
+            },
+          },
+          {
+            text: "Importar Actividad",
+            handler: async () => {
+              const modal = await modalController.create({
+                component: ImportActivityModal,
+                componentProps: {
+                  targetLessonId: lessonId,
+                },
+              });
+              await modal.present();
+
+              const { data } = await modal.onWillDismiss();
+              if (data && data.imported) {
+                actividadesConsulta(lessonId); // Refresh activities list
+              }
+            },
+          },
+          {
+            text: "Cancelar",
+            role: "cancel",
+          },
+        ],
+      });
+      await actionSheet.present();
+    };
+
 
     return {
       basedeURL,
@@ -570,6 +607,7 @@ export default {
         return `/crear/leccion/${leccion.id}`;
       },
       presentMaterialCreationOptions,
+      presentActivityCreationOptions,
       adminOProfesor,
       area,
       curso,
