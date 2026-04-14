@@ -70,7 +70,7 @@ import {
 import axios from "axios";
 import { ref } from "vue";
 
-import { tokenHeader } from "../globalService";
+import { tokenHeader, currentServerDate } from "../globalService";
 import {
   onIonViewWillEnter,
   IonLabel,
@@ -202,7 +202,7 @@ export default {
     };
 
     const generarCodigos = async () => {
-      const hoy = new Date();
+      const hoy = currentServerDate();
       const fechaExpiracion = new Date(hoy);
       fechaExpiracion.setDate(hoy.getDate() + 1); // Establecer la fecha de expiración al día siguiente
 

@@ -158,7 +158,7 @@
 <script>
 import { ref } from "vue";
 import axios from "axios";
-import { basedeURL, tokenHeader, usuarioGet, fetchServerTime } from "../globalService";
+import { basedeURL, tokenHeader, usuarioGet, fetchServerTime, currentServerDate } from "../globalService";
 import { Device } from "@capacitor/device"; // Import Device
 import {
   alertController,
@@ -303,7 +303,7 @@ export default {
               const serverTime = await fetchServerTime();
               const currentYear = serverTime
                 ? serverTime.year
-                : new Date().getFullYear();
+                : currentServerDate().getFullYear();
 
               localStorage.setItem("year", JSON.stringify(currentYear));
 

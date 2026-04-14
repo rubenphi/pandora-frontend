@@ -548,6 +548,9 @@ export default {
 
     // Funciones para modal de edición de grupo
     const openEditGroupModal = async (grupo) => {
+      currentEditingGroup.value = grupo;
+      editGroupName.value = grupo.name;
+
       if ((await QuizSinNotas(cursoId, usuario)).length > 0) {
         mensajeAlerta.value.header = "Hay cuestionarios grupales sin calificar";
         mensajeAlerta.value.subHeader = "¿Seguro que desea editar un grupo?";
@@ -567,7 +570,6 @@ export default {
             role: "confirm",
             handler: () => {
               isEditGroupModalOpen.value = true;
-              editGroupName.value = grupo.name;
             },
           },
         ];
@@ -576,10 +578,10 @@ export default {
         return;
       }
       // Detener la propagación del evento para evitar que se abra el acordeón
-      event.stopPropagation();
+      if (typeof event !== 'undefined') {
+        event.stopPropagation();
+      }
 
-      currentEditingGroup.value = grupo;
-      editGroupName.value = grupo.name;
       isEditGroupModalOpen.value = true;
     };
 
@@ -647,6 +649,7 @@ export default {
           // only rol student
 
           groupSelectedMembers.value = response.data
+            .filter((miembro) => miembro.active === true)
             .map((miembro) => ({
               ...miembro.user,
             }))
@@ -681,7 +684,7 @@ export default {
           { headers: tokenHeader() }
         );
         const students = response.data
-          .filter((u) => u.rol === "student")
+          .filter((u) => u.rol === "student" && u.active === true)
           .map((u) => u.user);
 
         // Sort students alphabetically
@@ -995,7 +998,10 @@ export default {
 
       // Filter groups by selected year
       const gruposFiltrados = llamado.filter(
-        (grupo) => grupo.year === parseInt(selectedYear, 10)
+        (grupo) => 
+          grupo.year === parseInt(selectedYear, 10) &&
+          grupo.active === true && 
+          grupo.exist !== false
       );
 
       gruposLista.value = [...gruposFiltrados];

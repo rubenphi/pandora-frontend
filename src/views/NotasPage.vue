@@ -629,7 +629,7 @@
 import axios from "axios";
 import { ref, computed } from "vue";
 import { alertController, actionSheetController } from "@ionic/vue";
-import { periodosGet, tokenHeader, usuarioGet } from "../globalService";
+import { periodosGet, tokenHeader, usuarioGet, currentServerDate } from "../globalService";
 import DomToImage from "dom-to-image";
 import htmlToDocx from "html-to-docx";
 import { Capacitor } from "@capacitor/core";
@@ -1398,7 +1398,7 @@ export default {
             `/courses/${cursoId}/users?year=${year}&active=true`,
             tokenHeader()
           );
-          const oneMonthAgo = new Date();
+          const oneMonthAgo = currentServerDate();
           oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
           const reportIds = new Set(estudiantesReporte.value.map((e) => e.id));
