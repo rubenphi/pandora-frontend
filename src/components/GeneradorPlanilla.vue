@@ -89,17 +89,17 @@ export default {
       const promReinf = parseFloat(estudiante.promedioRefuerzo);
       const promNiv = parseFloat(estudiante.promedioNivelacion);
 
-      // 1. Student has Reinforcement AND Reinforcement grade (promedioRefuerzo) > Regular grade (promedioRegular) AND promedioRefuerzo >= 3: L1 = 99
+      // 1. Student has Reinforcement AND Reinforcement grade (promedioRefuerzo) > Regular grade (promedioRegular) AND promedioRefuerzo >= 3: L1 = 98
       if (
         estudiante.hasReinforcement &&
         promReinf > promReg &&
         promReinf >= 3
       ) {
-        return 99;
-      }
-      // 2. Student has Remedial AND Remedial grade (promedioNivelacion) >= 3: L1 = 98
-      if (estudiante.hasRemedial && promNiv >= 3) {
         return 98;
+      }
+      // 2. Student has Remedial AND Remedial grade (promedioNivelacion) >= 3: L1 = 97
+      if (estudiante.hasRemedial && promNiv >= 3) {
+        return 97;
       }
       // 3. Student has Reinforcement AND Regular grade (promedioRegular) > Reinforcement grade (promedioRefuerzo) AND promedioRegular >= 3: L1 = 96
       if (estudiante.hasReinforcement && promReg > promReinf && promReg >= 3) {
@@ -205,12 +205,12 @@ export default {
             "El estudiante logró los desempeños básicos con su nota regular, aunque no superó el refuerzo.",
         },
         {
-          "Código L1": 98,
+          "Código L1": 97,
           Significado:
             "El estudiante logrado cumplir con los desempeños esperado gracias a actividades de nivelación.",
         },
         {
-          "Código L1": 99,
+          "Código L1": 98,
           Significado:
             "El estudiante logró cumplir con los desempeños esperado gracias a actividades de refuerzo.",
         },
@@ -278,12 +278,26 @@ export default {
       const finalStudentList = [];
       const systemStudentsFoundInExcel = new Set();
 
+      const studentOccurrences = {};
+      jsonData.forEach((row) => {
+        const di = normalizeString(row.DI);
+        if (di) {
+          studentOccurrences[di] = (studentOccurrences[di] || 0) + 1;
+        }
+      });
+
       // Process all students from Excel
       jsonData.forEach((excelRow) => {
         const normalizedDi = normalizeString(excelRow.DI);
         const systemStudent = systemStudentsMap.get(normalizedDi);
         const isRetired =
           excelRow.Retirado && excelRow.Retirado.toUpperCase() === "SI";
+        const appearsMultipleTimes = (studentOccurrences[normalizedDi] || 0) > 1;
+
+        // Skip if retired, multiple appearances, and NOT majority grade
+        if (appearsMultipleTimes && isRetired && majorityGrade && excelRow.Grado !== majorityGrade) {
+          return;
+        }
 
         // Add student if they belong to the majority grade OR if they are in our system
         if (
@@ -294,16 +308,25 @@ export default {
           if (systemStudent) {
             // Student exists in both systems
             systemStudentsFoundInExcel.add(normalizedDi);
-            const def =
-              parseFloat(systemStudent.promedioRefuerzo) >
-                parseFloat(systemStudent.promedioRegular) &&
-              systemStudent.hasReinforcement
-                ? systemStudent.promedioRefuerzo
-                : systemStudent.promedioRegular;
-            const niv = systemStudent.hasRemedial
-              ? systemStudent.promedioNivelacion
-              : "";
-            const l1 = calculateL1Value(systemStudent);
+
+            let def = "";
+            let niv = "";
+            let l1 = "";
+
+            const shouldPutGrades = !(appearsMultipleTimes && isRetired);
+
+            if (shouldPutGrades) {
+              def =
+                parseFloat(systemStudent.promedioRefuerzo) >
+                  parseFloat(systemStudent.promedioRegular) &&
+                systemStudent.hasReinforcement
+                  ? systemStudent.promedioRefuerzo
+                  : systemStudent.promedioRegular;
+              niv = systemStudent.hasRemedial
+                ? systemStudent.promedioNivelacion
+                : "";
+              l1 = calculateL1Value(systemStudent);
+            }
 
             studentData = {
               ...systemStudent,
@@ -442,12 +465,12 @@ export default {
             "El estudiante logró los desempeños básicos con su nota regular, aunque no superó el refuerzo.",
         },
         {
-          "Código L1": 98,
+          "Código L1": 97,
           Significado:
             "El estudiante logrado cumplir con los desempeños esperado gracias a actividades de nivelación.",
         },
         {
-          "Código L1": 99,
+          "Código L1": 98,
           Significado:
             "El estudiante logró cumplir con los desempeños esperado gracias a actividades de refuerzo.",
         },

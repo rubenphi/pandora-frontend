@@ -174,8 +174,8 @@ export default {
         lessonDetails.value = response.data;
 
         if (!activityId) {
-          const { course, area, period, year } = lessonDetails.value;
-          backUrl.value = `/lecciones/${course.id}/${area.id}/${period.id}/${year}`;
+          const { course, area, period, year, type } = lessonDetails.value;
+          backUrl.value = `/lecciones/${course.id}/${area.id}/${period.id}/${year}${type ? '/' + type : ''}`;
         } else if (activityId) {
           backUrl.value = `/actividades/${activityId}`;
         }

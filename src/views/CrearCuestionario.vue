@@ -137,8 +137,8 @@ export default {
         return `/cuestionario/${cuestionario.value.id}`;
       } else if (lessonDetails.value) {
         // If creating a quiz, go back to the lessons page for the specific lesson
-        const { course, area, period, year } = lessonDetails.value;
-        return `/lecciones/${course.id}/${area.id}/${period.id}/${year}`;
+        const { course, area, period, year, type } = lessonDetails.value;
+        return `/lecciones/${course.id}/${area.id}/${period.id}/${year}${type ? '/' + type : ''}`;
       } else {
         // Fallback if lessonDetails is not yet loaded or invalid
         return `/lecciones`; // Or a more appropriate default route
@@ -147,8 +147,8 @@ export default {
 
     const backUrlAfterDelete = computed(() => {
       if (lessonDetails.value) {
-        const { course, area, period, year } = lessonDetails.value;
-        return `/lecciones/${course.id}/${area.id}/${period.id}/${year}`;
+        const { course, area, period, year, type } = lessonDetails.value;
+        return `/lecciones/${course.id}/${area.id}/${period.id}/${year}${type ? '/' + type : ''}`;
       } else {
         return `/lecciones`;
       }
