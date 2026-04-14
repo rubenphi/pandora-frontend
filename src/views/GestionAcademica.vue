@@ -300,7 +300,7 @@
 <script setup>
 import axios from "axios";
 import { ref, onMounted } from "vue";
-import { tokenHeader, usuarioGet, sortPeriods } from "../globalService";
+import { tokenHeader, usuarioGet, sortPeriods, currentServerDate } from "../globalService";
 import {
   IonPage,
   IonHeader,
@@ -479,7 +479,7 @@ const editCourse = async () => {
     if (areasToAdd.length > 0) {
       const addPayload = areasToAdd.map((areaId) => ({
         areaId,
-        start_date: new Date().toISOString().split("T")[0],
+        start_date: currentServerDate().toISOString().split("T")[0],
       }));
       await axios.post(
         `/courses/${editedCourse.value.id}/areas`,

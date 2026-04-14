@@ -7,7 +7,8 @@ import { Capacitor } from "@capacitor/core";
 export const apiState = reactive({
   isBaseUrlInitialized: false,
   baseUrl: null,
-  serverTime: null, // Add serverTime to apiState or export it separately
+  serverTime: null,
+  timeOffset: 0,
 });
 
 // 2. Función para establecer y guardar la nueva IP
@@ -56,6 +57,18 @@ export async function fetchServerTime() {
   try {
     const response = await axios.get("/auth/server-time");
     apiState.serverTime = response.data;
+
+    const serverDateOptions = new Date(
+        apiState.serverTime.year,
+        apiState.serverTime.month - 1,
+        apiState.serverTime.day,
+        apiState.serverTime.hour,
+        apiState.serverTime.min,
+        apiState.serverTime.second,
+        apiState.serverTime.miliseconds
+    );
+    apiState.timeOffset = serverDateOptions.getTime() - Date.now();
+
     if (localStorage.getItem("year") === null) {
       localStorage.setItem("year", JSON.stringify(apiState.serverTime.year));
     }
@@ -154,8 +167,12 @@ export function selectedYear() {
   }
 }
 
+export function currentServerDate() {
+  return new Date(Date.now() + (apiState.timeOffset || 0));
+}
+
 export function currentServerYear() {
-  return apiState.serverTime ? apiState.serverTime.year : new Date().getFullYear();
+  return currentServerDate().getFullYear();
 }
 
 export function selectedPeriod() {

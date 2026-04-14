@@ -73,7 +73,7 @@ import { ref, computed } from "vue";
 import { LessonType } from "../globalService";
 import { useRoute } from "vue-router";
 import router from "../router";
-import { usuarioGet, tokenHeader } from "../globalService";
+import { usuarioGet, tokenHeader, currentServerDate } from "../globalService";
 import {
   onIonViewWillEnter,
   IonLabel,
@@ -118,7 +118,7 @@ export default {
     const isEditing = ref(false);
 
     const form = ref({
-      date: new Date().toISOString().substring(0, 10),
+      date: currentServerDate().toISOString().substring(0, 10),
       topic: "",
     });
 

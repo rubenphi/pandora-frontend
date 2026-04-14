@@ -142,7 +142,7 @@ import {
 import { defineComponent, ref, onMounted } from "vue";
 import { playOutline, refreshOutline } from "ionicons/icons";
 import axios from "axios";
-import { tokenHeader, usuarioGet, currentServerYear } from "../globalService";
+import { tokenHeader, usuarioGet, currentServerYear, fetchServerTime } from "../globalService";
 import { useRouter } from "vue-router";
 
 export default defineComponent({
@@ -347,6 +347,8 @@ export default defineComponent({
 
     onMounted(async () => {
       usuario.value = usuarioGet();
+      await fetchServerTime();
+      selectedYear.value = currentServerYear();
       generateYears();
       await getCourses(); 
     });
