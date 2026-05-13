@@ -406,10 +406,19 @@ export default {
 
     const toggleSeleccionTodas = (quizId, checked) => {
       if (questionsByQuiz.value[quizId]) {
-        questionsByQuiz.value[quizId].questions.forEach((q) => {
-          q.selected = checked;
-          toggleQuestionSelection(quizId, q);
-        });
+        const questions = questionsByQuiz.value[quizId].questions;
+        const areAllCurrentlySelected = questions.length > 0 && questions.every(q => q.selected);
+        
+        // Solo aplicar si el estado deseado es distinto al estado actual de todas las preguntas
+        // Esto evita el efecto cascada al deseleccionar una sola pregunta
+        if (areAllCurrentlySelected !== checked) {
+          questions.forEach((q) => {
+            if (q.selected !== checked) {
+              q.selected = checked;
+              toggleQuestionSelection(quizId, q);
+            }
+          });
+        }
       }
     };
 
