@@ -152,7 +152,7 @@ import { printOutline } from "ionicons/icons";
 import { ref, computed, onMounted } from "vue";
 import { FileSharer } from "@byteowls/capacitor-filesharer";
 import { Capacitor } from "@capacitor/core";
-import html2pdf from "html2pdf.js";
+// html2pdf replaced by direct jspdf + html2canvas (dynamic imports in processQrPDF)
 import QRCode from "qrcode";
 import router from "../router";
 
@@ -239,18 +239,21 @@ export default {
       const perPage = qrsPerPage.value;
       const columns = perPage === 6 ? 2 : 1;
 
+      // Tamaño del QR y fuente según hojas por página
+      const qrMaxWidth = perPage === 1 ? "185mm" : perPage === 2 ? "145mm" : "90mm";
+      const qrFontSize = perPage === 1 ? "16pt" : perPage === 2 ? "13pt" : "10pt";
+      const boxWidth   = columns === 2 ? "45%" : "90%";
+
       const styles = `
         <style>
-          .print-page { page-break-after: always; width: 216mm;  padding: 5px; background: white; box-sizing: border-box; display: flex; flex-wrap: wrap; justify-content: space-around; align-content: flex-start; }
-          .qr-box { border: 1px solid #eee; padding: 2px; text-align: center; width: ${
-            columns === 2 ? "45%" : "90%"
-          }; margin-bottom: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; }
-          .qr-img { width: 100%; max-width: ${
-            perPage === 2 ? "145mm" : "90mm"
-          }; height: auto; display: block; }
-          .qr-txt { font-size: ${
-            perPage === 2 ? "13pt" : "10pt"
-          }; font-family: sans-serif; font-weight: light; margin-top: 5mm; text-align: center; color: black; line-height: 1.2; width: 100%; }
+          .print-page { page-break-after: always; width: 216mm; ${
+            perPage === 1 ? "height: 345mm;" : ""
+          } padding: 5px; background: white; box-sizing: border-box; display: flex; flex-wrap: wrap; justify-content: space-around; align-content: ${
+            perPage === 1 ? "center" : "flex-start"
+          }; align-items: center; overflow: hidden; }
+          .qr-box { border: 1px solid #eee; padding: 2px; text-align: center; width: ${boxWidth}; margin-bottom: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; }
+          .qr-img { width: 100%; max-width: ${qrMaxWidth}; max-height: ${qrMaxWidth}; height: auto; display: block; object-fit: contain; }
+          .qr-txt { font-size: ${qrFontSize}; font-family: sans-serif; font-weight: light; margin-top: 5mm; text-align: center; color: black; line-height: 1.2; width: 100%; }
         </style>
       `;
 
@@ -285,26 +288,61 @@ export default {
     };
 
     const processQrPDF = async (htmlContent, action) => {
-      const element = document.createElement("div");
-      element.innerHTML = htmlContent;
+      // Parse the pages into individual DOM nodes to process sequentially.
+      // This avoids loading all canvases into memory simultaneously, which
+      // causes blank PDFs on mobile due to RAM exhaustion.
+      const tempContainer = document.createElement("div");
+      tempContainer.style.cssText = "position:absolute;left:-9999px;top:-9999px;";
+      tempContainer.innerHTML = htmlContent;
+      document.body.appendChild(tempContainer);
 
-      // Use a fixed, reliable scale. Scale 2 is good for quality.
-      const scale = 1;
+      const pageNodes = Array.from(tempContainer.querySelectorAll(".print-page"));
 
-      const opt = {
-        margin: 0,
-        filename: "QRs_estudiantes.pdf",
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: scale, useCORS: true, logging: false },
-        jsPDF: { unit: "mm", format: "legal", orientation: "portrait" },
-      };
+      // Lower scale on native mobile to save RAM
+      const isNative = Capacitor.isNativePlatform();
+      const canvasScale = isNative ? 1 : 1.5;
 
-      const worker = html2pdf().from(element).set(opt);
+      const { jsPDF } = await import("jspdf");
+      const { default: html2canvas } = await import("html2canvas");
+
+      // Legal page in mm: 215.9 x 355.6
+      const pdf = new jsPDF({ unit: "mm", format: "legal", orientation: "portrait" });
+      const pageWidthMm = 215.9;
+      const pageHeightMm = 355.6;
+
+      for (let i = 0; i < pageNodes.length; i++) {
+        const node = pageNodes[i];
+
+        const canvas = await html2canvas(node, {
+          scale: canvasScale,
+          useCORS: true,
+          logging: false,
+          allowTaint: false,
+        });
+
+        const imgData = canvas.toDataURL("image/jpeg", isNative ? 0.85 : 0.95);
+
+        if (i > 0) pdf.addPage("legal", "portrait");
+        // Use the canvas's real aspect ratio to avoid stretching
+        const canvasAspect = canvas.height / canvas.width;
+        const imgHeightMm = Math.min(pageWidthMm * canvasAspect, pageHeightMm);
+        pdf.addImage(imgData, "JPEG", 0, 0, pageWidthMm, imgHeightMm, undefined, "FAST");
+
+        // Free canvas memory immediately after use
+        canvas.width = 0;
+        canvas.height = 0;
+
+        // Small yield to allow GC to run between pages
+        await new Promise((r) => setTimeout(r, 50));
+      }
+
+      // Cleanup detached container
+      document.body.removeChild(tempContainer);
 
       if (action === "save") {
-        await worker.save();
+        pdf.save("QRs_estudiantes.pdf");
       } else if (action === "base64") {
-        return await worker.outputPdf("datauristring");
+        return "data:application/pdf;base64," + pdf.output("datauristring").split(",")[1];
       }
     };
 
@@ -429,6 +467,13 @@ export default {
             text: "2 por página",
             handler: () => {
               qrsPerPage.value = 2;
+              presentOutputOptions(studentsToPrint, optionRange.value);
+            },
+          },
+          {
+            text: "1 por página",
+            handler: () => {
+              qrsPerPage.value = 1;
               presentOutputOptions(studentsToPrint, optionRange.value);
             },
           },

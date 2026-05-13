@@ -39,7 +39,7 @@
 
       <ion-button expand="block" @click="exportData" class="ion-margin-top">
         <ion-icon slot="start" :icon="downloadOutline"></ion-icon>
-        Exportar
+        Exportar PDF
       </ion-button>
       <ion-button expand="block" @click="printData" fill="outline" v-if="!isNative">
         <ion-icon slot="start" :icon="printOutline"></ion-icon>
@@ -81,6 +81,7 @@ import { downloadOutline, printOutline } from "ionicons/icons";
 import html2pdf from "html2pdf.js";
 import { FileSharer } from "@byteowls/capacitor-filesharer";
 import { Capacitor } from "@capacitor/core";
+
 export default defineComponent({
   name: "CuestionarioGeneratorModal",
   components: {
@@ -102,7 +103,7 @@ export default defineComponent({
     isOpen: Boolean,
     questions: Array,
     title: String,
-    lessonData: Object, // New prop for lesson data
+    lessonData: Object,
   },
   setup(props, { emit }) {
     const questionnaireType = ref("variable");
@@ -110,7 +111,11 @@ export default defineComponent({
     const generatedHtml = ref("");
     const localQuestions = ref([]);
 
-    // Deep copy questions prop to avoid mutation issues
+    // Escala para impresora térmica 80mm en PDF A4
+    // A4: 210mm | Térmica: 80mm | Escala: 210/80 = 2.625 ≈ 2.6
+    const THERMAL_SCALE = 2.6;
+
+    // Deep copy questions prop
     watch(
       () => props.questions,
       (newQuestions) => {
@@ -144,7 +149,7 @@ export default defineComponent({
         const firstQuestionOptions = limitedQuestions[0].options || [];
         
         firstQuestionOptions
-          .slice() // clonar para no mutar el original
+          .slice()
           .sort((a, b) => a.identifier.localeCompare(b.identifier))
           .forEach((opt) => {
             htmlOutput += `<div class="fixed-option-item">${opt.identifier}. ${opt.sentence}</div>`;
@@ -155,7 +160,6 @@ export default defineComponent({
       limitedQuestions.forEach((question, index) => {
         let processedSentence = question.sentence;
 
-        // If the sentence starts with <p>, remove only the opening and closing <p> tags
         if (
           processedSentence.trim().startsWith("<p>") &&
           processedSentence.trim().endsWith("</p>")
@@ -163,7 +167,6 @@ export default defineComponent({
           processedSentence = processedSentence.trim().slice(3, -4);
         }
 
-        // If the sentence starts with any heading tag (h1-h6), replace it with <strong>
         processedSentence = processedSentence.replace(
           /^<h([1-6])>(.*?)<\/h\1>/i,
           "<strong>$2</strong>"
@@ -220,78 +223,176 @@ export default defineComponent({
       generatedHtml.value = htmlOutput;
     };
 
-    const exportPDF = async (mode) => {
-      const isStandard = mode === "standard";
-      const filename = `${props.title || "cuestionario"}_${isStandard ? "estandar" : "thermal"}.pdf`;
+    /**
+     * NUEVA FUNCIÓN: Exportar PDF A4 escalado para impresora térmica
+     * El contenido se escala 2.6x para que al imprimirse en 80mm
+     * tenga proporciones reales de ticket
+     */
+    const exportPDFThermal = async () => {
+      const filename = `${props.title || "cuestionario"}_thermal.pdf`;
 
       const loading = await alertController.create({
         header: "Generando PDF",
-        message: "Por favor espere...",
+        message: "Escalando para impresora térmica...",
         backdropDismiss: false,
       });
       await loading.present();
 
       try {
-        // Forzar generación del HTML antes de exportar
         generateQuestionnaire();
 
-        // Estilos diferenciados por modo
-        const styles = isStandard
-          ? `
-            <style>
-              .pdf-page { padding: 10mm; font-family: Arial, sans-serif; color: black; background: white; width: 190mm; box-sizing: border-box; }
-              .pdf-header { text-align: center; margin-bottom: 8mm; border-bottom: 1px solid #000; padding-bottom: 2mm; width: 100%; }
-              .pdf-content { width: 100%; column-count: 2; column-gap: 10mm; }
-              .pdf-content p { margin-bottom: 4mm; display: block; break-inside: avoid-column; page-break-inside: avoid; }
-              .fixed-options-container { display: flex; flex-wrap: wrap; gap: 5mm; margin-bottom: 5mm; column-span: all; }
-              .fixed-option-item { flex: 0 0 calc(50% - 5mm); }
-              h2, h3 { margin: 0 0 2mm 0; }
-            </style>
-          `
-          : `
-            <style>
-              .pdf-page { padding: 4mm; font-family: Arial, sans-serif; color: black; background: white; width: 72mm; box-sizing: border-box; font-size: 9pt; }
-              .pdf-header { text-align: center; margin-bottom: 4mm; border-bottom: 1px dotted #000; padding-bottom: 2mm; width: 100%; }
-              .pdf-content { width: 100%; }
-              .pdf-content p { margin-bottom: 3mm; display: block; page-break-inside: avoid; }
-              .fixed-options-container { display: block; margin-bottom: 4mm; }
-              .fixed-option-item { display: block; margin-bottom: 1mm; }
-              h2 { font-size: 11pt; margin: 0 0 1mm 0; }
-              h3 { font-size: 10pt; margin: 0 0 2mm 0; }
-            </style>
-          `;
+        // ============================================================
+        // CSS ESCALADO 2.6x PARA A4 → TÉRMICA 80mm
+        // Solo se escala FONT-SIZE, no margins/padding
+        // ============================================================
+        const thermalStyles = `
+          <style>
+            * {
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            
+            html, body {
+              width: 100%;
+              height: 100%;
+              margin: 0;
+              padding: 0;
+            }
+            
+            .pdf-container {
+              width: 210mm;
+              box-sizing: border-box;
+              padding: 8mm;
+              font-family: "Arial", sans-serif;
+              color: #000;
+              background: #fff;
+              font-size: ${10 * THERMAL_SCALE}pt;
+              line-height: 1.3;
+            }
+            
+            .pdf-header {
+              text-align: center;
+              margin-bottom: 4mm;
+              border-bottom: 1px solid #000;
+              padding-bottom: 2mm;
+              width: 100%;
+              box-sizing: border-box;
+              page-break-inside: avoid;
+            }
+            
+            .pdf-header h2 {
+              font-size: ${11 * THERMAL_SCALE}pt;
+              font-weight: bold;
+              margin: 0 0 2mm 0;
+              letter-spacing: 0.5px;
+            }
+            
+            .pdf-header h3 {
+              font-size: ${10 * THERMAL_SCALE}pt;
+              margin: 0 0 1mm 0;
+              font-weight: 600;
+            }
+            
+            .pdf-content {
+              width: 100%;
+              box-sizing: border-box;
+            }
+            
+            .pdf-content p {
+              margin: 0 0 4mm 0;
+              page-break-inside: avoid;
+              break-inside: avoid;
+              font-size: ${10 * THERMAL_SCALE}pt;
+              line-height: 1.35;
+              orphans: 2;
+              widows: 2;
+            }
+            
+            .pdf-content p strong {
+              font-weight: bold;
+              font-size: ${10.5 * THERMAL_SCALE}pt;
+            }
+            
+            .pdf-content p br {
+              display: block;
+              content: "";
+              margin: 1.5mm 0;
+            }
+            
+            .fixed-options-container {
+              display: block;
+              margin-bottom: 4mm;
+              padding: 0;
+              page-break-inside: avoid;
+              break-inside: avoid;
+            }
+            
+            .fixed-option-item {
+              display: block;
+              margin-bottom: 2mm;
+              font-size: ${10 * THERMAL_SCALE}pt;
+              page-break-inside: avoid;
+              break-inside: avoid;
+              line-height: 1.3;
+            }
+          </style>
+        `;
 
         const htmlContent = `
-          ${styles}
-          <div class="pdf-page">
-            <div class="pdf-header">
-              <h2>${props.title || "CUESTIONARIO"}</h2>
-              <h3>${props.lessonData?.topic || ""} - Curso: ${props.lessonData?.course?.name || ""}</h3>
-            </div>
-            <div class="pdf-content">
-              ${generatedHtml.value || "No se pudo recuperar el contenido del cuestionario."}
-            </div>
-          </div>
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              ${thermalStyles}
+            </head>
+            <body>
+              <div class="pdf-container">
+                <div class="pdf-header">
+                  <h2>${props.title || "CUESTIONARIO"}</h2>
+                  <h3>${props.lessonData?.topic || ""}</h3>
+                  <h3>${props.lessonData?.course?.name || ""}</h3>
+                </div>
+                <div class="pdf-content">
+                  ${generatedHtml.value || "No hay contenido disponible."}
+                </div>
+              </div>
+            </body>
+          </html>
         `;
 
         const element = document.createElement("div");
         element.innerHTML = htmlContent;
+        element.style.width = "210mm";
+        element.style.margin = "0";
+        element.style.padding = "0";
 
-        const opt = isStandard
-          ? {
-              margin: 0,
-              filename: filename,
-              image: { type: "jpeg", quality: 0.98 },
-              html2canvas: { scale: 2, useCORS: true, logging: false },
-              jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-            }
-          : {
-              margin: 0,
-              filename: filename,
-              image: { type: "jpeg", quality: 0.98 },
-              html2canvas: { scale: 2, useCORS: true, logging: false },
-              jsPDF: { unit: "mm", format: [80, 400], orientation: "portrait" }, // 80mm width, long height
-            };
+        // Configuración html2pdf optimizada
+        const opt = {
+          margin: 0,
+          filename: filename,
+          image: {
+            type: "jpeg",
+            quality: 0.98,
+          },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            allowTaint: true,
+            backgroundColor: "#ffffff",
+            windowHeight: 1400,
+          },
+          jsPDF: {
+            unit: "mm",
+            format: "a4",
+            orientation: "portrait",
+            compress: true,
+          },
+          pagebreak: {
+            mode: ["avoid-all", "css", "legacy"],
+          },
+        };
 
         const worker = html2pdf().from(element).set(opt);
 
@@ -323,7 +424,191 @@ export default defineComponent({
           console.error("PDF EXPORT ERROR:", e);
           const errorAlert = await alertController.create({
             header: "Error al exportar",
-            message: e.message || "Ocurrió un error inesperado al generar el PDF.",
+            message: e.message || "Ocurrió un error inesperado.",
+            buttons: ["OK"],
+          });
+          await errorAlert.present();
+        }
+      } finally {
+        await loading.dismiss();
+      }
+    };
+
+    /**
+     * FUNCIÓN ESTÁNDAR: PDF A4 normal (sin escala)
+     */
+    const exportPDFStandard = async () => {
+      const filename = `${props.title || "cuestionario"}_standard.pdf`;
+
+      const loading = await alertController.create({
+        header: "Generando PDF",
+        message: "Por favor espere...",
+        backdropDismiss: false,
+      });
+      await loading.present();
+
+      try {
+        generateQuestionnaire();
+
+        const standardStyles = `
+          <style>
+            * {
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            
+            html, body {
+              width: 100%;
+              margin: 0;
+              padding: 0;
+            }
+            
+            .pdf-container {
+              width: 210mm;
+              box-sizing: border-box;
+              padding: 15mm;
+              font-family: "Arial", sans-serif;
+              color: #000;
+              background: #fff;
+              font-size: 11pt;
+            }
+            
+            .pdf-header {
+              text-align: center;
+              margin-bottom: 12mm;
+              border-bottom: 1px solid #000;
+              padding-bottom: 5mm;
+              width: 100%;
+              box-sizing: border-box;
+              page-break-inside: avoid;
+            }
+            
+            .pdf-header h2 {
+              font-size: 18pt;
+              font-weight: bold;
+              margin: 0 0 5mm 0;
+            }
+            
+            .pdf-header h3 {
+              font-size: 14pt;
+              margin: 0 0 2mm 0;
+              font-weight: 600;
+            }
+            
+            .pdf-content {
+              width: 100%;
+              column-count: 2;
+              column-gap: 10mm;
+              box-sizing: border-box;
+            }
+            
+            .pdf-content p {
+              margin: 0 0 6mm 0;
+              page-break-inside: avoid;
+              break-inside: avoid-column;
+              font-size: 11pt;
+              line-height: 1.4;
+              orphans: 2;
+              widows: 2;
+            }
+            
+            .pdf-content p strong {
+              font-weight: bold;
+              font-size: 12pt;
+            }
+            
+            .fixed-options-container {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 8mm;
+              margin-bottom: 8mm;
+              column-span: all;
+              page-break-inside: avoid;
+            }
+            
+            .fixed-option-item {
+              flex: 0 0 calc(50% - 4mm);
+              font-size: 11pt;
+              page-break-inside: avoid;
+              break-inside: avoid;
+            }
+          </style>
+        `;
+
+        const htmlContent = `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="UTF-8">
+              ${standardStyles}
+            </head>
+            <body>
+              <div class="pdf-container">
+                <div class="pdf-header">
+                  <h2>${props.title || "CUESTIONARIO"}</h2>
+                  <h3>${props.lessonData?.topic || ""}</h3>
+                  <h3>${props.lessonData?.course?.name || ""}</h3>
+                </div>
+                <div class="pdf-content">
+                  ${generatedHtml.value || "No hay contenido disponible."}
+                </div>
+              </div>
+            </body>
+          </html>
+        `;
+
+        const element = document.createElement("div");
+        element.innerHTML = htmlContent;
+
+        const opt = {
+          margin: 0,
+          filename: filename,
+          image: {
+            type: "jpeg",
+            quality: 0.98,
+          },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: "#ffffff",
+          },
+          jsPDF: {
+            unit: "mm",
+            format: "a4",
+            orientation: "portrait",
+            compress: true,
+          },
+        };
+
+        const worker = html2pdf().from(element).set(opt);
+
+        if (Capacitor.isNativePlatform()) {
+          const pdfDataUri = await worker.outputPdf("datauristring");
+          if (!pdfDataUri || pdfDataUri.length < 1000) {
+            throw new Error("El PDF generado parece estar vacío.");
+          }
+          const base64Data = pdfDataUri.split(",")[1];
+          await FileSharer.share({
+            filename: filename,
+            contentType: "application/pdf",
+            base64Data: base64Data,
+          });
+        } else {
+          await worker.save();
+        }
+      } catch (e) {
+        const msg = (e.message || "").toLowerCase();
+        const isCancel =
+          msg.includes("cancelled") ||
+          msg.includes("user_cancelled") ||
+          msg.includes("dismiss");
+
+        if (!isCancel) {
+          console.error("PDF EXPORT ERROR:", e);
+          const errorAlert = await alertController.create({
+            header: "Error al exportar",
+            message: e.message || "Ocurrió un error inesperado.",
             buttons: ["OK"],
           });
           await errorAlert.present();
@@ -343,12 +628,12 @@ export default defineComponent({
         header: "Exportar como PDF",
         buttons: [
           {
-            text: "PDF Estándar (A4)",
-            handler: () => exportPDF("standard"),
+            text: "📄 A4 Estándar",
+            handler: () => exportPDFStandard(),
           },
           {
-            text: "PDF Térmica (80mm)",
-            handler: () => exportPDF("thermal"),
+            text: "🖨️ A4 para Térmica 80mm",
+            handler: () => exportPDFThermal(),
           },
           {
             text: "Cancelar",
@@ -387,20 +672,29 @@ export default defineComponent({
     };
 
     const printView = () => {
-      const printWindow = window.open("", "", "height=600,width=800");
+      const printWindow = window.open("", "", "height=600,width=900");
       printWindow.document.write(
-        `<html><head><title>${props.lessonData.course.name}:${props.lessonData.topic} - ${props.title}</title>`
+        `<html><head><title>${props.lessonData.course.name}: ${props.lessonData.topic} - ${props.title}</title>`
       );
       printWindow.document.write(
         `<style>
-          body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.4; }
+          body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.4; }
+          h2, h3 { text-align: center; margin-bottom: 15px; }
+          h2 { font-size: 18px; }
+          h3 { font-size: 14px; color: #333; }
           #printable-content { column-count: 2; column-gap: 20px; }
-          #printable-content p { break-inside: avoid-column; }
-          .fixed-options-container { display: flex; flex-wrap: wrap; gap: 10px; }
+          #printable-content p { break-inside: avoid-column; margin-bottom: 8px; }
+          .fixed-options-container { display: flex; flex-wrap: wrap; gap: 10px; column-span: all; }
           .fixed-option-item { flex: 1 1 calc(50% - 10px); box-sizing: border-box; }
         </style>`
       );
       printWindow.document.write("</head><body>");
+      printWindow.document.write(
+        `<h2>${props.title}</h2>`
+      );
+      printWindow.document.write(
+        `<h3>${props.lessonData.topic} - ${props.lessonData.course.name}</h3>`
+      );
       printWindow.document.write(
         `<div id="printable-content">${generatedHtml.value}</div>`
       );
@@ -410,24 +704,40 @@ export default defineComponent({
     };
 
     const printThermal = () => {
-      const printWindow = window.open("", "", "height=600,width=320");
+      const printWindow = window.open("", "", "height=900,width=400");
       printWindow.document.write(
-        `<html><head><title>${props.lessonData.course.name}:${props.lessonData.topic} - ${props.title}</title>`
+        `<html><head><title>${props.lessonData.course.name}: ${props.lessonData.topic}</title>`
       );
       printWindow.document.write(
         `<style>
-          @page { size: 80mm auto; margin: 4mm; }
-          body { font-family: Arial, sans-serif; width: 72mm; margin: 0; padding: 0; font-size: 9pt; line-height: 1.3; }
-          h2 { font-size: 10pt; margin: 2mm 0 1mm 0; text-align: center; }
-          h3 { font-size: 9pt; margin: 1mm 0; text-align: center; }
+          @page { size: 80mm auto; margin: 5mm; }
+          body { 
+            font-family: "Courier New", monospace;
+            width: 72mm; 
+            margin: 0; 
+            padding: 5mm;
+            font-size: 9pt; 
+            line-height: 1.3;
+          }
+          h2 { font-size: 11pt; margin: 3mm 0 1mm 0; text-align: center; font-weight: bold; }
+          h3 { font-size: 9pt; margin: 1mm 0 2mm 0; text-align: center; }
           #printable-content { column-count: 1; }
-          #printable-content p { margin: 1mm 0; break-inside: avoid; }
-          .fixed-options-container { display: block; }
-          .fixed-option-item { display: block; margin: 1mm 0; }
+          #printable-content p { margin: 2mm 0; break-inside: avoid; page-break-inside: avoid; font-size: 9pt; }
+          .fixed-options-container { display: block; margin-bottom: 3mm; }
+          .fixed-option-item { display: block; margin: 1mm 0; font-size: 9pt; }
           strong { font-weight: bold; }
         </style>`
       );
       printWindow.document.write("</head><body>");
+      printWindow.document.write(
+        `<h2>${props.title}</h2>`
+      );
+      printWindow.document.write(
+        `<h3>${props.lessonData.topic}</h3>`
+      );
+      printWindow.document.write(
+        `<h3>${props.lessonData.course.name}</h3>`
+      );
       printWindow.document.write(
         `<div id="printable-content">${generatedHtml.value}</div>`
       );
@@ -441,11 +751,11 @@ export default defineComponent({
         header: "Imprimir cuestionario",
         buttons: [
           {
-            text: "Formato Estándar (A4)",
+            text: "📄 Formato A4",
             handler: () => printView(),
           },
           {
-            text: "Formato Térmico (80mm)",
+            text: "🖨️ Formato Térmico (80mm)",
             handler: () => printThermal(),
           },
           {
@@ -479,7 +789,7 @@ export default defineComponent({
       printData,
       downloadOutline,
       printOutline,
-      emit, // Make emit available in the template
+      emit,
     };
   },
 });
@@ -498,12 +808,11 @@ export default defineComponent({
 .fixed-options-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px; /* Espacio entre las opciones */
+  gap: 10px;
 }
 
 .fixed-option-item {
-  flex: 1 1 calc(50% - 10px); /* Dos columnas con espacio */
+  flex: 1 1 calc(50% - 10px);
   box-sizing: border-box;
-  /* Puedes añadir más estilos aquí si quieres bordes, padding, etc. */
 }
 </style>

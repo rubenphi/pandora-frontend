@@ -1004,6 +1004,13 @@ export default {
           grupo.exist !== false
       );
 
+      // Sort groups alphabetically and naturally
+      gruposFiltrados.sort((a, b) => {
+        const nameA = a.name || "";
+        const nameB = b.name || "";
+        return nameA.localeCompare(nameB, undefined, { numeric: true });
+      });
+
       gruposLista.value = [...gruposFiltrados];
 
       grupos.value = gruposFiltrados;

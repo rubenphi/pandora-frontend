@@ -88,7 +88,7 @@ import { onMounted, ref, computed } from "vue";
 import AnswerSheet from "@/components/AnswerSheet.vue";
 import { FileSharer } from "@byteowls/capacitor-filesharer";
 import { Capacitor } from "@capacitor/core";
-import html2pdf from "html2pdf.js";
+// html2pdf replaced by direct jspdf + html2canvas (dynamic imports in processPDF)
 
 export default {
   components: {
@@ -422,7 +422,7 @@ export default {
     };
 
     const processPDF = async (action) => {
-      // 1. Convert background image to Base64 to ensure it renders without loading issues
+      // 1. Convert background image to Base64 once to avoid repeated fetches
       const getBase64ImageFromUrl = async (imageUrl) => {
         const res = await fetch(imageUrl);
         const blob = await res.blob();
@@ -437,49 +437,78 @@ export default {
       const domain = window.location.origin;
       const bgImageBase64 = await getBase64ImageFromUrl(`${domain}/hoja50.jpg`);
 
-      // 2. Generate HTML (we'll replace the image source manually)
+      // 2. Generate HTML and replace image src with base64
       let { pagesHTML, newImageWidth, newImageHeight, scale, sheetSpacing } =
         generateSheetContentHTML();
 
-      // Replace the image url with the base64 data
-      // The original src was: src="${domain}/hoja50.jpg"
-      // or src="/hoja50.jpg" depending on how it was generated
-      const originalSrcRegex = new RegExp(`${domain}/hoja50.jpg`, "g");
-      const relativeSrcRegex = /src="\/hoja50.jpg"/g;
-
-      pagesHTML = pagesHTML.replace(originalSrcRegex, `${bgImageBase64}`);
+      const originalSrcRegex = new RegExp(`${domain}/hoja50\\.jpg`, "g");
+      const relativeSrcRegex = /src="\/hoja50\.jpg"/g;
+      pagesHTML = pagesHTML.replace(originalSrcRegex, bgImageBase64);
       pagesHTML = pagesHTML.replace(relativeSrcRegex, `src="${bgImageBase64}"`);
 
       const css = generateStyles(newImageWidth, newImageHeight, scale, sheetSpacing);
 
-      // 3. Create a detached container (matches the working Android implementation)
-      // We do NOT append this to the body, avoiding z-index/viewport issues.
-      const element = document.createElement("div");
-      element.innerHTML = `
-        <style>${css}</style>
-        ${pagesHTML}
-      `;
+      // 3. Parse the pages into individual DOM nodes to process sequentially.
+      //    This avoids loading all canvases into memory simultaneously, which
+      //    causes blank PDFs on mobile due to RAM exhaustion.
+      const tempContainer = document.createElement("div");
+      tempContainer.style.cssText = "position:absolute;left:-9999px;top:-9999px;";
+      tempContainer.innerHTML = pagesHTML;
+      document.body.appendChild(tempContainer);
 
-      // html2pdf options
-      const opt = {
-        margin: 0,
-        filename: "hojas_respuesta.pdf",
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          // Remove scroll options that might conflict with detached elements
-        },
-        jsPDF: { unit: "mm", format: "legal", orientation: "portrait" },
+      const pageNodes = Array.from(tempContainer.querySelectorAll(".print-page"));
+
+      // html2canvas / jsPDF options (lower scale on mobile to save RAM)
+      const isNative = Capacitor.isNativePlatform();
+      const canvasScale = isNative ? 1 : 2;
+
+      const h2cOptions = {
+        scale: canvasScale,
+        useCORS: true,
+        logging: false,
+        allowTaint: false,
       };
 
-      const worker = html2pdf().from(element).set(opt);
+      const { jsPDF } = await import("jspdf");
+      const { default: html2canvas } = await import("html2canvas");
+
+      // Legal page in mm: 215.9 x 355.6
+      const pdf = new jsPDF({ unit: "mm", format: "legal", orientation: "portrait" });
+      const pageWidthMm = 215.9;
+      const pageHeightMm = 355.6;
+
+      for (let i = 0; i < pageNodes.length; i++) {
+        const node = pageNodes[i];
+
+        // Inject styles so each isolated node renders correctly
+        const styleEl = document.createElement("style");
+        styleEl.textContent = css;
+        node.prepend(styleEl);
+
+        // Render page to canvas
+        const canvas = await html2canvas(node, h2cOptions);
+
+        // Add canvas as JPEG image into the PDF page
+        const imgData = canvas.toDataURL("image/jpeg", isNative ? 0.85 : 0.98);
+
+        if (i > 0) pdf.addPage("legal", "portrait");
+        pdf.addImage(imgData, "JPEG", 0, 0, pageWidthMm, pageHeightMm, undefined, "FAST");
+
+        // Free canvas memory immediately after use
+        canvas.width = 0;
+        canvas.height = 0;
+
+        // Small yield to allow GC to run between pages
+        await new Promise((r) => setTimeout(r, 50));
+      }
+
+      // Cleanup detached container
+      document.body.removeChild(tempContainer);
 
       if (action === "save") {
-        await worker.save();
+        pdf.save("hojas_respuesta.pdf");
       } else if (action === "base64") {
-        return await worker.outputPdf("datauristring");
+        return "data:application/pdf;base64," + pdf.output("datauristring").split(",")[1];
       }
     };
 

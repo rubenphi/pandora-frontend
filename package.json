@@ -41,6 +41,7 @@
     "html2pdf.js": "^0.10.3",
     "https-browserify": "^1.0.0",
     "ionicons": "^7.4.0",
+    "jspdf": "^4.2.1",
     "qrcode": "^1.5.4",
     "stream-browserify": "^3.0.0",
     "stream-http": "^3.2.0",
