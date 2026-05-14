@@ -44,17 +44,8 @@
             <ion-icon :icon="createOutline"></ion-icon>
           </ion-button>
 
-          <ion-button
-            v-if="allVisible == false"
-            @click="marcarTodoDisponibleVisible(true)"
-          >
-            <ion-icon :icon="lockOpenOutline"></ion-icon>
-          </ion-button>
-          <ion-button
-            v-if="allVisible == true"
-            @click="marcarTodoDisponibleVisible(false)"
-          >
-            <ion-icon :icon="lockClosedOutline"></ion-icon>
+          <ion-button @click="abrirMarcarDisponibleModal">
+            <ion-icon :icon="allVisible ? lockClosedOutline : lockOpenOutline"></ion-icon>
           </ion-button>
           <ion-button @click="openGeneratorModal()">
             <ion-icon :icon="downloadOutline"></ion-icon>
@@ -192,6 +183,14 @@
         :lesson-data="cuestionario.lesson"
         @close="closeGeneratorModal"
       ></CuestionarioGeneratorModal>
+
+      <MarcarDisponibleModal
+        :is-open="isMarcarDisponibleOpen"
+        :questions="cuestionario.questions || []"
+        :estado="!allVisible"
+        @close="isMarcarDisponibleOpen = false"
+        @confirmar="onConfirmarMarcar"
+      ></MarcarDisponibleModal>
     </ion-content>
   </ion-page>
 </template>
@@ -235,6 +234,7 @@ import {
 } from "@ionic/vue";
 
 import CuestionarioGeneratorModal from "../components/CuestionarioGeneratorModal.vue";
+import MarcarDisponibleModal from "../components/MarcarDisponibleModal.vue";
 
 import { useRoute } from "vue-router";
 import router from "../router";
@@ -260,6 +260,7 @@ export default {
     IonSelect,
     IonSelectOption,
     CuestionarioGeneratorModal,
+    MarcarDisponibleModal,
   },
   setup() {
     const admin = adminOprofesor();
@@ -267,6 +268,7 @@ export default {
 
     const isModalOpen = ref(false);
     const isGeneratorModalOpen = ref(false);
+    const isMarcarDisponibleOpen = ref(false);
     const year = ref();
     const allVisible = ref(false);
     const mroute = useRoute();
@@ -453,7 +455,11 @@ export default {
       await alert.present();
     };
 
-    const marcarTodoDisponibleVisible = async function (estado) {
+    const abrirMarcarDisponibleModal = () => {
+      isMarcarDisponibleOpen.value = true;
+    };
+
+    const marcarTodoDisponibleVisible = async function (estado, questionIds) {
       if (
         !cuestionario.value.questions.length ||
         !cuestionario.value.institute
@@ -461,7 +467,11 @@ export default {
         return;
       }
 
-      const promises = cuestionario.value.questions.map((pregunta) => {
+      const preguntasAActualizar = questionIds
+        ? cuestionario.value.questions.filter((q) => questionIds.includes(q.id))
+        : cuestionario.value.questions;
+
+      const promises = preguntasAActualizar.map((pregunta) => {
         const preguntaUpdate = {
           quizId: cuestionario.value.id,
           visible: estado,
@@ -483,6 +493,31 @@ export default {
       }
     };
 
+    const onConfirmarMarcar = async (selectedIds) => {
+      if (!cuestionario.value.questions.length || !cuestionario.value.institute) return;
+
+      const promises = cuestionario.value.questions.map((pregunta) => {
+        const visible = selectedIds.includes(pregunta.id);
+        return axios.patch(
+          `/questions/${pregunta.id}`,
+          {
+            quizId: cuestionario.value.id,
+            visible,
+            available: visible,
+            instituteId: cuestionario.value.institute.id,
+          },
+          tokenHeader()
+        );
+      });
+
+      try {
+        await Promise.all(promises);
+        window.location.reload();
+      } catch (error) {
+        console.error("Error al actualizar preguntas:", error);
+      }
+    };
+
     return {
       tipoImportacionUrl,
       closeModal,
@@ -493,6 +528,9 @@ export default {
       tiposIportacion,
       allVisible,
       marcarTodoDisponibleVisible,
+      abrirMarcarDisponibleModal,
+      isMarcarDisponibleOpen,
+      onConfirmarMarcar,
       admin,
       cuestionario,
       id,
