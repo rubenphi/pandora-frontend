@@ -36,9 +36,13 @@ export function useToast() {
 export function calculateFinalGrade(studentId, evaluationObj, criteriaArr) {
   let totalScore = 0;
   let maxPossibleScore = 0;
+  let hasAnyEvaluation = false;
 
   for (const criterionId in evaluationObj[studentId]) {
     const entry = evaluationObj[studentId][criterionId];
+    if (entry.value !== null) {
+      hasAnyEvaluation = true;
+    }
     const value = entry.value === null ? 0 : entry.value;
     const criterion = criteriaArr.find((c) => c.id == criterionId);
     if (criterion) {
@@ -48,6 +52,7 @@ export function calculateFinalGrade(studentId, evaluationObj, criteriaArr) {
   }
 
   if (maxPossibleScore === 0) return 0;
+  if (!hasAnyEvaluation) return null;
   return (totalScore / maxPossibleScore) * 5;
 }
 

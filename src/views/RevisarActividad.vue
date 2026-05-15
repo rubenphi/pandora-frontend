@@ -18,14 +18,37 @@
           </ion-item>
         </ion-buttons>
         <ion-buttons slot="end">
-          <ion-button @click="presentConfirmAlert()">
-            Registrar Notas
+          <ion-button @click="presentSaveOptions()">
+            <ion-icon :icon="saveOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <ion-accordion-group>
+
+      <!-- ── Single-criterion mode: flat list, Tab between students ── -->
+      <single-criterion-student-list
+        v-if="isSingleCriterion"
+        :students="students"
+        :criterion="criteria[0]"
+        :modelValue="getAllFlat()"
+        :criteria="criteria"
+        :evaluation="evaluation"
+        :isSaving="isSaving"
+        @update:modelValue="onAllFlatUpdate"
+        @save="saveSingleEvaluation"
+      >
+        <template #row-prefix="{ student }">
+          <ion-checkbox
+            :checked="selectedStudents.has(student.id)"
+            @ionChange="handleStudentSelection(student.id, $event.detail.checked)"
+            @click.stop
+          />
+        </template>
+      </single-criterion-student-list>
+
+      <!-- ── Multi-criterion mode: accordion per student ── -->
+      <ion-accordion-group v-else>
         <ion-accordion
           v-for="student in students"
           :key="student.id"
@@ -35,9 +58,7 @@
             <ion-checkbox
               slot="start"
               :checked="selectedStudents.has(student.id)"
-              @ionChange="
-                handleStudentSelection(student.id, $event.detail.checked)
-              "
+              @ionChange="handleStudentSelection(student.id, $event.detail.checked)"
               @click.stop
             ></ion-checkbox>
             <IonLabel>{{ student.lastName + " " + student.name }}</IonLabel>
@@ -50,27 +71,17 @@
               }}</IonNote
             >
           </IonItem>
-
           <div class="ion-padding" slot="content">
-            <ion-button
-              expand="block"
-              @click="saveSingleEvaluation(student)"
-              :disabled="isSaving"
+            <ion-button expand="block" @click="saveSingleEvaluation(student)" :disabled="isSaving"
               >Guardar</ion-button
             >
-
-            <!-- Shared criterion list + 0/Medio/Max buttons -->
             <criterion-list
               v-if="evaluation[student.id]"
               :criteria="criteria"
               :modelValue="getStudentFlat(student)"
               @update:modelValue="onStudentEvalUpdate($event, student)"
             />
-
-            <ion-button
-              expand="block"
-              @click="saveSingleEvaluation(student)"
-              :disabled="isSaving"
+            <ion-button expand="block" @click="saveSingleEvaluation(student)" :disabled="isSaving"
               >Guardar</ion-button
             >
           </div>
@@ -100,9 +111,7 @@
         slot="fixed"
         v-if="selectedStudents.size > 0"
       >
-        <ion-fab-button @click="goToBulkEvaluation">
-          Evaluar
-        </ion-fab-button>
+        <ion-fab-button @click="goToBulkEvaluation">Evaluar</ion-fab-button>
       </ion-fab>
     </ion-content>
   </ion-page>
@@ -132,6 +141,7 @@ import {
   IonAccordionGroup,
   IonAccordion,
   alertController,
+  actionSheetController,
   IonIcon,
   IonToast,
   IonNote,
@@ -139,8 +149,9 @@ import {
   IonFab,
   IonFabButton,
 } from "@ionic/vue";
-import { arrowBackOutline } from "ionicons/icons";
+import { arrowBackOutline, saveOutline, checkmarkDoneOutline, closeOutline } from "ionicons/icons";
 import CriterionList from "../components/CriterionList.vue";
+import SingleCriterionStudentList from "../components/SingleCriterionStudentList.vue";
 
 export default {
   components: {
@@ -162,6 +173,7 @@ export default {
     IonFab,
     IonFabButton,
     CriterionList,
+    SingleCriterionStudentList,
   },
   setup() {
     const mroute = useRoute();
@@ -212,6 +224,34 @@ export default {
       updateGrade(student);
     };
 
+    // ─── Single-criterion mode helpers ───────────────────────────────────────
+
+    /** True when the activity has exactly one criterion (enables flat mode). */
+    const isSingleCriterion = computed(() => criteria.value.length === 1);
+
+    /**
+     * Returns a flat { [studentId]: { [criterionId]: value } } object
+     * for all students – used as v-model by SingleCriterionStudentList.
+     */
+    const getAllFlat = () => {
+      const result = {};
+      for (const student of students.value) {
+        result[student.id] = getStudentFlat(student);
+      }
+      return result;
+    };
+
+    /**
+     * Receives the full flat map back from SingleCriterionStudentList and
+     * syncs changes into the nested evaluation object.
+     */
+    const onAllFlatUpdate = (newAllFlat) => {
+      for (const studentId in newAllFlat) {
+        const student = students.value.find((s) => s.id == studentId);
+        if (student) onStudentEvalUpdate(newAllFlat[studentId], student);
+      }
+    };
+
     // ─── Data fetching ────────────────────────────────────────────────────────
 
     const fetchActivityDetails = async () => {
@@ -260,6 +300,7 @@ export default {
             };
           }
         });
+        students.value.forEach((student) => updateGrade(student));
       } catch (error) {
         console.error(
           "Error in fetchStudentCriterionScores:",
@@ -409,6 +450,49 @@ export default {
       } finally {
         isSaving.value = false;
       }
+    };
+
+    const saveAllEvaluations = async () => {
+      isSaving.value = true;
+      try {
+        await Promise.all(
+          students.value.map((student) => saveEvaluation(student))
+        );
+        setSuccessToastOpen(true);
+        await fetchStudentCriterionScores(activityId);
+      } catch (error) {
+        console.error("Una o más guardados fallaron.", error);
+      } finally {
+        isSaving.value = false;
+      }
+    };
+
+    const presentSaveOptions = async () => {
+      const actionSheet = await actionSheetController.create({
+        header: 'Opciones de Guardado',
+        buttons: [
+          {
+            text: 'Solo Guardar Evaluaciones',
+            icon: saveOutline,
+            handler: async () => {
+              await saveAllEvaluations();
+            }
+          },
+          {
+            text: 'Guardar y Registrar Notas',
+            icon: checkmarkDoneOutline,
+            handler: () => {
+              presentConfirmAlert();
+            }
+          },
+          {
+            text: 'Cancelar',
+            role: 'cancel',
+            icon: closeOutline
+          }
+        ]
+      });
+      await actionSheet.present();
     };
 
     const registerAllGrades = async () => {
@@ -572,8 +656,11 @@ export default {
       criteria,
       evaluation,
       arrowBackOutline,
+      saveOutline,
       saveEvaluation,
       saveSingleEvaluation,
+      saveAllEvaluations,
+      presentSaveOptions,
       handleAccordionChange,
       currentlyOpenStudentId,
       fetchStudentCriterionScores,
@@ -595,6 +682,9 @@ export default {
       goToBulkEvaluation,
       getStudentFlat,
       onStudentEvalUpdate,
+      isSingleCriterion,
+      getAllFlat,
+      onAllFlatUpdate,
     };
   },
 };
