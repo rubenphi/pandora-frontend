@@ -1,77 +1,99 @@
 <template>
   <ion-item>
-    <div style="width: 100%; padding-top: 10px; padding-bottom: 10px">
-      <ion-label class="ion-text-wrap" style="margin-bottom: 10px; font-weight: 500">
+    <div style="width: 100%; padding: 10px 0">
+      <ion-label class="ion-text-wrap" style="margin-bottom: 8px; font-weight: 500">
         {{ criterion.description }}
       </ion-label>
-      <div style="display: flex; align-items: center; justify-content: space-between">
-        <div class="range-wrapper" style="width: 100%; flex: 1">
-          <div class="range-labels">
-            <span class="range-label" style="text-align: left">0</span>
-            <span class="range-label" style="text-align: right">{{ criterion.score }}</span>
-          </div>
-          <ion-range
-            :value="modelValue ?? 0"
-            @ionChange="$emit('update:modelValue', $event.detail.value)"
-            min="0"
-            :max="criterion.score"
-            step="0.5"
-            snaps="true"
-            ticks="true"
-            pin="true"
-            :pin-formatter="(value) => value.toFixed(1)"
-            style="width: 100%"
-          />
-        </div>
-        <ion-note
-          style="min-width: 50px; text-align: right; font-size: 1.1em; font-weight: bold"
-        >
-          {{ modelValue != null ? Number(modelValue).toFixed(1) : "-" }}
-        </ion-note>
+      <div class="score-input-row">
+        <input
+          class="score-input"
+          type="text"
+          inputmode="decimal"
+          v-model="localValue"
+          :placeholder="`0 – ${criterion.score}`"
+          @blur="handleBlur"
+          @keydown.tab="$emit('tab', $event)"
+        />
+        <span class="score-max">/ {{ criterion.score }}</span>
       </div>
     </div>
   </ion-item>
 </template>
 
 <script>
-import { IonItem, IonLabel, IonRange, IonNote } from "@ionic/vue";
+import { ref, watch } from "vue";
+import { IonItem, IonLabel } from "@ionic/vue";
 
 export default {
   name: "CriterionSlider",
-  components: { IonItem, IonLabel, IonRange, IonNote },
+  components: { IonItem, IonLabel },
   props: {
-    /** Criterion object: { id, description, score } */
-    criterion: {
-      type: Object,
-      required: true,
-    },
-    /** Current score value. null means "not yet evaluated". */
-    modelValue: {
-      type: Number,
-      default: null,
-    },
+    criterion: { type: Object, required: true },
+    modelValue: { type: Number, default: null },
   },
-  emits: ["update:modelValue"],
+  emits: ["update:modelValue", "tab"],
+  setup(props, { emit }) {
+    const localValue = ref(
+      props.modelValue != null ? String(props.modelValue) : ""
+    );
+
+    // Sync when parent updates (e.g. markAll buttons)
+    watch(
+      () => props.modelValue,
+      (val) => {
+        localValue.value = val != null ? String(val) : "";
+      }
+    );
+
+    const handleBlur = () => {
+      const raw = localValue.value.replace(",", ".").trim();
+      const num = parseFloat(raw);
+      if (!isNaN(num)) {
+        const clamped = Math.min(Math.max(num, 0), props.criterion.score);
+        localValue.value = String(clamped);
+        emit("update:modelValue", clamped);
+      } else if (raw === "") {
+        emit("update:modelValue", null);
+      } else {
+        // Revert to last known good value
+        localValue.value =
+          props.modelValue != null ? String(props.modelValue) : "";
+      }
+    };
+
+    return { localValue, handleBlur };
+  },
 };
 </script>
 
 <style scoped>
-.range-wrapper {
+.score-input-row {
   display: flex;
-  flex-direction: column;
   align-items: center;
+  gap: 8px;
 }
 
-.range-labels {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  padding: 0 5px;
-  font-size: 0.8em;
-  margin-bottom: 5px;
+.score-input {
+  width: 80px;
+  padding: 6px 10px;
+  font-size: 1.1em;
+  font-weight: bold;
+  border: 1.5px solid var(--ion-color-medium);
+  border-radius: 8px;
+  text-align: center;
+  background: var(--ion-background-color);
+  color: var(--ion-text-color);
+  transition: border-color 0.2s;
 }
 
-.range-label {
-  flex: 1;
+.score-input:focus {
+  outline: none;
+  border-color: var(--ion-color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ion-color-primary) 20%, transparent);
+}
+
+.score-max {
+  font-size: 0.9em;
+  color: var(--ion-color-medium);
 }
 </style>

@@ -9,10 +9,29 @@
         </ion-buttons>
         <ion-title>Ver Revisión</ion-title>
         <ion-buttons slot="primary"></ion-buttons>
+        <ion-buttons slot="end">
+          <ion-button @click="saveAllEvaluations()">
+            <ion-icon :icon="saveOutline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <ion-accordion-group>
+      <!-- ── Single-criterion mode: flat list, Tab between students ── -->
+      <single-criterion-student-list
+        v-if="isSingleCriterion"
+        :students="students"
+        :criterion="criteria[0]"
+        :modelValue="getAllFlat()"
+        :criteria="criteria"
+        :evaluation="evaluation"
+        :isSaving="isSaving"
+        @update:modelValue="onAllFlatUpdate"
+        @save="saveSingleEvaluation"
+      />
+
+      <!-- ── Multi-criterion mode: accordion per student ── -->
+      <ion-accordion-group v-else>
         <ion-accordion
           v-for="student in students"
           :key="student.id"
@@ -166,8 +185,9 @@ import {
   IonModal,
 } from "@ionic/vue";
 import { useRoute } from "vue-router";
-import { arrowBackOutline } from "ionicons/icons";
+import { arrowBackOutline, saveOutline } from "ionicons/icons";
 import CriterionList from "../components/CriterionList.vue";
+import SingleCriterionStudentList from "../components/SingleCriterionStudentList.vue";
 
 export default {
   name: "EvaluarPares",
@@ -193,6 +213,7 @@ export default {
     IonFabButton,
     IonModal,
     CriterionList,
+    SingleCriterionStudentList,
   },
   setup() {
     const mroute = useRoute();
@@ -245,7 +266,28 @@ export default {
       updateGrade(student);
     };
 
+
+    // ─── Single-criterion mode helpers ───────────────────────────────────────
+
+    const isSingleCriterion = computed(() => criteria.value.length === 1);
+
+    const getAllFlat = () => {
+      const result = {};
+      for (const student of students.value) {
+        result[student.id] = getStudentFlat(student);
+      }
+      return result;
+    };
+
+    const onAllFlatUpdate = (newAllFlat) => {
+      for (const studentId in newAllFlat) {
+        const student = students.value.find((s) => s.id == studentId);
+        if (student) onStudentEvalUpdate(newAllFlat[studentId], student);
+      }
+    };
+
     // ─── Data fetching ────────────────────────────────────────────────────────
+
 
     const fetchActivityDetails = async () => {
       try {
@@ -357,6 +399,7 @@ export default {
             };
           }
         });
+        students.value.forEach((student) => updateGrade(student));
       } catch (error) {
         console.error(
           "Error in fetchStudentCriterionScores:",
@@ -447,6 +490,21 @@ export default {
         await fetchStudentCriterionScores();
       } catch (error) {
         console.error(`Fallo al guardar la evaluacion para ${student.name}`);
+      } finally {
+        isSaving.value = false;
+      }
+    };
+
+    const saveAllEvaluations = async () => {
+      isSaving.value = true;
+      try {
+        await Promise.all(
+          students.value.map((student) => saveEvaluation(student))
+        );
+        setSuccessToastOpen(true);
+        await fetchStudentCriterionScores();
+      } catch (error) {
+        console.error("Una o más guardados fallaron.", error);
       } finally {
         isSaving.value = false;
       }
@@ -544,8 +602,10 @@ export default {
       students,
       criteria,
       evaluation,
+      saveOutline,
       saveEvaluation,
       saveSingleEvaluation,
+      saveAllEvaluations,
       handleAccordionChange,
       currentlyOpenStudentId,
       isSaving,
@@ -568,6 +628,9 @@ export default {
       applyAndSaveChanges,
       getStudentFlat,
       onStudentEvalUpdate,
+      isSingleCriterion,
+      getAllFlat,
+      onAllFlatUpdate,
     };
   },
 };
