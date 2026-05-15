@@ -28,86 +28,18 @@
         </ion-card-content>
       </ion-card>
 
-      <ion-grid>
-        <ion-row>
-          <ion-col>
-            <p>
-              Asigne una puntuación a cada criterio. Se aplicará a los
-              <strong>{{ studentIds.length }}</strong> estudiantes
-              seleccionados.
-            </p>
-          </ion-col>
-        </ion-row>
-        <ion-row>
-          <ion-col>
-            <ion-button
-              expand="block"
-              @click="markAllAs('min')"
-              color="danger"
-              >0</ion-button
-            >
-          </ion-col>
-          <ion-col>
-            <ion-button
-              expand="block"
-              @click="markAllAs('mid')"
-              color="warning"
-              >Medio</ion-button
-            >
-          </ion-col>
-          <ion-col>
-            <ion-button
-              expand="block"
-              @click="markAllAs('max')"
-              color="success"
-              >Max</ion-button
-            >
-          </ion-col>
-        </ion-row>
-      </ion-grid>
+      <p style="padding: 0 16px">
+        Asigne una puntuación a cada criterio. Se aplicará a los
+        <strong>{{ studentIds.length }}</strong> estudiantes seleccionados.
+      </p>
 
-      <ion-list>
-        <template v-for="criterion in criteria" :key="criterion.id">
-          <ion-item>
-            <div style="width: 100%; padding-top: 10px; padding-bottom: 10px;">
-              <ion-label class="ion-text-wrap" style="margin-bottom: 10px; font-weight: 500;">
-                {{ criterion.description }}
-              </ion-label>
-              <div style="display: flex; align-items: center; justify-content: space-between;">
-                <div class="range-wrapper" style="width: 100%; flex: 1;">
-                  <div class="range-labels">
-                    <span class="range-label" style="text-align: left;">0</span>
-                    <span class="range-label" style="text-align: right;">{{ criterion.score }}</span>
-                  </div>
-                  <ion-range
-                    :value="bulkEvaluationTemplate[criterion.id]"
-                    @ionChange="
-                      bulkEvaluationTemplate[criterion.id] = $event.detail.value
-                    "
-                    min="0"
-                    :max="criterion.score"
-                    step="0.5"
-                    snaps="true"
-                    ticks="true"
-                    pin="true"
-                    :pin-formatter="(value) => value.toFixed(1)"
-                    style="width: 100%;"
-                  >
-                  </ion-range>
-                </div>
-                <ion-note style="min-width: 50px; text-align: right; font-size: 1.1em; font-weight: bold;">
-                  {{
-                    bulkEvaluationTemplate[criterion.id] != null
-                      ? bulkEvaluationTemplate[criterion.id].toFixed(1)
-                      : "-"
-                  }}
-                </ion-note>
-              </div>
-            </div>
-          </ion-item>
-        </template>
-      </ion-list>
-       <ion-toast
+      <!-- Shared criterion list + 0/Medio/Max buttons -->
+      <criterion-list
+        :criteria="criteria"
+        v-model="bulkEvaluationTemplate"
+      />
+
+      <ion-toast
         :is-open="isSuccessToastOpen"
         message="Evaluación guardada correctamente"
         :duration="3000"
@@ -128,8 +60,10 @@
 <script>
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
-import axios from "axios";
-import { tokenHeader, usuarioGet } from "../globalService";
+import {
+  useToast,
+  saveCriterionScore,
+} from "../composables/useEvaluation";
 import {
   IonPage,
   IonHeader,
@@ -140,14 +74,6 @@ import {
   IonButton,
   IonBackButton,
   onIonViewWillEnter,
-  IonList,
-  IonItem,
-  IonLabel,
-  IonRange,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonNote,
   IonSpinner,
   IonToast,
   IonCard,
@@ -155,6 +81,9 @@ import {
   IonCardHeader,
   IonCardTitle,
 } from "@ionic/vue";
+import axios from "axios";
+import { tokenHeader, usuarioGet } from "../globalService";
+import CriterionList from "../components/CriterionList.vue";
 
 export default {
   components: {
@@ -166,20 +95,13 @@ export default {
     IonButtons,
     IonButton,
     IonBackButton,
-    IonList,
-    IonItem,
-    IonLabel,
-    IonRange,
-    IonGrid,
-    IonRow,
-    IonCol,
-    IonNote,
     IonSpinner,
     IonToast,
     IonCard,
     IonCardContent,
     IonCardHeader,
     IonCardTitle,
+    CriterionList,
   },
   setup() {
     const router = useRouter();
@@ -191,19 +113,16 @@ export default {
     const existingScores = ref({});
     const isSaving = ref(false);
 
-    const isSuccessToastOpen = ref(false);
-    const setSuccessToastOpen = (val) => (isSuccessToastOpen.value = val);
-    const isErrorToastOpen = ref(false);
-    const errorMessage = ref("");
-    const setErrorToastOpen = (val, message = "") => {
-      isErrorToastOpen.value = val;
-      errorMessage.value = message;
-    };
+    const {
+      isSuccessToastOpen,
+      isErrorToastOpen,
+      errorMessage,
+      setSuccessToastOpen,
+      setErrorToastOpen,
+    } = useToast();
 
     const templateGrade = computed(() => {
-      if (criteria.value.length === 0) {
-        return 0;
-      }
+      if (criteria.value.length === 0) return 0;
 
       let totalScore = 0;
       let maxPossibleScore = 0;
@@ -214,9 +133,7 @@ export default {
         totalScore += value;
       }
 
-      if (maxPossibleScore === 0) {
-        return 0;
-      }
+      if (maxPossibleScore === 0) return 0;
       return (totalScore / maxPossibleScore) * 5;
     });
 
@@ -243,12 +160,9 @@ export default {
           `/student-criterion-scores/getAll?activityId=${id}`,
           tokenHeader()
         );
-        const fetchedScores = response.data;
         const scoresMap = {};
-        fetchedScores.forEach((score) => {
-          if (!scoresMap[score.student.id]) {
-            scoresMap[score.student.id] = {};
-          }
+        response.data.forEach((score) => {
+          if (!scoresMap[score.student.id]) scoresMap[score.student.id] = {};
           scoresMap[score.student.id][score.criterion.id] = score.id;
         });
         existingScores.value = scoresMap;
@@ -273,21 +187,6 @@ export default {
       }
     });
 
-    const markAllAs = (valueType) => {
-      for (const criterionId in bulkEvaluationTemplate.value) {
-        const criterion = criteria.value.find((c) => c.id == criterionId);
-        if (criterion) {
-          let score = 0;
-          if (valueType === "mid") {
-            score = criterion.score / 2;
-          } else if (valueType === "max") {
-            score = criterion.score;
-          }
-          bulkEvaluationTemplate.value[criterionId] = score;
-        }
-      }
-    };
-
     const saveChanges = async () => {
       isSaving.value = true;
       const savePromises = [];
@@ -297,32 +196,15 @@ export default {
           const score = bulkEvaluationTemplate.value[criterion.id];
           if (score !== null) {
             const payload = {
-              studentId: studentId,
+              studentId,
               criterionId: criterion.id,
-              score: score,
+              score,
               instituteId: usuario.value.institute.id,
               activityId: parseInt(activityId.value),
             };
-
-            const scoreId = existingScores.value[studentId]
-              ? existingScores.value[studentId][criterion.id]
-              : null;
-
-            let promise;
-            if (scoreId) {
-              promise = axios.patch(
-                `/student-criterion-scores/update/${scoreId}`,
-                payload,
-                tokenHeader()
-              );
-            } else {
-              promise = axios.post(
-                `/student-criterion-scores/create`,
-                payload,
-                tokenHeader()
-              );
-            }
-            savePromises.push(promise);
+            const scoreId =
+              existingScores.value[studentId]?.[criterion.id] ?? null;
+            savePromises.push(saveCriterionScore(scoreId, payload));
           }
         });
       });
@@ -347,7 +229,6 @@ export default {
       criteria,
       bulkEvaluationTemplate,
       isSaving,
-      markAllAs,
       saveChanges,
       isSuccessToastOpen,
       setSuccessToastOpen,
@@ -359,24 +240,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-.range-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.range-labels {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  padding: 0 5px;
-  font-size: 0.8em;
-  margin-bottom: 5px;
-}
-
-.range-label {
-  flex: 1;
-}
-</style>
