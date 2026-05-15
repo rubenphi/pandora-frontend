@@ -8,9 +8,7 @@
           </ion-button>
         </ion-buttons>
         <ion-title>Ver Revisión</ion-title>
-        <ion-buttons slot="primary">
-        
-        </ion-buttons>
+        <ion-buttons slot="primary"></ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -21,7 +19,6 @@
           @ionChange="handleAccordionChange($event, student)"
         >
           <IonItem slot="header">
-           
             <IonLabel>{{ student.lastName + " " + student.name }}</IonLabel>
             <IonNote slot="end"
               >Nota:
@@ -32,93 +29,28 @@
               }}</IonNote
             >
           </IonItem>
+
           <div class="ion-padding" slot="content">
-            <ion-grid>
-              <ion-row>
-                <ion-col>
-                  <ion-button
-                    expand="block"
-                    @click="markAllAs(student, 'min')"
-                    color="danger"
-                    >0</ion-button
-                  >
-                </ion-col>
-                <ion-col>
-                  <ion-button
-                    expand="block"
-                    @click="markAllAs(student, 'mid')"
-                    color="warning"
-                    >Medio</ion-button
-                  >
-                </ion-col>
-                <ion-col>
-                  <ion-button
-                    expand="block"
-                    @click="markAllAs(student, 'max')"
-                    color="success"
-                    >Max</ion-button
-                  >
-                </ion-col>
-              </ion-row>
-            </ion-grid>
             <ion-button
               expand="block"
               @click="saveSingleEvaluation(student)"
               :disabled="isSaving"
               >Guardar</ion-button
             >
-            <ion-list>
-              <template v-for="criterion in criteria" :key="criterion.id">
-                <ion-item>
-                  <div style="width: 100%; padding-top: 10px; padding-bottom: 10px;">
-                    <ion-label class="ion-text-wrap" style="margin-bottom: 10px; font-weight: 500;">
-                      {{ criterion.description }}
-                    </ion-label>
-                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                      <div class="range-wrapper" style="width: 100%; flex: 1;">
-                        <div class="range-labels">
-                          <span class="range-label" style="text-align: left;">0</span>
-                          <span class="range-label" style="text-align: right;">{{ criterion.score }}</span>
-                        </div>
-                        <ion-range
-                          :value="evaluation[student.id][criterion.id].value"
-                          @ionChange="
-                            (evaluation[student.id][criterion.id].value =
-                              $event.detail.value),
-                              updateGrade(student)
-                          "
-                          min="0"
-                          :max="criterion.score"
-                          step="0.5"
-                          snaps="true"
-                          ticks="true"
-                          pin="true"
-                          :pin-formatter="(value) => value.toFixed(1)"
-                          style="width: 100%;"
-                        >
-                        </ion-range>
-                      </div>
-                      <ion-note style="min-width: 50px; text-align: right; font-size: 1.1em; font-weight: bold;">
-                        {{ evaluation[student.id][criterion.id].value != null ? evaluation[student.id][criterion.id].value.toFixed(1) : '-' }}
-                      </ion-note>
-                    </div>
-                  </div>
-                </ion-item>
-              </template>
-              <ion-item>
-                <ion-grid>
-                  <ion-row class="button-row">
-                    <ion-col size="auto">
-                      <ion-button
-                        @click="saveSingleEvaluation(student)"
-                        :disabled="isSaving"
-                        >Guardar</ion-button
-                      >
-                    </ion-col>
-                  </ion-row>
-                </ion-grid>
-              </ion-item>
-            </ion-list>
+
+            <!-- Shared criterion list + 0/Medio/Max buttons -->
+            <criterion-list
+              :criteria="criteria"
+              :modelValue="getStudentFlat(student)"
+              @update:modelValue="onStudentEvalUpdate($event, student)"
+            />
+
+            <ion-button
+              expand="block"
+              @click="saveSingleEvaluation(student)"
+              :disabled="isSaving"
+              >Guardar</ion-button
+            >
           </div>
         </ion-accordion>
       </ion-accordion-group>
@@ -146,7 +78,9 @@
         slot="fixed"
         v-if="selectedStudents.size > 0"
       >
-        <ion-fab-button @click="openBulkEvaluationModal"> Evaluar </ion-fab-button>
+        <ion-fab-button @click="openBulkEvaluationModal">
+          Evaluar
+        </ion-fab-button>
       </ion-fab>
 
       <!-- Bulk Evaluation Modal -->
@@ -169,43 +103,13 @@
             Asigne una puntuación a cada criterio. Se aplicará a los
             {{ selectedStudents.size }} compañeros seleccionados.
           </p>
-          <ion-list>
-            <template v-for="criterion in criteria" :key="criterion.id">
-              <ion-item>
-                <div style="width: 100%; padding-top: 10px; padding-bottom: 10px;">
-                  <ion-label class="ion-text-wrap" style="margin-bottom: 10px; font-weight: 500;">
-                    {{ criterion.description }}
-                  </ion-label>
-                  <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <div class="range-wrapper" style="width: 100%; flex: 1;">
-                      <div class="range-labels">
-                        <span class="range-label" style="text-align: left;">0</span>
-                        <span class="range-label" style="text-align: right;">{{ criterion.score }}</span>
-                      </div>
-                      <ion-range
-                        :value="bulkEvaluationTemplate[criterion.id]"
-                        @ionChange="
-                          bulkEvaluationTemplate[criterion.id] = $event.detail.value
-                        "
-                        min="0"
-                        :max="criterion.score"
-                        step="0.5"
-                        snaps="true"
-                        ticks="true"
-                        pin="true"
-                        :pin-formatter="(value) => value.toFixed(1)"
-                        style="width: 100%;"
-                      >
-                      </ion-range>
-                    </div>
-                    <ion-note style="min-width: 50px; text-align: right; font-size: 1.1em; font-weight: bold;">
-                      {{ bulkEvaluationTemplate[criterion.id] != null ? bulkEvaluationTemplate[criterion.id].toFixed(1) : '-' }}
-                    </ion-note>
-                  </div>
-                </div>
-              </ion-item>
-            </template>
-          </ion-list>
+
+          <!-- Shared criterion list + 0/Medio/Max buttons -->
+          <criterion-list
+            :criteria="criteria"
+            v-model="bulkEvaluationTemplate"
+          />
+
           <ion-grid>
             <ion-row>
               <ion-col>
@@ -235,6 +139,11 @@ import { ref, onMounted, computed } from "vue";
 import axios from "axios";
 import { tokenHeader, usuarioGet } from "../globalService";
 import {
+  useToast,
+  calculateFinalGrade,
+  saveCriterionScore,
+} from "../composables/useEvaluation";
+import {
   IonHeader,
   IonToolbar,
   IonTitle,
@@ -243,28 +152,25 @@ import {
   IonPage,
   IonIcon,
   IonContent,
-  IonList,
   IonItem,
   IonLabel,
   IonAccordionGroup,
   IonAccordion,
-  IonRange,
   IonGrid,
   IonRow,
   IonCol,
   IonToast,
   IonNote,
-
   IonFab,
   IonFabButton,
   IonModal,
 } from "@ionic/vue";
 import { useRoute } from "vue-router";
 import { arrowBackOutline } from "ionicons/icons";
+import CriterionList from "../components/CriterionList.vue";
 
 export default {
   name: "EvaluarPares",
-
   components: {
     IonHeader,
     IonToolbar,
@@ -273,30 +179,26 @@ export default {
     IonButtons,
     IonPage,
     IonContent,
-    IonList,
     IonItem,
     IonLabel,
     IonButton,
     IonAccordionGroup,
     IonAccordion,
-    IonRange,
     IonGrid,
     IonRow,
     IonCol,
     IonToast,
     IonNote,
-  
     IonFab,
     IonFabButton,
     IonModal,
+    CriterionList,
   },
   setup() {
     const mroute = useRoute();
 
     const grupoUsuario = ref(null);
-
     const activityId = ref(mroute.params.id);
-
     const usuario = ref(null);
     const userPermissions = ref([]);
 
@@ -310,16 +212,40 @@ export default {
     const isBulkModalOpen = ref(false);
     const bulkEvaluationTemplate = ref({});
 
-    const isSuccessToastOpen = ref(false);
-    const setSuccessToastOpen = (val) => (isSuccessToastOpen.value = val);
-    const isErrorToastOpen = ref(false);
-    const errorMessage = ref("");
-    const setErrorToastOpen = (val, message = "") => {
-      isErrorToastOpen.value = val;
-      errorMessage.value = message;
-    };
+    const {
+      isSuccessToastOpen,
+      isErrorToastOpen,
+      errorMessage,
+      setSuccessToastOpen,
+      setErrorToastOpen,
+    } = useToast();
 
     usuario.value = usuarioGet();
+
+    // ─── Helpers for CriterionList v-model ───────────────────────────────────
+
+    /** Returns a flat { criterionId: value } map for a student. */
+    const getStudentFlat = (student) => {
+      const flat = {};
+      if (!evaluation.value[student.id]) return flat;
+      for (const cId in evaluation.value[student.id]) {
+        flat[cId] = evaluation.value[student.id][cId]?.value ?? null;
+      }
+      return flat;
+    };
+
+    /** Syncs a flat update back into the nested evaluation object. */
+    const onStudentEvalUpdate = (newFlat, student) => {
+      if (!evaluation.value[student.id]) return;
+      for (const cId in newFlat) {
+        if (evaluation.value[student.id][cId] !== undefined) {
+          evaluation.value[student.id][cId].value = newFlat[cId];
+        }
+      }
+      updateGrade(student);
+    };
+
+    // ─── Data fetching ────────────────────────────────────────────────────────
 
     const fetchActivityDetails = async () => {
       try {
@@ -344,7 +270,6 @@ export default {
           `/student-criterion-scores/permissions?reviserId=${usuario.value.id}&activityId=${activityId.value}&expired=false`,
           tokenHeader()
         );
-
         userPermissions.value = [...permisosIndividuales.data];
 
         if (grupoUsuario.value != null) {
@@ -374,9 +299,7 @@ export default {
             const isAlreadyAdded = allStudents.some(
               (student) => student.id === userResponse.data.id
             );
-            if (!isAlreadyAdded) {
-              allStudents.push(userResponse.data);
-            }
+            if (!isAlreadyAdded) allStudents.push(userResponse.data);
           }
         } else if (permission.revisedType === "Group") {
           const groupUsersResponse = await axios.get(
@@ -399,9 +322,7 @@ export default {
         }
       }
 
-      students.value = allStudents.map((student) => ({
-        ...student,
-      }));
+      students.value = allStudents.map((student) => ({ ...student }));
       initializeEvaluation();
     };
 
@@ -425,13 +346,10 @@ export default {
         const response = await axios.get(
           `/student-criterion-scores/getAll?activityId=${activityId.value}`,
           tokenHeader()
-        ); 
-        const fetchedScores = response.data;
-
-        fetchedScores.forEach((score) => {
+        );
+        response.data.forEach((score) => {
           if (
-            evaluation.value[score.student.id] &&
-            evaluation.value[score.student.id][score.criterion.id]
+            evaluation.value[score.student.id]?.[score.criterion.id]
           ) {
             evaluation.value[score.student.id][score.criterion.id] = {
               value: score.score,
@@ -447,25 +365,6 @@ export default {
       }
     };
 
-    const calculateFinalGrade = (student) => {
-      let totalScore = 0;
-      let maxPossibleScore = 0;
-
-      for (const criterionId in evaluation.value[student.id]) {
-        const evaluationEntry = evaluation.value[student.id][criterionId];
-        const value =
-          evaluationEntry.value === null ? 0 : evaluationEntry.value;
-        const criterion = criteria.value.find((c) => c.id == criterionId);
-
-        if (criterion) {
-          maxPossibleScore += criterion.score;
-          totalScore += value;
-        }
-      }
-      if (maxPossibleScore === 0) return 0;
-      return (totalScore / maxPossibleScore) * 5;
-    };
-
     const fetchCriteria = async () => {
       try {
         const response = await axios.get(
@@ -478,6 +377,16 @@ export default {
       }
     };
 
+    // ─── Grade helpers ────────────────────────────────────────────────────────
+
+    const updateGrade = (student) => {
+      studentGrades.value[student.id] = calculateFinalGrade(
+        student.id,
+        evaluation.value,
+        criteria.value
+      );
+    };
+
     const handleAccordionChange = (event, student) => {
       if (event.detail.checked) {
         currentlyOpenStudentId.value = student.id;
@@ -487,33 +396,27 @@ export default {
       }
     };
 
-    const updateGrade = (student) => {
-      studentGrades.value[student.id] = calculateFinalGrade(student);
-    };
+    // ─── Save helpers ─────────────────────────────────────────────────────────
 
+    /** Saves one student's criterion scores. EvaluarPares-specific: adds permissionId. */
     const saveEvaluation = async (student) => {
       try {
         for (const criterionId in evaluation.value[student.id]) {
-          const evaluationEntry = evaluation.value[student.id][criterionId];
-          const value = evaluationEntry.value;
-          const scoreId = evaluationEntry.id;
-
-          if (value !== null) {
-            const score = value;
-
+          const entry = evaluation.value[student.id][criterionId];
+          if (entry.value !== null) {
             const payload = {
               studentId: student.id,
               criterionId: parseInt(criterionId),
-              score: score,
+              score: entry.value,
               instituteId: usuario.value.institute.id,
               activityId: parseInt(activityId.value),
             };
 
+            // EvaluarPares requires a permissionId
             const permission = userPermissions.value.find((p) => {
               if (p.revisedType === "User") return p.revisedId === student.id;
-              if (p.revisedType === "Group") {
+              if (p.revisedType === "Group")
                 return p.revisedId === student._allowedByGroupId;
-              }
               return false;
             });
             if (permission) {
@@ -522,19 +425,9 @@ export default {
               throw new Error("No permission to evaluate this student.");
             }
 
-            if (scoreId) {
-              await axios.patch(
-                `/student-criterion-scores/update/${scoreId}`,
-                payload,
-                tokenHeader()
-              );
-            } else {
-              const response = await axios.post(
-                `/student-criterion-scores/create`,
-                payload,
-                tokenHeader()
-              );
-              evaluation.value[student.id][criterionId].id = response.data.id;
+            const savedData = await saveCriterionScore(entry.id, payload);
+            if (!entry.id && savedData?.id) {
+              evaluation.value[student.id][criterionId].id = savedData.id;
             }
           }
         }
@@ -567,23 +460,7 @@ export default {
       await fetchActivityDetails();
     });
 
-    const markAllAs = (student, valueType) => {
-      if (evaluation.value[student.id]) {
-        for (const criterionId in evaluation.value[student.id]) {
-          const criterion = criteria.value.find((c) => c.id == criterionId);
-          if (criterion) {
-            let score = 0;
-            if (valueType === "mid") {
-              score = criterion.score / 2;
-            } else if (valueType === "max") {
-              score = criterion.score;
-            }
-            evaluation.value[student.id][criterionId].value = score;
-          }
-        }
-        updateGrade(student);
-      }
-    };
+    // ─── Student selection ────────────────────────────────────────────────────
 
     const handleStudentSelection = (studentId, isChecked) => {
       if (isChecked) {
@@ -593,12 +470,11 @@ export default {
       }
     };
 
-    const areAllSelected = computed(() => {
-      return (
+    const areAllSelected = computed(
+      () =>
         students.value.length > 0 &&
         selectedStudents.value.size === students.value.length
-      );
-    });
+    );
 
     const toggleSelectAll = () => {
       if (areAllSelected.value) {
@@ -610,8 +486,9 @@ export default {
       }
     };
 
+    // ─── Bulk evaluation modal ────────────────────────────────────────────────
+
     const openBulkEvaluationModal = () => {
-      // Initialize template with 0
       criteria.value.forEach((c) => {
         bulkEvaluationTemplate.value[c.id] = 0;
       });
@@ -626,18 +503,14 @@ export default {
       const studentObjects = students.value.filter((s) =>
         selectedStudents.value.has(s.id)
       );
-
       studentObjects.forEach((student) => {
         for (const criterionId in bulkEvaluationTemplate.value) {
-          if (
-            evaluation.value[student.id] &&
-            evaluation.value[student.id][criterionId]
-          ) {
+          if (evaluation.value[student.id]?.[criterionId]) {
             evaluation.value[student.id][criterionId].value =
               bulkEvaluationTemplate.value[criterionId];
           }
         }
-        updateGrade(student); // Recalculate grade after applying
+        updateGrade(student);
       });
     };
 
@@ -650,10 +523,9 @@ export default {
         await Promise.all(
           studentObjects.map((student) => saveEvaluation(student))
         );
-        setSuccessToastOpen(true); // Show success toast only after all are saved
-        await fetchStudentCriterionScores(); // Re-fetch scores to update IDs
+        setSuccessToastOpen(true);
+        await fetchStudentCriterionScores();
       } catch (error) {
-        // Error toast is already handled in saveEvaluation
         console.error("Una o más guardados fallaron.", error);
       } finally {
         isSaving.value = false;
@@ -684,7 +556,6 @@ export default {
       setErrorToastOpen,
       studentGrades,
       updateGrade,
-      markAllAs,
       usuario,
       selectedStudents,
       handleStudentSelection,
@@ -695,6 +566,8 @@ export default {
       openBulkEvaluationModal,
       closeBulkEvaluationModal,
       applyAndSaveChanges,
+      getStudentFlat,
+      onStudentEvalUpdate,
     };
   },
 };
@@ -704,24 +577,4 @@ export default {
 .button-row {
   justify-content: space-between;
 }
-
-.range-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.range-labels {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  padding: 0 5px;
-  font-size: 0.8em;
-  margin-bottom: 5px;
-}
-
-.range-label {
-  flex: 1;
-}
-
 </style>

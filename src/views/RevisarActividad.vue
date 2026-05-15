@@ -50,100 +50,33 @@
               }}</IonNote
             >
           </IonItem>
+
           <div class="ion-padding" slot="content">
-            <ion-grid>
-              <ion-row>
-                <ion-col>
-                  <ion-button
-                    expand="block"
-                    @click="markAllAs(student, 'min')"
-                    color="danger"
-                    >0</ion-button
-                  >
-                </ion-col>
-                <ion-col>
-                  <ion-button
-                    expand="block"
-                    @click="markAllAs(student, 'mid')"
-                    color="warning"
-                    >Medio</ion-button
-                  >
-                </ion-col>
-                <ion-col>
-                  <ion-button
-                    expand="block"
-                    @click="markAllAs(student, 'max')"
-                    color="success"
-                    >Max</ion-button
-                  >
-                </ion-col>
-              </ion-row>
-            </ion-grid>
             <ion-button
               expand="block"
               @click="saveSingleEvaluation(student)"
               :disabled="isSaving"
               >Guardar</ion-button
             >
-            <ion-list v-if="evaluation[student.id]">
-              <template v-for="criterion in criteria" :key="criterion.id">
-                <ion-item>
-                  <div style="width: 100%; padding-top: 10px; padding-bottom: 10px;">
-                    <ion-label class="ion-text-wrap" style="margin-bottom: 10px; font-weight: 500;">
-                      {{ criterion.description }}
-                    </ion-label>
-                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                      <div class="range-wrapper" style="width: 100%; flex: 1;">
-                        <div class="range-labels">
-                          <span class="range-label" style="text-align: left;">0</span>
-                          <span class="range-label" style="text-align: right;">{{ criterion.score }}</span>
-                        </div>
-                        <ion-range
-                          :value="evaluation[student.id][criterion.id].value"
-                          @ionChange="
-                            (evaluation[student.id][criterion.id].value =
-                              $event.detail.value),
-                              updateGrade(student)
-                          "
-                          min="0"
-                          :max="criterion.score"
-                          step="0.5"
-                          snaps="true"
-                          ticks="true"
-                          pin="true"
-                          :pin-formatter="(value) => value.toFixed(1)"
-                          style="width: 100%;"
-                        >
-                        </ion-range>
-                      </div>
-                      <ion-note style="min-width: 50px; text-align: right; font-size: 1.1em; font-weight: bold;">
-                        {{
-                          evaluation[student.id][criterion.id].value != null
-                            ? evaluation[student.id][criterion.id].value.toFixed(1)
-                            : "-"
-                        }}
-                      </ion-note>
-                    </div>
-                  </div>
-                </ion-item>
-              </template>
-              <ion-item>
-                <ion-grid>
-                  <ion-row class="button-row">
-                    <ion-col size="auto">
-                      <ion-button
-                        @click="saveSingleEvaluation(student)"
-                        :disabled="isSaving"
-                        >Guardar</ion-button
-                      >
-                    </ion-col>
-                  </ion-row>
-                </ion-grid>
-              </ion-item>
-            </ion-list>
+
+            <!-- Shared criterion list + 0/Medio/Max buttons -->
+            <criterion-list
+              v-if="evaluation[student.id]"
+              :criteria="criteria"
+              :modelValue="getStudentFlat(student)"
+              @update:modelValue="onStudentEvalUpdate($event, student)"
+            />
+
+            <ion-button
+              expand="block"
+              @click="saveSingleEvaluation(student)"
+              :disabled="isSaving"
+              >Guardar</ion-button
+            >
           </div>
         </ion-accordion>
       </ion-accordion-group>
+
       <!-- Toasts -->
       <ion-toast
         :is-open="isSuccessToastOpen"
@@ -171,7 +104,6 @@
           Evaluar
         </ion-fab-button>
       </ion-fab>
-
     </ion-content>
   </ion-page>
 </template>
@@ -182,12 +114,16 @@ import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 import { tokenHeader, usuarioGet } from "../globalService";
 import {
+  useToast,
+  calculateFinalGrade,
+  saveCriterionScore,
+} from "../composables/useEvaluation";
+import {
   IonPage,
   IonHeader,
   IonToolbar,
   IonTitle,
   IonContent,
-  IonList,
   IonItem,
   IonLabel,
   IonButton,
@@ -195,10 +131,6 @@ import {
   onIonViewWillEnter,
   IonAccordionGroup,
   IonAccordion,
-  IonRange,
-  IonGrid,
-  IonRow,
-  IonCol,
   alertController,
   IonIcon,
   IonToast,
@@ -208,6 +140,7 @@ import {
   IonFabButton,
 } from "@ionic/vue";
 import { arrowBackOutline } from "ionicons/icons";
+import CriterionList from "../components/CriterionList.vue";
 
 export default {
   components: {
@@ -216,23 +149,19 @@ export default {
     IonToolbar,
     IonTitle,
     IonContent,
-    IonList,
     IonItem,
     IonLabel,
     IonButton,
     IonButtons,
     IonAccordionGroup,
     IonAccordion,
-    IonRange,
-    IonGrid,
-    IonRow,
-    IonCol,
     IonIcon,
     IonToast,
     IonNote,
     IonCheckbox,
     IonFab,
     IonFabButton,
+    CriterionList,
   },
   setup() {
     const mroute = useRoute();
@@ -244,29 +173,51 @@ export default {
 
     const students = ref([]);
     const criteria = ref([]);
-    const evaluation = ref({}); // { studentId: { criterionId: 'value' } }
+    const evaluation = ref({}); // { studentId: { criterionId: { value, id } } }
     const studentGrades = ref({});
-    const currentlyOpenStudentId = ref(null); // Track the currently open student accordion
+    const currentlyOpenStudentId = ref(null);
     const isSaving = ref(false);
     const selectedStudents = ref(new Set());
 
-    const isSuccessToastOpen = ref(false);
-    const setSuccessToastOpen = (val) => (isSuccessToastOpen.value = val);
-    const isErrorToastOpen = ref(false);
-    const errorMessage = ref("");
-    const setErrorToastOpen = (val, message = "") => {
-      isErrorToastOpen.value = val;
-      errorMessage.value = message;
-    };
+    const {
+      isSuccessToastOpen,
+      isErrorToastOpen,
+      errorMessage,
+      setSuccessToastOpen,
+      setErrorToastOpen,
+    } = useToast();
 
-    // ... existing setup
     usuario.value = usuarioGet();
 
+    // ─── Helpers for CriterionList v-model ───────────────────────────────────
+
+    /** Returns a flat { criterionId: value } map for a student. */
+    const getStudentFlat = (student) => {
+      const flat = {};
+      if (!evaluation.value[student.id]) return flat;
+      for (const cId in evaluation.value[student.id]) {
+        flat[cId] = evaluation.value[student.id][cId]?.value ?? null;
+      }
+      return flat;
+    };
+
+    /** Syncs a flat update back into the nested evaluation object. */
+    const onStudentEvalUpdate = (newFlat, student) => {
+      if (!evaluation.value[student.id]) return;
+      for (const cId in newFlat) {
+        if (evaluation.value[student.id][cId] !== undefined) {
+          evaluation.value[student.id][cId].value = newFlat[cId];
+        }
+      }
+      updateGrade(student);
+    };
+
+    // ─── Data fetching ────────────────────────────────────────────────────────
+
     const fetchActivityDetails = async () => {
-      // Force reset of evaluation state to prevent stale data on navigation
       evaluation.value = {};
       studentGrades.value = {};
-      
+
       try {
         const response = await axios.get(
           `/activities/${activityId}`,
@@ -281,9 +232,8 @@ export default {
         periodId.value = response.data.lesson.period.id;
         instituteId.value = response.data.institute.id;
 
-        await fetchCriteria(activityId); // Fetch criteria first
+        await fetchCriteria(activityId);
 
-        // Conditional student fetch based on lesson type
         if (lessonType === "reinforcement") {
           await fetchReinforcementStudents(lessonId);
         } else {
@@ -302,10 +252,7 @@ export default {
           `/student-criterion-scores/getAll?activityId=${activityId}`,
           tokenHeader()
         );
-        const fetchedScores = response.data;
-
-        // Populate evaluation with fetched scores
-        fetchedScores.forEach((score) => {
+        response.data.forEach((score) => {
           if (evaluation.value[score.student.id]) {
             evaluation.value[score.student.id][score.criterion.id] = {
               value: score.score,
@@ -321,30 +268,6 @@ export default {
       }
     };
 
-    const calculateFinalGrade = (student) => {
-      let totalScore = 0;
-      let maxPossibleScore = 0;
-
-      for (const criterionId in evaluation.value[student.id]) {
-        const evaluationEntry = evaluation.value[student.id][criterionId];
-        // Treat null values as 0 for the purpose of final grade calculation
-        const value =
-          evaluationEntry.value === null ? 0 : evaluationEntry.value;
-        const criterion = criteria.value.find((c) => c.id == criterionId);
-
-        if (criterion) {
-          maxPossibleScore += criterion.score;
-          totalScore += value;
-        }
-      }
-      // Normalize the score to a 0-5 scale, assuming maxPossibleScore is the total possible points for all criteria
-      // If maxPossibleScore is 0 (no criteria or all criteria have 0 score), return 0 to avoid division by zero
-      if (maxPossibleScore === 0) {
-        return 0;
-      }
-      return (totalScore / maxPossibleScore) * 5;
-    };
-
     const fetchStudents = async (courseId, year) => {
       try {
         const response = await axios.get(
@@ -358,15 +281,10 @@ export default {
         students.value = allStudents.sort((a, b) => {
           const lastNameA = a.lastName || "";
           const lastNameB = b.lastName || "";
-          if (lastNameA !== lastNameB) {
-            return lastNameA.localeCompare(lastNameB);
-          }
-          const nameA = a.name || "";
-          const nameB = b.name || "";
-          return nameA.localeCompare(nameB);
+          if (lastNameA !== lastNameB) return lastNameA.localeCompare(lastNameB);
+          return (a.name || "").localeCompare(b.name || "");
         });
 
-        // Initialize evaluation for all students
         students.value.forEach((student) => {
           studentGrades.value[student.id] = null;
           if (!evaluation.value[student.id]) {
@@ -375,7 +293,7 @@ export default {
               evaluation.value[student.id][criterion.id] = {
                 value: null,
                 id: null,
-              }; // Initialize with null for not evaluated and no ID
+              };
             });
           }
         });
@@ -390,22 +308,15 @@ export default {
           `/reinforcement/lesson/${lessonId}`,
           tokenHeader()
         );
-
-        // response.data is array of Reinforcement objects with student relation
         const reinforcementStudents = response.data.map((r) => r.student);
 
         students.value = reinforcementStudents.sort((a, b) => {
           const lastNameA = a.lastName || "";
           const lastNameB = b.lastName || "";
-          if (lastNameA !== lastNameB) {
-            return lastNameA.localeCompare(lastNameB);
-          }
-          const nameA = a.name || "";
-          const nameB = b.name || "";
-          return nameA.localeCompare(nameB);
+          if (lastNameA !== lastNameB) return lastNameA.localeCompare(lastNameB);
+          return (a.name || "").localeCompare(b.name || "");
         });
 
-        // Initialize evaluation for reinforcement students
         students.value.forEach((student) => {
           studentGrades.value[student.id] = null;
           if (!evaluation.value[student.id]) {
@@ -438,53 +349,43 @@ export default {
       }
     };
 
+    // ─── Grade helpers ────────────────────────────────────────────────────────
+
+    const updateGrade = (student) => {
+      studentGrades.value[student.id] = calculateFinalGrade(
+        student.id,
+        evaluation.value,
+        criteria.value
+      );
+    };
+
     const handleAccordionChange = (event, student) => {
       if (event.detail.checked) {
-        // Check if the accordion is being opened
         currentlyOpenStudentId.value = student.id;
         updateGrade(student);
       } else {
-        currentlyOpenStudentId.value = null; // Accordion is closed
+        currentlyOpenStudentId.value = null;
       }
     };
 
-    const updateGrade = (student) => {
-      studentGrades.value[student.id] = calculateFinalGrade(student);
-    };
+    // ─── Save helpers ─────────────────────────────────────────────────────────
 
+    /** Saves one student's criterion scores (without success toast). */
     const saveEvaluation = async (student) => {
-      // This function is now designed to not open the success toast,
-      // as it will be controlled by the bulk save function.
-      // It will still show errors individually.
       try {
         for (const criterionId in evaluation.value[student.id]) {
-          const evaluationEntry = evaluation.value[student.id][criterionId];
-          const value = evaluationEntry.value;
-          const scoreId = evaluationEntry.id;
-
-          if (value !== null) {
-            const score = value;
+          const entry = evaluation.value[student.id][criterionId];
+          if (entry.value !== null) {
             const payload = {
               studentId: student.id,
               criterionId: parseInt(criterionId),
-              score: score,
+              score: entry.value,
               instituteId: usuario.value.institute.id,
               activityId: parseInt(activityId),
             };
-
-            if (scoreId) {
-              await axios.patch(
-                `/student-criterion-scores/update/${scoreId}`,
-                payload,
-                tokenHeader()
-              );
-            } else {
-              const response = await axios.post(
-                `/student-criterion-scores/create`,
-                payload,
-                tokenHeader()
-              );
-              evaluation.value[student.id][criterionId].id = response.data.id;
+            const savedData = await saveCriterionScore(entry.id, payload);
+            if (!entry.id && savedData?.id) {
+              evaluation.value[student.id][criterionId].id = savedData.id;
             }
           }
         }
@@ -493,7 +394,6 @@ export default {
           error.response?.data?.message ||
           `Error guardando evaluación para ${student.name}`;
         setErrorToastOpen(true, message);
-        // Throw error to stop Promise.all in saveBulkEvaluations
         throw new Error(message);
       }
     };
@@ -501,11 +401,10 @@ export default {
     const saveSingleEvaluation = async (student) => {
       isSaving.value = true;
       try {
-        await saveEvaluation(student); // The core logic
+        await saveEvaluation(student);
         setSuccessToastOpen(true);
-        await fetchStudentCriterionScores(activityId); // Refetch to get new IDs
+        await fetchStudentCriterionScores(activityId);
       } catch (error) {
-        // error toast is handled by saveEvaluation
         console.error(`Fallo al guardar la evaluacion para ${student.name}`);
       } finally {
         isSaving.value = false;
@@ -516,48 +415,35 @@ export default {
       const allPromises = [];
 
       for (const student of students.value) {
-        // Collect all criterion score promises for this student
         const criterionPromises = criteria.value.map(async (criterion) => {
-          const evaluationEntry = evaluation.value[student.id][criterion.id];
-          let valueToSave = evaluationEntry.value;
-          if (valueToSave === null) {
-            valueToSave = 0;
-          }
-          const score = valueToSave;
+          const entry = evaluation.value[student.id][criterion.id];
+          const score = entry.value === null ? 0 : entry.value;
 
           const payload = {
             studentId: student.id,
             criterionId: criterion.id,
-            score: score,
+            score,
             instituteId: usuario.value.institute.id,
             activityId: parseInt(activityId),
           };
 
           try {
-            if (evaluationEntry.id) {
-              await axios.patch(
-                `/student-criterion-scores/update/${evaluationEntry.id}`,
-                payload,
-                tokenHeader()
-              );
-            } else {
-              const response = await axios.post(
-                `/student-criterion-scores/create`,
-                payload,
-                tokenHeader()
-              );
-              evaluation.value[student.id][criterion.id].id = response.data.id;
+            const savedData = await saveCriterionScore(entry.id, payload);
+            if (!entry.id && savedData?.id) {
+              evaluation.value[student.id][criterion.id].id = savedData.id;
             }
           } catch (error) {
-            console.error(`Error saving criterion score`, error);
+            console.error("Error saving criterion score", error);
           }
         });
 
-        // Wait for all criterion scores for this student, then register final grade
         const studentGradePromise = Promise.all(criterionPromises).then(
           async () => {
-            const finalGrade = calculateFinalGrade(student);
-
+            const finalGrade = calculateFinalGrade(
+              student.id,
+              evaluation.value,
+              criteria.value
+            );
             const payloadFinalGrade = {
               userId: student.id,
               gradableId: parseInt(activityId),
@@ -567,7 +453,6 @@ export default {
               grade: parseFloat(finalGrade.toFixed(2)),
               instituteId: instituteId.value,
             };
-
             try {
               await axios.post("/grades", payloadFinalGrade, tokenHeader());
             } catch (error) {
@@ -582,7 +467,6 @@ export default {
         allPromises.push(studentGradePromise);
       }
 
-      // Wait for all students to complete
       await Promise.all(allPromises);
     };
 
@@ -595,22 +479,17 @@ export default {
         message +=
           "<br><br><b>¡Advertencia!</b> Los siguientes estudiantes tienen criterios sin evaluar. Sus notas se registrarán con 0 en esos criterios:<br>";
         message += "<ul>";
-        studentsWithMissing.forEach((studentName) => {
-          message += `<li>${studentName}</li>`;
+        studentsWithMissing.forEach((name) => {
+          message += `<li>${name}</li>`;
         });
         message += "</ul>";
       }
 
       const alert = await alertController.create({
         header: "Confirmar Registro",
-        message: message,
+        message,
         buttons: [
-          {
-            text: "Cancelar",
-            role: "cancel",
-            cssClass: "secondary",
-            handler: () => {},
-          },
+          { text: "Cancelar", role: "cancel", cssClass: "secondary" },
           {
             text: "Registrar",
             handler: async () => {
@@ -636,16 +515,10 @@ export default {
     const getStudentsWithMissingCriteria = () => {
       const studentsWithMissing = [];
       students.value.forEach((student) => {
-        let hasMissing = false;
-        criteria.value.forEach((criterion) => {
-          if (
-            evaluation.value[student.id] &&
-            evaluation.value[student.id][criterion.id] &&
-            evaluation.value[student.id][criterion.id].value === null
-          ) {
-            hasMissing = true;
-          }
-        });
+        const hasMissing = criteria.value.some(
+          (criterion) =>
+            evaluation.value[student.id]?.[criterion.id]?.value === null
+        );
         if (hasMissing) {
           studentsWithMissing.push(student.name + " " + student.lastName);
         }
@@ -657,23 +530,7 @@ export default {
       await fetchActivityDetails();
     });
 
-    const markAllAs = (student, valueType) => {
-      if (evaluation.value[student.id]) {
-        for (const criterionId in evaluation.value[student.id]) {
-          const criterion = criteria.value.find((c) => c.id == criterionId);
-          if (criterion) {
-            let score = 0;
-            if (valueType === "mid") {
-              score = criterion.score / 2;
-            } else if (valueType === "max") {
-              score = criterion.score;
-            }
-            evaluation.value[student.id][criterionId].value = score;
-          }
-        }
-        updateGrade(student);
-      }
-    };
+    // ─── Student selection ────────────────────────────────────────────────────
 
     const handleStudentSelection = (studentId, isChecked) => {
       if (isChecked) {
@@ -683,12 +540,11 @@ export default {
       }
     };
 
-    const areAllSelected = computed(() => {
-      return (
+    const areAllSelected = computed(
+      () =>
         students.value.length > 0 &&
         selectedStudents.value.size === students.value.length
-      );
-    });
+    );
 
     const toggleSelectAll = () => {
       if (areAllSelected.value) {
@@ -704,7 +560,7 @@ export default {
       router.push({
         name: "EvaluacionGrupal",
         state: {
-          activityId: activityId,
+          activityId,
           studentIds: Array.from(selectedStudents.value),
         },
       });
@@ -731,13 +587,14 @@ export default {
       setErrorToastOpen,
       studentGrades,
       updateGrade,
-      markAllAs,
       usuario,
       selectedStudents,
       handleStudentSelection,
       areAllSelected,
       toggleSelectAll,
       goToBulkEvaluation,
+      getStudentFlat,
+      onStudentEvalUpdate,
     };
   },
 };
@@ -746,24 +603,5 @@ export default {
 <style scoped>
 .button-row {
   justify-content: space-between;
-}
-
-.range-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.range-labels {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  padding: 0 5px;
-  font-size: 0.8em;
-  margin-bottom: 5px;
-}
-
-.range-label {
-  flex: 1;
 }
 </style>
