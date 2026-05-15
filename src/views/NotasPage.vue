@@ -1653,19 +1653,18 @@ export default {
     const isZipGenerationCancelled = ref(false);
 
     const cancelarGeneracionZip = () => {
+      if (isZipGenerationCancelled.value) return;
       isZipGenerationCancelled.value = true;
       zipProgressText.value = "Cancelando, por favor espere...";
-      isGeneratingZip.value = false; // Cerrar el modal instantáneamente
     };
 
-    const delay = (ms) => new Promise(r => setTimeout(r, ms));
     
     // Función para ceder agresivamente el hilo principal al navegador
     // Permite que se procesen eventos de click y se pinte la pantalla
-    const yieldThread = (ms = 150) => new Promise(resolve => {
-      requestAnimationFrame(() => {
-        setTimeout(resolve, ms);
-      });
+    const yieldThread = (ms = 0) => new Promise(resolve => {
+      const { port1, port2 } = new MessageChannel();
+      port1.onmessage = () => setTimeout(resolve, ms);
+      port2.postMessage(null);
     });
 
     const descargarPaqueteReportes = async () => {
@@ -1681,8 +1680,13 @@ export default {
       const zip = new JSZip();
       const total = usuariosEstudiantes.value.length;
       
-      // Pequeña pausa inicial para que el modal termine de animarse y aparecer
-      await delay(300);
+      // Pausa inicial generosa para que el modal se muestre y el botón sea clicable
+      await yieldThread(800); 
+      
+      if (isZipGenerationCancelled.value) {
+        isGeneratingZip.value = false;
+        return;
+      }
       
       for (let i = 0; i < total; i++) {
         if (isZipGenerationCancelled.value) {
@@ -1699,7 +1703,7 @@ export default {
         studentToRender.value = est;
         // Wait for Vue to mount and render the hidden component
         await nextTick();
-        await yieldThread(150); // Dar tiempo al DOM de actualizarse y procesar eventos
+        await yieldThread(400); // pausa más larga antes de renderizar para ventana de cancelación
         
         // Revisar de nuevo por si cancelaron durante el renderizado
         if (isZipGenerationCancelled.value) {
@@ -1717,7 +1721,7 @@ export default {
           margin:       10,
           filename:     `${est.lastName}_${est.name}.pdf`,
           image:        { type: 'jpeg', quality: 0.98 },
-          html2canvas:  { scale: 2, useCORS: true, logging: false },
+          html2canvas:  { scale: 1.5, useCORS: true, logging: false },
           jsPDF:        { 
             unit: 'mm', 
             format: 'a4', 
@@ -1737,8 +1741,14 @@ export default {
           console.error("Error generando PDF para", est.name, err);
         }
         
-        // Ceder agresivamente el hilo principal para capturar clics de Cancelar
-        await yieldThread(250);
+        // Pausa generosa POST-renderizado — aquí el usuario puede cancelar
+        await yieldThread(300);
+
+        if (isZipGenerationCancelled.value) {
+          isGeneratingZip.value = false;
+          studentToRender.value = null;
+          return;
+        }
       }
       
       if (isZipGenerationCancelled.value) {
