@@ -70,7 +70,7 @@
             <div class="ion-padding" slot="content">
               <!-- Sub-acordeones para tipos de notas -->
               <ion-accordion-group class="ion-margin-top">
-                <!-- Notas Regulares -->
+                <!-- Notas De Clase -->
                 <ion-accordion
                   value="regular"
                   v-if="
@@ -80,7 +80,7 @@
                   "
                 >
                   <ion-item slot="header">
-                    <ion-label>Notas Regulares</ion-label>
+                    <ion-label>Notas De Clase</ion-label>
                     <ion-chip
                       slot="end"
                       :class="getGradeColorClass(estudiante.promedioRegular)"
@@ -622,18 +622,53 @@
       :usuarios-estudiantes="usuariosEstudiantes"
       @close="mostrarModalGeneradorPlanilla = false"
     ></generador-planilla>
+    <!-- Contenedor oculto para la generación de PDFs -->
+    <div style="position: absolute; left: -9999px; top: 0;">
+      <div id="hidden-pdf-container">
+        <student-report-p-d-f-template
+          v-if="studentToRender"
+          :estudiante="studentToRender"
+          :curso-selected="cursoSelected"
+          :area-selected="areaSelected"
+        />
+      </div>
+    </div>
+
+    <!-- Modal de progreso de la generación ZIP -->
+    <ion-modal :is-open="isGeneratingZip" :backdrop-dismiss="false">
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Generando Paquete</ion-title>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding ion-text-center">
+        <h2 style="margin-top: 20px;">Procesando Reportes</h2>
+        <p>{{ zipProgressText }}</p>
+        <ion-progress-bar :value="zipProgressValue" style="margin-top: 20px;"></ion-progress-bar>
+        <p style="margin-top: 20px; font-size: 0.9em; color: gray;">
+          Por favor, no cierre esta ventana hasta que la descarga comience. El proceso puede tomar unos minutos dependiendo de la cantidad de estudiantes.
+        </p>
+        <ion-button color="danger" fill="outline" style="margin-top: 20px;" @click="cancelarGeneracionZip" :disabled="isZipGenerationCancelled">
+          Cancelar
+        </ion-button>
+      </ion-content>
+    </ion-modal>
+
   </ion-page>
 </template>
 
 <script>
 import axios from "axios";
-import { ref, computed } from "vue";
+import { ref, computed, nextTick } from "vue";
 import { alertController, actionSheetController } from "@ionic/vue";
 import { periodosGet, tokenHeader, usuarioGet, currentServerDate } from "../globalService";
 import DomToImage from "dom-to-image";
 import htmlToDocx from "html-to-docx";
 import { Capacitor } from "@capacitor/core";
 import { FileSharer } from "@byteowls/capacitor-filesharer";
+import JSZip from "jszip";
+import html2pdf from "html2pdf.js";
+import StudentReportPDFTemplate from "../components/StudentReportPDFTemplate.vue";
 
 import {
   onIonViewWillEnter,
@@ -663,6 +698,7 @@ import {
   IonItemGroup,
   IonItemDivider,
   IonBackButton,
+  IonProgressBar,
 } from "@ionic/vue";
 import { useRoute } from "vue-router";
 import {
@@ -704,7 +740,9 @@ export default {
     IonItemGroup,
     IonItemDivider,
     IonBackButton,
+    IonProgressBar,
     GeneradorPlanilla,
+    StudentReportPDFTemplate,
   },
   setup() {
     const mroute = useRoute();
@@ -1608,6 +1646,132 @@ export default {
       mostrarModalGeneradorPlanilla.value = true;
     };
 
+    const isGeneratingZip = ref(false);
+    const zipProgressValue = ref(0);
+    const zipProgressText = ref("");
+    const studentToRender = ref(null);
+    const isZipGenerationCancelled = ref(false);
+
+    const cancelarGeneracionZip = () => {
+      isZipGenerationCancelled.value = true;
+      zipProgressText.value = "Cancelando, por favor espere...";
+      isGeneratingZip.value = false; // Cerrar el modal instantáneamente
+    };
+
+    const delay = (ms) => new Promise(r => setTimeout(r, ms));
+    
+    // Función para ceder agresivamente el hilo principal al navegador
+    // Permite que se procesen eventos de click y se pinte la pantalla
+    const yieldThread = (ms = 150) => new Promise(resolve => {
+      requestAnimationFrame(() => {
+        setTimeout(resolve, ms);
+      });
+    });
+
+    const descargarPaqueteReportes = async () => {
+      if (!usuariosEstudiantes.value || usuariosEstudiantes.value.length === 0) {
+        alert("No hay estudiantes para procesar.");
+        return;
+      }
+      
+      isGeneratingZip.value = true;
+      zipProgressValue.value = 0;
+      isZipGenerationCancelled.value = false;
+      
+      const zip = new JSZip();
+      const total = usuariosEstudiantes.value.length;
+      
+      // Pequeña pausa inicial para que el modal termine de animarse y aparecer
+      await delay(300);
+      
+      for (let i = 0; i < total; i++) {
+        if (isZipGenerationCancelled.value) {
+          zipProgressText.value = "Generación cancelada.";
+          isGeneratingZip.value = false;
+          studentToRender.value = null;
+          return;
+        }
+
+        const est = usuariosEstudiantes.value[i];
+        zipProgressText.value = `Generando reporte para ${est.lastName} ${est.name} (${i + 1}/${total})...`;
+        zipProgressValue.value = i / total;
+        
+        studentToRender.value = est;
+        // Wait for Vue to mount and render the hidden component
+        await nextTick();
+        await yieldThread(150); // Dar tiempo al DOM de actualizarse y procesar eventos
+        
+        // Revisar de nuevo por si cancelaron durante el renderizado
+        if (isZipGenerationCancelled.value) {
+          isGeneratingZip.value = false;
+          studentToRender.value = null;
+          return;
+        }
+
+        const element = document.getElementById("hidden-pdf-container");
+        
+        // Use est.code as the password, fallback to a default if missing
+        const password = est.code || est.document || "1234";
+        
+        const opt = {
+          margin:       10,
+          filename:     `${est.lastName}_${est.name}.pdf`,
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2, useCORS: true, logging: false },
+          jsPDF:        { 
+            unit: 'mm', 
+            format: 'a4', 
+            orientation: 'portrait',
+            encryption: {
+              userPassword: password,
+              ownerPassword: password,
+              userPermissions: ['print', 'copy']
+            }
+          }
+        };
+        
+        try {
+          const pdfArrayBuffer = await html2pdf().from(element).set(opt).outputPdf('arraybuffer');
+          zip.file(`${est.lastName}_${est.name}_Reporte.pdf`, pdfArrayBuffer);
+        } catch (err) {
+          console.error("Error generando PDF para", est.name, err);
+        }
+        
+        // Ceder agresivamente el hilo principal para capturar clics de Cancelar
+        await yieldThread(250);
+      }
+      
+      if (isZipGenerationCancelled.value) {
+        isGeneratingZip.value = false;
+        studentToRender.value = null;
+        return;
+      }
+
+      zipProgressText.value = "Comprimiendo archivo ZIP...";
+      zipProgressValue.value = 1;
+      await yieldThread(100);
+      
+      try {
+        const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
+        
+        // Trigger download
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Reportes_${cursoSelected.value?.name || 'Curso'}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      } catch (e) {
+        console.error("Error comprimiendo ZIP", e);
+        alert("Ocurrió un error al generar el archivo ZIP.");
+      } finally {
+        isGeneratingZip.value = false;
+        studentToRender.value = null;
+      }
+    };
+
     const presentReportActionSheet = async () => {
       const actionSheet = await actionSheetController.create({
         header: "Opciones de Reporte",
@@ -1616,6 +1780,12 @@ export default {
             text: "Generar Reporte",
             handler: () => {
               abrirModalConfig();
+            },
+          },
+          {
+            text: "Descargar Paquete de Reportes (ZIP/PDF)",
+            handler: () => {
+              descargarPaqueteReportes();
             },
           },
           {
@@ -1682,6 +1852,12 @@ export default {
       mostrarModalGeneradorPlanilla,
       reportContent,
       areaId,
+      isGeneratingZip,
+      zipProgressValue,
+      zipProgressText,
+      studentToRender,
+      cancelarGeneracionZip,
+      isZipGenerationCancelled,
     };
   },
 };
