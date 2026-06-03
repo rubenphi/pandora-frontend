@@ -243,13 +243,13 @@ export default {
       try {
         if (!admin) {
           const response = await axios.get(
-            `/student-criterion-scores/permissions?reviserId=${usuario.value.id}&activityId=${actividad.value.id}&expired=false`,
+            `/student-criterion-scores/permissions?reviserId=${usuario.value.id}&activityId=${actividad.value.id}&expired=false&reviserType=User`,
             tokenHeader()
           );
           userPermissions.value.push(...response.data)
           if (grupoUsuario.value != null) {
             const permisosGrupales = await axios.get(
-              `/student-criterion-scores/permissions?reviserId=${grupoUsuario.value?.id}&activityId=${actividad.value.id}&expired=false`,
+              `/student-criterion-scores/permissions?reviserId=${grupoUsuario.value?.id}&activityId=${actividad.value.id}&expired=false&reviserType=Group`,
               tokenHeader()
             );
             userPermissions.value.push(...permisosGrupales.data);

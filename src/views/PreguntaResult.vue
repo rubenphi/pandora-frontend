@@ -94,18 +94,6 @@
             >
             <ion-text v-else color="primary"><h6>Respuesta: ?</h6></ion-text>
           </ion-note>
-          <ion-buttons
-            v-if="
-              admin &&
-              respuesta.group &&
-              groupAnswerCount[respuesta.group.id] > 1
-            "
-            slot="end"
-          >
-            <ion-button @click="presentDeleteAlert(respuesta.id)">
-              <ion-icon :icon="trashOutline"></ion-icon>
-            </ion-button>
-          </ion-buttons>
         </ion-item>
       </ion-list>
 
@@ -141,6 +129,17 @@
           :href="'/qr-preguntas/' + id"
         >
           <ion-icon :icon="qrCodeOutline"></ion-icon>
+        </ion-button>
+        <ion-button
+          expand="full"
+          fill="outline"
+          shape="round"
+          color="danger"
+          class="ion-align-self-center"
+          @click="presentDeleteAllAlert"
+        >
+          Eliminar Respuestas
+          <ion-icon :icon="trashOutline"></ion-icon>
         </ion-button>
       </ion-buttons>
     </ion-content>
@@ -262,20 +261,20 @@ export default {
       groupAnswerCount.value = counts;
     };
 
-    const presentDeleteAlert = async (answerId) => {
+    const presentDeleteAllAlert = async () => {
       const alert = await alertController.create({
         header: "Confirmar Eliminación",
         message:
-          "¿Estás seguro de que quieres eliminar esta respuesta? Esta acción no se puede deshacer.",
+          "¿Estás seguro de que quieres eliminar TODAS las respuestas a esta pregunta? Los estudiantes podrán responder nuevamente.",
         buttons: [
           {
             text: "Cancelar",
             role: "cancel",
           },
           {
-            text: "Eliminar",
+            text: "Eliminar Todo",
             handler: () => {
-              deleteAnswer(answerId);
+              deleteAllAnswers();
             },
           },
         ],
@@ -284,13 +283,13 @@ export default {
       await alert.present();
     };
 
-    const deleteAnswer = async (answerId) => {
+    const deleteAllAnswers = async () => {
       try {
-        await axios.delete(`/answers/${answerId}`, tokenHeader());
-        respuestas.value = respuestas.value.filter((r) => r.id !== answerId);
+        await axios.delete(`/answers/question/${id}`, tokenHeader());
+        respuestas.value = [];
         calcularRespuestasPorGrupo();
       } catch (error) {
-        console.error("Error al eliminar la respuesta:", error);
+        console.error("Error al eliminar las respuestas:", error);
       }
     };
 
@@ -339,7 +338,7 @@ usuario,
       helpCircleOutline,
       qrCodeOutline,
       trashOutline,
-      presentDeleteAlert,
+      presentDeleteAllAlert,
     };
   },
 };

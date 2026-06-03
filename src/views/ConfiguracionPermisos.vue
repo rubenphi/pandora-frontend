@@ -267,7 +267,7 @@ export default {
     const fetchGroups = async () => {
       if (!courseId.value) return;
       try {
-       const response =  await axios.get(`/courses/${courseId.value}/groups?year=${selectedYear}`, {
+       const response =  await axios.get(`/courses/${courseId.value}/groups?year=${selectedYear}&active=true`, {
           headers: tokenHeader(),
         })
         groups.value = response.data.filter(
