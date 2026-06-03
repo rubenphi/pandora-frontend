@@ -309,14 +309,14 @@ export default {
     const fetchStudentPermissions = async (courseId, year) => {
       try {
         const permisosIndividuales = await axios.get(
-          `/student-criterion-scores/permissions?reviserId=${usuario.value.id}&activityId=${activityId.value}&expired=false`,
+          `/student-criterion-scores/permissions?reviserId=${usuario.value.id}&activityId=${activityId.value}&expired=false&reviserType=User`,
           tokenHeader()
         );
         userPermissions.value = [...permisosIndividuales.data];
 
         if (grupoUsuario.value != null) {
           const permisosGrupales = await axios.get(
-            `/student-criterion-scores/permissions?reviserId=${grupoUsuario.value.id}&activityId=${activityId.value}&expired=false`,
+            `/student-criterion-scores/permissions?reviserId=${grupoUsuario.value.id}&activityId=${activityId.value}&expired=falsereviserType=Group`,
             tokenHeader()
           );
           userPermissions.value.push(...permisosGrupales.data);
