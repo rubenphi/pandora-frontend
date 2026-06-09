@@ -51,6 +51,17 @@
               <ion-select-option value="relative">Relativa</ion-select-option>
             </ion-select>
           </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Categoría de Cuestionario</ion-label>
+            <ion-select
+              label="Categoría de Cuestionario"
+              v-model="cuestionario.category"
+              placeholder="Seleccione uno"
+            >
+              <ion-select-option value="regular">Regular</ion-select-option>
+              <ion-select-option value="improvement">Mejora de Nota</ion-select-option>
+            </ion-select>
+          </ion-item>
           <ion-item
             class="ion-text-center"
             button
@@ -122,6 +133,7 @@ export default {
       instituteId: null,
       exist: true,
       evaluationType: "relative", // Default to relative
+      category: "regular", // Default to regular
     });
     const error = ref({
       estatus: 0,
@@ -180,6 +192,7 @@ export default {
             instituteId: response.data.lesson.institute.id,
             exist: response.data.exist,
             evaluationType: response.data.evaluationType, // Include evaluationType
+            category: response.data.category ?? "regular", // Include category
           };
         } catch (error) {
           console.error("Error fetching quiz details:", error);
@@ -195,6 +208,7 @@ export default {
             instituteId: usuario.value.institute.id,
             exist: true,
             evaluationType: "relative", // Default for new quiz
+            category: "regular", // Default for new quiz
           };
         }
       } else {
@@ -210,6 +224,7 @@ export default {
           instituteId: usuario.value.institute.id,
           exist: true,
           evaluationType: "relative", // Default for new quiz
+          category: "regular", // Default for new quiz
         };
       }
     });
@@ -233,6 +248,7 @@ export default {
           lessonId: cuestionario.value.lessonId,
           instituteId: cuestionario.value.instituteId,
           evaluationType: cuestionario.value.evaluationType, // Include evaluationType in payload
+          category: cuestionario.value.category, // Include category in payload
         };
 
         try {
