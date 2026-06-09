@@ -279,6 +279,92 @@
             </div>
           </ion-content>
         </ion-modal>
+
+        <!-- Modal de Mejora de Nota -->
+        <ion-modal :is-open="showImprovementModal" @didDismiss="showImprovementModal = false">
+          <ion-header>
+            <ion-toolbar color="warning">
+              <ion-title>Mejora de Nota</ion-title>
+              <ion-buttons slot="end">
+                <ion-button @click="showImprovementModal = false">Cerrar</ion-button>
+              </ion-buttons>
+            </ion-toolbar>
+          </ion-header>
+          <ion-content class="ion-padding">
+            <p class="ion-padding-horizontal" style="font-size: 0.9em; color: var(--ion-color-medium);">
+              <ion-icon :icon="informationCircleOutline" style="vertical-align: middle;"></ion-icon>
+              Seleccione el cuestionario cuya nota desea mejorar. Solo se actualizará la nota si la nueva calificación es superior.
+            </p>
+
+            <ion-item>
+              <ion-label position="stacked">Cuestionario a Mejorar</ion-label>
+              <ion-select
+                v-model="selectedQuizToImproveId"
+                placeholder="Seleccione un cuestionario"
+                @ionChange="loadExistingGradesForImprovement"
+              >
+                <ion-select-option
+                  v-for="q in quizzesInCourse"
+                  :key="q.id"
+                  :value="q.id"
+                >
+                  {{ q.title }} ({{ q.lesson?.title || 'Lección' }})
+                </ion-select-option>
+              </ion-select>
+            </ion-item>
+
+            <div v-if="loadingExistingGrades" class="ion-text-center ion-padding">
+              <ion-spinner name="crescent"></ion-spinner>
+              <p>Cargando notas existentes...</p>
+            </div>
+
+            <div v-else-if="selectedQuizToImproveId && improvementComparison.length > 0" class="ion-margin-top">
+              <h4 class="ion-padding-horizontal" style="color: var(--ion-color-dark); font-size: 1em;">
+                Comparación de notas ({{ improvementComparison.length }} estudiantes)
+              </h4>
+              <ion-card v-for="item in improvementComparison" :key="item.userId" class="improvement-card">
+                <ion-card-content style="padding: 12px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                    <div style="flex: 1;">
+                      <strong style="font-size: 0.95em;">{{ item.name }}</strong>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9em;">
+                      <span style="color: var(--ion-color-medium);">
+                        Anterior: <strong>{{ parseFloat(item.previousGrade).toFixed(1) }}</strong>
+                      </span>
+                      <ion-icon :icon="arrowForwardOutline" style="font-size: 1.1em;"></ion-icon>
+                      <span :style="{ color: item.improves ? 'var(--ion-color-success)' : 'var(--ion-color-medium)' }">
+                        Nueva: <strong>{{ parseFloat(item.newGrade).toFixed(1) }}</strong>
+                      </span>
+                      <ion-badge :color="item.improves ? 'success' : 'medium'" style="font-size: 0.75em;">
+                        {{ item.improves ? 'Mejorará' : 'Se mantiene' }}
+                      </ion-badge>
+                    </div>
+                  </div>
+                </ion-card-content>
+              </ion-card>
+
+              <div class="ion-padding">
+                <ion-note style="display: block; margin-bottom: 12px; font-size: 0.85em;">
+                  {{ improvementComparison.filter(i => i.improves).length }} de {{ improvementComparison.length }} estudiantes mejorarán su nota.
+                </ion-note>
+                <ion-button
+                  expand="block"
+                  color="warning"
+                  :disabled="registrandoMejora"
+                  @click="confirmarRegistroMejora"
+                >
+                  <ion-spinner v-if="registrandoMejora" name="crescent" style="margin-right: 8px;"></ion-spinner>
+                  Confirmar Registro
+                </ion-button>
+              </div>
+            </div>
+
+            <div v-else-if="selectedQuizToImproveId && !loadingExistingGrades && improvementComparison.length === 0" class="ion-text-center ion-padding">
+              <p>No hay datos de notas o respuestas para comparar.</p>
+            </div>
+          </ion-content>
+        </ion-modal>
       </ion-content>
     </div>
   </ion-page>
@@ -312,6 +398,7 @@ import {
   informationCircleOutline,
   checkmarkCircle,
   closeCircle,
+  arrowForwardOutline,
 } from "ionicons/icons";
 
 import {
@@ -343,6 +430,8 @@ import {
   IonCardContent,
   IonBadge,
   IonProgressBar,
+  IonSelect,
+  IonSelectOption,
 } from "@ionic/vue";
 
 export default {
@@ -373,6 +462,8 @@ export default {
     IonCardContent,
     IonBadge,
     IonProgressBar,
+    IonSelect,
+    IonSelectOption,
   },
   setup() {
     const usuario = ref();
@@ -418,6 +509,15 @@ export default {
     const statsSegment = ref("challenging");
     const questionStats = ref([]);
     const loadingStats = ref(false);
+
+    // Variables para Modal de Mejora de Nota
+    const showImprovementModal = ref(false);
+    const quizzesInCourse = ref([]);
+    const selectedQuizToImproveId = ref(null);
+    const existingGrades = ref([]);
+    const improvementComparison = ref([]);
+    const loadingExistingGrades = ref(false);
+    const registrandoMejora = ref(false);
 
     const startScan = async () => {
       isShowingScanResult.value = false;
@@ -706,6 +806,26 @@ export default {
         setErrorToastOpen(true, "Faltan datos del cuestionario.");
         return;
       }
+
+      // Si es un cuestionario de mejora de nota, abrir el modal en lugar de registrar directamente
+      if (cuestionario.value.category === "improvement") {
+        // Cargar cuestionarios del mismo curso, periodo y año
+        try {
+          const { course, period, year, institute } = cuestionario.value.lesson;
+          const response = await axios.get(
+            `/quizzes?courseId=${course.id}&periodId=${period.id}&year=${year}&instituteId=${institute.id}&category=regular`
+          );
+          quizzesInCourse.value = response.data;
+          selectedQuizToImproveId.value = null;
+          improvementComparison.value = [];
+          showImprovementModal.value = true;
+        } catch (e) {
+          setErrorToastOpen(true, "Error al cargar los cuestionarios del curso.");
+        }
+        return;
+      }
+
+      // Flujo normal para cuestionarios regulares
       try {
         for (const respuesta of respuestas.value) {
           if (respuesta.user && respuesta.user.id) {
@@ -742,7 +862,6 @@ export default {
               grade: respuesta.nota,
               instituteId: cuestionario.value.lesson.institute.id,
             };
-
             await axios.post("/grades", data);
           }
         }
@@ -772,6 +891,99 @@ export default {
         return response.data;
       } else {
         return [];
+      }
+    }
+
+    // Carga las notas existentes del cuestionario seleccionado y construye la comparación
+    async function loadExistingGradesForImprovement() {
+      if (!selectedQuizToImproveId.value) return;
+      loadingExistingGrades.value = true;
+      improvementComparison.value = [];
+      try {
+        const gradesRes = await axios.get(
+          `/grades?gradableId=${selectedQuizToImproveId.value}&gradableType=quiz`
+        );
+        existingGrades.value = gradesRes.data;
+
+        // Indexar notas existentes por userId para búsqueda rápida
+        const gradesMap = {};
+        for (const g of existingGrades.value) {
+          gradesMap[g.user.id] = parseFloat(g.grade);
+        }
+
+        const comparison = [];
+
+        for (const respuesta of respuestas.value) {
+          if (respuesta.user && respuesta.user.id) {
+            // Cuestionario individual
+            const userId = respuesta.user.id;
+            const newGrade = parseFloat(respuesta.nota);
+            const previousGrade = gradesMap[userId] ?? 0;
+            comparison.push({
+              userId,
+              name: `${respuesta.user.name} ${respuesta.user.lastName}`,
+              previousGrade,
+              newGrade,
+              improves: newGrade > previousGrade,
+            });
+          } else if (respuesta.group && respuesta.group.id) {
+            // Cuestionario grupal: cargar integrantes del grupo
+            const groupRes = await axios.get(
+              `/groups/${respuesta.group.id}/${cuestionario.value.lesson.year}/users`
+            );
+            for (const rel of groupRes.data) {
+              const userId = rel.user.id;
+              const newGrade = parseFloat(respuesta.nota);
+              const previousGrade = gradesMap[userId] ?? 0;
+              comparison.push({
+                userId,
+                name: `${rel.user.name} ${rel.user.lastName}`,
+                previousGrade,
+                newGrade,
+                improves: newGrade > previousGrade,
+              });
+            }
+          }
+        }
+
+        improvementComparison.value = comparison;
+      } catch (e) {
+        setErrorToastOpen(true, "Error al cargar las notas existentes.");
+        console.error(e);
+      } finally {
+        loadingExistingGrades.value = false;
+      }
+    }
+
+    // Confirma el registro de notas de mejora bajo el cuestionario original con registrarMayor: true
+    async function confirmarRegistroMejora() {
+      if (!selectedQuizToImproveId.value) {
+        setErrorToastOpen(true, "Seleccione el cuestionario a mejorar.");
+        return;
+      }
+      registrandoMejora.value = true;
+      try {
+        for (const item of improvementComparison.value) {
+          const data = {
+            userId: item.userId,
+            gradableId: selectedQuizToImproveId.value,
+            gradableType: "quiz",
+            periodId: cuestionario.value.lesson.period.id,
+            gradeType: "regular",
+            grade: item.newGrade,
+            instituteId: cuestionario.value.lesson.institute.id,
+            registrarMayor: true,
+          };
+          await axios.post("/grades", data);
+        }
+        showImprovementModal.value = false;
+        setSuccessToastOpen(true);
+      } catch (e) {
+        const message =
+          e.response?.data?.message || "Error al registrar las notas de mejora";
+        setErrorToastOpen(true, message);
+      } finally {
+        registrandoMejora.value = false;
       }
     }
 
@@ -833,6 +1045,16 @@ export default {
       informationCircleOutline,
       checkmarkCircle,
       closeCircle,
+      // Modal mejora de nota
+      showImprovementModal,
+      quizzesInCourse,
+      selectedQuizToImproveId,
+      improvementComparison,
+      loadingExistingGrades,
+      registrandoMejora,
+      loadExistingGradesForImprovement,
+      confirmarRegistroMejora,
+      arrowForwardOutline,
     };
   },
 };
@@ -843,6 +1065,13 @@ export default {
   margin-bottom: 20px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--ion-color-light);
+}
+
+.improvement-card {
+  margin-bottom: 8px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   border: 1px solid var(--ion-color-light);
 }
 
