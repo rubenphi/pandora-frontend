@@ -379,6 +379,7 @@ export async function QuizSinNotas(cursoId, usuario, onlyGroupQuizzes = false) {
         courseId: cursoId,
         periodId: selectedPeriod(),
         year: selectedYear(),
+        category: "regular",
         instituteId: usuario.value.institute.id,
       },
     });

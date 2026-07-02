@@ -194,7 +194,7 @@ export default {
             grade.gradableItem &&
             grade.gradableItem.id
           ) {
-            const uniqueKey = `${grade.gradableType}-${grade.gradableItem.id}`;
+            const uniqueKey = `${grade.gradableType}-${grade.gradableItem.id}-${grade.classification}`;
             if (!masterItemsMap.has(uniqueKey)) {
               masterItemsMap.set(uniqueKey, {
                 id: grade.gradableItem.id,
@@ -223,7 +223,7 @@ export default {
             grade.gradableItem?.lesson?.type === LessonType.REINFORCEMENT &&
             grade.gradableItem?.id
           ) {
-            const uniqueKey = `${grade.gradableType}-${grade.gradableItem.id}`;
+            const uniqueKey = `${grade.gradableType}-${grade.gradableItem.id}-${grade.classification}`;
             if (!masterReinfMap.has(uniqueKey)) {
               masterReinfMap.set(uniqueKey, {
                 id: grade.gradableItem.id,
@@ -265,7 +265,8 @@ export default {
             const foundGrade = studentGrades.find(
               (g) =>
                 g.gradableType === masterItem.type &&
-                g.gradableItem.id === masterItem.id
+                g.gradableItem.id === masterItem.id &&
+                g.classification === masterItem.classification
             );
             if (foundGrade && foundGrade.grade !== null) {
               totalScore += foundGrade.grade;
@@ -280,7 +281,10 @@ export default {
           const pH = calculateAverageFromMasterList(grades, mE);
           const pB = calculateAverageFromMasterList(grades, mB);
           if (pS === 0 && pH === 0 && pB === 0) return 0;
+       
+          
           const avgFinal = (pS + pH + pB) / 3;
+   
           return Math.max(avgFinal, 1.0);
         };
 

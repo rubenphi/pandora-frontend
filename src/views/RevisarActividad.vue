@@ -616,13 +616,17 @@ export default {
 
     // ─── Student selection ────────────────────────────────────────────────────
 
-    const handleStudentSelection = (studentId, isChecked) => {
-      if (isChecked) {
-        selectedStudents.value.add(studentId);
-      } else {
-        selectedStudents.value.delete(studentId);
-      }
-    };
+   const handleStudentSelection = (studentId, isChecked) => {
+  // Evitar que el checkbox "Seleccionar Todos" dispare cambios individuales
+  if (!isChecked && areAllSelected.value) return;
+
+  if (isChecked) {
+    selectedStudents.value.add(studentId);
+  } else {
+    selectedStudents.value.delete(studentId);
+  }
+};
+
 
     const areAllSelected = computed(
       () =>

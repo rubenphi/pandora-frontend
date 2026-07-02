@@ -581,20 +581,21 @@ export default {
         const masterGradesResponse = await axios.get(masterGradesUrl);
         const masterAllGrades = masterGradesResponse.data;
 
-        const masterItemsMap = new Map();
-        masterAllGrades.forEach((grade) => {
-          if (grade.gradableItem && grade.gradableItem.id) {
-            const uniqueKey = `${grade.gradableType}-${grade.gradableItem.id}`;
-            if (!masterItemsMap.has(uniqueKey)) {
-              masterItemsMap.set(uniqueKey, {
-                id: grade.gradableItem.id,
-                type: grade.gradableType,
-                item: grade.gradableItem,
-                classification: grade.classification,
-              });
-            }
-          }
-        });
+       const masterItemsMap = new Map();
+masterAllGrades.forEach((grade) => {
+  if (grade.gradableItem && grade.gradableItem.id) {
+    // La clave ahora incluye la clasificación
+    const uniqueKey = `${grade.gradableType}-${grade.gradableItem.id}-${grade.classification}`;
+    if (!masterItemsMap.has(uniqueKey)) {
+      masterItemsMap.set(uniqueKey, {
+        id: grade.gradableItem.id,
+        type: grade.gradableType,
+        item: grade.gradableItem,
+        classification: grade.classification, // Ahora almacenamos la clasificación
+      });
+    }
+  }
+});
 
         // 2. Fetch specific student grades
         const studentGradesUrl = `/grades?userId=${member.userId}&areaId=${area.id}&periodId=${periodoSelected.value}&year=${year.value}`;
@@ -622,66 +623,69 @@ export default {
         );
 
         // Processing helpers
-        const getStudentGradeForItem = (grades, item) => {
-          return grades.find(
-            (g) =>
-              g.gradableType === item.type &&
-              String(g.gradableItem?.id) === String(item.id)
-          );
-        };
+      const getStudentGradeForItem = (grades, item) => {
+  return grades.find(
+    (g) =>
+      g.gradableType === item.type &&
+      String(g.gradableItem?.id) === String(item.id) &&
+      g.classification === item.classification // Ahora filtramos por classification
+  );
+};
 
-        const mapToDisplayParamsWithMasterList = (grades, masterList) => {
-          return masterList
-            .map((masterItem) => {
-              const foundGrade = getStudentGradeForItem(grades, masterItem);
-              if (foundGrade) {
-                return {
-                  id: foundGrade.id,
-                  gradableItem: foundGrade.gradableItem,
-                  gradableType: foundGrade.gradableType,
-                  classification: foundGrade.classification,
-                  grade: foundGrade.grade,
-                  isPending: false,
-                };
-              } else {
-                return {
-                  id: `pending-${masterItem.type}-${masterItem.id}`,
-                  gradableItem: masterItem.item,
-                  gradableType: masterItem.type,
-                  classification: masterItem.classification,
-                  grade: null,
-                  isPending: true,
-                };
-              }
-            })
-            .sort(
-              (a, b) =>
-                new Date(a.gradableItem.lesson?.date) -
-                new Date(b.gradableItem.lesson?.date)
-            );
+      const mapToDisplayParamsWithMasterList = (grades, masterList) => {
+  return masterList
+    .map((masterItem) => {
+      const foundGrade = getStudentGradeForItem(grades, masterItem);
+      if (foundGrade) {
+        return {
+          id: foundGrade.id,
+          gradableItem: foundGrade.gradableItem,
+          gradableType: foundGrade.gradableType,
+          classification: foundGrade.classification,
+          grade: foundGrade.grade,
+          isPending: false,
         };
-
-        const calculateAverageFromMasterList = (grades, masterList) => {
-          if (masterList.length === 0) return 0;
-          let totalScore = 0;
-          masterList.forEach((masterItem) => {
-            const foundGrade = getStudentGradeForItem(grades, masterItem);
-            if (foundGrade) totalScore += foundGrade.grade;
-          });
-          const avg = totalScore / masterList.length;
-          return Math.max(avg, 1.0);
+      } else {
+        return {
+          id: `pending-${masterItem.type}-${masterItem.id}-${masterItem.classification}`,
+          gradableItem: masterItem.item,
+          gradableType: masterItem.type,
+          classification: masterItem.classification,
+          grade: null,
+          isPending: true,
         };
+      }
+    })
+    .sort(
+      (a, b) =>
+        new Date(a.gradableItem.lesson?.date) -
+        new Date(b.gradableItem.lesson?.date)
+    );
+};
 
+       const calculateAverageFromMasterList = (grades, masterList) => {
+  if (masterList.length === 0) return 0;
+  let totalScore = 0;
+  masterList.forEach((masterItem) => {
+    const foundGrade = getStudentGradeForItem(grades, masterItem);
+    if (foundGrade && foundGrade.grade !== null && foundGrade.grade !== undefined) {
+      totalScore += foundGrade.grade;
+    }
+    // Si no existe nota o es null, contribuye con 0 al promedio
+  });
+  const avg = totalScore / masterList.length;
+  return Math.max(avg, 1.0);
+};
         const areaMasterItems = Array.from(masterItemsMap.values());
         const masterKnowledge = areaMasterItems.filter(
-          (i) => i.classification === "knowledge"
-        );
-        const masterExecution = areaMasterItems.filter(
-          (i) => i.classification === "execution"
-        );
-        const masterBehavior = areaMasterItems.filter(
-          (i) => i.classification === "behavior"
-        );
+  (i) => i.classification === "knowledge"
+);
+const masterExecution = areaMasterItems.filter(
+  (i) => i.classification === "execution"
+);
+const masterBehavior = areaMasterItems.filter(
+  (i) => i.classification === "behavior"
+);
 
         // Reg
         const mKReg = masterKnowledge.filter(
@@ -742,7 +746,7 @@ export default {
             mBReinf
           );
           
-          const avgReinf = (pKReinf + pEReinf + pBReinf) / 3;
+          const avgReinf = ((pKReinf + pEReinf + pBReinf) / 3) > 4 ? 4 : ((pKReinf + pEReinf + pBReinf) / 3);
           area.promedioReinf = formatGradeValue(
             Math.max(avgReinf, 1.0)
           ).toFixed(1);
