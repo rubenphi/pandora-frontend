@@ -951,7 +951,7 @@ export default {
             masterBehaviorReinf
           );
           promedioFinalReinf =
-            (promSaberReinf + promHacerReinf + promSerReinf) / 3;
+            (promSaberReinf + promHacerReinf + promSerReinf) / 3 > 4 ? 4 : (promSaberReinf + promHacerReinf + promSerReinf) / 3;
         }
 
         // --- REMEDIAL GRADES LOGIC ---

@@ -106,8 +106,13 @@
                 <template v-else>
                   <div>
                     <strong>
+                      <span v-if="respuestaDetallada.length > 0">
                       Tienes un total de
                       {{ respuestaDetallada.length }} preguntas resueltas.
+                      </span>
+                      <span v-else>
+                        No tienes preguntas resueltas o las preguntas no estan disponibles para verlas.
+                      </span>
                       <p
                         v-if="respuesta.points != respuestaMAyor.points"
                         style="color: orange"
@@ -795,6 +800,9 @@ export default {
             return answer;
           })
           .sort((a, b) => a.numeroPregunta - b.numeroPregunta);
+          if(!adminOprofesor()){
+            respuestaDetallada.value = respuestaDetallada.value.filter(a => !a.question.available);
+          }
       } catch (error) {
         console.error("Error loading answers:", error);
       }

@@ -353,6 +353,7 @@ export default {
               courseId: curso,
               periodId: selectedPeriod(),
               year: year,
+              category: 'regular',
               instituteId: usuario.value.institute.id,
             },
           });
