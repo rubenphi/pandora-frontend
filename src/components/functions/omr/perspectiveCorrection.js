@@ -510,28 +510,23 @@ function processDetectionResults(detections, rows, cols, type, matrixDef) {
       content: answers
     };
   } else if (type === "multiselect") {
-    const selectedByRow = [];
+    const allSelected = [];
     const rowLabels = matrixDef && matrixDef.labels;
     for (let r = 0; r < rows; r++) {
-      const selected = [];
       for (let c = 0; c < cols; c++) {
         const det = detections.find(d => d.row === r && d.col === c);
         if (det && det.marked) {
           const label = rowLabels && rowLabels[r] && rowLabels[r][c]
             ? rowLabels[r][c]
             : `${String.fromCharCode("a".charCodeAt(0) + c)}`;
-          if (label) selected.push(label);
+          if (label) allSelected.push(label);
         }
       }
-      selectedByRow.push({
-        row: r + 1,
-        selected: selected
-      });
     }
     return {
       typeOrigin: "multiselect",
       contentType: "array",
-      content: selectedByRow
+      content: allSelected
     };
   }
   return null;

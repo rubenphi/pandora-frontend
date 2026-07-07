@@ -25,29 +25,25 @@
           <h3>Resultado del escaneo</h3>
 
           <ion-item>
-            <ion-label position="stacked">Código</ion-label>
-            <ion-input
-              v-model="currentResult.code"
-              placeholder="Código o ID"
-            ></ion-input>
+            <ion-label>Registro #{{ currentResult.code }}</ion-label>
           </ion-item>
 
           <p class="ion-padding-start ion-text-small">
             Toque las respuestas para editarlas si es necesario.
           </p>
 
-          <!-- Sección 1: Sí/No -->
+          <!-- Q1: Sí/No -->
           <ion-item v-if="currentResult.sections.seccion1" lines="none">
             <ion-label class="section-title">
-              <strong>Sección 1 - Sí / No</strong>
+              <strong>Pregunta 1 - Sí / No</strong>
             </ion-label>
           </ion-item>
           <IonList v-if="currentResult.sections.seccion1">
             <IonItem
               v-for="item in currentResult.sections.seccion1"
-              :key="item.question"
+              :key="'s1-' + item.question"
             >
-              <IonLabel>Pregunta {{ item.question }}</IonLabel>
+              <IonLabel>Q1</IonLabel>
               <ion-select
                 v-model="item.answer"
                 interface="action-sheet"
@@ -59,18 +55,18 @@
             </IonItem>
           </IonList>
 
-          <!-- Sección 2: Likert 14 preguntas -->
+          <!-- Q2-Q15: Likert 14 preguntas -->
           <ion-item v-if="currentResult.sections.seccion2" lines="none">
             <ion-label class="section-title">
-              <strong>Sección 2 - Frecuencia (14 preguntas)</strong>
+              <strong>Preguntas 2 a 15 - Frecuencia</strong>
             </ion-label>
           </ion-item>
           <IonList v-if="currentResult.sections.seccion2">
             <IonItem
-              v-for="item in currentResult.sections.seccion2"
+              v-for="(item, idx) in currentResult.sections.seccion2"
               :key="'s2-' + item.question"
             >
-              <IonLabel>P{{ item.question }}</IonLabel>
+              <IonLabel>Q{{ idx + 2 }}</IonLabel>
               <ion-select
                 v-model="item.answer"
                 interface="action-sheet"
@@ -87,18 +83,18 @@
             </IonItem>
           </IonList>
 
-          <!-- Sección 3: Likert 4 preguntas -->
+          <!-- Q16-Q19: Likert 4 preguntas -->
           <ion-item v-if="currentResult.sections.seccion3" lines="none">
             <ion-label class="section-title">
-              <strong>Sección 3 - Frecuencia (4 preguntas)</strong>
+              <strong>Preguntas 16 a 19 - Frecuencia</strong>
             </ion-label>
           </ion-item>
           <IonList v-if="currentResult.sections.seccion3">
             <IonItem
-              v-for="item in currentResult.sections.seccion3"
+              v-for="(item, idx) in currentResult.sections.seccion3"
               :key="'s3-' + item.question"
             >
-              <IonLabel>P{{ item.question }}</IonLabel>
+              <IonLabel>Q{{ idx + 16 }}</IonLabel>
               <ion-select
                 v-model="item.answer"
                 interface="action-sheet"
@@ -115,24 +111,17 @@
             </IonItem>
           </IonList>
 
-          <!-- Sección 4: Multiselect -->
+          <!-- Q20: Multiselect -->
           <ion-item v-if="currentResult.sections.seccion4" lines="none">
             <ion-label class="section-title">
-              <strong>Sección 4 - Materiales y recursos</strong>
+              <strong>Pregunta 20 - ¿Qué herramientas usa el docente?</strong>
             </ion-label>
           </ion-item>
-          <IonList v-if="currentResult.sections.seccion4">
-            <div
-              v-for="row in currentResult.sections.seccion4"
-              :key="'s4-row-' + row.row"
-              class="multiselect-row"
-            >
-              <ion-label class="ion-padding-start">
-                <strong>Fila {{ row.row }}</strong>
-              </ion-label>
+          <IonList v-if="currentResult.sections.seccion4 && currentResult.sections.seccion4.length > 0">
+            <IonItem>
               <div class="multiselect-chips">
                 <ion-chip
-                  v-for="opt in row.selected"
+                  v-for="opt in currentResult.sections.seccion4"
                   :key="opt"
                   color="primary"
                   outline
@@ -140,11 +129,11 @@
                 >
                   {{ opt }}
                 </ion-chip>
-                <span v-if="row.selected.length === 0" class="ion-text-medium ion-padding-start"
+                <span v-if="currentResult.sections.seccion4.length === 0" class="ion-text-medium ion-padding-start"
                   >(sin selección)</span
                 >
               </div>
-            </div>
+            </IonItem>
           </IonList>
 
           <div v-if="currentResult.imageUrl" class="scan-result-container">
@@ -226,7 +215,6 @@ import {
   IonGrid,
   IonSelect,
   IonSelectOption,
-  IonInput,
   IonChip,
   alertController,
   onIonViewDidEnter,
@@ -243,8 +231,6 @@ import {
   downloadOutline,
   trashOutline,
 } from "ionicons/icons";
-
-const SECTION_NAMES = ["seccion1", "seccion2", "seccion3", "seccion4"];
 
 export default {
   name: "OmrSurveyReader",
@@ -269,7 +255,6 @@ export default {
     IonGrid,
     IonSelect,
     IonSelectOption,
-    IonInput,
     IonChip,
     OmrScanner,
   },
@@ -353,37 +338,27 @@ export default {
     };
 
     const parseResultsBySection = (results) => {
-      const sections = {};
-      SECTION_NAMES.forEach((name) => (sections[name] = []));
-
-      for (const block of results) {
-        if (block.typeOrigin === "question" || block.typeOrigin === "multiselect") {
-          if (block.content && Array.isArray(block.content)) {
-            sections[block.typeOrigin === "multiselect" ? "seccion4" : "seccion1"] = block.content;
-          }
-        }
-      }
+      const sections = { seccion1: [], seccion2: [], seccion3: [], seccion4: [] };
 
       const allQuestions = results
         .filter((r) => r.typeOrigin === "question")
         .flatMap((r) => r.content || []);
 
-      if (allQuestions.length === 1) {
-        sections.seccion1 = allQuestions;
-        sections.seccion2 = [];
-        sections.seccion3 = [];
-      } else if (allQuestions.length === 18) {
+      if (allQuestions.length >= 19) {
         sections.seccion1 = allQuestions.slice(0, 1);
         sections.seccion2 = allQuestions.slice(1, 15);
         sections.seccion3 = allQuestions.slice(15, 19);
-      } else {
-        sections.seccion1 = allQuestions.slice(0, 1) || [];
-        sections.seccion2 = allQuestions.slice(1, 15) || [];
-        sections.seccion3 = allQuestions.slice(15) || [];
+      } else if (allQuestions.length >= 15) {
+        sections.seccion1 = allQuestions.slice(0, 1);
+        sections.seccion2 = allQuestions.slice(1, 15);
+        sections.seccion3 = allQuestions.slice(15);
+      } else if (allQuestions.length >= 1) {
+        sections.seccion1 = allQuestions.slice(0, 1);
+        sections.seccion2 = allQuestions.slice(1);
       }
 
       const multiBlock = results.find((r) => r.typeOrigin === "multiselect");
-      if (multiBlock && multiBlock.content) {
+      if (multiBlock && Array.isArray(multiBlock.content)) {
         sections.seccion4 = multiBlock.content;
       }
 
@@ -448,28 +423,28 @@ export default {
     const buildCSVString = () => {
       const headers = [
         "Código",
-        "S1_P1 (Sí/No)",
+        "Q1 (Sí/No)",
       ];
-      for (let i = 1; i <= 14; i++) {
-        headers.push(`S2_P${i} (Nunca/Algunas veces/Casi siempre/Siempre)`);
+      for (let i = 2; i <= 15; i++) {
+        headers.push(`Q${i} (Nunca/Algunas veces/Casi siempre/Siempre)`);
       }
-      for (let i = 1; i <= 4; i++) {
-        headers.push(`S3_P${i} (Nunca/Algunas veces/Casi siempre/Siempre)`);
+      for (let i = 16; i <= 19; i++) {
+        headers.push(`Q${i} (Nunca/Algunas veces/Casi siempre/Siempre)`);
       }
-      const multiselectLabels = [
+      const toolLabels = [
         "Tablero",
         "Películas y videos",
-        "Láminas y otros",
+        "Láminas y otros materiales gráficos",
         "Computadores",
-        "Diapositivas/acetatos",
+        "Diapositivas o acetatos",
         "Música",
         "Libros de texto",
         "Laboratorios",
         "Otros",
-        "Prog. educativos",
+        "Programas educativos computarizados",
         "Mapas",
       ];
-      multiselectLabels.forEach((l) => headers.push(`S4_${l}`));
+      toolLabels.forEach((l) => headers.push(`Q20_${l}`));
 
       const rows = scannedResponses.value.map((response) => {
         const row = [response.code];
@@ -489,12 +464,9 @@ export default {
         }
 
         const s4 = sec.seccion4 || [];
-        const allSelected = new Set();
-        s4.forEach((rowItem) => {
-          (rowItem.selected || []).forEach((item) => allSelected.add(item));
-        });
-        multiselectLabels.forEach((label) => {
-          row.push(allSelected.has(label) ? "Sí" : "");
+        const selectedSet = new Set(s4);
+        toolLabels.forEach((label) => {
+          row.push(selectedSet.has(label) ? "Sí" : "");
         });
 
         return row.map(escapeCSVCell).join(",");

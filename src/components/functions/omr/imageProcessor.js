@@ -673,10 +673,9 @@ export function extractAndDrawResults(
         content: answers,
       });
     } else if (type === "multiselect") {
-      const selectedByRow = [];
+      const allSelected = [];
       const rowLabels = matrixDef.labels;
       for (let r = 0; r < rows; r++) {
-        const selected = [];
         for (let c = 0; c < cols; c++) {
           const i = r * cols + c;
           if (detectedPoints[i]) {
@@ -684,18 +683,14 @@ export function extractAndDrawResults(
             const label = rowLabels && rowLabels[r] && rowLabels[r][c]
               ? rowLabels[r][c]
               : `${String.fromCharCode("a".charCodeAt(0) + c)}`;
-            if (label) selected.push(label);
+            if (label) allSelected.push(label);
           }
         }
-        selectedByRow.push({
-          row: r + 1,
-          selected: selected,
-        });
       }
       finalResults.push({
         typeOrigin: "multiselect",
         contentType: "array",
-        content: selectedByRow,
+        content: allSelected,
       });
     }
 
