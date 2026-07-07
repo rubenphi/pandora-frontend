@@ -26,12 +26,17 @@
             <ion-icon slot="start" :icon="playOutline"></ion-icon>
             Girar Ruleta
           </ion-button>
+
+          <ion-item class="ion-margin-top">
+            <ion-label>Excluir estudiantes que ya salieron</ion-label>
+            <ion-toggle v-model="excludeSelected"></ion-toggle>
+          </ion-item>
           
           <div class="ion-margin-top" v-if="selectedCourseId">
-              <ion-button fill="outline" expand="block" @click="openSelectionModal">
-                Cambiar Curso
-              </ion-button>
-          </div>
+                 <ion-button fill="outline" expand="block" @click="openSelectionModal">
+                     Cambiar Curso
+                 </ion-button>
+               </div>
         </ion-card-content>
       </ion-card>
 
@@ -138,8 +143,9 @@ import {
   IonButton,
   IonIcon,
   IonModal,
+  IonToggle,
 } from "@ionic/vue";
-import { defineComponent, ref, onMounted } from "vue";
+import { defineComponent, ref, onMounted, onUnmounted } from "vue";
 import { playOutline, refreshOutline } from "ionicons/icons";
 import axios from "axios";
 import { tokenHeader, usuarioGet, currentServerYear, fetchServerTime } from "../globalService";
@@ -166,6 +172,7 @@ export default defineComponent({
     IonButton,
     IonIcon,
     IonModal,
+    IonToggle,
   },
   setup() {
     const router = useRouter();
@@ -176,6 +183,8 @@ export default defineComponent({
     const courses = ref([]);
     const selectedCourseId = ref(null);
     const students = ref([]);
+    const selectedStudentIds = ref([]);
+    const excludeSelected = ref(false);
     
     // Roulette State
     const spinning = ref(false);
@@ -245,9 +254,9 @@ export default defineComponent({
 
     const confirmSelection = async () => {
       if (selectedCourseId.value) {
+        selectedStudentIds.value = [];
         await getStudents();
         isSelectionModalOpen.value = false;
-        // If we have data, we can unlock the UI or let them click Spin
       }
     };
     
@@ -269,39 +278,50 @@ export default defineComponent({
     const spinRoulette = () => {
       if (!students.value.length) return;
 
+      let availableStudents = students.value;
+
+      if (excludeSelected.value) {
+        availableStudents = students.value.filter(
+          s => !selectedStudentIds.value.includes(s.id)
+        );
+
+        if (availableStudents.length === 0) {
+          selectedStudentIds.value = [];
+          availableStudents = students.value;
+        }
+      }
+
       spinning.value = true;
       winner.value = null;
       hasMarshaled.value = true; 
 
-      const totalStudents = students.value.length;
+      const totalStudents = availableStudents.length;
       const targetIndex = Math.floor(Math.random() * totalStudents);
-      const targetStudent = students.value[targetIndex];
+      const targetStudent = availableStudents[targetIndex];
+
+      selectedStudentIds.value.push(targetStudent.id);
 
       // Build the strip
-      // We want the strip to fall DOWN. 
-      // This means we view the bottom initially and animate to view the top.
       // List: [Winner, ...Randoms... , Randoms (Start View)]
       
-      const numberOfFillers = 40; // Enough to spin for ~2s
+      const numberOfFillers = 40;
       const fillerStudents = [];
       
       for (let i = 0; i < numberOfFillers; i++) {
           const randomIndex = Math.floor(Math.random() * totalStudents);
-          fillerStudents.push(students.value[randomIndex]);
+          fillerStudents.push(availableStudents[randomIndex]);
       }
       
       // Structure: [Winner (plus neighbors for context), ...fillers]
       // When we land, we want Winner centered.
-      // Let's say window shows 3 items. Winner is item index 1 (center).
-      // So we need: [Neighbor, Winner, Neighbor, ...fillers]
       
       const prevIndex = (targetIndex - 1 + totalStudents) % totalStudents;
       const nextIndex = (targetIndex + 1) % totalStudents;
       
       const finalView = [
-          students.value[prevIndex], 
+          availableStudents[prevIndex], 
           targetStudent, 
-          students.value[nextIndex]
+          availableStudents[nextIndex]
       ];
       
       // Full list
@@ -353,6 +373,10 @@ export default defineComponent({
       await getCourses(); 
     });
 
+    onUnmounted(() => {
+      selectedStudentIds.value = [];
+    });
+
     return {
       playOutline,
       refreshOutline,
@@ -365,6 +389,8 @@ export default defineComponent({
       spinning,
       winner,
       hasMarshaled,
+      selectedStudentIds,
+      excludeSelected,
       rouletteItems,
       stripStyle,
       getCourses,

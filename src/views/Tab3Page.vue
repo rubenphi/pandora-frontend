@@ -14,7 +14,7 @@
           <ion-button
             v-if="curso && area"
             slot="end"
-            :href="createUrl"
+            @click="presentCreateLessonOptions"
           >
             <ion-icon :icon="addOutline"></ion-icon>
             <ion-label v-if="lessonType !== 'standard'">{{ createLabel }}</ion-label>
@@ -197,6 +197,7 @@ import { addOutline, arrowBackOutline, createOutline, alertCircleOutline } from 
 import MaterialModal from "../components/MaterialModal.vue";
 import MaterialSelectionModal from "../components/MaterialSelectionModal.vue"; // Import the new modal
 import ImportActivityModal from "../components/ImportActivityModal.vue";
+import DuplicateLessonModal from "../components/DuplicateLessonModal.vue";
 import { actionSheetController } from "@ionic/vue";
 import { LessonType } from "../globalService"; // Import LessonType
 
@@ -559,6 +560,65 @@ export default {
       await actionSheet.present();
     };
 
+    const presentCreateLessonOptions = async () => {
+      const actionSheet = await actionSheetController.create({
+        header: "Opciones de Lección",
+        buttons: [
+          {
+            text: "Crear Lección Nueva",
+            handler: () => {
+              router.push(createUrl.value);
+            },
+          },
+          {
+            text: "Importar Lección",
+            handler: async () => {
+              const modal = await modalController.create({
+                component: DuplicateLessonModal,
+                componentProps: {
+                  currentCourseId: parseInt(curso),
+                  currentAreaId: parseInt(area),
+                  currentPeriodId: periodo,
+                  currentYear: parseInt(year),
+                  lessonType: lessonType,
+                },
+              });
+              await modal.present();
+
+              const { data } = await modal.onWillDismiss();
+              if (data && data.imported) {
+                const storedYearVal = selectedYear();
+                const storedPeriodoVal = localStorage.getItem("periodoSelected")
+                  ? JSON.parse(localStorage.getItem("periodoSelected"))
+                  : null;
+                const res = await axios.get(
+                  `/lessons?courseId=${curso}&areaId=${area}&periodId=${periodo || storedPeriodoVal}${
+                    (year || storedYearVal) ? "&year=" + (year || storedYearVal) : ""
+                  }&exist=true&type=${lessonType}`
+                );
+                lecciones.value = res.data
+                  .map((l) => ({
+                    id: l.id,
+                    topic: l.topic,
+                    date: l.date,
+                    area: { id: l.area.id },
+                    course: { id: l.course.id },
+                    year: l.year,
+                    type: l.type,
+                  }))
+                  .sort((a, b) => new Date(a.date) - new Date(b.date));
+              }
+            },
+          },
+          {
+            text: "Cancelar",
+            role: "cancel",
+          },
+        ],
+      });
+      await actionSheet.present();
+    };
+
     const presentActivityCreationOptions = async (lessonId) => {
       const actionSheet = await actionSheetController.create({
         header: "Opciones de Actividad",
@@ -608,6 +668,7 @@ export default {
         return `/crear/leccion/${leccion.id}`;
       },
       presentMaterialCreationOptions,
+      presentCreateLessonOptions,
       presentActivityCreationOptions,
       adminOProfesor,
       area,
