@@ -34,17 +34,20 @@
           <ion-icon slot="start" :icon="schoolOutline"></ion-icon>
           <ion-label>Gestión Académica</ion-label>
         </ion-item>
-            <ion-item :href="'/herramientas'">
+        <ion-item :href="'/herramientas'">
           <ion-icon slot="start" :icon="constructOutline"></ion-icon>
           <ion-label>Herramientas</ion-label>
         </ion-item>
         <ion-item :href="'/omr-encuesta'">
           <ion-icon slot="start" :icon="scanOutline"></ion-icon>
-          <ion-label>Encuesta OMR</ion-label>
+          <ion-label>Encuesta a Estudiantes</ion-label>
+        </ion-item>
+
+        <ion-item :href="'/omr-test'">
+          <ion-icon slot="start" :icon="documentTextOutline"></ion-icon>
+          <ion-label>Lector OMR</ion-label>
         </ion-item>
       </ion-list>
-
- 
     </ion-content>
   </ion-page>
 </template>
@@ -60,9 +63,10 @@ import {
   personAddOutline,
   settingsOutline,
   scanOutline,
+  documentTextOutline,
   layersOutline,
   schoolOutline,
-  constructOutline, // New icon
+  constructOutline,
 } from "ionicons/icons";
 
 import {
@@ -76,7 +80,6 @@ import {
   IonToolbar,
   IonTitle,
   IonContent,
-  
 } from "@ionic/vue";
 
 export default {
@@ -90,7 +93,6 @@ export default {
     IonContent,
     IonPage,
     IonIcon,
-    
   },
   methods: {
     courseSelected: function (course) {
@@ -117,6 +119,7 @@ export default {
       personAddOutline,
       peopleCircleOutline,
       scanOutline,
+      documentTextOutline,
       layersOutline,
       schoolOutline,
       constructOutline,

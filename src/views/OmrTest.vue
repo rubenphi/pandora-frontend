@@ -7,7 +7,7 @@
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
-        <ion-title>Encuesta a Estudiantes</ion-title>
+        <ion-title>Encuesta OMR</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content class="ion-padding">
@@ -22,129 +22,39 @@
         </ion-card>
 
         <div v-if="currentResult">
-          <h3>Resultado del escaneo</h3>
+          <h3>Resultado escaneo</h3>
 
           <ion-item>
             <ion-label position="stacked">Código</ion-label>
             <ion-input
               v-model="currentResult.code"
-              placeholder="Código o ID"
+              placeholder="Código del estudiante"
             ></ion-input>
           </ion-item>
 
           <p class="ion-padding-start ion-text-small">
-            Toque las respuestas para editarlas si es necesario.
+            Toque la respuesta para editarla si es necesario.
           </p>
-
-          <!-- Sección 1: Sí/No -->
-          <ion-item v-if="currentResult.sections.seccion1" lines="none">
-            <ion-label class="section-title">
-              <strong>Sección 1 - Sí / No</strong>
-            </ion-label>
-          </ion-item>
-          <IonList v-if="currentResult.sections.seccion1">
+          <IonList>
             <IonItem
-              v-for="item in currentResult.sections.seccion1"
-              :key="item.question"
+              v-for="answer in currentResult.answers"
+              :key="answer.question"
             >
-              <IonLabel>Pregunta {{ item.question }}</IonLabel>
+              <IonLabel>Pregunta {{ answer.question }}</IonLabel>
               <ion-select
-                v-model="item.answer"
-                interface="action-sheet"
-                class="editable-answer-select"
-              >
-                <ion-select-option value="Sí">Sí</ion-select-option>
-                <ion-select-option value="No">No</ion-select-option>
-              </ion-select>
-            </IonItem>
-          </IonList>
-
-          <!-- Sección 2: Likert 14 preguntas -->
-          <ion-item v-if="currentResult.sections.seccion2" lines="none">
-            <ion-label class="section-title">
-              <strong>Sección 2 - Frecuencia (14 preguntas)</strong>
-            </ion-label>
-          </ion-item>
-          <IonList v-if="currentResult.sections.seccion2">
-            <IonItem
-              v-for="item in currentResult.sections.seccion2"
-              :key="'s2-' + item.question"
-            >
-              <IonLabel>P{{ item.question }}</IonLabel>
-              <ion-select
-                v-model="item.answer"
+                v-model="answer.answer"
                 interface="action-sheet"
                 class="editable-answer-select"
               >
                 <ion-select-option
-                  v-for="opt in likertOptions"
+                  v-for="opt in answerOptions"
                   :key="opt"
-                  :value="opt"
+                  :value="opt.toLowerCase()"
                 >
                   {{ opt }}
                 </ion-select-option>
               </ion-select>
             </IonItem>
-          </IonList>
-
-          <!-- Sección 3: Likert 4 preguntas -->
-          <ion-item v-if="currentResult.sections.seccion3" lines="none">
-            <ion-label class="section-title">
-              <strong>Sección 3 - Frecuencia (4 preguntas)</strong>
-            </ion-label>
-          </ion-item>
-          <IonList v-if="currentResult.sections.seccion3">
-            <IonItem
-              v-for="item in currentResult.sections.seccion3"
-              :key="'s3-' + item.question"
-            >
-              <IonLabel>P{{ item.question }}</IonLabel>
-              <ion-select
-                v-model="item.answer"
-                interface="action-sheet"
-                class="editable-answer-select"
-              >
-                <ion-select-option
-                  v-for="opt in likertOptions"
-                  :key="opt"
-                  :value="opt"
-                >
-                  {{ opt }}
-                </ion-select-option>
-              </ion-select>
-            </IonItem>
-          </IonList>
-
-          <!-- Sección 4: Multiselect -->
-          <ion-item v-if="currentResult.sections.seccion4" lines="none">
-            <ion-label class="section-title">
-              <strong>Sección 4 - Materiales y recursos</strong>
-            </ion-label>
-          </ion-item>
-          <IonList v-if="currentResult.sections.seccion4">
-            <div
-              v-for="row in currentResult.sections.seccion4"
-              :key="'s4-row-' + row.row"
-              class="multiselect-row"
-            >
-              <ion-label class="ion-padding-start">
-                <strong>Fila {{ row.row }}</strong>
-              </ion-label>
-              <div class="multiselect-chips">
-                <ion-chip
-                  v-for="opt in row.selected"
-                  :key="opt"
-                  color="primary"
-                  outline
-                  class="multiselect-chip"
-                >
-                  {{ opt }}
-                </ion-chip>
-                <span v-if="row.selected.length === 0" class="ion-text-medium ion-padding-start"
-                  >(sin selección)</span
-                >
-              </div>
-            </div>
           </IonList>
 
           <div v-if="currentResult.imageUrl" class="scan-result-container">
@@ -183,7 +93,12 @@
           </ion-row>
           <ion-row v-if="scannedResponses.length > 0">
             <ion-col>
-              <ion-button expand="block" color="danger" fill="outline" @click="resetAll">
+              <ion-button
+                expand="block"
+                color="danger"
+                fill="outline"
+                @click="resetAll"
+              >
                 <ion-icon :icon="trashOutline" slot="start"></ion-icon>
                 Nuevo escaneo general
               </ion-button>
@@ -195,7 +110,6 @@
       <div v-show="isScanning" class="scanner-container">
         <omr-scanner
           ref="scannerComponent"
-          templateName="studentSurvey"
           @scan-complete="onScanComplete"
           @scan-cancelled="onScanCancelled"
         ></omr-scanner>
@@ -227,7 +141,6 @@ import {
   IonSelect,
   IonSelectOption,
   IonInput,
-  IonChip,
   alertController,
   onIonViewDidEnter,
 } from "@ionic/vue";
@@ -243,8 +156,6 @@ import {
   downloadOutline,
   trashOutline,
 } from "ionicons/icons";
-
-const SECTION_NAMES = ["seccion1", "seccion2", "seccion3", "seccion4"];
 
 export default {
   name: "OmrSurveyReader",
@@ -270,7 +181,6 @@ export default {
     IonSelect,
     IonSelectOption,
     IonInput,
-    IonChip,
     OmrScanner,
   },
   setup() {
@@ -280,10 +190,10 @@ export default {
     const currentResult = ref(null);
     const scannedResponses = ref([]);
     const autoCodeCounter = ref(1);
-    const likertOptions = ["Nunca", "Algunas veces", "Casi siempre", "Siempre"];
+    const answerOptions = ["A", "B", "C", "D", "E", "F", "G", "H"];
 
-    const STORAGE_KEY = "omr_student_survey_responses";
-    const COUNTER_KEY = "omr_student_survey_counter";
+    const STORAGE_KEY = "omr_survey_responses";
+    const COUNTER_KEY = "omr_survey_counter";
 
     const loadFromStorage = () => {
       try {
@@ -352,57 +262,70 @@ export default {
       if (scannerComponent.value) scannerComponent.value.start();
     };
 
-    const parseResultsBySection = (results) => {
-      const sections = {};
-      SECTION_NAMES.forEach((name) => (sections[name] = []));
+    const extractCode = (results) => {
+      const numericBlock = results.find((r) => r.typeOrigin === "numeric");
+      if (!numericBlock) return "";
+      const rawCode = numericBlock.content || "";
+      const trimmedCode = rawCode.replace(/^0+/, "");
+      return trimmedCode;
+    };
 
-      for (const block of results) {
-        if (block.typeOrigin === "question" || block.typeOrigin === "multiselect") {
-          if (block.content && Array.isArray(block.content)) {
-            sections[block.typeOrigin === "multiselect" ? "seccion4" : "seccion1"] = block.content;
-          }
-        }
-      }
-
-      const allQuestions = results
-        .filter((r) => r.typeOrigin === "question")
-        .flatMap((r) => r.content || []);
-
-      if (allQuestions.length === 1) {
-        sections.seccion1 = allQuestions;
-        sections.seccion2 = [];
-        sections.seccion3 = [];
-      } else if (allQuestions.length === 18) {
-        sections.seccion1 = allQuestions.slice(0, 1);
-        sections.seccion2 = allQuestions.slice(1, 15);
-        sections.seccion3 = allQuestions.slice(15, 19);
-      } else {
-        sections.seccion1 = allQuestions.slice(0, 1) || [];
-        sections.seccion2 = allQuestions.slice(1, 15) || [];
-        sections.seccion3 = allQuestions.slice(15) || [];
-      }
-
-      const multiBlock = results.find((r) => r.typeOrigin === "multiselect");
-      if (multiBlock && multiBlock.content) {
-        sections.seccion4 = multiBlock.content;
-      }
-
-      return sections;
+    const extractAnswers = (results) => {
+      const questionBlocks = results.filter((r) => r.typeOrigin === "question");
+      const allAnswers = [];
+      questionBlocks.forEach((block) => {
+        allAnswers.push(...block.content);
+      });
+      return allAnswers;
     };
 
     const onScanComplete = async (payload) => {
       isScanning.value = false;
 
-      const sections = parseResultsBySection(payload.results);
+      const code = extractCode(payload.results);
+      const answers = extractAnswers(payload.results);
 
-      const assigned = String(autoCodeCounter.value).padStart(4, "0");
-      autoCodeCounter.value++;
+      let finalCode = code;
 
-      currentResult.value = {
-        code: assigned,
-        sections: sections,
-        imageUrl: payload.imageUrl,
-      };
+      if (!code) {
+        const alert = await alertController.create({
+          header: "Código no detectado",
+          message:
+            "No se pudo reconocer un código de identificación en la hoja escaneada. ¿Desea almacenarla igualmente? Se le asignará un código automático.",
+          buttons: [
+            {
+              text: "No, cancelar",
+              role: "cancel",
+              handler: () => {
+                currentResult.value = null;
+              },
+            },
+            {
+              text: "Sí, almacenar",
+              handler: () => {
+                const assigned = String(autoCodeCounter.value).padStart(
+                  10,
+                  "0",
+                );
+                autoCodeCounter.value++;
+                finalCode = assigned;
+                currentResult.value = {
+                  code: finalCode,
+                  answers: answers,
+                  imageUrl: payload.imageUrl,
+                };
+              },
+            },
+          ],
+        });
+        await alert.present();
+      } else {
+        currentResult.value = {
+          code: finalCode,
+          answers: answers,
+          imageUrl: payload.imageUrl,
+        };
+      }
     };
 
     const onScanCancelled = () => {
@@ -414,7 +337,7 @@ export default {
 
       const savedItem = {
         code: currentResult.value.code,
-        answers: currentResult.value.sections,
+        answers: currentResult.value.answers,
       };
       scannedResponses.value.push(savedItem);
       currentResult.value = null;
@@ -437,70 +360,45 @@ export default {
       }
     };
 
-    const escapeCSVCell = (str) => {
-      const s = String(str);
-      if (s.includes(",") || s.includes('"') || s.includes("\n")) {
-        return `"${s.replace(/"/g, '""')}"`;
-      }
-      return s;
-    };
-
     const buildCSVString = () => {
-      const headers = [
-        "Código",
-        "S1_P1 (Sí/No)",
-      ];
-      for (let i = 1; i <= 14; i++) {
-        headers.push(`S2_P${i} (Nunca/Algunas veces/Casi siempre/Siempre)`);
+      const maxQuestions = scannedResponses.value.reduce(
+        (max, r) => Math.max(max, r.answers.length),
+        0,
+      );
+
+      const headers = ["Código"];
+      for (let i = 1; i <= maxQuestions; i++) {
+        headers.push(`P${i}`);
       }
-      for (let i = 1; i <= 4; i++) {
-        headers.push(`S3_P${i} (Nunca/Algunas veces/Casi siempre/Siempre)`);
-      }
-      const multiselectLabels = [
-        "Tablero",
-        "Películas y videos",
-        "Láminas y otros",
-        "Computadores",
-        "Diapositivas/acetatos",
-        "Música",
-        "Libros de texto",
-        "Laboratorios",
-        "Otros",
-        "Prog. educativos",
-        "Mapas",
-      ];
-      multiselectLabels.forEach((l) => headers.push(`S4_${l}`));
 
       const rows = scannedResponses.value.map((response) => {
         const row = [response.code];
-        const sec = response.answers || {};
-
-        const s1 = sec.seccion1 || [];
-        row.push(s1.length > 0 ? s1[0].answer || "" : "");
-
-        const s2 = sec.seccion2 || [];
-        for (let i = 0; i < 14; i++) {
-          row.push(s2[i] ? s2[i].answer || "" : "");
+        for (let i = 0; i < maxQuestions; i++) {
+          const answer = response.answers[i];
+          row.push(answer ? answer.answer.toUpperCase() : "");
         }
-
-        const s3 = sec.seccion3 || [];
-        for (let i = 0; i < 4; i++) {
-          row.push(s3[i] ? s3[i].answer || "" : "");
-        }
-
-        const s4 = sec.seccion4 || [];
-        const allSelected = new Set();
-        s4.forEach((rowItem) => {
-          (rowItem.selected || []).forEach((item) => allSelected.add(item));
-        });
-        multiselectLabels.forEach((label) => {
-          row.push(allSelected.has(label) ? "Sí" : "");
-        });
-
-        return row.map(escapeCSVCell).join(",");
+        return row;
       });
 
-      const csvContent = [headers.join(","), ...rows].join("\n");
+      const csvContent = [
+        headers.join(","),
+        ...rows.map((r) =>
+          r
+            .map((cell) => {
+              const str = String(cell);
+              if (
+                str.includes(",") ||
+                str.includes('"') ||
+                str.includes("\n")
+              ) {
+                return `"${str.replace(/"/g, '""')}"`;
+              }
+              return str;
+            })
+            .join(","),
+        ),
+      ].join("\n");
+
       return "\uFEFF" + csvContent;
     };
 
@@ -513,7 +411,7 @@ export default {
       link.href = url;
       link.setAttribute(
         "download",
-        `encuesta_estudiantes_${new Date().toISOString().slice(0, 10)}.csv`,
+        `encuesta_omr_${new Date().toISOString().slice(0, 10)}.csv`,
       );
       document.body.appendChild(link);
       link.click();
@@ -536,7 +434,7 @@ export default {
       });
 
       await FileSharer.share({
-        filename: `encuesta_estudiantes_${new Date().toISOString().slice(0, 10)}.csv`,
+        filename: `encuesta_omr_${new Date().toISOString().slice(0, 10)}.csv`,
         contentType: "text/csv",
         base64Data: base64Data,
       });
@@ -589,7 +487,7 @@ export default {
       onScanCancelled,
       confirmResponse,
       downloadCSV,
-      likertOptions,
+      answerOptions,
       resetAll,
     };
   },
@@ -617,31 +515,8 @@ export default {
 }
 
 .editable-answer-select {
-  min-width: 110px;
+  min-width: 80px;
   text-align: center;
   font-weight: bold;
-}
-
-.section-title {
-  font-size: 1.1em;
-  padding: 8px 0;
-}
-
-.multiselect-row {
-  display: flex;
-  flex-direction: column;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--ion-color-light);
-}
-
-.multiselect-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding: 4px 8px;
-}
-
-.multiselect-chip {
-  font-size: 0.85em;
 }
 </style>

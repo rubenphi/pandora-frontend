@@ -49,5 +49,72 @@
       },
       "radius": 15
     }
-  ]
+  ],
+  "surveys": {
+    "studentSurvey": {
+      "circleTemplate": [
+        {
+          "type": "question",
+          "name": "seccion1",
+          "rows": 1,
+          "cols": 2,
+          "circles": {
+            "CTL": { "percent_x": 64.89, "percent_y": 5.29 },
+            "CTR": { "percent_x": 76.40, "percent_y": 5.29 },
+            "CBL": { "percent_x": 64.89, "percent_y": 5.29 },
+            "CBR": { "percent_x": 76.40, "percent_y": 5.29 }
+          },
+          "radius": 15,
+          "labels": ["Sí", "No"]
+        },
+        {
+          "type": "question",
+          "name": "seccion2",
+          "rows": 14,
+          "cols": 4,
+          "circles": {
+            "CTL": { "percent_x": 67.28, "percent_y": 15.41 },
+            "CTR": { "percent_x": 91.85, "percent_y": 15.41 },
+            "CBL": { "percent_x": 67.28, "percent_y": 53.78 },
+            "CBR": { "percent_x": 91.85, "percent_y": 53.78 }
+          },
+          "radius": 15,
+          "labels": ["Nunca", "Algunas veces", "Casi siempre", "Siempre"]
+        },
+        {
+          "type": "question",
+          "name": "seccion3",
+          "rows": 4,
+          "cols": 4,
+          "circles": {
+            "CTL": { "percent_x": 67.28, "percent_y": 62.54 },
+            "CTR": { "percent_x": 91.85, "percent_y": 62.54 },
+            "CBL": { "percent_x": 67.28, "percent_y": 71.60 },
+            "CBR": { "percent_x": 91.85, "percent_y": 71.60 }
+          },
+          "radius": 15,
+          "labels": ["Nunca", "Algunas veces", "Casi siempre", "Siempre"]
+        },
+        {
+          "type": "multiselect",
+          "name": "seccion4",
+          "rows": 4,
+          "cols": 3,
+          "circles": {
+            "CTL": { "percent_x": 35.25, "percent_y": 82.78 },
+            "CTR": { "percent_x": 96.21, "percent_y": 82.78 },
+            "CBL": { "percent_x": 35.25, "percent_y": 91.84 },
+            "CBR": { "percent_x": 96.21, "percent_y": 91.84 }
+          },
+          "radius": 15,
+          "labels": [
+            ["Tablero", "Películas y videos", "Láminas y otros materiales gráficos"],
+            ["Computadores", "Diapositivas o acetatos", "Música"],
+            ["Libros de texto", "Laboratorios", "Otros"],
+            ["Programas educativos computarizados", "Mapas", ""]
+          ]
+        }
+      ]
+    }
+  }
 }

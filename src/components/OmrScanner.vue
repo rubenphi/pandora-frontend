@@ -54,7 +54,7 @@ import {
 } from "ionicons/icons";
 import { CapacitorFlash } from "@capgo/capacitor-flash";
 import cv from "@techstark/opencv-js";
-import { fetchTemplates } from "@/components/functions/omr/templateLoader.js";
+import { fetchTemplates, fetchSurveyTemplate } from "@/components/functions/omr/templateLoader.js";
 import {
   findAndLabelMarkers,
   performPerspectiveCorrection,
@@ -84,8 +84,14 @@ export default {
     IonButton,
     IonIcon,
   },
+  props: {
+    templateName: {
+      type: String,
+      default: null,
+    },
+  },
   emits: ["scan-complete", "scan-cancelled"],
-  setup(_, { emit, expose }) {
+  setup(props, { emit, expose }) {
     const video = ref(null);
     const outputCanvas = ref(null);
     const isLoading = ref(true);
@@ -258,7 +264,12 @@ export default {
 
           await checkFlashAvailability();
 
-          const templates = await fetchTemplates();
+          let templates;
+          if (props.templateName) {
+            templates = await fetchSurveyTemplate(props.templateName);
+          } else {
+            templates = await fetchTemplates();
+          }
           OMR_STATE.circleTemplate = templates.circleTemplate;
           OMR_STATE.matrixTemplate = templates.matrixTemplate;
 

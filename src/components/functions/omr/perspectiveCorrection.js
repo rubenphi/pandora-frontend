@@ -351,7 +351,7 @@ export function extractAndDrawResultsWithCurvature(
     drawDetectionResults(cctx, gridPoints, detections, matrixDef.radius, type);
 
     // Procesar resultados según tipo
-    const result = processDetectionResults(detections, rows, cols, type);
+    const result = processDetectionResults(detections, rows, cols, type, matrixDef);
     if (result) finalResults.push(result);
   }
 
@@ -436,9 +436,7 @@ function detectMarkedBubbles(gray, points, radius, width, height) {
 
 function drawDetectionResults(ctx, points, detections, radius, type) {
   // Dibujar todas las burbujas
-  ctx.fillStyle = type === "numeric" 
-    ? "rgba(64, 224, 208, 0.95)" 
-    : "rgba(64, 224, 208, 0.95)";
+  ctx.fillStyle = "rgba(64, 224, 208, 0.3)";
   
   for (const point of points) {
     ctx.beginPath();
@@ -454,7 +452,9 @@ function drawDetectionResults(ctx, points, detections, radius, type) {
       const green = Math.round(240 + fraction * (0 - 240));
       const blue = Math.round(240 + fraction * (128 - 240));
 
-      ctx.fillStyle = `rgba(${red}, ${green}, ${blue}, 0.95)`;
+      ctx.fillStyle = type === "multiselect"
+        ? "rgba(128, 0, 128, 0.8)"
+        : `rgba(${red}, ${green}, ${blue}, 0.95)`;
       ctx.beginPath();
       ctx.arc(Math.round(x), Math.round(y), radius, 0, Math.PI * 2);
       ctx.fill();
@@ -462,7 +462,7 @@ function drawDetectionResults(ctx, points, detections, radius, type) {
   }
 }
 
-function processDetectionResults(detections, rows, cols, type) {
+function processDetectionResults(detections, rows, cols, type, matrixDef) {
   if (type === "numeric") {
     const codeDigits = [];
     for (let c = 0; c < cols; c++) {
@@ -483,6 +483,7 @@ function processDetectionResults(detections, rows, cols, type) {
     };
   } else if (type === "question") {
     const answers = [];
+    const colLabels = matrixDef && matrixDef.labels;
     for (let r = 0; r < rows; r++) {
       let bestCol = -1, bestFrac = -1;
       for (let c = 0; c < cols; c++) {
@@ -492,15 +493,45 @@ function processDetectionResults(detections, rows, cols, type) {
           bestCol = c;
         }
       }
+      let answerText = "";
+      if (bestCol !== -1) {
+        answerText = colLabels && colLabels[bestCol]
+          ? colLabels[bestCol]
+          : String.fromCharCode("a".charCodeAt(0) + bestCol);
+      }
       answers.push({
         question: r + 1,
-        answer: bestCol !== -1 ? String.fromCharCode("a".charCodeAt(0) + bestCol) : ""
+        answer: answerText
       });
     }
     return {
       typeOrigin: "question",
       contentType: "array",
       content: answers
+    };
+  } else if (type === "multiselect") {
+    const selectedByRow = [];
+    const rowLabels = matrixDef && matrixDef.labels;
+    for (let r = 0; r < rows; r++) {
+      const selected = [];
+      for (let c = 0; c < cols; c++) {
+        const det = detections.find(d => d.row === r && d.col === c);
+        if (det && det.marked) {
+          const label = rowLabels && rowLabels[r] && rowLabels[r][c]
+            ? rowLabels[r][c]
+            : `${String.fromCharCode("a".charCodeAt(0) + c)}`;
+          if (label) selected.push(label);
+        }
+      }
+      selectedByRow.push({
+        row: r + 1,
+        selected: selected
+      });
+    }
+    return {
+      typeOrigin: "multiselect",
+      contentType: "array",
+      content: selectedByRow
     };
   }
   return null;

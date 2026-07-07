@@ -54,6 +54,10 @@ const routes = [
         component: () => import("@/views/OmrRead.vue"),
       },
       {
+        path: "omr-test",
+        component: () => import("@/views/OmrTest.vue"),
+      },
+      {
         path: "omr-encuesta",
         component: () => import("@/views/OmrSurveyReader.vue"),
       },
@@ -383,7 +387,7 @@ const routes = [
           else next({ path: "/inicio" });
         },
       },
-     
+
       {
         path: "materials/edit/:id",
         component: () => import("@/views/CrearMaterial.vue"),
@@ -395,13 +399,12 @@ const routes = [
       {
         path: "/herramientas",
         component: () => import("@/views/HerramientasPage.vue"),
-       
       },
       {
         path: "/herramientas/tingo-tango",
         component: () => import("@/views/TingoTangoPage.vue"),
         beforeEnter: (to, from, next) => {
-           // Assuming similar auth requirements as other admin tools
+          // Assuming similar auth requirements as other admin tools
           if (adminOprofesor()) next();
           else next({ path: "/inicio" });
         },

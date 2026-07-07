@@ -642,7 +642,7 @@ export function extractAndDrawResults(
       });
     } else if (type === "question") {
       const answers = [];
-      // For questions: Groups are Rows
+      const colLabels = matrixDef.labels;
       for (let r = 0; r < rows; r++) {
         let bestCol = -1;
         let bestFrac = -1;
@@ -656,19 +656,46 @@ export function extractAndDrawResults(
         if (bestCol !== -1) {
           winnerIndices.add(r * cols + bestCol);
         }
-        // Data Extraction Logic
+        let answerText = "";
+        if (bestCol !== -1) {
+          answerText = colLabels && colLabels[bestCol]
+            ? colLabels[bestCol]
+            : String.fromCharCode("a".charCodeAt(0) + bestCol);
+        }
         answers.push({
           question: r + 1,
-          answer:
-            bestCol !== -1
-              ? String.fromCharCode("a".charCodeAt(0) + bestCol)
-              : "",
+          answer: answerText,
         });
       }
       finalResults.push({
         typeOrigin: "question",
         contentType: "array",
         content: answers,
+      });
+    } else if (type === "multiselect") {
+      const selectedByRow = [];
+      const rowLabels = matrixDef.labels;
+      for (let r = 0; r < rows; r++) {
+        const selected = [];
+        for (let c = 0; c < cols; c++) {
+          const i = r * cols + c;
+          if (detectedPoints[i]) {
+            winnerIndices.add(i);
+            const label = rowLabels && rowLabels[r] && rowLabels[r][c]
+              ? rowLabels[r][c]
+              : `${String.fromCharCode("a".charCodeAt(0) + c)}`;
+            if (label) selected.push(label);
+          }
+        }
+        selectedByRow.push({
+          row: r + 1,
+          selected: selected,
+        });
+      }
+      finalResults.push({
+        typeOrigin: "multiselect",
+        contentType: "array",
+        content: selectedByRow,
       });
     }
 
