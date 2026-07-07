@@ -60,11 +60,11 @@
           "cols": 2,
           "circles": {
             "CTL": { "percent_x": 64.89, "percent_y": 5.29 },
-            "CTR": { "percent_x": 76.40, "percent_y": 5.29 },
+            "CTR": { "percent_x": 76.4, "percent_y": 5.29 },
             "CBL": { "percent_x": 64.89, "percent_y": 5.29 },
-            "CBR": { "percent_x": 76.40, "percent_y": 5.29 }
+            "CBR": { "percent_x": 76.4, "percent_y": 5.29 }
           },
-          "radius": 15,
+          "radius": 8,
           "labels": ["Sí", "No"]
         },
         {
@@ -89,8 +89,8 @@
           "circles": {
             "CTL": { "percent_x": 67.28, "percent_y": 62.54 },
             "CTR": { "percent_x": 91.85, "percent_y": 62.54 },
-            "CBL": { "percent_x": 67.28, "percent_y": 71.60 },
-            "CBR": { "percent_x": 91.85, "percent_y": 71.60 }
+            "CBL": { "percent_x": 67.28, "percent_y": 71.6 },
+            "CBR": { "percent_x": 91.85, "percent_y": 71.6 }
           },
           "radius": 15,
           "labels": ["Nunca", "Algunas veces", "Casi siempre", "Siempre"]
@@ -108,7 +108,11 @@
           },
           "radius": 15,
           "labels": [
-            ["Tablero", "Películas y videos", "Láminas y otros materiales gráficos"],
+            [
+              "Tablero",
+              "Películas y videos",
+              "Láminas y otros materiales gráficos"
+            ],
             ["Computadores", "Diapositivas o acetatos", "Música"],
             ["Libros de texto", "Laboratorios", "Otros"],
             ["Programas educativos computarizados", "Mapas", ""]

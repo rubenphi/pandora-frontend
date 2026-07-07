@@ -29,7 +29,7 @@
       "rows": 10,
       "cols": 8,
       "circles": {
-        "CTL": { "percent_x": 9.1, "percent_y": 53},
+        "CTL": { "percent_x": 9.1, "percent_y": 53 },
         "CTR": { "percent_x": 45.6, "percent_y": 53 },
         "CBL": { "percent_x": 9.1, "percent_y": 90 },
         "CBR": { "percent_x": 45.6, "percent_y": 90 }
@@ -59,12 +59,12 @@
           "rows": 1,
           "cols": 2,
           "circles": {
-            "CTL": { "percent_x": 64.89, "percent_y": 5.29 },
-            "CTR": { "percent_x": 76.40, "percent_y": 5.29 },
-            "CBL": { "percent_x": 64.89, "percent_y": 5.29 },
-            "CBR": { "percent_x": 76.40, "percent_y": 5.29 }
+            "CTL": { "percent_x": 65, "percent_y": 5.29 },
+            "CTR": { "percent_x": 76.6, "percent_y": 5.29 },
+            "CBL": { "percent_x": 65, "percent_y": 5.29 },
+            "CBR": { "percent_x": 76.6, "percent_y": 5.29 }
           },
-          "radius": 15,
+          "radius": 7,
           "labels": ["Sí", "No"]
         },
         {
@@ -73,12 +73,12 @@
           "rows": 14,
           "cols": 4,
           "circles": {
-            "CTL": { "percent_x": 67.28, "percent_y": 15.41 },
-            "CTR": { "percent_x": 91.85, "percent_y": 15.41 },
-            "CBL": { "percent_x": 67.28, "percent_y": 53.78 },
-            "CBR": { "percent_x": 91.85, "percent_y": 53.78 }
+            "CTL": { "percent_x": 67.27, "percent_y": 16 },
+            "CTR": { "percent_x": 92, "percent_y": 16 },
+            "CBL": { "percent_x": 67.27, "percent_y": 53 },
+            "CBR": { "percent_x": 92, "percent_y": 53 }
           },
-          "radius": 15,
+          "radius": 7,
           "labels": ["Nunca", "Algunas veces", "Casi siempre", "Siempre"]
         },
         {
@@ -89,10 +89,10 @@
           "circles": {
             "CTL": { "percent_x": 67.28, "percent_y": 62.54 },
             "CTR": { "percent_x": 91.85, "percent_y": 62.54 },
-            "CBL": { "percent_x": 67.28, "percent_y": 71.60 },
-            "CBR": { "percent_x": 91.85, "percent_y": 71.60 }
+            "CBL": { "percent_x": 67.28, "percent_y": 71.6 },
+            "CBR": { "percent_x": 91.85, "percent_y": 71.6 }
           },
-          "radius": 15,
+          "radius": 7,
           "labels": ["Nunca", "Algunas veces", "Casi siempre", "Siempre"]
         },
         {
@@ -106,9 +106,13 @@
             "CBL": { "percent_x": 35.25, "percent_y": 91.84 },
             "CBR": { "percent_x": 96.21, "percent_y": 91.84 }
           },
-          "radius": 15,
+          "radius": 7,
           "labels": [
-            ["Tablero", "Películas y videos", "Láminas y otros materiales gráficos"],
+            [
+              "Tablero",
+              "Películas y videos",
+              "Láminas y otros materiales gráficos"
+            ],
             ["Computadores", "Diapositivas o acetatos", "Música"],
             ["Libros de texto", "Laboratorios", "Otros"],
             ["Programas educativos computarizados", "Mapas", ""]
