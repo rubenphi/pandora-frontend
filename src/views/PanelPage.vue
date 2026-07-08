@@ -38,11 +38,14 @@
           <ion-icon slot="start" :icon="constructOutline"></ion-icon>
           <ion-label>Herramientas</ion-label>
         </ion-item>
-        <ion-item :href="'/omr-encuesta'">
+        <ion-item :href="'/omr-encuesta/estudiantes'">
           <ion-icon slot="start" :icon="scanOutline"></ion-icon>
           <ion-label>Encuesta a Estudiantes</ion-label>
         </ion-item>
-
+        <ion-item :href="'/omr-encuesta/padres'">
+          <ion-icon slot="start" :icon="peopleOutline"></ion-icon>
+          <ion-label>Encuesta a Padres</ion-label>
+        </ion-item>
         <ion-item :href="'/omr-test'">
           <ion-icon slot="start" :icon="documentTextOutline"></ion-icon>
           <ion-label>Lector OMR</ion-label>
@@ -64,6 +67,7 @@ import {
   settingsOutline,
   scanOutline,
   documentTextOutline,
+  peopleOutline,
   layersOutline,
   schoolOutline,
   constructOutline,
@@ -120,6 +124,7 @@ export default {
       peopleCircleOutline,
       scanOutline,
       documentTextOutline,
+      peopleOutline,
       layersOutline,
       schoolOutline,
       constructOutline,

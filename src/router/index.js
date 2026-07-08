@@ -58,8 +58,12 @@ const routes = [
         component: () => import("@/views/OmrTest.vue"),
       },
       {
-        path: "omr-encuesta",
+        path: "omr-encuesta/estudiantes",
         component: () => import("@/views/OmrSurveyReader.vue"),
+      },
+      {
+        path: "omr-encuesta/padres",
+        component: () => import("@/views/OmrParentSurveyReader.vue"),
       },
       {
         path: "lecciones/:curso/:area/:periodo/:year/:lessonType?",

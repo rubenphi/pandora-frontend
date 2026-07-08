@@ -51,6 +51,38 @@
     }
   ],
   "surveys": {
+    "parentSurvey": {
+      "circleTemplate": [
+        {
+          "type": "question",
+          "name": "seccion1",
+          "rows": 14,
+          "cols": 4,
+          "circles": {
+            "CTL": { "percent_x": 68.48, "percent_y": 12.69 },
+            "CTR": { "percent_x": 91.49, "percent_y": 12.69 },
+            "CBL": { "percent_x": 68.48, "percent_y": 69.57 },
+            "CBR": { "percent_x": 91.49, "percent_y": 69.57 }
+          },
+          "radius": 7,
+          "labels": ["Nunca", "Algunas veces", "Casi siempre", "Siempre"]
+        },
+        {
+          "type": "question",
+          "name": "seccion2",
+          "rows": 4,
+          "cols": 4,
+          "circles": {
+            "CTL": { "percent_x": 68.48, "percent_y": 82.20 },
+            "CTR": { "percent_x": 91.49, "percent_y": 82.20 },
+            "CBL": { "percent_x": 68.48, "percent_y": 95.27 },
+            "CBR": { "percent_x": 91.49, "percent_y": 95.27 }
+          },
+          "radius": 7,
+          "labels": ["Nunca", "Algunas veces", "Casi siempre", "Siempre"]
+        }
+      ]
+    },
     "studentSurvey": {
       "circleTemplate": [
         {
