@@ -39,7 +39,7 @@
           </ion-item>
 
           <p class="ion-padding-start ion-text-small">
-            Toque las respuestas para editarlas si es necesario.
+            Revise las respuestas. Si es necesario, toque la respuesta para cambiarla antes de confirmar.
           </p>
 
           <!-- Q1-Q14 -->
@@ -132,23 +132,6 @@
               </ion-button>
             </ion-col>
           </ion-row>
-          <ion-row v-if="templateId && pendingLocalCount > 0">
-            <ion-col>
-              <ion-button
-                expand="block"
-                color="warning"
-                @click="uploadAllLocal"
-                :disabled="isUploadingLocal"
-              >
-                <ion-icon :icon="cloudUploadOutline" slot="start"></ion-icon>
-                {{
-                  isUploadingLocal
-                    ? "Subiendo..."
-                    : `Subir locales (${pendingLocalCount})`
-                }}
-              </ion-button>
-            </ion-col>
-          </ion-row>
           <ion-row v-if="templateId">
             <ion-col>
               <ion-button
@@ -224,10 +207,9 @@ import {
   IonSelect,
   IonSelectOption,
   alertController,
-  toastController,
   onIonViewDidEnter,
 } from "@ionic/vue";
-import { ref, nextTick, computed } from "vue";
+import { ref, nextTick } from "vue";
 import OmrScanner from "@/components/OmrScanner.vue";
 import { useRouter } from "vue-router";
 import { FileSharer } from "@byteowls/capacitor-filesharer";
@@ -240,7 +222,6 @@ import {
   cameraOutline,
   downloadOutline,
   trashOutline,
-  cloudUploadOutline,
 } from "ionicons/icons";
 
 export default {
@@ -281,15 +262,7 @@ export default {
     const serverResponses = ref([]);
     const isServerLoading = ref(false);
     const currentSession = ref(null);
-    const isUploadingLocal = ref(false);
-    const pendingLocalCount = computed(() => {
-      const serverCodes = new Set(serverResponses.value.map((r) => r.code));
-      return scannedResponses.value.filter((r) => !serverCodes.has(r.code))
-        .length;
-    });
 
-    const STORAGE_KEY = "omr_parent_survey_responses";
-    const COUNTER_KEY = "omr_parent_survey_counter";
 
     const loadSessionFromRoute = async () => {
       const sessionId = router.currentRoute.value.params.sessionId;
@@ -352,56 +325,6 @@ export default {
       }
     };
 
-    const uploadAllLocal = async () => {
-      if (!templateId.value || scannedResponses.value.length === 0) return;
-      const serverCodes = new Set(serverResponses.value.map((r) => r.code));
-      const pending = scannedResponses.value.filter(
-        (r) => !serverCodes.has(r.code),
-      );
-      if (pending.length === 0) return;
-
-      isUploadingLocal.value = true;
-      let uploaded = 0;
-      for (const r of pending) {
-        const ok = await uploadToServer(r.code, r.seccion1, r.seccion2);
-        if (ok) uploaded++;
-      }
-      await fetchServerResponses();
-      isUploadingLocal.value = false;
-
-      const toast = await toastController.create({
-        message: `${uploaded} de ${pending.length} registros sincronizados`,
-        duration: 3000,
-        color: uploaded === pending.length ? "success" : "warning",
-        position: "bottom",
-      });
-      await toast.present();
-    };
-
-    const loadFromStorage = () => {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) scannedResponses.value = JSON.parse(saved);
-        const savedCounter = localStorage.getItem(COUNTER_KEY);
-        if (savedCounter) autoCodeCounter.value = parseInt(savedCounter, 10);
-      } catch (e) {
-        console.warn("Error loading parent survey data:", e);
-      }
-    };
-
-    const trySaveToStorage = () => {
-      try {
-        localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify(scannedResponses.value),
-        );
-        localStorage.setItem(COUNTER_KEY, String(autoCodeCounter.value));
-        return true;
-      } catch (e) {
-        return false;
-      }
-    };
-
     const resetAll = async () => {
       const alert = await alertController.create({
         header: "Nuevo escaneo general",
@@ -415,8 +338,6 @@ export default {
               scannedResponses.value = [];
               currentResult.value = null;
               autoCodeCounter.value = 1;
-              localStorage.removeItem(STORAGE_KEY);
-              localStorage.removeItem(COUNTER_KEY);
             },
           },
         ],
@@ -425,7 +346,6 @@ export default {
     };
 
     onIonViewDidEnter(async () => {
-      loadFromStorage();
       await loadSessionFromRoute();
       if (templateId.value) {
         await fetchServerResponses();
@@ -463,44 +383,71 @@ export default {
       isScanning.value = false;
     };
 
+    const validateResponses = (seccion1, seccion2) => {
+      const issues = [];
+      const allItems = [
+        ...seccion1.map((item, i) => ({ num: i + 1, item })),
+        ...seccion2.map((item, i) => ({ num: i + 15, item })),
+      ];
+      for (const { num, item } of allItems) {
+        if (!item.answer || item.answer.trim() === "") {
+          issues.push(`Q${num}: sin respuesta`);
+        }
+        if (Array.isArray(item.answer)) {
+          issues.push(`Q${num}: múltiples respuestas`);
+        }
+      }
+      return issues;
+    };
+
     const confirmResponse = async () => {
       if (!currentResult.value) return;
 
       const { code, seccion1, seccion2 } = currentResult.value;
+      const issues = validateResponses(seccion1, seccion2);
+
+      let confirmed = false;
+      const promptAlert = await alertController.create({
+        header:
+          issues.length > 0
+            ? "Aviso: respuestas con inconsistencias"
+            : "Confirmar registro",
+        message:
+          issues.length > 0
+            ? "Se detectaron los siguientes problemas:\n\n" +
+              issues.join("\n") +
+              "\n\nPuede corregirlas o subirlas tal como están."
+            : "Los datos guardados no se podrán modificar. ¿Desea continuar?",
+        buttons: [
+          { text: "Cancelar", role: "cancel" },
+          {
+            text: issues.length > 0 ? "Subir de todas formas" : "Confirmar",
+            handler: () => {
+              confirmed = true;
+            },
+          },
+        ],
+      });
+      await promptAlert.present();
+      await promptAlert.onDidDismiss();
+      if (!confirmed) return;
 
       scannedResponses.value.push({ code, seccion1, seccion2 });
       currentResult.value = null;
-
-      const saved = trySaveToStorage();
 
       const uploaded = await uploadToServer(code, seccion1, seccion2);
       if (uploaded) {
         await fetchServerResponses();
       }
 
-      if (!saved) {
-        const alert = await alertController.create({
-          header: "Almacenado en memoria",
-          message:
-            "No se pudo guardar en almacenamiento local. Descargue el CSV antes de salir.",
-          buttons: ["OK"],
-        });
-        await alert.present();
-      } else if (!uploaded) {
-        const alert = await alertController.create({
-          header: "Registrado localmente",
-          message: `Respuesta almacenada (${scannedResponses.value.length} en total). No se pudo sincronizar con el servidor.`,
-          buttons: ["OK"],
-        });
-        await alert.present();
-      } else {
-        const alert = await alertController.create({
-          header: "Registrado",
-          message: `Respuesta almacenada y sincronizada (${serverResponses.value.length} en servidor).`,
-          buttons: ["OK"],
-        });
-        await alert.present();
-      }
+      const resultAlert = await alertController.create({
+        header: uploaded ? "Registrado" : "Error de conexión",
+        message: uploaded
+          ? `Respuesta registrada (${serverResponses.value.length} en servidor).`
+          : "No se pudo conectar con el servidor. Intente de nuevo.",
+        buttons: ["OK"],
+      });
+      await resultAlert.present();
     };
 
     const escapeCSVCell = (str) => {
@@ -655,7 +602,6 @@ export default {
       cameraOutline,
       downloadOutline,
       trashOutline,
-      cloudUploadOutline,
       goBack,
       startScan,
       onScanComplete,
@@ -670,9 +616,6 @@ export default {
       isServerLoading,
       fetchServerResponses,
       currentSession,
-      pendingLocalCount,
-      isUploadingLocal,
-      uploadAllLocal,
     };
   },
 };
