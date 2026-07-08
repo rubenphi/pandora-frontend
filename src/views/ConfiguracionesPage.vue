@@ -39,6 +39,16 @@
             Consultar la API
           </ion-button>
         </ion-item>
+        <ion-item v-if="adminView">
+          <ion-label>
+            <h2>Plantillas de Encuestas OMR</h2>
+            <p>Gestionar plantillas de encuestas escaneables</p>
+          </ion-label>
+          <ion-button slot="end" fill="outline" color="tertiary" href="/admin/plantillas-encuestas">
+            <ion-icon :icon="fileTrayStackOutline" slot="start"></ion-icon>
+            Gestionar
+          </ion-button>
+        </ion-item>
       </ion-list>
     </ion-content>
   </ion-page>
@@ -62,7 +72,7 @@ import {
   alertController,
   toastController,
 } from "@ionic/vue";
-import { arrowBackOutline, keyOutline, copyOutline, documentTextOutline } from "ionicons/icons";
+import { arrowBackOutline, keyOutline, copyOutline, documentTextOutline, fileTrayStackedOutline } from "ionicons/icons";
 import axios from "axios";
 import { basedeURL } from "../globalService";
 
@@ -246,6 +256,7 @@ export default {
       arrowBackOutline,
       keyOutline,
       documentTextOutline,
+      fileTrayStackedOutline,
     };
   },
 };

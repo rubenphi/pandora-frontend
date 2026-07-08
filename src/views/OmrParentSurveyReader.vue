@@ -21,6 +21,16 @@
           </ion-card-header>
         </ion-card>
 
+        <ion-card v-if="currentSession">
+          <ion-card-header>
+            <ion-card-title>{{ currentSession.label }}</ion-card-title>
+            <ion-card-subtitle>
+              {{ currentSession.year }} &middot;
+              {{ serverResponses.length }} respuesta(s) en servidor
+            </ion-card-subtitle>
+          </ion-card-header>
+        </ion-card>
+
         <div v-if="currentResult">
           <h3>Resultado del escaneo</h3>
 
@@ -118,13 +128,59 @@
             <ion-col>
               <ion-button expand="block" color="success" @click="downloadCSV">
                 <ion-icon :icon="downloadOutline" slot="start"></ion-icon>
-                Descargar CSV ({{ scannedResponses.length }} registros)
+                CSV local ({{ scannedResponses.length }})
+              </ion-button>
+            </ion-col>
+          </ion-row>
+          <ion-row v-if="templateId && pendingLocalCount > 0">
+            <ion-col>
+              <ion-button
+                expand="block"
+                color="warning"
+                @click="uploadAllLocal"
+                :disabled="isUploadingLocal"
+              >
+                <ion-icon :icon="cloudUploadOutline" slot="start"></ion-icon>
+                {{
+                  isUploadingLocal
+                    ? "Subiendo..."
+                    : `Subir locales (${pendingLocalCount})`
+                }}
+              </ion-button>
+            </ion-col>
+          </ion-row>
+          <ion-row v-if="templateId">
+            <ion-col>
+              <ion-button
+                expand="block"
+                color="tertiary"
+                @click="downloadServerCSV"
+                :disabled="serverResponses.length === 0"
+              >
+                <ion-icon :icon="downloadOutline" slot="start"></ion-icon>
+                CSV servidor ({{ serverResponses.length }})
+              </ion-button>
+            </ion-col>
+            <ion-col v-if="templateId">
+              <ion-button
+                expand="block"
+                fill="outline"
+                color="medium"
+                @click="fetchServerResponses"
+                :disabled="isServerLoading"
+              >
+                {{ isServerLoading ? "Cargando..." : "Actualizar" }}
               </ion-button>
             </ion-col>
           </ion-row>
           <ion-row v-if="scannedResponses.length > 0">
             <ion-col>
-              <ion-button expand="block" color="danger" fill="outline" @click="resetAll">
+              <ion-button
+                expand="block"
+                color="danger"
+                fill="outline"
+                @click="resetAll"
+              >
                 <ion-icon :icon="trashOutline" slot="start"></ion-icon>
                 Nuevo escaneo general
               </ion-button>
@@ -168,28 +224,48 @@ import {
   IonSelect,
   IonSelectOption,
   alertController,
+  toastController,
   onIonViewDidEnter,
 } from "@ionic/vue";
-import { ref, nextTick } from "vue";
+import { ref, nextTick, computed } from "vue";
 import OmrScanner from "@/components/OmrScanner.vue";
 import { useRouter } from "vue-router";
 import { FileSharer } from "@byteowls/capacitor-filesharer";
 import { Capacitor } from "@capacitor/core";
+import axios from "axios";
+import { tokenHeader } from "../globalService";
 import {
   arrowBackOutline,
   checkmarkOutline,
   cameraOutline,
   downloadOutline,
   trashOutline,
+  cloudUploadOutline,
 } from "ionicons/icons";
 
 export default {
   name: "OmrParentSurveyReader",
   components: {
-    IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
-    IonButtons, IonButton, IonLabel, IonList, IonItem,
-    IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle,
-    IonIcon, IonCol, IonRow, IonGrid, IonSelect, IonSelectOption,
+    IonPage,
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonContent,
+    IonButtons,
+    IonButton,
+    IonLabel,
+    IonList,
+    IonItem,
+    IonCard,
+    IonCardHeader,
+    IonCardTitle,
+    IonCardSubtitle,
+    IonIcon,
+    IonCol,
+    IonRow,
+    IonGrid,
+    IonSelect,
+    IonSelectOption,
     OmrScanner,
   },
   setup() {
@@ -201,8 +277,106 @@ export default {
     const autoCodeCounter = ref(1);
     const likertOptions = ["Nunca", "Algunas veces", "Casi siempre", "Siempre"];
 
+    const templateId = ref(null);
+    const serverResponses = ref([]);
+    const isServerLoading = ref(false);
+    const currentSession = ref(null);
+    const isUploadingLocal = ref(false);
+    const pendingLocalCount = computed(() => {
+      const serverCodes = new Set(serverResponses.value.map((r) => r.code));
+      return scannedResponses.value.filter((r) => !serverCodes.has(r.code))
+        .length;
+    });
+
     const STORAGE_KEY = "omr_parent_survey_responses";
     const COUNTER_KEY = "omr_parent_survey_counter";
+
+    const loadSessionFromRoute = async () => {
+      const sessionId = router.currentRoute.value.params.sessionId;
+      if (!sessionId) return;
+      try {
+        tokenHeader();
+        const res = await axios.get(`/surveys/sessions/${sessionId}`);
+        currentSession.value = res.data;
+        if (res.data.template) {
+          templateId.value = res.data.template.id;
+        }
+      } catch (err) {
+        console.error("loadSession error:", err.response?.data || err.message);
+      }
+    };
+
+    const fetchServerResponses = async () => {
+      if (!templateId.value) return;
+      isServerLoading.value = true;
+      try {
+        tokenHeader();
+        const params = { templateId: templateId.value };
+        if (currentSession.value) {
+          params.sessionId = currentSession.value.id;
+        }
+        const res = await axios.get("/surveys/responses", { params });
+        serverResponses.value = res.data || [];
+      } catch {
+        serverResponses.value = [];
+      } finally {
+        isServerLoading.value = false;
+      }
+    };
+
+    const uploadToServer = async (code, seccion1, seccion2) => {
+      if (!templateId.value) {
+        console.warn("uploadToServer: templateId is null");
+        return false;
+      }
+      try {
+        tokenHeader();
+        const payload = {
+          templateId: templateId.value,
+          code,
+          answers: { seccion1, seccion2 },
+          respondent: "parent",
+        };
+        if (currentSession.value) {
+          payload.sessionId = currentSession.value.id;
+        }
+        await axios.post("/surveys/responses", payload);
+        return true;
+      } catch (err) {
+        console.error(
+          "uploadToServer error:",
+          err.response?.status,
+          err.response?.data || err.message,
+        );
+        return false;
+      }
+    };
+
+    const uploadAllLocal = async () => {
+      if (!templateId.value || scannedResponses.value.length === 0) return;
+      const serverCodes = new Set(serverResponses.value.map((r) => r.code));
+      const pending = scannedResponses.value.filter(
+        (r) => !serverCodes.has(r.code),
+      );
+      if (pending.length === 0) return;
+
+      isUploadingLocal.value = true;
+      let uploaded = 0;
+      for (const r of pending) {
+        const ok = await uploadToServer(r.code, r.seccion1, r.seccion2);
+        if (ok) uploaded++;
+      }
+      await fetchServerResponses();
+      isUploadingLocal.value = false;
+
+      const toast = await toastController.create({
+        message: `${uploaded} de ${pending.length} registros sincronizados`,
+        duration: 3000,
+        color: uploaded === pending.length ? "success" : "warning",
+        position: "bottom",
+      });
+      await toast.present();
+    };
 
     const loadFromStorage = () => {
       try {
@@ -217,7 +391,10 @@ export default {
 
     const trySaveToStorage = () => {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(scannedResponses.value));
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify(scannedResponses.value),
+        );
         localStorage.setItem(COUNTER_KEY, String(autoCodeCounter.value));
         return true;
       } catch (e) {
@@ -247,7 +424,13 @@ export default {
       await alert.present();
     };
 
-    onIonViewDidEnter(() => loadFromStorage());
+    onIonViewDidEnter(async () => {
+      loadFromStorage();
+      await loadSessionFromRoute();
+      if (templateId.value) {
+        await fetchServerResponses();
+      }
+    });
 
     const goBack = () => router.back();
 
@@ -283,24 +466,37 @@ export default {
     const confirmResponse = async () => {
       if (!currentResult.value) return;
 
-      scannedResponses.value.push({
-        code: currentResult.value.code,
-        seccion1: currentResult.value.seccion1,
-        seccion2: currentResult.value.seccion2,
-      });
+      const { code, seccion1, seccion2 } = currentResult.value;
+
+      scannedResponses.value.push({ code, seccion1, seccion2 });
       currentResult.value = null;
 
-      if (!trySaveToStorage()) {
+      const saved = trySaveToStorage();
+
+      const uploaded = await uploadToServer(code, seccion1, seccion2);
+      if (uploaded) {
+        await fetchServerResponses();
+      }
+
+      if (!saved) {
         const alert = await alertController.create({
           header: "Almacenado en memoria",
-          message: "No se pudo guardar en almacenamiento local. Descargue el CSV antes de salir.",
+          message:
+            "No se pudo guardar en almacenamiento local. Descargue el CSV antes de salir.",
+          buttons: ["OK"],
+        });
+        await alert.present();
+      } else if (!uploaded) {
+        const alert = await alertController.create({
+          header: "Registrado localmente",
+          message: `Respuesta almacenada (${scannedResponses.value.length} en total). No se pudo sincronizar con el servidor.`,
           buttons: ["OK"],
         });
         await alert.present();
       } else {
         const alert = await alertController.create({
           header: "Registrado",
-          message: `Respuesta almacenada (${scannedResponses.value.length} en total).`,
+          message: `Respuesta almacenada y sincronizada (${serverResponses.value.length} en servidor).`,
           buttons: ["OK"],
         });
         await alert.present();
@@ -338,7 +534,10 @@ export default {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `encuesta_padres_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.setAttribute(
+        "download",
+        `encuesta_padres_${new Date().toISOString().slice(0, 10)}.csv`,
+      );
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -353,10 +552,71 @@ export default {
         reader.readAsDataURL(blob);
       });
       await FileSharer.share({
-        filename: `encuesta_padres_${new Date().toISOString().slice(0, 10)}.csv`,
+        filename: `encuesta_padres_${new Date()
+          .toISOString()
+          .slice(0, 10)}.csv`,
         contentType: "text/csv",
         base64Data,
       });
+    };
+
+    const buildCSVFromServerData = () => {
+      const headers = ["Código"];
+      for (let i = 1; i <= 18; i++) {
+        headers.push(`Q${i} (Nunca/Algunas veces/Casi siempre/Siempre)`);
+      }
+
+      const rows = serverResponses.value.map((r) => {
+        const row = [r.code];
+        const ans = r.answers || {};
+        const s1 = ans.seccion1 || [];
+        const s2 = ans.seccion2 || [];
+        for (let i = 0; i < 14; i++) row.push(s1[i] ? s1[i].answer || "" : "");
+        for (let i = 0; i < 4; i++) row.push(s2[i] ? s2[i].answer || "" : "");
+        return row.map(escapeCSVCell).join(",");
+      });
+
+      return "\uFEFF" + [headers.join(","), ...rows].join("\n");
+    };
+
+    const downloadServerCSV = async () => {
+      if (serverResponses.value.length === 0) return;
+      await fetchServerResponses();
+      const csvString = buildCSVFromServerData();
+      if (Capacitor.isNativePlatform()) {
+        try {
+          await downloadCSVNative(csvString);
+        } catch (error) {
+          const msg = (error?.message || "").toLowerCase();
+          if (
+            !msg.includes("cancelled") &&
+            !msg.includes("dismiss") &&
+            !msg.includes("back button")
+          ) {
+            const alert = await alertController.create({
+              header: "Error",
+              message: "Hubo un error al compartir el archivo.",
+              buttons: ["OK"],
+            });
+            await alert.present();
+          }
+        }
+      } else {
+        const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute(
+          "download",
+          `encuesta_padres_servidor_${new Date()
+            .toISOString()
+            .slice(0, 10)}.csv`,
+        );
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
     };
 
     const downloadCSV = async () => {
@@ -367,7 +627,11 @@ export default {
           await downloadCSVNative(csvString);
         } catch (error) {
           const msg = (error?.message || "").toLowerCase();
-          if (!msg.includes("cancelled") && !msg.includes("dismiss") && !msg.includes("back button")) {
+          if (
+            !msg.includes("cancelled") &&
+            !msg.includes("dismiss") &&
+            !msg.includes("back button")
+          ) {
             const alert = await alertController.create({
               header: "Error",
               message: "Hubo un error al compartir el archivo.",
@@ -382,10 +646,33 @@ export default {
     };
 
     return {
-      isScanning, currentResult, scannedResponses, scannerComponent,
-      arrowBackOutline, checkmarkOutline, cameraOutline, downloadOutline, trashOutline,
-      goBack, startScan, onScanComplete, onScanCancelled, confirmResponse,
-      downloadCSV, likertOptions, resetAll,
+      isScanning,
+      currentResult,
+      scannedResponses,
+      scannerComponent,
+      arrowBackOutline,
+      checkmarkOutline,
+      cameraOutline,
+      downloadOutline,
+      trashOutline,
+      cloudUploadOutline,
+      goBack,
+      startScan,
+      onScanComplete,
+      onScanCancelled,
+      confirmResponse,
+      downloadCSV,
+      downloadServerCSV,
+      likertOptions,
+      resetAll,
+      templateId,
+      serverResponses,
+      isServerLoading,
+      fetchServerResponses,
+      currentSession,
+      pendingLocalCount,
+      isUploadingLocal,
+      uploadAllLocal,
     };
   },
 };

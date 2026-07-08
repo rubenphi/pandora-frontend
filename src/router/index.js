@@ -67,6 +67,10 @@ const routes = [
       },
       {
         path: "omr-encuesta/padres",
+        component: () => import("@/views/OmrParentSurveyLauncher.vue"),
+      },
+      {
+        path: "omr-encuesta/padres/:sessionId",
         component: () => import("@/views/OmrParentSurveyReader.vue"),
       },
       {
@@ -113,6 +117,14 @@ const routes = [
       {
         path: "admin/configuraciones",
         component: () => import("@/views/ConfiguracionesPage.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
+        path: "admin/plantillas-encuestas",
+        component: () => import("@/views/SurveyTemplateManager.vue"),
         beforeEnter: (to, from, next) => {
           if (adminOprofesor()) next();
           else next({ path: "/inicio" });
