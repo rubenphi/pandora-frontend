@@ -13,10 +13,7 @@
     <ion-content>
       <div :fullscreen="true">
         <ion-list>
-          <!-- Error display -->
-          <ion-item v-if="error.estatus == 1">
-            <ion-label :color="error.color">{{ error.data }}</ion-label>
-          </ion-item>
+
 
           <!-- checkbox para mezclar objetos de array "Mezclar objetos" -->
           <ion-item>
@@ -131,6 +128,22 @@ O también objetos separados:
           </ion-item>
         </ion-list>
       </div>
+
+      <!-- Toasts -->
+      <ion-toast
+        :is-open="isSuccessToastOpen"
+        message="Importación exitosa"
+        :duration="3000"
+        color="success"
+        @didDismiss="isSuccessToastOpen = false"
+      ></ion-toast>
+      <ion-toast
+        :is-open="isErrorToastOpen"
+        :message="toastErrorMessage"
+        :duration="3000"
+        color="danger"
+        @didDismiss="isErrorToastOpen = false"
+      ></ion-toast>
     </ion-content>
   </ion-page>
 </template>
@@ -142,6 +155,7 @@ import { useRoute } from "vue-router";
 import { usuarioGet, tokenHeader, shuffleArray } from "../globalService";
 import {
   onIonViewWillEnter,
+  IonToast,
   IonCheckbox,
   IonTextarea,
   IonItemGroup,
@@ -165,6 +179,7 @@ import axios from "axios";
 
 export default {
   components: {
+    IonToast,
     IonButton,
     IonButtons,
     IonCheckbox,
@@ -194,18 +209,16 @@ export default {
       questionId: 0,
     });
 
-    const error = ref({
-      estatus: 0,
-      data: "",
-      color: "",
-    });
+    const isSuccessToastOpen = ref(false);
+    const isErrorToastOpen = ref(false);
+    const toastErrorMessage = ref("");
+    const debugMessage = ref("");
 
     const usuario = ref();
     const textareaContent = ref("");
     const objetosValidos = ref([]);
     const tiposDetectados = ref([]);
     const tiposIncorrectos = ref([]);
-    const debugMessage = ref("");
 
     // Computed para filtrar preguntas excluyendo tipos incorrectos
     const preguntasFiltradas = computed(() => {
@@ -219,13 +232,12 @@ export default {
 
     const procesarObjetos = () => {
       try {
-        error.value.estatus = 0;
+        isErrorToastOpen.value = false;
         let contenido = textareaContent.value.trim();
 
         if (!contenido) {
-          error.value.estatus = 1;
-          error.value.color = "warning";
-          error.value.data = "Por favor ingrese contenido JSON";
+          toastErrorMessage.value = "Por favor ingrese contenido JSON";
+          isErrorToastOpen.value = true;
           return;
         }
 
@@ -305,14 +317,12 @@ export default {
         tiposIncorrectos.value = []; // Reset tipos incorrectos
 
         if (objetosProcesados.length === 0) {
-          error.value.estatus = 1;
-          error.value.color = "warning";
-          error.value.data = "No se encontraron objetos válidos";
+          toastErrorMessage.value = "No se encontraron objetos válidos";
+          isErrorToastOpen.value = true;
         }
       } catch (err) {
-        error.value.estatus = 1;
-        error.value.color = "danger";
-        error.value.data = err.message;
+        toastErrorMessage.value = err.message;
+        isErrorToastOpen.value = true;
         objetosValidos.value = [];
         tiposDetectados.value = [];
       }
@@ -358,9 +368,7 @@ export default {
       debugMessage.value = `Eliminados ${tiposAEliminar.length} tipos. Quedan ${objetosValidos.value.length} objetos`;
 
       // Mostrar mensaje de éxito
-      error.value.estatus = 1;
-      error.value.color = "success";
-      error.value.data = `Se eliminaron ${tiposAEliminar.length} tipos incorrectos exitosamente`;
+      isSuccessToastOpen.value = true;
     };
 
     const importarPreguntas = () => {
@@ -382,20 +390,16 @@ export default {
         )
         .then((response) => {
           if (response.data.estatus === 1) {
-            error.value.estatus = 1;
-            error.value.color = "success";
-            error.value.data = response.data.data;
+            isSuccessToastOpen.value = true;
           } else {
-            error.value.estatus = 1;
-            error.value.color = "danger";
-            error.value.data = response.data.data;
+            toastErrorMessage.value = response.data.data || "Error al importar";
+            isErrorToastOpen.value = true;
           }
         })
-        .catch((error) => {
-          console.error("Error al importar preguntas:", error);
-          error.value.estatus = 1;
-          error.value.color = "danger";
-          error.value.data = "Error al importar preguntas: " + error.message;
+        .catch((err) => {
+          console.error("Error al importar preguntas:", err);
+          toastErrorMessage.value = "Error al importar preguntas: " + err.message;
+          isErrorToastOpen.value = true;
         });
     };
 
@@ -413,7 +417,9 @@ export default {
       pregunta,
       id,
       usuario,
-      error,
+      isSuccessToastOpen,
+      isErrorToastOpen,
+      toastErrorMessage,
       opcion,
       textareaContent,
       objetosValidos,

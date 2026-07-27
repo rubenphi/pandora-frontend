@@ -374,15 +374,6 @@ const routes = [
           else next({ path: "/inicio" });
         },
       },
-
-      {
-        path: "materials",
-        component: () => import("@/views/MaterialsPage.vue"),
-        beforeEnter: (to, from, next) => {
-          if (adminOprofesor()) next();
-          else next({ path: "/inicio" });
-        },
-      },
       {
         path: "crear/material/:lessonId",
         component: () => import("@/views/CrearMaterial.vue"),

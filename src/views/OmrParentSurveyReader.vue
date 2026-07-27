@@ -131,6 +131,12 @@
                 CSV local ({{ scannedResponses.length }})
               </ion-button>
             </ion-col>
+            <ion-col>
+              <ion-button expand="block" color="success" fill="outline" @click="downloadLocalPDF">
+                <ion-icon :icon="documentTextOutline" slot="start"></ion-icon>
+                PDF local ({{ scannedResponses.length }})
+              </ion-button>
+            </ion-col>
           </ion-row>
           <ion-row v-if="templateId">
             <ion-col>
@@ -144,7 +150,21 @@
                 CSV servidor ({{ serverResponses.length }})
               </ion-button>
             </ion-col>
-            <ion-col v-if="templateId">
+            <ion-col>
+              <ion-button
+                expand="block"
+                color="tertiary"
+                fill="outline"
+                @click="downloadServerPDF"
+                :disabled="serverResponses.length === 0"
+              >
+                <ion-icon :icon="documentTextOutline" slot="start"></ion-icon>
+                PDF servidor ({{ serverResponses.length }})
+              </ion-button>
+            </ion-col>
+          </ion-row>
+          <ion-row v-if="templateId">
+            <ion-col>
               <ion-button
                 expand="block"
                 fill="outline"
@@ -216,12 +236,14 @@ import { FileSharer } from "@byteowls/capacitor-filesharer";
 import { Capacitor } from "@capacitor/core";
 import axios from "axios";
 import { tokenHeader } from "../globalService";
+import { generateSurveyPDF } from "@/components/functions/omr/surveyPdfGenerator.js";
 import {
   arrowBackOutline,
   checkmarkOutline,
   cameraOutline,
   downloadOutline,
   trashOutline,
+  documentTextOutline,
 } from "ionicons/icons";
 
 export default {
@@ -592,6 +614,17 @@ export default {
       }
     };
 
+    const downloadLocalPDF = async () => {
+      if (scannedResponses.value.length === 0) return;
+      await generateSurveyPDF(scannedResponses.value, "Escaneos locales", currentSession.value);
+    };
+
+    const downloadServerPDF = async () => {
+      if (serverResponses.value.length === 0) return;
+      await fetchServerResponses();
+      await generateSurveyPDF(serverResponses.value, "Servidor", currentSession.value);
+    };
+
     return {
       isScanning,
       currentResult,
@@ -602,6 +635,7 @@ export default {
       cameraOutline,
       downloadOutline,
       trashOutline,
+      documentTextOutline,
       goBack,
       startScan,
       onScanComplete,
@@ -609,6 +643,8 @@ export default {
       confirmResponse,
       downloadCSV,
       downloadServerCSV,
+      downloadLocalPDF,
+      downloadServerPDF,
       likertOptions,
       resetAll,
       templateId,
