@@ -192,7 +192,9 @@
         </ion-header>
         <ion-content class="ion-padding">
           <ion-item>
-            <ion-label position="floating">Cantidad de grupos a crear</ion-label>
+            <ion-label position="floating"
+              >Cantidad de grupos a crear</ion-label
+            >
             <ion-input
               type="number"
               min="1"
@@ -200,7 +202,7 @@
               placeholder="Ingrese la cantidad de grupos"
             ></ion-input>
           </ion-item>
-            </ion-content>
+        </ion-content>
       </ion-modal>
 
       <!-- Modal para editar grupo -->
@@ -236,7 +238,12 @@
       </ion-modal>
 
       <!-- Botón flotante para asignar aleatoriamente estudiantes sin grupo -->
-      <ion-fab slot="fixed" vertical="bottom" horizontal="end" v-if="canManageGroups">
+      <ion-fab
+        slot="fixed"
+        vertical="bottom"
+        horizontal="end"
+        v-if="canManageGroups"
+      >
         <ion-fab-button @click="shuffleAssignStudents" color="primary">
           <ion-icon :icon="shuffleOutline"></ion-icon>
         </ion-fab-button>
@@ -266,20 +273,16 @@ ion-item ion-select {
 }
 
 .select-alert .alert-tappable.sc-ion-alert-md {
-    /* Ensures the container item can grow */
-    height: auto;
-    min-height: 50px;
+  /* Ensures the container item can grow */
+  height: auto;
+  min-height: 50px;
 }
 </style>
 
 <script>
 import axios from "axios";
 import { ref, computed } from "vue";
-import {
-  QuizSinNotas,
-  tokenHeader,
-  usuarioGet,
-} from "../globalService";
+import { QuizSinNotas, tokenHeader, usuarioGet } from "../globalService";
 import { useRoute } from "vue-router";
 import {
   onIonViewWillEnter,
@@ -344,7 +347,7 @@ export default {
     const mroute = useRoute();
     const logedUser = usuarioGet();
     const userCourses = JSON.parse(
-      localStorage.getItem("cursosUsuario") || "[]"
+      localStorage.getItem("cursosUsuario") || "[]",
     ); // Parse userCourses
     const currentCourseId = parseInt(mroute.params.cursoId, 10);
 
@@ -356,7 +359,7 @@ export default {
 
       // Check if user is admin for the current course
       const courseAssignment = userCourses.find(
-        (course) => course.id === currentCourseId && course.active
+        (course) => course.id === currentCourseId && course.active,
       );
       return courseAssignment && courseAssignment.rol === "admin";
     });
@@ -517,7 +520,7 @@ export default {
 
         for (let i = 0; i < numGroups; i++) {
           const groupName = `Grupo ${baseGroupCount + i + 1}`;
-          
+
           const data = {
             name: groupName,
             courseId: parseInt(cursoId, 10),
@@ -578,7 +581,7 @@ export default {
         return;
       }
       // Detener la propagación del evento para evitar que se abra el acordeón
-      if (typeof event !== 'undefined') {
+      if (typeof event !== "undefined") {
         event.stopPropagation();
       }
 
@@ -644,7 +647,7 @@ export default {
             `/courses/${cursoId}/usersNoGroup?year=${selectedYear}`,
             {
               headers: tokenHeader(),
-            }
+            },
           );
           // only rol student
 
@@ -655,7 +658,7 @@ export default {
             }))
             .filter(
               (estudiante) =>
-                estudiante.rol === "student" || estudiante.rol === "user"
+                estudiante.rol === "student" || estudiante.rol === "user",
             );
         } catch (error) {
           console.error("Error fetching group members:", error);
@@ -666,7 +669,7 @@ export default {
             `/groups/${groupId}/${selectedYear}/users`,
             {
               headers: tokenHeader(),
-            }
+            },
           );
           groupSelectedMembers.value = response.data.map((miembro) => ({
             ...miembro.user,
@@ -681,7 +684,7 @@ export default {
       try {
         const response = await axios.get(
           `/courses/${cursoId}/users?year=${selectedYear}`,
-          { headers: tokenHeader() }
+          { headers: tokenHeader() },
         );
         const students = response.data
           .filter((u) => u.rol === "student" && u.active === true)
@@ -715,7 +718,7 @@ export default {
           },
           {
             headers: tokenHeader(),
-          }
+          },
         );
         getMembers(groupId);
         //refresh page
@@ -747,7 +750,7 @@ export default {
                 for (const group of groupsToEmpty) {
                   const response = await axios.get(
                     `/groups/${group.id}/${selectedYear}/users`,
-                    { headers: tokenHeader() }
+                    { headers: tokenHeader() },
                   );
                   const members = response.data;
 
@@ -759,7 +762,7 @@ export default {
                         userIdToUpdate: member.user.id,
                         active: false,
                       },
-                      { headers: tokenHeader() }
+                      { headers: tokenHeader() },
                     );
                   }
                 }
@@ -769,7 +772,7 @@ export default {
               } catch (error) {
                 console.error("Error emptying all groups:", error);
                 alert(
-                  "Error al vaciar los grupos. Por favor intente nuevamente."
+                  "Error al vaciar los grupos. Por favor intente nuevamente.",
                 );
               }
             },
@@ -780,7 +783,7 @@ export default {
     };
 
     const shuffleAssignStudents = async () => {
-      const validGroups = grupos.value.filter(g => g.id !== 0);
+      const validGroups = grupos.value.filter((g) => g.id !== 0);
       if (validGroups.length === 0) {
         window.alert("No existen grupos para asignar estudiantes.");
         return;
@@ -788,7 +791,8 @@ export default {
 
       const confirmAlert = await alertController.create({
         header: "Asignación Aleatoria",
-        message: "¿Desea asignar a los estudiantes sin grupo de forma aleatoria y equitativa entre los grupos existentes?",
+        message:
+          "¿Desea asignar a los estudiantes sin grupo de forma aleatoria y equitativa entre los grupos existentes?",
         buttons: [
           { text: "Cancelar", role: "cancel" },
           {
@@ -798,12 +802,12 @@ export default {
               try {
                 const res = await axios.get(
                   `/courses/${cursoId}/usersNoGroup?year=${selectedYear}`,
-                  { headers: tokenHeader() }
+                  { headers: tokenHeader() },
                 );
-                
+
                 const studentsToAssign = res.data
-                  .map(miembro => miembro.user)
-                  .filter(u => u.rol === "student" || u.rol === "user");
+                  .map((miembro) => miembro.user)
+                  .filter((u) => u.rol === "student" || u.rol === "user");
 
                 if (studentsToAssign.length === 0) {
                   window.alert("No hay estudiantes sin grupo para asignar.");
@@ -811,17 +815,27 @@ export default {
                 }
 
                 // Barajar estudiantes
-                const shuffledStudents = [...studentsToAssign].sort(() => 0.5 - Math.random());
+                const shuffledStudents = [...studentsToAssign].sort(
+                  () => 0.5 - Math.random(),
+                );
 
                 // Obtener recuentos actuales
-                const groupSizes = await Promise.all(validGroups.map(async (group) => {
-                  try {
-                    const groupMembersRes = await axios.get(`/groups/${group.id}/${selectedYear}/users`, { headers: tokenHeader() });
-                    return { id: group.id, count: groupMembersRes.data.length };
-                  } catch (e) {
-                    return { id: group.id, count: 0 };
-                  }
-                }));
+                const groupSizes = await Promise.all(
+                  validGroups.map(async (group) => {
+                    try {
+                      const groupMembersRes = await axios.get(
+                        `/groups/${group.id}/${selectedYear}/users`,
+                        { headers: tokenHeader() },
+                      );
+                      return {
+                        id: group.id,
+                        count: groupMembersRes.data.length,
+                      };
+                    } catch (e) {
+                      return { id: group.id, count: 0 };
+                    }
+                  }),
+                );
 
                 // Asignar equitablemente
                 for (const student of shuffledStudents) {
@@ -836,7 +850,9 @@ export default {
                     active: true,
                   };
 
-                  await axios.post(`/users/${student.id}/groups`, data, { headers: tokenHeader() });
+                  await axios.post(`/users/${student.id}/groups`, data, {
+                    headers: tokenHeader(),
+                  });
                   targetGroup.count++;
                 }
 
@@ -845,9 +861,9 @@ export default {
                 console.error("Error en asignación aleatoria:", error);
                 window.alert("Ocurrió un error al asignar los estudiantes.");
               }
-            }
-          }
-        ]
+            },
+          },
+        ],
       });
       await confirmAlert.present();
     };
@@ -898,20 +914,31 @@ export default {
             handler: async () => {
               try {
                 // Primero: Obtener y remover todos los miembros del grupo
-                const membersRes = await axios.get(`/groups/${group.id}/${selectedYear}/users`, { headers: tokenHeader() });
+                const membersRes = await axios.get(
+                  `/groups/${group.id}/${selectedYear}/users`,
+                  { headers: tokenHeader() },
+                );
                 const members = membersRes.data;
 
                 for (const member of members) {
-                  await axios.patch(`/groups/${group.id}/users`, {
-                    userIdToUpdate: member.user.id,
-                    active: false,
-                  }, { headers: tokenHeader() });
+                  await axios.patch(
+                    `/groups/${group.id}/users`,
+                    {
+                      userIdToUpdate: member.user.id,
+                      active: false,
+                    },
+                    { headers: tokenHeader() },
+                  );
                 }
 
                 // Segundo: Inactivar (borrado lógico) del grupo
-                await axios.patch(`/groups/${group.id}`, {
-                  active: false
-                }, { headers: tokenHeader() });
+                await axios.patch(
+                  `/groups/${group.id}`,
+                  {
+                    active: false,
+                  },
+                  { headers: tokenHeader() },
+                );
 
                 // Recargar para aplicar cambios en UI
                 location.reload();
@@ -919,9 +946,9 @@ export default {
                 console.error("Error deleting group:", error);
                 window.alert("Ocurrió un error al intentar eliminar el grupo.");
               }
-            }
-          }
-        ]
+            },
+          },
+        ],
       });
 
       await alert.present();
@@ -991,17 +1018,20 @@ export default {
       usuario.value = usuarioGet();
       await getAllStudentsInCourse();
       const llamado = (
-        await axios.get(`/courses/${cursoId}/groups?year=${selectedYear}`, {
-          headers: tokenHeader(),
-        })
+        await axios.get(
+          `/courses/${cursoId}/groups?year=${selectedYear}&active=true`,
+          {
+            headers: tokenHeader(),
+          },
+        )
       ).data;
 
       // Filter groups by selected year
       const gruposFiltrados = llamado.filter(
-        (grupo) => 
+        (grupo) =>
           grupo.year === parseInt(selectedYear, 10) &&
-          grupo.active === true && 
-          grupo.exist !== false
+          grupo.active === true &&
+          grupo.exist !== false,
       );
 
       // Sort groups alphabetically and naturally
