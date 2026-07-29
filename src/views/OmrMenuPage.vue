@@ -20,6 +20,10 @@
           <ion-icon slot="start" :icon="peopleOutline"></ion-icon>
           <ion-label>Encuesta a Padres</ion-label>
         </ion-item>
+        <ion-item :href="'/omr-editor'">
+          <ion-icon slot="start" :icon="createOutline" color="tertiary"></ion-icon>
+          <ion-label><strong>Editor de Plantillas OMR (Nuevo)</strong></ion-label>
+        </ion-item>
         <ion-item :href="'/omr-test'">
           <ion-icon slot="start" :icon="scanOutline"></ion-icon>
           <ion-label>Lector OMR</ion-label>
@@ -49,6 +53,7 @@ import {
   scanOutline,
   peopleOutline,
   peopleCircleOutline,
+  createOutline,
 } from "ionicons/icons";
 
 export default {
@@ -75,6 +80,7 @@ export default {
       peopleCircleOutline,
       scanOutline,
       peopleOutline,
+      createOutline,
     };
   },
 };

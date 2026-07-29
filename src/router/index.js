@@ -62,6 +62,10 @@ const routes = [
         component: () => import("@/views/OmrMenuPage.vue"),
       },
       {
+        path: "omr-editor",
+        component: () => import("@/views/OmrTemplateEditor.vue"),
+      },
+      {
         path: "omr-encuesta/estudiantes",
         component: () => import("@/views/OmrStudentSurveyLauncher.vue"),
       },
