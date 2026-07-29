@@ -17,14 +17,23 @@
             <h2>Vista Administrador</h2>
             <p>Ver todos los cursos y áreas del instituto</p>
           </ion-label>
-          <ion-toggle slot="end" v-model="adminView" @ionChange="toggleAdminView"></ion-toggle>
+          <ion-toggle
+            slot="end"
+            v-model="adminView"
+            @ionChange="toggleAdminView"
+          ></ion-toggle>
         </ion-item>
         <ion-item v-if="adminView">
           <ion-label>
             <h2>Token de Acceso</h2>
             <p>Ver y copiar el Bearer Token actual</p>
           </ion-label>
-          <ion-button slot="end" fill="outline" color="primary" @click="solicitarContrasenaToken">
+          <ion-button
+            slot="end"
+            fill="outline"
+            color="primary"
+            @click="solicitarContrasenaToken"
+          >
             <ion-icon :icon="keyOutline" slot="start"></ion-icon>
             Mostrar Token
           </ion-button>
@@ -34,7 +43,12 @@
             <h2>Documentación de la API</h2>
             <p>Consultar endpoints y modelos interactivos</p>
           </ion-label>
-          <ion-button slot="end" fill="outline" color="secondary" @click="openApiDocs">
+          <ion-button
+            slot="end"
+            fill="outline"
+            color="secondary"
+            @click="openApiDocs"
+          >
             <ion-icon :icon="documentTextOutline" slot="start"></ion-icon>
             Consultar la API
           </ion-button>
@@ -44,7 +58,12 @@
             <h2>Plantillas de Encuestas OMR</h2>
             <p>Gestionar plantillas de encuestas escaneables</p>
           </ion-label>
-          <ion-button slot="end" fill="outline" color="tertiary" href="/admin/plantillas-encuestas">
+          <ion-button
+            slot="end"
+            fill="outline"
+            color="tertiary"
+            href="/admin/plantillas-encuestas"
+          >
             <ion-icon :icon="fileTrayStackOutline" slot="start"></ion-icon>
             Gestionar
           </ion-button>
@@ -72,7 +91,14 @@ import {
   alertController,
   toastController,
 } from "@ionic/vue";
-import { arrowBackOutline, keyOutline, copyOutline, documentTextOutline, fileTrayStackedOutline } from "ionicons/icons";
+import {
+  arrowBackOutline,
+  keyOutline,
+  copyOutline,
+  documentTextOutline,
+  fileTrayStackedOutline,
+  fileTrayStackOutline,
+} from "ionicons/icons";
 import axios from "axios";
 import { basedeURL } from "../globalService";
 
@@ -106,28 +132,29 @@ export default {
 
     const solicitarContrasenaToken = async () => {
       const alert = await alertController.create({
-        header: 'Seguridad',
-        message: 'Por favor, ingrese su contraseña para ver el token de acceso.',
+        header: "Seguridad",
+        message:
+          "Por favor, ingrese su contraseña para ver el token de acceso.",
         inputs: [
           {
-            name: 'password',
-            type: 'password',
-            placeholder: 'Contraseña'
-          }
+            name: "password",
+            type: "password",
+            placeholder: "Contraseña",
+          },
         ],
         buttons: [
           {
-            text: 'Cancelar',
-            role: 'cancel',
+            text: "Cancelar",
+            role: "cancel",
           },
           {
-            text: 'Verificar',
+            text: "Verificar",
             handler: async (data) => {
               if (!data.password) return false;
               return await verificarYMostrarToken(data.password);
-            }
-          }
-        ]
+            },
+          },
+        ],
       });
 
       await alert.present();
@@ -136,15 +163,15 @@ export default {
     const verificarYMostrarToken = async (password) => {
       try {
         const usuarioGlobal = JSON.parse(localStorage.getItem("usuario"));
-        
+
         if (!usuarioGlobal || !usuarioGlobal.code) {
-            throw new Error("No se pudo obtener el usuario actual.");
+          throw new Error("No se pudo obtener el usuario actual.");
         }
 
         // Verify password using login endpoint
         const response = await axios.post("/auth/login", {
           code: usuarioGlobal.code,
-          password: password
+          password: password,
         });
 
         // If successful, show the token
@@ -153,17 +180,17 @@ export default {
           mostrarTokenConCopia(token);
           return true;
         } else {
-             throw new Error("Credenciales inválidas");
+          throw new Error("Credenciales inválidas");
         }
       } catch (error) {
         let msg = "Contraseña incorrecta o error al verificar.";
         if (error.response?.status === 401) {
-            msg = "Contraseña incorrecta.";
+          msg = "Contraseña incorrecta.";
         }
         const errorAlert = await alertController.create({
-          header: 'Error',
+          header: "Error",
           message: msg,
-          buttons: ['OK']
+          buttons: ["OK"],
         });
         await errorAlert.present();
         return false;
@@ -172,21 +199,21 @@ export default {
 
     const mostrarTokenConCopia = async (token) => {
       const alert = await alertController.create({
-        header: 'Token de Acceso',
+        header: "Token de Acceso",
         message: `<div style="word-break: break-all; max-height: 200px; overflow-y: auto; user-select: text;">${token}</div>`,
         buttons: [
           {
-            text: 'Cerrar',
-            role: 'cancel'
+            text: "Cerrar",
+            role: "cancel",
           },
           {
-            text: 'Copiar al Portapapeles',
+            text: "Copiar al Portapapeles",
             handler: () => {
               copiarTexto(token);
-              return true; 
-            }
-          }
-        ]
+              return true;
+            },
+          },
+        ],
       });
       await alert.present();
     };
@@ -199,7 +226,10 @@ export default {
           await navigator.clipboard.writeText(texto);
           exitoso = true;
         } catch (err) {
-          console.log("Clipboard API falló, intentando método alternativo:", err);
+          console.log(
+            "Clipboard API falló, intentando método alternativo:",
+            err,
+          );
         }
       }
 
@@ -224,19 +254,19 @@ export default {
 
       if (exitoso) {
         const toast = await toastController.create({
-          message: 'Token copiado al portapapeles',
+          message: "Token copiado al portapapeles",
           duration: 2000,
-          color: 'success',
-          position: 'bottom',
-          icon: copyOutline
+          color: "success",
+          position: "bottom",
+          icon: copyOutline,
         });
         await toast.present();
       } else {
         const toast = await toastController.create({
-          message: 'Error al copiar el token',
+          message: "Error al copiar el token",
           duration: 2000,
-          color: 'danger',
-          position: 'bottom'
+          color: "danger",
+          position: "bottom",
         });
         await toast.present();
       }
@@ -244,8 +274,10 @@ export default {
 
     const openApiDocs = () => {
       const baseUrl = basedeURL() || "";
-      const docsUrl = baseUrl.endsWith("/") ? `${baseUrl}api/docs/` : `${baseUrl}/api/docs/`;
-      window.open(docsUrl, '_blank');
+      const docsUrl = baseUrl.endsWith("/")
+        ? `${baseUrl}api/docs/`
+        : `${baseUrl}/api/docs/`;
+      window.open(docsUrl, "_blank");
     };
 
     return {
@@ -257,6 +289,7 @@ export default {
       keyOutline,
       documentTextOutline,
       fileTrayStackedOutline,
+      fileTrayStackOutline,
     };
   },
 };

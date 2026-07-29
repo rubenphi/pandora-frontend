@@ -238,6 +238,13 @@ import axios from "axios";
 import { tokenHeader } from "../globalService";
 import { generateSurveyPDF } from "@/components/functions/omr/surveyPdfGenerator.js";
 import {
+  PARENT_SURVEY_KEYS,
+  getLocalData,
+  saveLocalData,
+  clearLocalData,
+  confirmLocalDataOverwrite,
+} from "@/components/functions/omr/surveyStorage.js";
+import {
   arrowBackOutline,
   checkmarkOutline,
   cameraOutline,
@@ -284,7 +291,6 @@ export default {
     const serverResponses = ref([]);
     const isServerLoading = ref(false);
     const currentSession = ref(null);
-
 
     const loadSessionFromRoute = async () => {
       const sessionId = router.currentRoute.value.params.sessionId;
@@ -347,6 +353,48 @@ export default {
       }
     };
 
+    const checkAndLoadLocalData = async () => {
+      const localData = getLocalData(PARENT_SURVEY_KEYS);
+      if (localData.responses && localData.responses.length > 0) {
+        if (
+          localData.session?.id &&
+          currentSession.value?.id &&
+          localData.session.id === currentSession.value.id
+        ) {
+          scannedResponses.value = localData.responses;
+          autoCodeCounter.value = localData.counter;
+        } else {
+          const savedLabel = localData.session?.label;
+          const confirmed = await confirmLocalDataOverwrite(savedLabel, "ingresar");
+          if (confirmed) {
+            clearLocalData(PARENT_SURVEY_KEYS);
+            scannedResponses.value = [];
+            autoCodeCounter.value = 1;
+            if (currentSession.value) {
+              saveLocalData(PARENT_SURVEY_KEYS, [], 1, currentSession.value);
+            }
+          } else {
+            router.back();
+          }
+        }
+      } else {
+        scannedResponses.value = [];
+        autoCodeCounter.value = 1;
+        if (currentSession.value) {
+          saveLocalData(PARENT_SURVEY_KEYS, [], 1, currentSession.value);
+        }
+      }
+    };
+
+    const trySaveToStorage = () => {
+      return saveLocalData(
+        PARENT_SURVEY_KEYS,
+        scannedResponses.value,
+        autoCodeCounter.value,
+        currentSession.value
+      );
+    };
+
     const resetAll = async () => {
       const alert = await alertController.create({
         header: "Nuevo escaneo general",
@@ -360,6 +408,7 @@ export default {
               scannedResponses.value = [];
               currentResult.value = null;
               autoCodeCounter.value = 1;
+              clearLocalData(PARENT_SURVEY_KEYS);
             },
           },
         ],
@@ -369,6 +418,7 @@ export default {
 
     onIonViewDidEnter(async () => {
       await loadSessionFromRoute();
+      await checkAndLoadLocalData();
       if (templateId.value) {
         await fetchServerResponses();
       }
@@ -456,6 +506,7 @@ export default {
 
       scannedResponses.value.push({ code, seccion1, seccion2 });
       currentResult.value = null;
+      trySaveToStorage();
 
       const uploaded = await uploadToServer(code, seccion1, seccion2);
       if (uploaded) {

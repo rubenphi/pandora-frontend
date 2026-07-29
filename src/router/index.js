@@ -63,6 +63,10 @@ const routes = [
       },
       {
         path: "omr-encuesta/estudiantes",
+        component: () => import("@/views/OmrStudentSurveyLauncher.vue"),
+      },
+      {
+        path: "omr-encuesta/estudiantes/:sessionId",
         component: () => import("@/views/OmrSurveyReader.vue"),
       },
       {

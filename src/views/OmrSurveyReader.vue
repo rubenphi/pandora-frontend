@@ -21,6 +21,16 @@
           </ion-card-header>
         </ion-card>
 
+        <ion-card v-if="currentSession">
+          <ion-card-header>
+            <ion-card-title>{{ currentSession.label }}</ion-card-title>
+            <ion-card-subtitle>
+              {{ currentSession.year }} &middot;
+              {{ serverResponses.length }} respuesta(s) en servidor
+            </ion-card-subtitle>
+          </ion-card-header>
+        </ion-card>
+
         <div v-if="currentResult">
           <h3>Resultado del escaneo</h3>
 
@@ -166,7 +176,51 @@
             <ion-col>
               <ion-button expand="block" color="success" @click="downloadCSV">
                 <ion-icon :icon="downloadOutline" slot="start"></ion-icon>
-                Descargar CSV ({{ scannedResponses.length }} registros)
+                CSV local ({{ scannedResponses.length }})
+              </ion-button>
+            </ion-col>
+            <ion-col>
+              <ion-button expand="block" color="success" fill="outline" @click="downloadLocalPDF">
+                <ion-icon :icon="documentTextOutline" slot="start"></ion-icon>
+                PDF local ({{ scannedResponses.length }})
+              </ion-button>
+            </ion-col>
+          </ion-row>
+          <ion-row v-if="templateId">
+            <ion-col>
+              <ion-button
+                expand="block"
+                color="tertiary"
+                @click="downloadServerCSV"
+                :disabled="serverResponses.length === 0"
+              >
+                <ion-icon :icon="downloadOutline" slot="start"></ion-icon>
+                CSV servidor ({{ serverResponses.length }})
+              </ion-button>
+            </ion-col>
+            <ion-col>
+              <ion-button
+                expand="block"
+                color="tertiary"
+                fill="outline"
+                @click="downloadServerPDF"
+                :disabled="serverResponses.length === 0"
+              >
+                <ion-icon :icon="documentTextOutline" slot="start"></ion-icon>
+                PDF servidor ({{ serverResponses.length }})
+              </ion-button>
+            </ion-col>
+          </ion-row>
+          <ion-row v-if="templateId">
+            <ion-col>
+              <ion-button
+                expand="block"
+                fill="outline"
+                color="medium"
+                @click="fetchServerResponses"
+                :disabled="isServerLoading"
+              >
+                {{ isServerLoading ? "Cargando..." : "Actualizar" }}
               </ion-button>
             </ion-col>
           </ion-row>
@@ -224,12 +278,23 @@ import OmrScanner from "@/components/OmrScanner.vue";
 import { useRouter } from "vue-router";
 import { FileSharer } from "@byteowls/capacitor-filesharer";
 import { Capacitor } from "@capacitor/core";
+import axios from "axios";
+import { tokenHeader } from "../globalService";
+import { generateStudentSurveyPDF } from "@/components/functions/omr/surveyPdfGenerator.js";
+import {
+  STUDENT_SURVEY_KEYS,
+  getLocalData,
+  saveLocalData,
+  clearLocalData,
+  confirmLocalDataOverwrite,
+} from "@/components/functions/omr/surveyStorage.js";
 import {
   arrowBackOutline,
   checkmarkOutline,
   cameraOutline,
   downloadOutline,
   trashOutline,
+  documentTextOutline,
 } from "ionicons/icons";
 
 export default {
@@ -267,36 +332,111 @@ export default {
     const autoCodeCounter = ref(1);
     const likertOptions = ["Nunca", "Algunas veces", "Casi siempre", "Siempre"];
 
-    const STORAGE_KEY = "omr_student_survey_responses";
-    const COUNTER_KEY = "omr_student_survey_counter";
+    const templateId = ref(null);
+    const serverResponses = ref([]);
+    const isServerLoading = ref(false);
+    const currentSession = ref(null);
 
-    const loadFromStorage = () => {
+    const loadSessionFromRoute = async () => {
+      const sessionId = router.currentRoute.value.params.sessionId;
+      if (!sessionId) return;
       try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          scannedResponses.value = JSON.parse(saved);
+        tokenHeader();
+        const res = await axios.get(`/surveys/sessions/${sessionId}`);
+        currentSession.value = res.data;
+        if (res.data.template) {
+          templateId.value = res.data.template.id;
         }
-        const savedCounter = localStorage.getItem(COUNTER_KEY);
-        if (savedCounter) {
-          autoCodeCounter.value = parseInt(savedCounter, 10);
+      } catch (err) {
+        console.error("loadSession error:", err.response?.data || err.message);
+      }
+    };
+
+    const fetchServerResponses = async () => {
+      if (!templateId.value) return;
+      isServerLoading.value = true;
+      try {
+        tokenHeader();
+        const params = { templateId: templateId.value };
+        if (currentSession.value) {
+          params.sessionId = currentSession.value.id;
         }
-      } catch (e) {
-        console.warn("Error loading survey data from storage:", e);
+        const res = await axios.get("/surveys/responses", { params });
+        serverResponses.value = res.data || [];
+      } catch {
+        serverResponses.value = [];
+      } finally {
+        isServerLoading.value = false;
+      }
+    };
+
+    const uploadToServer = async (code, sections) => {
+      if (!templateId.value) {
+        return false;
+      }
+      try {
+        tokenHeader();
+        const payload = {
+          templateId: templateId.value,
+          code,
+          answers: sections,
+          respondent: "student",
+        };
+        if (currentSession.value) {
+          payload.sessionId = currentSession.value.id;
+        }
+        await axios.post("/surveys/responses", payload);
+        return true;
+      } catch (err) {
+        console.error(
+          "uploadToServer error:",
+          err.response?.status,
+          err.response?.data || err.message,
+        );
+        return false;
+      }
+    };
+
+    const checkAndLoadLocalData = async () => {
+      const localData = getLocalData(STUDENT_SURVEY_KEYS);
+      if (localData.responses && localData.responses.length > 0) {
+        if (
+          localData.session?.id &&
+          currentSession.value?.id &&
+          localData.session.id === currentSession.value.id
+        ) {
+          scannedResponses.value = localData.responses;
+          autoCodeCounter.value = localData.counter;
+        } else {
+          const savedLabel = localData.session?.label;
+          const confirmed = await confirmLocalDataOverwrite(savedLabel, "ingresar");
+          if (confirmed) {
+            clearLocalData(STUDENT_SURVEY_KEYS);
+            scannedResponses.value = [];
+            autoCodeCounter.value = 1;
+            if (currentSession.value) {
+              saveLocalData(STUDENT_SURVEY_KEYS, [], 1, currentSession.value);
+            }
+          } else {
+            router.back();
+          }
+        }
+      } else {
+        scannedResponses.value = [];
+        autoCodeCounter.value = 1;
+        if (currentSession.value) {
+          saveLocalData(STUDENT_SURVEY_KEYS, [], 1, currentSession.value);
+        }
       }
     };
 
     const trySaveToStorage = () => {
-      try {
-        const dataToSave = scannedResponses.value.map((r) => ({
-          code: r.code,
-          answers: r.answers,
-        }));
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
-        localStorage.setItem(COUNTER_KEY, String(autoCodeCounter.value));
-        return true;
-      } catch (e) {
-        return false;
-      }
+      return saveLocalData(
+        STUDENT_SURVEY_KEYS,
+        scannedResponses.value,
+        autoCodeCounter.value,
+        currentSession.value
+      );
     };
 
     const resetAll = async () => {
@@ -313,8 +453,7 @@ export default {
               scannedResponses.value = [];
               currentResult.value = null;
               autoCodeCounter.value = 1;
-              localStorage.removeItem(STORAGE_KEY);
-              localStorage.removeItem(COUNTER_KEY);
+              clearLocalData(STUDENT_SURVEY_KEYS);
             },
           },
         ],
@@ -322,8 +461,12 @@ export default {
       await alert.present();
     };
 
-    onIonViewDidEnter(() => {
-      loadFromStorage();
+    onIonViewDidEnter(async () => {
+      await loadSessionFromRoute();
+      await checkAndLoadLocalData();
+      if (templateId.value) {
+        await fetchServerResponses();
+      }
     });
 
     const goBack = () => {
@@ -387,29 +530,33 @@ export default {
     const confirmResponse = async () => {
       if (!currentResult.value) return;
 
+      const code = currentResult.value.code;
+      const sections = currentResult.value.sections;
+
       const savedItem = {
-        code: currentResult.value.code,
-        answers: currentResult.value.sections,
+        code: code,
+        answers: sections,
       };
       scannedResponses.value.push(savedItem);
       currentResult.value = null;
+      trySaveToStorage();
 
-      if (!trySaveToStorage()) {
-        const alert = await alertController.create({
-          header: "Almacenado en memoria",
-          message:
-            "No se pudo guardar en almacenamiento local, pero los datos están retenidos en memoria. Descargue el CSV antes de salir para no perderlos.",
-          buttons: ["OK"],
-        });
-        await alert.present();
-      } else {
-        const alert = await alertController.create({
-          header: "Registrado",
-          message: `Respuesta almacenada (${scannedResponses.value.length} en total).`,
-          buttons: ["OK"],
-        });
-        await alert.present();
+      let uploaded = false;
+      if (templateId.value) {
+        uploaded = await uploadToServer(code, sections);
+        if (uploaded) {
+          await fetchServerResponses();
+        }
       }
+
+      const alert = await alertController.create({
+        header: uploaded ? "Registrado" : "Respuesta guardada",
+        message: uploaded
+          ? `Respuesta registrada (${serverResponses.value.length} en servidor).`
+          : `Respuesta almacenada localmente (${scannedResponses.value.length} en total).`,
+        buttons: ["OK"],
+      });
+      await alert.present();
     };
 
     const escapeCSVCell = (str) => {
@@ -420,30 +567,28 @@ export default {
       return s;
     };
 
+    const toolLabels = [
+      "Tablero",
+      "Películas y videos",
+      "Láminas y otros materiales gráficos",
+      "Computadores",
+      "Diapositivas o acetatos",
+      "Música",
+      "Libros de texto",
+      "Laboratorios",
+      "Otros",
+      "Programas educativos computarizados",
+      "Mapas",
+    ];
+
     const buildCSVString = () => {
-      const headers = [
-        "Código",
-        "Q1 (Sí/No)",
-      ];
+      const headers = ["Código", "Q1 (Sí/No)"];
       for (let i = 2; i <= 15; i++) {
         headers.push(`Q${i} (Nunca/Algunas veces/Casi siempre/Siempre)`);
       }
       for (let i = 16; i <= 19; i++) {
         headers.push(`Q${i} (Nunca/Algunas veces/Casi siempre/Siempre)`);
       }
-      const toolLabels = [
-        "Tablero",
-        "Películas y videos",
-        "Láminas y otros materiales gráficos",
-        "Computadores",
-        "Diapositivas o acetatos",
-        "Música",
-        "Libros de texto",
-        "Laboratorios",
-        "Otros",
-        "Programas educativos computarizados",
-        "Mapas",
-      ];
       toolLabels.forEach((l) => headers.push(`Q20_${l}`));
 
       const rows = scannedResponses.value.map((response) => {
@@ -476,24 +621,61 @@ export default {
       return "\uFEFF" + csvContent;
     };
 
-    const downloadCSVWeb = (csvString) => {
+    const buildCSVFromServerData = () => {
+      const headers = ["Código", "Q1 (Sí/No)"];
+      for (let i = 2; i <= 15; i++) {
+        headers.push(`Q${i} (Nunca/Algunas veces/Casi siempre/Siempre)`);
+      }
+      for (let i = 16; i <= 19; i++) {
+        headers.push(`Q${i} (Nunca/Algunas veces/Casi siempre/Siempre)`);
+      }
+      toolLabels.forEach((l) => headers.push(`Q20_${l}`));
+
+      const rows = serverResponses.value.map((response) => {
+        const row = [response.code];
+        const sec = response.answers || {};
+
+        const s1 = sec.seccion1 || [];
+        row.push(s1.length > 0 ? s1[0].answer || "" : "");
+
+        const s2 = sec.seccion2 || [];
+        for (let i = 0; i < 14; i++) {
+          row.push(s2[i] ? s2[i].answer || "" : "");
+        }
+
+        const s3 = sec.seccion3 || [];
+        for (let i = 0; i < 4; i++) {
+          row.push(s3[i] ? s3[i].answer || "" : "");
+        }
+
+        const s4 = sec.seccion4 || [];
+        const selectedSet = new Set(s4);
+        toolLabels.forEach((label) => {
+          row.push(selectedSet.has(label) ? "Sí" : "");
+        });
+
+        return row.map(escapeCSVCell).join(",");
+      });
+
+      const csvContent = [headers.join(","), ...rows].join("\n");
+      return "\uFEFF" + csvContent;
+    };
+
+    const downloadCSVWeb = (csvString, filenameStr) => {
       const blob = new Blob([csvString], {
         type: "text/csv;charset=utf-8;",
       });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute(
-        "download",
-        `encuesta_estudiantes_${new Date().toISOString().slice(0, 10)}.csv`,
-      );
+      link.setAttribute("download", filenameStr);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     };
 
-    const downloadCSVNative = async (csvString) => {
+    const downloadCSVNative = async (csvString, filenameStr) => {
       const blob = new Blob([csvString], {
         type: "text/csv;charset=utf-8;",
       });
@@ -508,7 +690,7 @@ export default {
       });
 
       await FileSharer.share({
-        filename: `encuesta_estudiantes_${new Date().toISOString().slice(0, 10)}.csv`,
+        filename: filenameStr,
         contentType: "text/csv",
         base64Data: base64Data,
       });
@@ -518,10 +700,11 @@ export default {
       if (scannedResponses.value.length === 0) return;
 
       const csvString = buildCSVString();
+      const fn = `encuesta_estudiantes_local_${new Date().toISOString().slice(0, 10)}.csv`;
 
       if (Capacitor.isNativePlatform()) {
         try {
-          await downloadCSVNative(csvString);
+          await downloadCSVNative(csvString, fn);
         } catch (error) {
           const msg = (error?.message || "").toLowerCase();
           const isCancel =
@@ -541,8 +724,59 @@ export default {
           }
         }
       } else {
-        downloadCSVWeb(csvString);
+        downloadCSVWeb(csvString, fn);
       }
+    };
+
+    const downloadServerCSV = async () => {
+      if (serverResponses.value.length === 0) return;
+      await fetchServerResponses();
+      const csvString = buildCSVFromServerData();
+      const fn = `encuesta_estudiantes_servidor_${new Date().toISOString().slice(0, 10)}.csv`;
+
+      if (Capacitor.isNativePlatform()) {
+        try {
+          await downloadCSVNative(csvString, fn);
+        } catch (error) {
+          const msg = (error?.message || "").toLowerCase();
+          const isCancel =
+            msg.includes("cancelled") ||
+            msg.includes("user_cancelled") ||
+            msg.includes("dismiss") ||
+            msg.includes("user back") ||
+            msg.includes("back button");
+
+          if (!isCancel) {
+            const alert = await alertController.create({
+              header: "Error",
+              message: "Hubo un error al compartir el archivo.",
+              buttons: ["OK"],
+            });
+            await alert.present();
+          }
+        }
+      } else {
+        downloadCSVWeb(csvString, fn);
+      }
+    };
+
+    const downloadLocalPDF = async () => {
+      if (scannedResponses.value.length === 0) return;
+      await generateStudentSurveyPDF(
+        scannedResponses.value,
+        "Escaneos locales",
+        currentSession.value
+      );
+    };
+
+    const downloadServerPDF = async () => {
+      if (serverResponses.value.length === 0) return;
+      await fetchServerResponses();
+      await generateStudentSurveyPDF(
+        serverResponses.value,
+        "Servidor",
+        currentSession.value
+      );
     };
 
     return {
@@ -555,14 +789,23 @@ export default {
       cameraOutline,
       downloadOutline,
       trashOutline,
+      documentTextOutline,
       goBack,
       startScan,
       onScanComplete,
       onScanCancelled,
       confirmResponse,
       downloadCSV,
+      downloadServerCSV,
+      downloadLocalPDF,
+      downloadServerPDF,
       likertOptions,
       resetAll,
+      templateId,
+      serverResponses,
+      isServerLoading,
+      fetchServerResponses,
+      currentSession,
     };
   },
 };
@@ -597,13 +840,6 @@ export default {
 .section-title {
   font-size: 1.1em;
   padding: 8px 0;
-}
-
-.multiselect-row {
-  display: flex;
-  flex-direction: column;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--ion-color-light);
 }
 
 .multiselect-chips {

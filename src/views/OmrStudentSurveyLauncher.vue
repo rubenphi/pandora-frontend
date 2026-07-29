@@ -7,7 +7,7 @@
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
-        <ion-title>Encuesta a Padres</ion-title>
+        <ion-title>Encuesta a Estudiantes</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content class="ion-padding">
@@ -141,7 +141,7 @@ import { useRouter } from "vue-router";
 import axios from "axios";
 import { tokenHeader, selectedYear } from "../globalService";
 import {
-  PARENT_SURVEY_KEYS,
+  STUDENT_SURVEY_KEYS,
   getLocalData,
   clearLocalData,
   confirmLocalDataOverwrite,
@@ -155,7 +155,7 @@ import {
 } from "ionicons/icons";
 
 export default {
-  name: "OmrParentSurveyLauncher",
+  name: "OmrStudentSurveyLauncher",
   components: {
     IonPage,
     IonHeader,
@@ -191,10 +191,21 @@ export default {
       try {
         tokenHeader();
         const res = await axios.get("/surveys/templates", {
-          params: { slug: "parent-survey" },
+          params: { slug: "student-survey" },
         });
-        if (res.data.length > 0) {
+        if (res.data && res.data.length > 0) {
           templateId.value = res.data[0].id;
+        } else {
+          try {
+            const createRes = await axios.post("/surveys/templates", {
+              name: "Encuesta a Estudiantes",
+              slug: "student-survey",
+              active: true,
+            });
+            templateId.value = createRes.data.id;
+          } catch {
+            // Ignorar errores al auto-crear
+          }
         }
       } catch (err) {
         console.error("loadTemplate error:", err.response?.data || err.message);
@@ -226,7 +237,7 @@ export default {
               }
             }
           } catch {
-            // ignore errors counting individual session responses
+            // ignorar errores
           }
         }
 
@@ -246,14 +257,14 @@ export default {
     const createSession = async () => {
       if (!templateId.value || !createLabel.value || !createYear.value) return;
 
-      const localData = getLocalData(PARENT_SURVEY_KEYS);
+      const localData = getLocalData(STUDENT_SURVEY_KEYS);
       if (localData.responses && localData.responses.length > 0) {
         const savedLabel = localData.session?.label;
         const confirmed = await confirmLocalDataOverwrite(savedLabel, "nueva");
         if (!confirmed) {
           return;
         }
-        clearLocalData(PARENT_SURVEY_KEYS);
+        clearLocalData(STUDENT_SURVEY_KEYS);
       }
 
       try {
@@ -276,7 +287,7 @@ export default {
     };
 
     const enterSession = async (session) => {
-      const localData = getLocalData(PARENT_SURVEY_KEYS);
+      const localData = getLocalData(STUDENT_SURVEY_KEYS);
       if (localData.responses && localData.responses.length > 0) {
         if (localData.session?.id && localData.session.id !== session.id) {
           const savedLabel = localData.session?.label;
@@ -284,10 +295,10 @@ export default {
           if (!confirmed) {
             return;
           }
-          clearLocalData(PARENT_SURVEY_KEYS);
+          clearLocalData(STUDENT_SURVEY_KEYS);
         }
       }
-      router.push(`/omr-encuesta/padres/${session.id}`);
+      router.push(`/omr-encuesta/estudiantes/${session.id}`);
     };
 
     const formatDate = (dateStr) => {
