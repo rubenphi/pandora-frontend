@@ -97,6 +97,28 @@
             <div class="canvas-size-hint">
               Actual: {{ canvasWidth }} × {{ canvasHeight }} px
             </div>
+            <div class="num-row">
+              <div class="num-field">
+                <label>Tamaño marcadores (px)</label>
+                <div class="num-input-row">
+                  <ion-range
+                    v-model="config.markerSize"
+                    min="20"
+                    max="80"
+                    step="1"
+                    @ionChange="drawPreview"
+                  ></ion-range>
+                  <input
+                    class="num-input-box"
+                    type="number"
+                    v-model.number="config.markerSize"
+                    min="20"
+                    max="80"
+                    @change="drawPreview"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Sections list -->
@@ -808,6 +830,7 @@ export default {
 
     const config = ref({
       name: "Nueva Plantilla OMR",
+      markerSize: 40,
       sections: [
         {
           name: "codigo",
@@ -867,6 +890,7 @@ export default {
     const minCanvasDimensions = computed(() => {
       const w = canvasWidth.value;
       const h = canvasHeight.value;
+      const ms = config.value.markerSize;
       let maxRight = 0;
       let maxBottom = 0;
       for (const sec of config.value.sections) {
@@ -874,9 +898,10 @@ export default {
         maxRight = Math.max(maxRight, bounds.x + bounds.width);
         maxBottom = Math.max(maxBottom, bounds.y + bounds.height);
       }
+      const pad = ms + 80;
       return {
-        width: Math.max(Math.ceil(maxRight + 120), 500),
-        height: Math.max(Math.ceil(maxBottom + 120), 500),
+        width: Math.max(Math.ceil(maxRight + pad), 500),
+        height: Math.max(Math.ceil(maxBottom + pad), 500),
       };
     });
 
@@ -909,7 +934,7 @@ export default {
     const clampToScannableArea = () => {
       if (!selectedSection.value) return;
       const d = dims.value;
-      const area = getScannableBounds(d.width, d.height, autoMargins.value);
+      const area = getScannableBounds(d.width, d.height, autoMargins.value, config.value.markerSize);
       const secIdx = selectedIndex.value;
 
       // Clamp to scannable area
@@ -992,6 +1017,7 @@ export default {
           isPreview: true,
           selectedSectionIndex: selectedIndex.value,
           dims: dims.value,
+          markerSize: config.value.markerSize,
         };
         renderSheet(canvasRef.value, config.value, opts);
       }
@@ -1508,7 +1534,7 @@ export default {
     const downloadPNG = () => {
       if (!canvasRef.value) return;
       const exportCanvas = document.createElement("canvas");
-      renderSheet(exportCanvas, config.value, { isPreview: false, dims: dims.value });
+      renderSheet(exportCanvas, config.value, { isPreview: false, dims: dims.value, markerSize: config.value.markerSize });
       const safeName = (config.value.name || "plantilla_omr")
         .toLowerCase()
         .replace(/[^a-z0-9]/g, "_");

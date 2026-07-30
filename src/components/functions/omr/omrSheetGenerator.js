@@ -58,15 +58,16 @@ export function getAnchorPositions(width, height, margins) {
  * @param {number} width
  * @param {number} height
  * @param {object} margins - optional { top, bottom, left, right } in pixels
+ * @param {number} markerSize - size of the corner markers in pixels
  */
-export function getScannableBounds(width, height, margins) {
+export function getScannableBounds(width, height, margins, markerSize = MARKER_SIZE) {
   const anchors = getAnchorPositions(width, height, margins);
-  const half = MARKER_SIZE / 2;
+  const half = markerSize / 2;
   return {
     x: anchors.TL.x + half,
     y: anchors.TL.y + half,
-    width: anchors.TR.x - anchors.TL.x - MARKER_SIZE,
-    height: anchors.BL.y - anchors.TL.y - MARKER_SIZE,
+    width: anchors.TR.x - anchors.TL.x - markerSize,
+    height: anchors.BL.y - anchors.TL.y - markerSize,
   };
 }
 
@@ -76,9 +77,9 @@ export function getScannableBounds(width, height, margins) {
  * @param {number} height
  * @param {object} margins - optional { top, bottom, left, right } in pixels
  */
-export function getReservedZones(width, height, margins) {
+export function getReservedZones(width, height, margins, markerSize = MARKER_SIZE) {
   const anchors = getAnchorPositions(width, height, margins);
-  const half = MARKER_SIZE / 2 + 18;
+  const half = markerSize / 2 + 18;
   return [
     // Header strip
     { x: 0, y: 0, w: width, h: HEADER_HEIGHT + 10 },
@@ -199,8 +200,9 @@ export function getSectionBounds(sec, dims) {
  * Renders the entire OMR sheet onto a canvas
  */
 export function renderSheet(canvas, config, options = {}) {
-  const { isPreview = false, selectedSectionIndex = -1, dims: canvasDims } = options;
+  const { isPreview = false, selectedSectionIndex = -1, dims: canvasDims, markerSize: markerSizeOpt } = options;
   const { sections = [] } = config;
+  const markerSize = markerSizeOpt || MARKER_SIZE;
 
   const canvasWidth = canvasDims?.width || CANVAS_PORTRAIT.width;
   const canvasHeight = canvasDims?.height || CANVAS_PORTRAIT.height;
@@ -239,10 +241,10 @@ export function renderSheet(canvas, config, options = {}) {
 
   // 2. Concentric Anchor Markers
   const anchors = getAnchorPositions(canvasWidth, canvasHeight, margins);
-  drawConcentricSquareMarker(ctx, anchors.TL.x, anchors.TL.y);
-  drawConcentricSquareMarker(ctx, anchors.TR.x, anchors.TR.y);
-  drawConcentricSquareMarker(ctx, anchors.BL.x, anchors.BL.y);
-  drawConcentricSquareMarker(ctx, anchors.BR.x, anchors.BR.y);
+  drawConcentricSquareMarker(ctx, anchors.TL.x, anchors.TL.y, markerSize);
+  drawConcentricSquareMarker(ctx, anchors.TR.x, anchors.TR.y, markerSize);
+  drawConcentricSquareMarker(ctx, anchors.BL.x, anchors.BL.y, markerSize);
+  drawConcentricSquareMarker(ctx, anchors.BR.x, anchors.BR.y, markerSize);
 
   // 3. Preview reserved zone overlays
   if (isPreview) {
@@ -251,14 +253,14 @@ export function renderSheet(canvas, config, options = {}) {
     ctx.strokeStyle = "rgba(239, 68, 68, 0.28)";
     ctx.lineWidth = 1.2;
     ctx.setLineDash([4, 3]);
-    getReservedZones(canvasWidth, canvasHeight, margins).forEach((z) => {
+    getReservedZones(canvasWidth, canvasHeight, margins, markerSize).forEach((z) => {
       ctx.fillRect(z.x, z.y, z.w, z.h);
       ctx.strokeRect(z.x, z.y, z.w, z.h);
     });
     ctx.restore();
 
     // Scannable area border (red dashed rectangle inside the 4 markers)
-    const area = getScannableBounds(canvasWidth, canvasHeight, margins);
+    const area = getScannableBounds(canvasWidth, canvasHeight, margins, markerSize);
     ctx.save();
     ctx.strokeStyle = "#ef4444";
     ctx.lineWidth = 1.5;
@@ -611,7 +613,7 @@ export function downloadCanvasAsPNG(canvas, filename = "plantilla_omr.png") {
  * Generates JSON template schema for the OMR scanner
  */
 export function exportTemplateJSON(config, canvasDims) {
-  const { name, sections } = config;
+  const { name, sections, markerSize } = config;
   const dims = canvasDims || CANVAS_PORTRAIT;
   const margins = {
     left: dims.width * ANCHOR_MARGIN_RATIO_X,
@@ -754,6 +756,7 @@ export function exportTemplateJSON(config, canvasDims) {
 
   return {
     template_name: name || "Plantilla OMR Personalizada",
+    marker_size: markerSize || MARKER_SIZE,
     margins: margins || { top: 75, bottom: 75, left: 75, right: 75 },
     sections: formattedSections,
   };
