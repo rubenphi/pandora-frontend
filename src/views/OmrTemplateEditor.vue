@@ -47,6 +47,58 @@
             </ion-item>
           </div>
 
+          <!-- Canvas size controls -->
+          <div class="panel-card">
+            <div class="panel-card-title">Tamaño del Lienzo</div>
+            <div class="num-row">
+              <div class="num-field">
+                <label>Ancho (px)</label>
+                <div class="num-input-row">
+                  <ion-range
+                    :value="canvasWidth"
+                    :min="minCanvasDimensions.width"
+                    :max="2000"
+                    step="10"
+                    @ionChange="onCanvasWidthChange(+$event.detail.value)"
+                  ></ion-range>
+                  <input
+                    class="num-input-box"
+                    type="number"
+                    :value="canvasWidth"
+                    :min="minCanvasDimensions.width"
+                    :max="2000"
+                    @change="onCanvasWidthChange(+$event.target.value)"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="num-row">
+              <div class="num-field">
+                <label>Alto (px)</label>
+                <div class="num-input-row">
+                  <ion-range
+                    :value="canvasHeight"
+                    :min="minCanvasDimensions.height"
+                    :max="3000"
+                    step="10"
+                    @ionChange="onCanvasHeightChange(+$event.detail.value)"
+                  ></ion-range>
+                  <input
+                    class="num-input-box"
+                    type="number"
+                    :value="canvasHeight"
+                    :min="minCanvasDimensions.height"
+                    :max="3000"
+                    @change="onCanvasHeightChange(+$event.target.value)"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="canvas-size-hint">
+              Actual: {{ canvasWidth }} × {{ canvasHeight }} px
+            </div>
+          </div>
+
           <!-- Sections list -->
           <div class="panel-card">
             <div class="panel-card-title-row">
@@ -566,92 +618,6 @@
               </div>
             </div>
 
-            <div class="props-group-title">Área escaneable (márgenes)</div>
-            <div class="num-row two-col">
-              <div class="num-field">
-                <label>Superior (px)</label>
-                <div class="num-input-row">
-                  <ion-range
-                    v-model="config.margins.top"
-                    min="30"
-                    max="200"
-                    step="1"
-                    @ionChange="drawPreview"
-                  ></ion-range>
-                  <input
-                    class="num-input-box"
-                    type="number"
-                    v-model.number="config.margins.top"
-                    min="30"
-                    max="200"
-                    @change="drawPreview"
-                  />
-                </div>
-              </div>
-              <div class="num-field">
-                <label>Inferior (px)</label>
-                <div class="num-input-row">
-                  <ion-range
-                    v-model="config.margins.bottom"
-                    min="30"
-                    max="200"
-                    step="1"
-                    @ionChange="drawPreview"
-                  ></ion-range>
-                  <input
-                    class="num-input-box"
-                    type="number"
-                    v-model.number="config.margins.bottom"
-                    min="30"
-                    max="200"
-                    @change="drawPreview"
-                  />
-                </div>
-              </div>
-            </div>
-            <div class="num-row two-col">
-              <div class="num-field">
-                <label>Izquierdo (px)</label>
-                <div class="num-input-row">
-                  <ion-range
-                    v-model="config.margins.left"
-                    min="30"
-                    max="200"
-                    step="1"
-                    @ionChange="drawPreview"
-                  ></ion-range>
-                  <input
-                    class="num-input-box"
-                    type="number"
-                    v-model.number="config.margins.left"
-                    min="30"
-                    max="200"
-                    @change="drawPreview"
-                  />
-                </div>
-              </div>
-              <div class="num-field">
-                <label>Derecho (px)</label>
-                <div class="num-input-row">
-                  <ion-range
-                    v-model="config.margins.right"
-                    min="30"
-                    max="200"
-                    step="1"
-                    @ionChange="drawPreview"
-                  ></ion-range>
-                  <input
-                    class="num-input-box"
-                    type="number"
-                    v-model.number="config.margins.right"
-                    min="30"
-                    max="200"
-                    @change="drawPreview"
-                  />
-                </div>
-              </div>
-            </div>
-
             <div class="drag-hint-box">
               <ion-icon :icon="moveOutline"></ion-icon>
               Arrastra la sección directamente en el lienzo para posicionarla
@@ -777,18 +743,17 @@ export default {
     const tagInputValue = ref("");
     const tagInputRef = ref(null);
     const zoom = ref(1);
+    const canvasWidth = ref(CANVAS_PORTRAIT.width);
+    const canvasHeight = ref(CANVAS_PORTRAIT.height);
 
     // Drag state
     const dragging = ref(false);
-    const dragType = ref(null); // 'section' or 'marker'
-    const dragMarkerName = ref(null); // 'TL', 'TR', 'BL', 'BR'
+    const dragType = ref(null); // 'section'
     const hoverSectionIdx = ref(-1);
     const dragStartCanvasX = ref(0);
     const dragStartCanvasY = ref(0);
     const dragStartPercentX = ref(0);
     const dragStartPercentY = ref(0);
-    const dragStartMargins = ref({ top: 0, bottom: 0, left: 0, right: 0 });
-    const tempMargins = ref(null);
 
     const likertScales = {
       frecuencia: {
@@ -843,12 +808,6 @@ export default {
 
     const config = ref({
       name: "Nueva Plantilla OMR",
-      margins: {
-        top: 75,
-        bottom: 75,
-        left: 75,
-        right: 75,
-      },
       sections: [
         {
           name: "codigo",
@@ -900,25 +859,34 @@ export default {
       return null;
     });
 
-    const dims = computed(() => {
-      const base = CANVAS_PORTRAIT;
-      const m = config.value.margins;
-      const defaultMarginX = base.width * 0.06;
-      const defaultMarginY = base.height * 0.06;
+    const dims = computed(() => ({
+      width: canvasWidth.value,
+      height: canvasHeight.value,
+    }));
 
-      const extraLeft = Math.max(0, m.left - defaultMarginX);
-      const extraRight = Math.max(0, m.right - defaultMarginX);
-      const extraTop = Math.max(0, m.top - defaultMarginY);
-      const extraBottom = Math.max(0, m.bottom - defaultMarginY);
-
-      const shrinkLeft = Math.max(0, defaultMarginX - m.left);
-      const shrinkRight = Math.max(0, defaultMarginX - m.right);
-      const shrinkTop = Math.max(0, defaultMarginY - m.top);
-      const shrinkBottom = Math.max(0, defaultMarginY - m.bottom);
-
+    const minCanvasDimensions = computed(() => {
+      const w = canvasWidth.value;
+      const h = canvasHeight.value;
+      let maxRight = 0;
+      let maxBottom = 0;
+      for (const sec of config.value.sections) {
+        const bounds = getSectionBounds(sec, { width: w, height: h });
+        maxRight = Math.max(maxRight, bounds.x + bounds.width);
+        maxBottom = Math.max(maxBottom, bounds.y + bounds.height);
+      }
       return {
-        width: Math.max(100, base.width + extraLeft + extraRight - shrinkLeft - shrinkRight),
-        height: Math.max(100, base.height + extraTop + extraBottom - shrinkTop - shrinkBottom),
+        width: Math.max(Math.ceil(maxRight + 120), 500),
+        height: Math.max(Math.ceil(maxBottom + 120), 500),
+      };
+    });
+
+    const autoMargins = computed(() => {
+      const d = dims.value;
+      return {
+        left: d.width * 0.06,
+        right: d.width * 0.06,
+        top: d.height * 0.06,
+        bottom: d.height * 0.06,
       };
     });
 
@@ -941,7 +909,7 @@ export default {
     const clampToScannableArea = () => {
       if (!selectedSection.value) return;
       const d = dims.value;
-      const area = getScannableBounds(d.width, d.height, config.value.margins);
+      const area = getScannableBounds(d.width, d.height, autoMargins.value);
       const secIdx = selectedIndex.value;
 
       // Clamp to scannable area
@@ -993,7 +961,31 @@ export default {
       drawPreview();
     };
 
-    const drawPreview = async (marginsOverride) => {
+    const onCanvasWidthChange = (newWidth) => {
+      const oldWidth = canvasWidth.value;
+      newWidth = Math.max(minCanvasDimensions.value.width, Math.min(2000, newWidth));
+      if (Math.abs(newWidth - oldWidth) < 1) return;
+      config.value.sections.forEach((sec) => {
+        const absX = (sec.percentX / 100) * oldWidth;
+        sec.percentX = parseFloat(((absX / newWidth) * 100).toFixed(2));
+      });
+      canvasWidth.value = newWidth;
+      drawPreview();
+    };
+
+    const onCanvasHeightChange = (newHeight) => {
+      const oldHeight = canvasHeight.value;
+      newHeight = Math.max(minCanvasDimensions.value.height, Math.min(3000, newHeight));
+      if (Math.abs(newHeight - oldHeight) < 1) return;
+      config.value.sections.forEach((sec) => {
+        const absY = (sec.percentY / 100) * oldHeight;
+        sec.percentY = parseFloat(((absY / newHeight) * 100).toFixed(2));
+      });
+      canvasHeight.value = newHeight;
+      drawPreview();
+    };
+
+    const drawPreview = async () => {
       await nextTick();
       if (canvasRef.value) {
         const opts = {
@@ -1001,7 +993,6 @@ export default {
           selectedSectionIndex: selectedIndex.value,
           dims: dims.value,
         };
-        if (marginsOverride) opts.margins = marginsOverride;
         renderSheet(canvasRef.value, config.value, opts);
       }
     };
@@ -1051,59 +1042,16 @@ export default {
       return -1;
     };
 
-    const hitTestMarker = (canvasX, canvasY) => {
-      const d = dims.value;
-      const m = config.value.margins;
-      const hitRadius = 30;
-
-      const markers = [
-        { name: 'TL', x: m.left, y: 60 + m.top },
-        { name: 'TR', x: d.width - m.right, y: 60 + m.top },
-        { name: 'BL', x: m.left, y: d.height - m.bottom },
-        { name: 'BR', x: d.width - m.right, y: d.height - m.bottom },
-      ];
-
-      for (const mk of markers) {
-        const dx = canvasX - mk.x;
-        const dy = canvasY - mk.y;
-        if (Math.abs(dx) <= hitRadius && Math.abs(dy) <= hitRadius) {
-          return mk.name;
-        }
-      }
-      return null;
-    };
-
-    const markerToSide = (markerName, dx, dy) => {
-      if (markerName === 'TL') return Math.abs(dx) > Math.abs(dy) ? 'left' : 'top';
-      if (markerName === 'TR') return Math.abs(dx) > Math.abs(dy) ? 'right' : 'top';
-      if (markerName === 'BL') return Math.abs(dx) > Math.abs(dy) ? 'left' : 'bottom';
-      if (markerName === 'BR') return Math.abs(dx) > Math.abs(dy) ? 'right' : 'bottom';
-      return null;
-    };
-
     // ---- Mouse events ----
     const onCanvasMouseDown = (evt) => {
       if (!canvasRef.value) return;
       const pos = getCanvasPos(evt, canvasRef.value);
-
-      // Check marker hit first
-      const markerName = hitTestMarker(pos.x, pos.y);
-      if (markerName) {
-        dragging.value = true;
-        dragType.value = 'marker';
-        dragMarkerName.value = markerName;
-        dragStartCanvasX.value = evt.clientX;
-        dragStartCanvasY.value = evt.clientY;
-        dragStartMargins.value = { ...config.value.margins };
-        return;
-      }
 
       const hitIdx = hitTestSection(pos.x, pos.y);
       if (hitIdx >= 0) {
         selectSection(hitIdx);
         dragging.value = true;
         dragType.value = 'section';
-        dragMarkerName.value = null;
         dragStartCanvasX.value = pos.x;
         dragStartCanvasY.value = pos.y;
         const sec = config.value.sections[hitIdx];
@@ -1119,25 +1067,7 @@ export default {
       if (!canvasRef.value) return;
 
       if (dragging.value) {
-        if (dragType.value === 'marker' && dragMarkerName.value) {
-          const dx = evt.clientX - dragStartCanvasX.value;
-          const dy = evt.clientY - dragStartCanvasY.value;
-          const side = markerToSide(dragMarkerName.value, dx, dy);
-          const startM = dragStartMargins.value;
-          const newMargins = { ...startM };
-
-          if (side === 'top') {
-            newMargins.top = startM.top + dy;
-          } else if (side === 'bottom') {
-            newMargins.bottom = startM.bottom - dy;
-          } else if (side === 'left') {
-            newMargins.left = startM.left + dx;
-          } else if (side === 'right') {
-            newMargins.right = startM.right - dx;
-          }
-          tempMargins.value = newMargins;
-          drawPreview(newMargins);
-        } else if (dragType.value === 'section' && selectedSection.value) {
+        if (dragType.value === 'section' && selectedSection.value) {
           const pos = getCanvasPos(evt, canvasRef.value);
           const d = dims.value;
           const dx = pos.x - dragStartCanvasX.value;
@@ -1161,18 +1091,12 @@ export default {
     };
 
     const onCanvasMouseUp = () => {
-      if (dragging.value && dragType.value === 'marker' && tempMargins.value) {
-        config.value.margins = { ...tempMargins.value };
-        tempMargins.value = null;
-        drawPreview();
-        fitZoom();
-      } else if (dragging.value && dragType.value === 'section' && selectedSection.value) {
+      if (dragging.value && dragType.value === 'section' && selectedSection.value) {
         clampToScannableArea();
         drawPreview();
       }
       dragging.value = false;
       dragType.value = null;
-      dragMarkerName.value = null;
     };
 
     // ---- Touch events ----
@@ -1180,23 +1104,11 @@ export default {
       if (!canvasRef.value || !evt.touches[0]) return;
       const pos = getCanvasPos(evt.touches[0], canvasRef.value);
 
-      const markerName = hitTestMarker(pos.x, pos.y);
-      if (markerName) {
-        dragging.value = true;
-        dragType.value = 'marker';
-        dragMarkerName.value = markerName;
-        dragStartCanvasX.value = evt.touches[0].clientX;
-        dragStartCanvasY.value = evt.touches[0].clientY;
-        dragStartMargins.value = { ...config.value.margins };
-        return;
-      }
-
       const hitIdx = hitTestSection(pos.x, pos.y);
       if (hitIdx >= 0) {
         selectSection(hitIdx);
         dragging.value = true;
         dragType.value = 'section';
-        dragMarkerName.value = null;
         dragStartCanvasX.value = pos.x;
         dragStartCanvasY.value = pos.y;
         const sec = config.value.sections[hitIdx];
@@ -1208,25 +1120,7 @@ export default {
     const onCanvasTouchMove = (evt) => {
       if (!dragging.value || !canvasRef.value || !evt.touches[0]) return;
 
-      if (dragType.value === 'marker' && dragMarkerName.value) {
-        const dx = evt.touches[0].clientX - dragStartCanvasX.value;
-        const dy = evt.touches[0].clientY - dragStartCanvasY.value;
-        const side = markerToSide(dragMarkerName.value, dx, dy);
-        const startM = dragStartMargins.value;
-        const newMargins = { ...startM };
-
-        if (side === 'top') {
-          newMargins.top = startM.top + dy;
-        } else if (side === 'bottom') {
-          newMargins.bottom = startM.bottom - dy;
-        } else if (side === 'left') {
-          newMargins.left = startM.left + dx;
-        } else if (side === 'right') {
-          newMargins.right = startM.right - dx;
-        }
-        tempMargins.value = newMargins;
-        drawPreview(newMargins);
-      } else if (dragType.value === 'section' && selectedSection.value) {
+      if (dragType.value === 'section' && selectedSection.value) {
         const pos = getCanvasPos(evt.touches[0], canvasRef.value);
         const d = dims.value;
         const dx = pos.x - dragStartCanvasX.value;
@@ -1246,18 +1140,12 @@ export default {
     };
 
     const onCanvasTouchEnd = () => {
-      if (dragging.value && dragType.value === 'marker' && tempMargins.value) {
-        config.value.margins = { ...tempMargins.value };
-        tempMargins.value = null;
-        drawPreview();
-        fitZoom();
-      } else if (dragging.value && dragType.value === 'section' && selectedSection.value) {
+      if (dragging.value && dragType.value === 'section' && selectedSection.value) {
         clampToScannableArea();
         drawPreview();
       }
       dragging.value = false;
       dragType.value = null;
-      dragMarkerName.value = null;
     };
 
     // ---- Section management ----
@@ -1628,7 +1516,7 @@ export default {
     };
 
     const exportJSON = () => {
-      const jsonData = exportTemplateJSON(config.value);
+      const jsonData = exportTemplateJSON(config.value, dims.value);
       const str = JSON.stringify(jsonData, null, 2);
       const blob = new Blob([str], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -1667,6 +1555,9 @@ export default {
       onTagInputBackspace,
       addEmptyTag,
       zoom,
+      canvasWidth,
+      canvasHeight,
+      minCanvasDimensions,
       dragging,
       hoverSectionIdx,
       goBack,
@@ -1676,6 +1567,8 @@ export default {
       clampAndDraw,
       fitZoom,
       adjustZoom,
+      onCanvasWidthChange,
+      onCanvasHeightChange,
       addNewSection,
       removeSection,
       onSectionTypeChange,
@@ -1877,6 +1770,13 @@ export default {
   border: 1px solid #bae6fd;
   border-radius: 7px;
   padding: 8px 10px;
+}
+
+.canvas-size-hint {
+  font-size: 11px;
+  color: #94a3b8;
+  text-align: center;
+  padding: 4px 8px 0 8px;
 }
 
 /* Multiselect cell labels grid */

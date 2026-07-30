@@ -199,27 +199,18 @@ export function getSectionBounds(sec, dims) {
  * Renders the entire OMR sheet onto a canvas
  */
 export function renderSheet(canvas, config, options = {}) {
-  const { isPreview = false, selectedSectionIndex = -1, margins: marginsOverride } = options;
+  const { isPreview = false, selectedSectionIndex = -1, dims: canvasDims } = options;
   const { sections = [] } = config;
-  const margins = marginsOverride || config.margins;
 
-  // Dynamic canvas size based on margins
-  const base = CANVAS_PORTRAIT;
-  const defaultMarginX = base.width * ANCHOR_MARGIN_RATIO_X;
-  const defaultMarginY = base.height * ANCHOR_MARGIN_RATIO_Y;
+  const canvasWidth = canvasDims?.width || CANVAS_PORTRAIT.width;
+  const canvasHeight = canvasDims?.height || CANVAS_PORTRAIT.height;
 
-  const extraLeft = Math.max(0, margins.left - defaultMarginX);
-  const extraRight = Math.max(0, margins.right - defaultMarginX);
-  const extraTop = Math.max(0, margins.top - defaultMarginY);
-  const extraBottom = Math.max(0, margins.bottom - defaultMarginY);
-
-  const shrinkLeft = Math.max(0, defaultMarginX - margins.left);
-  const shrinkRight = Math.max(0, defaultMarginX - margins.right);
-  const shrinkTop = Math.max(0, defaultMarginY - margins.top);
-  const shrinkBottom = Math.max(0, defaultMarginY - margins.bottom);
-
-  const canvasWidth = Math.max(100, base.width + extraLeft + extraRight - shrinkLeft - shrinkRight);
-  const canvasHeight = Math.max(100, base.height + extraTop + extraBottom - shrinkTop - shrinkBottom);
+  const margins = {
+    left: canvasWidth * ANCHOR_MARGIN_RATIO_X,
+    right: canvasWidth * ANCHOR_MARGIN_RATIO_X,
+    top: canvasHeight * ANCHOR_MARGIN_RATIO_Y,
+    bottom: canvasHeight * ANCHOR_MARGIN_RATIO_Y,
+  };
 
   canvas.width = canvasWidth;
   canvas.height = canvasHeight;
@@ -619,9 +610,15 @@ export function downloadCanvasAsPNG(canvas, filename = "plantilla_omr.png") {
 /**
  * Generates JSON template schema for the OMR scanner
  */
-export function exportTemplateJSON(config) {
-  const { name, sections, margins } = config;
-  const dims = CANVAS_PORTRAIT;
+export function exportTemplateJSON(config, canvasDims) {
+  const { name, sections } = config;
+  const dims = canvasDims || CANVAS_PORTRAIT;
+  const margins = {
+    left: dims.width * ANCHOR_MARGIN_RATIO_X,
+    right: dims.width * ANCHOR_MARGIN_RATIO_X,
+    top: dims.height * ANCHOR_MARGIN_RATIO_Y,
+    bottom: dims.height * ANCHOR_MARGIN_RATIO_Y,
+  };
 
   const formattedSections = sections.map((sec, i) => {
     const startX = (sec.percentX / 100) * dims.width;
