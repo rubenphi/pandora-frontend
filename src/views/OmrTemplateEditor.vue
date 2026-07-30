@@ -9,11 +9,21 @@
         </ion-buttons>
         <ion-title>Editor de Plantillas OMR</ion-title>
         <ion-buttons slot="end">
-          <ion-button fill="solid" color="light" @click="downloadPNG" title="Descargar PNG">
+          <ion-button
+            fill="solid"
+            color="light"
+            @click="downloadPNG"
+            title="Descargar PNG"
+          >
             <ion-icon :icon="downloadOutline" slot="start"></ion-icon>
             PNG
           </ion-button>
-          <ion-button fill="outline" color="light" @click="exportJSON" title="Exportar JSON">
+          <ion-button
+            fill="outline"
+            color="light"
+            @click="exportJSON"
+            title="Exportar JSON"
+          >
             <ion-icon :icon="codeDownloadOutline" slot="start"></ion-icon>
             JSON
           </ion-button>
@@ -25,20 +35,30 @@
       <div class="editor-layout">
         <!-- ===== LEFT PANEL ===== -->
         <div class="left-panel">
-
           <!-- Sheet config -->
           <div class="panel-card">
             <div class="panel-card-title">Hoja</div>
             <ion-item lines="full">
               <ion-label>Orientación</ion-label>
-              <ion-select v-model="config.orientation" @ionChange="drawPreview" interface="action-sheet">
-                <ion-select-option value="portrait">Vertical (Portrait)</ion-select-option>
-                <ion-select-option value="landscape">Horizontal (Landscape)</ion-select-option>
+              <ion-select
+                v-model="config.orientation"
+                @ionChange="drawPreview"
+                interface="action-sheet"
+              >
+                <ion-select-option value="portrait"
+                  >Vertical (Portrait)</ion-select-option
+                >
+                <ion-select-option value="landscape"
+                  >Horizontal (Landscape)</ion-select-option
+                >
               </ion-select>
             </ion-item>
             <ion-item lines="none">
               <ion-label position="stacked">Nombre de Plantilla</ion-label>
-              <ion-input v-model="config.name" placeholder="Ej: Encuesta 2026"></ion-input>
+              <ion-input
+                v-model="config.name"
+                placeholder="Ej: Encuesta 2026"
+              ></ion-input>
             </ion-item>
           </div>
 
@@ -46,7 +66,12 @@
           <div class="panel-card">
             <div class="panel-card-title-row">
               <span class="panel-card-title">Secciones</span>
-              <ion-button size="small" color="success" fill="solid" @click="addNewSection">
+              <ion-button
+                size="small"
+                color="success"
+                fill="solid"
+                @click="addNewSection"
+              >
                 <ion-icon :icon="addOutline" slot="start"></ion-icon>
                 Añadir
               </ion-button>
@@ -59,15 +84,29 @@
               @click="selectSection(idx)"
             >
               <div class="section-list-info">
-                <span class="section-list-name">{{ sec.title || sec.name }}</span>
-                <span class="section-list-meta">{{ sectionTypeLabel(sec.type) }}
-                  <span v-if="sec.type === 'code'">· {{ sec.digits }} dígitos</span>
+                <span class="section-list-name">{{
+                  sec.title || sec.name
+                }}</span>
+                <span class="section-list-meta"
+                  >{{ sectionTypeLabel(sec.type) }}
+                  <span v-if="sec.type === 'code'"
+                    >· {{ sec.digits }} dígitos</span
+                  >
                   <span v-else>· {{ sec.rows }}×{{ sec.cols }}</span>
                 </span>
               </div>
-              <button class="section-delete-btn" @click.stop="removeSection(idx)" title="Eliminar">✕</button>
+              <button
+                class="section-delete-btn"
+                @click.stop="removeSection(idx)"
+                title="Eliminar"
+              >
+                ✕
+              </button>
             </div>
-            <div v-if="config.sections.length === 0" class="empty-sections-hint">
+            <div
+              v-if="config.sections.length === 0"
+              class="empty-sections-hint"
+            >
               Haz clic en "Añadir" para crear secciones
             </div>
           </div>
@@ -75,25 +114,48 @@
           <!-- Section properties -->
           <div class="panel-card" v-if="selectedSection">
             <div class="panel-card-title">
-              Propiedades: <span class="accent-text">{{ selectedSection.title || selectedSection.name }}</span>
+              Propiedades:
+              <span class="accent-text">{{
+                selectedSection.title || selectedSection.name
+              }}</span>
             </div>
 
             <ion-item lines="full">
-              <ion-label position="stacked">Título visible en la hoja</ion-label>
-              <ion-input v-model="selectedSection.title" @ionInput="drawPreview" placeholder="Título de la sección"></ion-input>
+              <ion-label position="stacked"
+                >Título visible en la hoja</ion-label
+              >
+              <ion-input
+                v-model="selectedSection.title"
+                @ionInput="drawPreview"
+                placeholder="Título de la sección"
+              ></ion-input>
             </ion-item>
 
             <ion-item lines="full">
               <ion-label position="stacked">Nombre interno (JSON)</ion-label>
-              <ion-input v-model="selectedSection.name" @ionInput="drawPreview" placeholder="seccion1"></ion-input>
+              <ion-input
+                v-model="selectedSection.name"
+                @ionInput="drawPreview"
+                placeholder="seccion1"
+              ></ion-input>
             </ion-item>
 
             <ion-item lines="full">
-              <ion-label>Tipo</ion-label>
-              <ion-select v-model="selectedSection.type" @ionChange="onSectionTypeChange" interface="action-sheet">
-                <ion-select-option value="code">Código de Identificación</ion-select-option>
-                <ion-select-option value="question">Pregunta (única opción)</ion-select-option>
-                <ion-select-option value="multiselect">Múltiple selección</ion-select-option>
+              <ion-label position="stacked">Tipo</ion-label>
+              <ion-select
+                v-model="selectedSection.type"
+                @ionChange="onSectionTypeChange"
+                interface="action-sheet"
+              >
+                <ion-select-option value="code"
+                  >Código de Identificación</ion-select-option
+                >
+                <ion-select-option value="question"
+                  >Pregunta (única opción)</ion-select-option
+                >
+                <ion-select-option value="multiselect"
+                  >Múltiple selección</ion-select-option
+                >
               </ion-select>
             </ion-item>
 
@@ -104,8 +166,21 @@
                 <div class="num-field">
                   <label>Dígitos</label>
                   <div class="num-input-row">
-                    <ion-range v-model="selectedSection.digits" min="1" max="12" step="1" @ionChange="drawPreview"></ion-range>
-                    <input class="num-input-box" type="number" v-model.number="selectedSection.digits" min="1" max="12" @change="drawPreview" />
+                    <ion-range
+                      v-model="selectedSection.digits"
+                      min="1"
+                      max="12"
+                      step="1"
+                      @ionChange="drawPreview"
+                    ></ion-range>
+                    <input
+                      class="num-input-box"
+                      type="number"
+                      v-model.number="selectedSection.digits"
+                      min="1"
+                      max="12"
+                      @change="drawPreview"
+                    />
                   </div>
                 </div>
               </div>
@@ -113,8 +188,21 @@
                 <div class="num-field">
                   <label>Tamaño celda escritura (px)</label>
                   <div class="num-input-row">
-                    <ion-range v-model="selectedSection.cellSize" min="20" max="70" step="1" @ionChange="drawPreview"></ion-range>
-                    <input class="num-input-box" type="number" v-model.number="selectedSection.cellSize" min="20" max="70" @change="drawPreview" />
+                    <ion-range
+                      v-model="selectedSection.cellSize"
+                      min="20"
+                      max="70"
+                      step="1"
+                      @ionChange="drawPreview"
+                    ></ion-range>
+                    <input
+                      class="num-input-box"
+                      type="number"
+                      v-model.number="selectedSection.cellSize"
+                      min="20"
+                      max="70"
+                      @change="drawPreview"
+                    />
                   </div>
                 </div>
               </div>
@@ -122,8 +210,21 @@
                 <div class="num-field">
                   <label>Separación columnas (px)</label>
                   <div class="num-input-row">
-                    <ion-range v-model="selectedSection.colSpacing" min="24" max="80" step="1" @ionChange="drawPreview"></ion-range>
-                    <input class="num-input-box" type="number" v-model.number="selectedSection.colSpacing" min="24" max="80" @change="drawPreview" />
+                    <ion-range
+                      v-model="selectedSection.colSpacing"
+                      min="24"
+                      max="80"
+                      step="1"
+                      @ionChange="drawPreview"
+                    ></ion-range>
+                    <input
+                      class="num-input-box"
+                      type="number"
+                      v-model.number="selectedSection.colSpacing"
+                      min="24"
+                      max="80"
+                      @change="drawPreview"
+                    />
                   </div>
                 </div>
               </div>
@@ -131,8 +232,21 @@
                 <div class="num-field">
                   <label>Separación filas burbujas (px)</label>
                   <div class="num-input-row">
-                    <ion-range v-model="selectedSection.rowSpacing" min="16" max="60" step="1" @ionChange="drawPreview"></ion-range>
-                    <input class="num-input-box" type="number" v-model.number="selectedSection.rowSpacing" min="16" max="60" @change="drawPreview" />
+                    <ion-range
+                      v-model="selectedSection.rowSpacing"
+                      min="16"
+                      max="60"
+                      step="1"
+                      @ionChange="drawPreview"
+                    ></ion-range>
+                    <input
+                      class="num-input-box"
+                      type="number"
+                      v-model.number="selectedSection.rowSpacing"
+                      min="16"
+                      max="60"
+                      @change="drawPreview"
+                    />
                   </div>
                 </div>
               </div>
@@ -140,8 +254,21 @@
                 <div class="num-field">
                   <label>Radio burbuja (px)</label>
                   <div class="num-input-row">
-                    <ion-range v-model="selectedSection.radius" min="5" max="18" step="1" @ionChange="drawPreview"></ion-range>
-                    <input class="num-input-box" type="number" v-model.number="selectedSection.radius" min="5" max="18" @change="drawPreview" />
+                    <ion-range
+                      v-model="selectedSection.radius"
+                      min="5"
+                      max="18"
+                      step="1"
+                      @ionChange="drawPreview"
+                    ></ion-range>
+                    <input
+                      class="num-input-box"
+                      type="number"
+                      v-model.number="selectedSection.radius"
+                      min="5"
+                      max="18"
+                      @change="drawPreview"
+                    />
                   </div>
                 </div>
               </div>
@@ -154,15 +281,41 @@
                 <div class="num-field">
                   <label>Filas</label>
                   <div class="num-input-row">
-                    <ion-range v-model="selectedSection.rows" min="1" max="50" step="1" @ionChange="drawPreview"></ion-range>
-                    <input class="num-input-box" type="number" v-model.number="selectedSection.rows" min="1" max="50" @change="drawPreview" />
+                    <ion-range
+                      v-model="selectedSection.rows"
+                      min="1"
+                      max="50"
+                      step="1"
+                      @ionChange="drawPreview"
+                    ></ion-range>
+                    <input
+                      class="num-input-box"
+                      type="number"
+                      v-model.number="selectedSection.rows"
+                      min="1"
+                      max="50"
+                      @change="drawPreview"
+                    />
                   </div>
                 </div>
                 <div class="num-field">
                   <label>Columnas</label>
                   <div class="num-input-row">
-                    <ion-range v-model="selectedSection.cols" min="1" max="20" step="1" @ionChange="drawPreview"></ion-range>
-                    <input class="num-input-box" type="number" v-model.number="selectedSection.cols" min="1" max="20" @change="drawPreview" />
+                    <ion-range
+                      v-model="selectedSection.cols"
+                      min="1"
+                      max="20"
+                      step="1"
+                      @ionChange="drawPreview"
+                    ></ion-range>
+                    <input
+                      class="num-input-box"
+                      type="number"
+                      v-model.number="selectedSection.cols"
+                      min="1"
+                      max="20"
+                      @change="drawPreview"
+                    />
                   </div>
                 </div>
               </div>
@@ -171,8 +324,21 @@
                 <div class="num-field">
                   <label>Separación columnas (px)</label>
                   <div class="num-input-row">
-                    <ion-range v-model="selectedSection.colSpacing" min="20" max="100" step="1" @ionChange="drawPreview"></ion-range>
-                    <input class="num-input-box" type="number" v-model.number="selectedSection.colSpacing" min="20" max="100" @change="drawPreview" />
+                    <ion-range
+                      v-model="selectedSection.colSpacing"
+                      min="20"
+                      max="100"
+                      step="1"
+                      @ionChange="drawPreview"
+                    ></ion-range>
+                    <input
+                      class="num-input-box"
+                      type="number"
+                      v-model.number="selectedSection.colSpacing"
+                      min="20"
+                      max="100"
+                      @change="drawPreview"
+                    />
                   </div>
                 </div>
               </div>
@@ -181,8 +347,21 @@
                 <div class="num-field">
                   <label>Separación filas (px)</label>
                   <div class="num-input-row">
-                    <ion-range v-model="selectedSection.rowSpacing" min="16" max="80" step="1" @ionChange="drawPreview"></ion-range>
-                    <input class="num-input-box" type="number" v-model.number="selectedSection.rowSpacing" min="16" max="80" @change="drawPreview" />
+                    <ion-range
+                      v-model="selectedSection.rowSpacing"
+                      min="16"
+                      max="80"
+                      step="1"
+                      @ionChange="drawPreview"
+                    ></ion-range>
+                    <input
+                      class="num-input-box"
+                      type="number"
+                      v-model.number="selectedSection.rowSpacing"
+                      min="16"
+                      max="80"
+                      @change="drawPreview"
+                    />
                   </div>
                 </div>
               </div>
@@ -191,39 +370,193 @@
                 <div class="num-field">
                   <label>Radio burbuja (px)</label>
                   <div class="num-input-row">
-                    <ion-range v-model="selectedSection.radius" min="5" max="20" step="1" @ionChange="drawPreview"></ion-range>
-                    <input class="num-input-box" type="number" v-model.number="selectedSection.radius" min="5" max="20" @change="drawPreview" />
+                    <ion-range
+                      v-model="selectedSection.radius"
+                      min="5"
+                      max="20"
+                      step="1"
+                      @ionChange="drawPreview"
+                    ></ion-range>
+                    <input
+                      class="num-input-box"
+                      type="number"
+                      v-model.number="selectedSection.radius"
+                      min="5"
+                      max="20"
+                      @change="drawPreview"
+                    />
                   </div>
                 </div>
               </div>
 
-              <div class="props-group-title">Etiquetas</div>
-              <ion-item lines="full">
+              <div class="props-group-title" v-if="selectedSection.type !== 'multiselect'">Etiquetas</div>
+              <ion-item lines="full" v-if="selectedSection.type !== 'multiselect'">
                 <ion-label>Preset de etiquetas</ion-label>
-                <ion-select v-model="selectedPreset" @ionChange="applyLabelPreset" interface="action-sheet">
-                  <ion-select-option value="numbers">1, 2, 3…</ion-select-option>
-                  <ion-select-option value="letters">A, B, C, D</ion-select-option>
-                  <ion-select-option value="likert">Nunca / Algunas veces / Casi siempre / Siempre</ion-select-option>
+                <ion-select
+                  v-model="selectedPreset"
+                  @ionChange="applyLabelPreset"
+                  interface="action-sheet"
+                >
+                  <ion-select-option value="numbers"
+                    >1, 2, 3…</ion-select-option
+                  >
+                  <ion-select-option value="letters"
+                    >A, B, C, D</ion-select-option
+                  >
+                  <ion-select-option value="likert"
+                    >Escala Likert</ion-select-option
+                  >
                   <ion-select-option value="yesno">Sí / No</ion-select-option>
-                  <ion-select-option value="custom">Personalizado</ion-select-option>
+                  <ion-select-option value="custom"
+                    >Personalizado</ion-select-option
+                  >
                 </ion-select>
               </ion-item>
 
-              <ion-item v-if="selectedPreset === 'custom'" lines="full">
-                <ion-label position="stacked">Etiquetas (separadas por comas)</ion-label>
-                <ion-input v-model="customLabelsInput" placeholder="Opción 1, Opción 2..." @ionInput="applyCustomLabels"></ion-input>
+              <!-- Likert scale chips -->
+              <div v-if="selectedPreset === 'likert' && selectedSection.type !== 'multiselect'" class="likert-chips-section">
+                <div class="likert-chips-grid">
+                  <button
+                    v-for="(scale, key) in likertScales"
+                    :key="key"
+                    class="likert-chip"
+                    @click="applyLikertScale(key)"
+                  >
+                    {{ scale.label }}
+                  </button>
+                </div>
+              </div>
+
+              <ion-item v-if="selectedPreset === 'custom' && selectedSection.type !== 'multiselect'" lines="full">
+                <ion-label position="stacked"
+                  >Etiquetas (separadas por comas)</ion-label
+                >
+                <ion-input
+                  v-model="customLabelsInput"
+                  placeholder="Opción 1, Opción 2..."
+                  @ionInput="applyCustomLabels"
+                ></ion-input>
               </ion-item>
 
-              <ion-item lines="none">
+              <ion-item lines="none" v-if="selectedSection.type !== 'multiselect'">
                 <ion-label>Mostrar etiquetas en hoja</ion-label>
-                <ion-toggle v-model="selectedSection.showLabels" @ionChange="drawPreview"></ion-toggle>
+                <ion-toggle
+                  v-model="selectedSection.showLabels"
+                  @ionChange="drawPreview"
+                ></ion-toggle>
               </ion-item>
 
-              <ion-item lines="none" v-if="selectedSection.showLabels">
-                <ion-label position="stacked">Prefijo de fila (ej: Q, P)</ion-label>
-                <ion-input v-model="selectedSection.rowPrefix" @ionInput="drawPreview" placeholder="Q"></ion-input>
+              <ion-item
+                lines="none"
+                v-if="
+                  selectedSection.showLabels &&
+                  selectedSection.type !== 'multiselect'
+                "
+              >
+                <ion-label position="stacked"
+                  >Prefijo de fila (ej: Q, P)</ion-label
+                >
+                <ion-input
+                  v-model="selectedSection.rowPrefix"
+                  @ionInput="drawPreview"
+                  placeholder="Q"
+                ></ion-input>
               </ion-item>
+
+              <!-- Multiselect: editable list of labels -->
+              <template v-if="selectedSection.type === 'multiselect'">
+                <div class="props-group-title">Etiquetas por celda</div>
+                <div class="label-list-section">
+                  <div
+                    v-for="(tag, idx) in flatTags"
+                    :key="'label-' + idx"
+                    class="label-list-row"
+                  >
+                    <span class="label-list-pos">{{ idx + 1 }}</span>
+                    <input
+                      class="label-list-input"
+                      :value="tag"
+                      @input="setFlatTag(idx, $event.target.value)"
+                      @blur="drawPreview"
+                      :placeholder="'Etiqueta ' + (idx + 1)"
+                    />
+                  </div>
+                  <div class="label-list-hint">
+                    {{ flatTags.filter(t => t).length }} / {{ selectedSection.rows * selectedSection.cols }} etiquetas
+                    — Se llenan de izq. a der. y arriba a abajo en la grilla
+                  </div>
+                </div>
+              </template>
             </template>
+
+            <div class="props-group-title">Posición en la hoja (%)</div>
+            <div class="num-row two-col">
+              <div class="num-field">
+                <label>Posición X</label>
+                <div class="num-input-row">
+                  <ion-range
+                    v-model="selectedSection.percentX"
+                    min="0"
+                    max="90"
+                    step="0.5"
+                    @ionChange="clampAndDraw"
+                  ></ion-range>
+                  <input
+                    class="num-input-box"
+                    type="number"
+                    v-model.number="selectedSection.percentX"
+                    min="0"
+                    max="90"
+                    step="0.5"
+                    @change="clampAndDraw"
+                  />
+                </div>
+              </div>
+              <div class="num-field">
+                <label>Posición Y</label>
+                <div class="num-input-row">
+                  <ion-range
+                    v-model="selectedSection.percentY"
+                    min="0"
+                    max="90"
+                    step="0.5"
+                    @ionChange="clampAndDraw"
+                  ></ion-range>
+                  <input
+                    class="num-input-box"
+                    type="number"
+                    v-model.number="selectedSection.percentY"
+                    min="0"
+                    max="90"
+                    step="0.5"
+                    @change="clampAndDraw"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="num-row">
+              <div class="num-field">
+                <label>Tamaño sección (escala %)</label>
+                <div class="num-input-row">
+                  <ion-range
+                    v-model="selectedSection.scale"
+                    min="50"
+                    max="200"
+                    step="5"
+                    @ionChange="applyScale"
+                  ></ion-range>
+                  <input
+                    class="num-input-box"
+                    type="number"
+                    v-model.number="selectedSection.scale"
+                    min="50"
+                    max="200"
+                    @change="applyScale"
+                  />
+                </div>
+              </div>
+            </div>
 
             <div class="drag-hint-box">
               <ion-icon :icon="moveOutline"></ion-icon>
@@ -240,7 +573,9 @@
               <button class="zoom-btn" @click="adjustZoom(-0.05)">−</button>
               <span class="zoom-value">{{ Math.round(zoom * 100) }}%</span>
               <button class="zoom-btn" @click="adjustZoom(0.05)">+</button>
-              <button class="zoom-btn zoom-fit" @click="fitZoom">Ajustar</button>
+              <button class="zoom-btn zoom-fit" @click="fitZoom">
+                Ajustar
+              </button>
             </div>
             <div class="canvas-legend">
               <span class="reserved-sample"></span> Zona reservada
@@ -249,11 +584,23 @@
           </div>
 
           <div class="canvas-scroll-container" ref="scrollContainer">
-            <div class="canvas-scaled-wrapper" :style="{ transform: `scale(${zoom})`, transformOrigin: 'top left' }">
+            <div
+              class="canvas-scaled-wrapper"
+              :style="{
+                transform: `scale(${zoom})`,
+                transformOrigin: 'top left',
+              }"
+            >
               <canvas
                 ref="canvasRef"
                 class="omr-canvas"
-                :style="{ cursor: dragging ? 'grabbing' : (hoverSectionIdx >= 0 ? 'grab' : 'default') }"
+                :style="{
+                  cursor: dragging
+                    ? 'grabbing'
+                    : hoverSectionIdx >= 0
+                    ? 'grab'
+                    : 'default',
+                }"
                 @mousedown="onCanvasMouseDown"
                 @mousemove="onCanvasMouseMove"
                 @mouseup="onCanvasMouseUp"
@@ -272,21 +619,38 @@
 
 <script>
 import {
-  IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
-  IonButtons, IonButton, IonIcon, IonItem, IonLabel,
-  IonInput, IonSelect, IonSelectOption, IonToggle, IonRange,
+  IonPage,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+  IonButtons,
+  IonButton,
+  IonIcon,
+  IonItem,
+  IonLabel,
+  IonInput,
+  IonSelect,
+  IonSelectOption,
+  IonToggle,
+  IonRange,
 } from "@ionic/vue";
 import { ref, computed, onMounted, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import {
-  arrowBackOutline, downloadOutline, codeDownloadOutline,
-  addOutline, trashOutline, moveOutline,
+  arrowBackOutline,
+  downloadOutline,
+  codeDownloadOutline,
+  addOutline,
+  trashOutline,
+  moveOutline,
 } from "ionicons/icons";
 import {
   renderSheet,
   downloadCanvasAsPNG,
   exportTemplateJSON,
   getSectionBounds,
+  getScannableBounds,
   CANVAS_PORTRAIT,
   CANVAS_LANDSCAPE,
 } from "@/components/functions/omr/omrSheetGenerator.js";
@@ -294,9 +658,21 @@ import {
 export default {
   name: "OmrTemplateEditor",
   components: {
-    IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
-    IonButtons, IonButton, IonIcon, IonItem, IonLabel,
-    IonInput, IonSelect, IonSelectOption, IonToggle, IonRange,
+    IonPage,
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonContent,
+    IonButtons,
+    IonButton,
+    IonIcon,
+    IonItem,
+    IonLabel,
+    IonInput,
+    IonSelect,
+    IonSelectOption,
+    IonToggle,
+    IonRange,
   },
   setup() {
     const router = useRouter();
@@ -305,7 +681,9 @@ export default {
     const selectedIndex = ref(-1);
     const selectedPreset = ref("likert");
     const customLabelsInput = ref("");
-    const zoom = ref(0.5);
+    const tagInputValue = ref("");
+    const tagInputRef = ref(null);
+    const zoom = ref(0.6);
 
     // Drag state
     const dragging = ref(false);
@@ -314,6 +692,57 @@ export default {
     const dragStartCanvasY = ref(0);
     const dragStartPercentX = ref(0);
     const dragStartPercentY = ref(0);
+
+    const likertScales = {
+      frecuencia: {
+        label: "Frecuencia",
+        options: ["Nunca", "Casi nunca", "Algunas veces", "Casi siempre", "Siempre"],
+      },
+      acuerdo: {
+        label: "Acuerdo",
+        options: ["Totalmente en desacuerdo", "En desacuerdo", "Ni de acuerdo ni en desacuerdo", "De acuerdo", "Totalmente de acuerdo"],
+      },
+      importancia: {
+        label: "Importancia",
+        options: ["Nada importante", "Poco importante", "Moderadamente importante", "Importante", "Muy importante"],
+      },
+      satisfaccion: {
+        label: "Satisfacción",
+        options: ["Muy insatisfecho", "Insatisfecho", "Ni satisfecho ni insatisfecho", "Satisfecho", "Muy satisfecho"],
+      },
+      calidad: {
+        label: "Calidad",
+        options: ["Muy mala", "Mala", "Regular", "Buena", "Excelente"],
+      },
+      dificultad: {
+        label: "Dificultad",
+        options: ["Muy difícil", "Difícil", "Ni fácil ni difícil", "Fácil", "Muy fácil"],
+      },
+      probabilidad: {
+        label: "Probabilidad",
+        options: ["Muy improbable", "Improbable", "Ni probable ni improbable", "Probable", "Muy probable"],
+      },
+      capacidad: {
+        label: "Capacidad",
+        options: ["Muy baja", "Baja", "Media", "Alta", "Muy alta"],
+      },
+      intensidad: {
+        label: "Intensidad",
+        options: ["Muy baja", "Baja", "Moderada", "Alta", "Muy alta"],
+      },
+      utilidad: {
+        label: "Utilidad",
+        options: ["Nada útil", "Poco útil", "Moderadamente útil", "Útil", "Muy útil"],
+      },
+      confianza: {
+        label: "Confianza",
+        options: ["Nada de confianza", "Poca confianza", "Confianza moderada", "Mucha confianza", "Total confianza"],
+      },
+      claridad: {
+        label: "Claridad",
+        options: ["Nada claro", "Poco claro", "Moderadamente claro", "Claro", "Muy claro"],
+      },
+    };
 
     const config = ref({
       name: "Nueva Plantilla OMR",
@@ -325,25 +754,33 @@ export default {
           type: "code",
           digits: 6,
           cellSize: 36,
-          colSpacing: 40,
-          rowSpacing: 28,
-          radius: 10,
+          colSpacing: 37,
+          rowSpacing: 36,
+          radius: 12,
+          scale: 100,
           percentX: 10,
-          percentY: 8,
+          percentY: 12,
         },
         {
           name: "seccion1",
           title: "Sección 1",
           type: "question",
           rows: 10,
-          cols: 4,
-          colSpacing: 50,
-          rowSpacing: 32,
+          cols: 5,
+          colSpacing: 58,
+          rowSpacing: 38,
           radius: 11,
+          scale: 100,
           showLabels: true,
           rowPrefix: "Q",
           labelWidth: 55,
-          labels: ["Nunca", "Algunas veces", "Casi siempre", "Siempre"],
+          labels: [
+            "Nunca",
+            "Rara vez",
+            "Algunas veces",
+            "Casi siempre",
+            "Siempre",
+          ],
           percentX: 10,
           percentY: 38,
         },
@@ -351,14 +788,19 @@ export default {
     });
 
     const selectedSection = computed(() => {
-      if (selectedIndex.value >= 0 && selectedIndex.value < config.value.sections.length) {
+      if (
+        selectedIndex.value >= 0 &&
+        selectedIndex.value < config.value.sections.length
+      ) {
         return config.value.sections[selectedIndex.value];
       }
       return null;
     });
 
     const dims = computed(() =>
-      config.value.orientation === "landscape" ? CANVAS_LANDSCAPE : CANVAS_PORTRAIT
+      config.value.orientation === "landscape"
+        ? CANVAS_LANDSCAPE
+        : CANVAS_PORTRAIT,
     );
 
     const goBack = () => router.back();
@@ -375,6 +817,27 @@ export default {
     };
 
     // ---- Canvas Rendering ----
+    const clampToScannableArea = () => {
+      if (!selectedSection.value) return;
+      const d = dims.value;
+      const area = getScannableBounds(d.width, d.height);
+      const bounds = getSectionBounds(selectedSection.value, d);
+      let dx = 0, dy = 0;
+      if (bounds.x < area.x) dx = area.x - bounds.x;
+      if (bounds.y < area.y) dy = area.y - bounds.y;
+      if (bounds.x + bounds.width > area.x + area.width) dx = (area.x + area.width) - (bounds.x + bounds.width);
+      if (bounds.y + bounds.height > area.y + area.height) dy = (area.y + area.height) - (bounds.y + bounds.height);
+      if (dx !== 0 || dy !== 0) {
+        selectedSection.value.percentX = parseFloat((selectedSection.value.percentX + (dx / d.width) * 100).toFixed(2));
+        selectedSection.value.percentY = parseFloat((selectedSection.value.percentY + (dy / d.height) * 100).toFixed(2));
+      }
+    };
+
+    const clampAndDraw = () => {
+      clampToScannableArea();
+      drawPreview();
+    };
+
     const drawPreview = async () => {
       await nextTick();
       if (canvasRef.value) {
@@ -388,10 +851,13 @@ export default {
     const fitZoom = async () => {
       await nextTick();
       if (scrollContainer.value && canvasRef.value) {
-        const containerW = scrollContainer.value.clientWidth - 40;
-        const containerH = scrollContainer.value.clientHeight - 40;
+        const containerW = scrollContainer.value.clientWidth - 32;
+        const containerH = scrollContainer.value.clientHeight - 32;
         const d = dims.value;
-        zoom.value = Math.min(containerW / d.width, containerH / d.height, 1);
+        zoom.value = Math.max(
+          1,
+          Math.min(containerW / d.width, containerH / d.height, 1),
+        );
       }
     };
 
@@ -455,8 +921,14 @@ export default {
         const d = dims.value;
         const dx = pos.x - dragStartCanvasX.value;
         const dy = pos.y - dragStartCanvasY.value;
-        const newPX = Math.max(0, Math.min(95, dragStartPercentX.value + (dx / d.width) * 100));
-        const newPY = Math.max(0, Math.min(95, dragStartPercentY.value + (dy / d.height) * 100));
+        const newPX = Math.max(
+          0,
+          Math.min(95, dragStartPercentX.value + (dx / d.width) * 100),
+        );
+        const newPY = Math.max(
+          0,
+          Math.min(95, dragStartPercentY.value + (dy / d.height) * 100),
+        );
         selectedSection.value.percentX = parseFloat(newPX.toFixed(2));
         selectedSection.value.percentY = parseFloat(newPY.toFixed(2));
         drawPreview();
@@ -466,6 +938,10 @@ export default {
     };
 
     const onCanvasMouseUp = () => {
+      if (dragging.value && selectedSection.value) {
+        clampToScannableArea();
+        drawPreview();
+      }
       dragging.value = false;
     };
 
@@ -491,8 +967,14 @@ export default {
       const d = dims.value;
       const dx = pos.x - dragStartCanvasX.value;
       const dy = pos.y - dragStartCanvasY.value;
-      const newPX = Math.max(0, Math.min(95, dragStartPercentX.value + (dx / d.width) * 100));
-      const newPY = Math.max(0, Math.min(95, dragStartPercentY.value + (dy / d.height) * 100));
+      const newPX = Math.max(
+        0,
+        Math.min(95, dragStartPercentX.value + (dx / d.width) * 100),
+      );
+      const newPY = Math.max(
+        0,
+        Math.min(95, dragStartPercentY.value + (dy / d.height) * 100),
+      );
       if (selectedSection.value) {
         selectedSection.value.percentX = parseFloat(newPX.toFixed(2));
         selectedSection.value.percentY = parseFloat(newPY.toFixed(2));
@@ -501,6 +983,10 @@ export default {
     };
 
     const onCanvasTouchEnd = () => {
+      if (dragging.value && selectedSection.value) {
+        clampToScannableArea();
+        drawPreview();
+      }
       dragging.value = false;
     };
 
@@ -513,9 +999,10 @@ export default {
         type: "question",
         rows: 5,
         cols: 4,
-        colSpacing: 50,
-        rowSpacing: 32,
+        colSpacing: 58,
+        rowSpacing: 38,
         radius: 11,
+        scale: 100,
         showLabels: true,
         rowPrefix: "Q",
         labelWidth: 55,
@@ -541,18 +1028,50 @@ export default {
         // Reset to code defaults
         selectedSection.value.digits = selectedSection.value.digits || 6;
         selectedSection.value.cellSize = selectedSection.value.cellSize || 36;
-        selectedSection.value.colSpacing = selectedSection.value.colSpacing || 40;
-        selectedSection.value.rowSpacing = selectedSection.value.rowSpacing || 28;
+        selectedSection.value.colSpacing =
+          selectedSection.value.colSpacing || 48;
+        selectedSection.value.rowSpacing =
+          selectedSection.value.rowSpacing || 36;
         selectedSection.value.radius = selectedSection.value.radius || 10;
         delete selectedSection.value.rows;
         delete selectedSection.value.cols;
         delete selectedSection.value.labels;
         delete selectedSection.value.showLabels;
+      } else if (selectedSection.value.type === "multiselect") {
+        // Reset to multiselect defaults
+        selectedSection.value.rows = selectedSection.value.rows || 4;
+        selectedSection.value.cols = selectedSection.value.cols || 3;
+        selectedSection.value.colSpacing =
+          selectedSection.value.colSpacing || 58;
+        selectedSection.value.rowSpacing =
+          selectedSection.value.rowSpacing || 38;
+        selectedSection.value.radius = selectedSection.value.radius || 11;
+        selectedSection.value.scale = selectedSection.value.scale || 100;
+        selectedSection.value.showLabels = true;
+        const needsRebuild =
+          !Array.isArray(selectedSection.value.labels) ||
+          selectedSection.value.labels.length === 0 ||
+          !Array.isArray(selectedSection.value.labels[0]);
+        if (needsRebuild) {
+          selectedSection.value.labels = [];
+          for (let r = 0; r < selectedSection.value.rows; r++) {
+            selectedSection.value.labels[r] = [];
+            for (let c = 0; c < selectedSection.value.cols; c++) {
+              selectedSection.value.labels[r][c] = "";
+            }
+          }
+        }
       } else {
         // Restore question defaults
         selectedSection.value.rows = selectedSection.value.rows || 5;
         selectedSection.value.cols = selectedSection.value.cols || 4;
-        selectedSection.value.labels = selectedSection.value.labels || ["A", "B", "C", "D"];
+        selectedSection.value.labels = selectedSection.value.labels || [
+          "A",
+          "B",
+          "C",
+          "D",
+        ];
+        selectedSection.value.scale = selectedSection.value.scale || 100;
         selectedSection.value.showLabels = true;
       }
       drawPreview();
@@ -561,15 +1080,55 @@ export default {
     const applyLabelPreset = () => {
       if (!selectedSection.value) return;
       const preset = selectedPreset.value;
+
+      // For multiselect, fill each row with the same labels
+      if (selectedSection.value.type === "multiselect") {
+        if (preset === "numbers") {
+          const n = selectedSection.value.cols;
+          const row = Array.from({ length: n }, (_, i) => String(i + 1));
+          selectedSection.value.labels = Array.from({ length: selectedSection.value.rows }, () => [...row]);
+        } else if (preset === "letters") {
+          const letters = ["A", "B", "C", "D", "E", "F", "G", "H"];
+          const row = letters.slice(0, selectedSection.value.cols);
+          selectedSection.value.labels = Array.from({ length: selectedSection.value.rows }, () => [...row]);
+        } else if (preset === "yesno") {
+          const row = ["Sí", "No"];
+          selectedSection.value.cols = 2;
+          selectedSection.value.labels = Array.from({ length: selectedSection.value.rows }, () => [...row]);
+        } else if (preset === "likert") {
+          // Likert scales are applied via chips, not directly here
+          drawPreview();
+          return;
+        } else if (preset === "custom") {
+          // Custom: clear labels for manual entry
+          selectedSection.value.labels = [];
+          for (let r = 0; r < selectedSection.value.rows; r++) {
+            selectedSection.value.labels[r] = [];
+            for (let c = 0; c < selectedSection.value.cols; c++) {
+              selectedSection.value.labels[r][c] = "";
+            }
+          }
+        }
+        drawPreview();
+        return;
+      }
+
+      // For question type
       if (preset === "numbers") {
         const n = selectedSection.value.cols;
-        selectedSection.value.labels = Array.from({ length: n }, (_, i) => String(i + 1));
+        selectedSection.value.labels = Array.from({ length: n }, (_, i) =>
+          String(i + 1),
+        );
       } else if (preset === "letters") {
         const letters = ["A", "B", "C", "D", "E", "F", "G", "H"];
-        selectedSection.value.labels = letters.slice(0, selectedSection.value.cols);
+        selectedSection.value.labels = letters.slice(
+          0,
+          selectedSection.value.cols,
+        );
       } else if (preset === "likert") {
-        selectedSection.value.labels = ["Nunca", "Algunas veces", "Casi siempre", "Siempre"];
-        selectedSection.value.cols = 4;
+        // Likert scales are applied via chips, not directly here
+        drawPreview();
+        return;
       } else if (preset === "yesno") {
         selectedSection.value.labels = ["Sí", "No"];
         selectedSection.value.cols = 2;
@@ -577,12 +1136,210 @@ export default {
       drawPreview();
     };
 
+    const applyLikertScale = (key) => {
+      if (!selectedSection.value) return;
+      const scale = likertScales[key];
+      if (!scale) return;
+
+      if (selectedSection.value.type === "multiselect") {
+        // Fill each row with the same Likert labels
+        selectedSection.value.cols = scale.options.length;
+        selectedSection.value.labels = Array.from(
+          { length: selectedSection.value.rows },
+          () => [...scale.options],
+        );
+      } else {
+        selectedSection.value.labels = [...scale.options];
+        selectedSection.value.cols = scale.options.length;
+      }
+      drawPreview();
+    };
+
+    const applyScale = () => {
+      if (!selectedSection.value) return;
+      const s = (selectedSection.value.scale || 100) / 100;
+
+      if (selectedSection.value.type === "code") {
+        // For code sections, scale colSpacing, rowSpacing, and radius proportionally
+        selectedSection.value.colSpacing = Math.round(48 * s);
+        selectedSection.value.rowSpacing = Math.round(36 * s);
+        selectedSection.value.radius = Math.max(5, Math.round(10 * s));
+      } else {
+        // For question/multiselect sections, scale colSpacing, rowSpacing, and radius proportionally
+        selectedSection.value.colSpacing = Math.round(58 * s);
+        selectedSection.value.rowSpacing = Math.round(38 * s);
+        selectedSection.value.radius = Math.max(5, Math.round(11 * s));
+      }
+      drawPreview();
+    };
+
     const applyCustomLabels = () => {
       if (!selectedSection.value) return;
-      const arr = customLabelsInput.value.split(",").map(s => s.trim()).filter(Boolean);
+      // For multiselect, custom labels don't apply the same way
+      if (selectedSection.value.type === "multiselect") {
+        drawPreview();
+        return;
+      }
+      const arr = customLabelsInput.value
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
       if (arr.length > 0) {
         selectedSection.value.labels = arr;
         selectedSection.value.cols = arr.length;
+      }
+      drawPreview();
+    };
+
+    // Multiselect cell labels helpers
+    const getMultiselectLabel = (row, col) => {
+      if (!selectedSection.value) return "";
+      if (!selectedSection.value.labels) return "";
+      if (!Array.isArray(selectedSection.value.labels)) return "";
+      if (!Array.isArray(selectedSection.value.labels[row])) return "";
+      return selectedSection.value.labels[row][col] || "";
+    };
+
+    const setMultiselectLabel = (row, col, evt) => {
+      if (!selectedSection.value) return;
+      let labels = selectedSection.value.labels;
+      if (
+        !Array.isArray(labels) ||
+        !Array.isArray(labels[0]) ||
+        typeof labels[0] === "string"
+      ) {
+        labels = [];
+        for (let r = 0; r < selectedSection.value.rows; r++) {
+          labels[r] = [];
+          for (let c = 0; c < selectedSection.value.cols; c++) {
+            labels[r][c] = "";
+          }
+        }
+      }
+      const newLabels = labels.map((r, ri) =>
+        ri === row
+          ? r.map((v, ci) => (ci === col ? evt.target.value : v))
+          : [...r],
+      );
+      selectedSection.value.labels = newLabels;
+      drawPreview();
+    };
+
+    // Tag-based input for multiselect
+    const flatTags = computed(() => {
+      if (!selectedSection.value) return [];
+      if (!selectedSection.value.labels) return [];
+      if (!Array.isArray(selectedSection.value.labels)) return [];
+      const tags = [];
+      const rows = selectedSection.value.rows || 1;
+      const cols = selectedSection.value.cols || 1;
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const val = selectedSection.value.labels[r] && selectedSection.value.labels[r][c]
+            ? selectedSection.value.labels[r][c]
+            : "";
+          tags.push(val);
+        }
+      }
+      return tags;
+    });
+
+    const ensureLabels2D = () => {
+      if (!selectedSection.value) return;
+      const rows = selectedSection.value.rows || 1;
+      const cols = selectedSection.value.cols || 1;
+      let labels = selectedSection.value.labels;
+      if (!Array.isArray(labels) || !Array.isArray(labels[0]) || typeof labels[0] === "string") {
+        labels = [];
+        for (let r = 0; r < rows; r++) {
+          labels[r] = [];
+          for (let c = 0; c < cols; c++) {
+            labels[r][c] = "";
+          }
+        }
+        selectedSection.value.labels = labels;
+      }
+      // Ensure correct dimensions
+      while (selectedSection.value.labels.length < rows) {
+        const newRow = [];
+        for (let c = 0; c < cols; c++) newRow.push("");
+        selectedSection.value.labels.push(newRow);
+      }
+      for (let r = 0; r < rows; r++) {
+        while (selectedSection.value.labels[r].length < cols) {
+          selectedSection.value.labels[r].push("");
+        }
+      }
+    };
+
+    const setFlatTag = (index, value) => {
+      if (!selectedSection.value) return;
+      ensureLabels2D();
+      const cols = selectedSection.value.cols || 1;
+      const r = Math.floor(index / cols);
+      const c = index % cols;
+      const newLabels = selectedSection.value.labels.map((row, ri) =>
+        ri === r ? row.map((v, ci) => (ci === c ? value : v)) : [...row]
+      );
+      selectedSection.value.labels = newLabels;
+    };
+
+    const addTagFromInput = () => {
+      const text = tagInputValue.value.trim();
+      if (!text) return;
+      // Split by comma in case user types multiple
+      const parts = text.split(",").map(s => s.trim()).filter(Boolean);
+      const maxTags = (selectedSection.value.rows || 1) * (selectedSection.value.cols || 1);
+
+      for (let i = 0; i < parts.length; i++) {
+        const emptyIdx = flatTags.value.findIndex(t => t === "");
+        if (emptyIdx >= 0) {
+          setFlatTag(emptyIdx, parts[i]);
+        } else if (flatTags.value.length < maxTags) {
+          setFlatTag(flatTags.value.length, parts[i]);
+        } else {
+          break; // Grid is full
+        }
+      }
+      tagInputValue.value = "";
+      drawPreview();
+    };
+
+    const removeTag = (index) => {
+      if (!selectedSection.value) return;
+      ensureLabels2D();
+      // Clear the tag and shift all subsequent tags forward
+      const tags = [...flatTags.value];
+      tags.splice(index, 1);
+      tags.push("");
+      const rows = selectedSection.value.rows || 1;
+      const cols = selectedSection.value.cols || 1;
+      const newLabels = [];
+      for (let r = 0; r < rows; r++) {
+        newLabels[r] = [];
+        for (let c = 0; c < cols; c++) {
+          newLabels[r][c] = tags[r * cols + c] || "";
+        }
+      }
+      selectedSection.value.labels = newLabels;
+      drawPreview();
+    };
+
+    const onTagInputBackspace = () => {
+      if (tagInputValue.value === "" && flatTags.value.length > 0) {
+        const lastIdx = flatTags.value.findLastIndex(t => t !== "");
+        if (lastIdx >= 0) removeTag(lastIdx);
+      }
+    };
+
+    const addEmptyTag = () => {
+      if (!selectedSection.value) return;
+      ensureLabels2D();
+      const rows = selectedSection.value.rows || 1;
+      const cols = selectedSection.value.cols || 1;
+      const maxTags = rows * cols;
+      if (flatTags.value.length < maxTags) {
+        setFlatTag(flatTags.value.length, "");
       }
       drawPreview();
     };
@@ -592,7 +1349,9 @@ export default {
       if (!canvasRef.value) return;
       const exportCanvas = document.createElement("canvas");
       renderSheet(exportCanvas, config.value, { isPreview: false });
-      const safeName = (config.value.name || "plantilla_omr").toLowerCase().replace(/[^a-z0-9]/g, "_");
+      const safeName = (config.value.name || "plantilla_omr")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "_");
       downloadCanvasAsPNG(exportCanvas, `${safeName}.png`);
     };
 
@@ -603,7 +1362,9 @@ export default {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      const safeName = (config.value.name || "plantilla_omr").toLowerCase().replace(/[^a-z0-9]/g, "_");
+      const safeName = (config.value.name || "plantilla_omr")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "_");
       link.download = `${safeName}.json`;
       document.body.appendChild(link);
       link.click();
@@ -612,24 +1373,61 @@ export default {
     };
 
     onMounted(async () => {
+      await nextTick();
       await fitZoom();
       await drawPreview();
     });
 
     return {
-      canvasRef, scrollContainer,
-      config, selectedIndex, selectedSection,
-      selectedPreset, customLabelsInput,
-      zoom, dragging, hoverSectionIdx,
-      goBack, selectSection, sectionTypeLabel,
-      drawPreview, fitZoom, adjustZoom,
-      addNewSection, removeSection, onSectionTypeChange,
-      applyLabelPreset, applyCustomLabels,
-      downloadPNG, exportJSON,
-      onCanvasMouseDown, onCanvasMouseMove, onCanvasMouseUp,
-      onCanvasTouchStart, onCanvasTouchMove, onCanvasTouchEnd,
-      arrowBackOutline, downloadOutline, codeDownloadOutline,
-      addOutline, trashOutline, moveOutline,
+      canvasRef,
+      scrollContainer,
+      config,
+      selectedIndex,
+      selectedSection,
+      selectedPreset,
+      customLabelsInput,
+      tagInputValue,
+      tagInputRef,
+      flatTags,
+      setFlatTag,
+      addTagFromInput,
+      removeTag,
+      onTagInputBackspace,
+      addEmptyTag,
+      zoom,
+      dragging,
+      hoverSectionIdx,
+      goBack,
+      selectSection,
+      sectionTypeLabel,
+      drawPreview,
+      clampAndDraw,
+      fitZoom,
+      adjustZoom,
+      addNewSection,
+      removeSection,
+      onSectionTypeChange,
+      applyLabelPreset,
+      applyLikertScale,
+      likertScales,
+      applyScale,
+      applyCustomLabels,
+      getMultiselectLabel,
+      setMultiselectLabel,
+      downloadPNG,
+      exportJSON,
+      onCanvasMouseDown,
+      onCanvasMouseMove,
+      onCanvasMouseUp,
+      onCanvasTouchStart,
+      onCanvasTouchMove,
+      onCanvasTouchEnd,
+      arrowBackOutline,
+      downloadOutline,
+      codeDownloadOutline,
+      addOutline,
+      trashOutline,
+      moveOutline,
     };
   },
 };
@@ -741,7 +1539,9 @@ export default {
   border-radius: 4px;
   transition: background 0.1s;
 }
-.section-delete-btn:hover { background: #fee2e2; }
+.section-delete-btn:hover {
+  background: #fee2e2;
+}
 
 .empty-sections-hint {
   font-size: 12px;
@@ -807,6 +1607,117 @@ export default {
   padding: 8px 10px;
 }
 
+/* Multiselect cell labels grid */
+.multiselect-labels-grid {
+  padding: 4px 8px;
+}
+
+.multiselect-row-labels {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.multiselect-cell-label {
+  flex: 1;
+}
+
+.multiselect-cell-label ion-input {
+  --padding-start: 6px;
+  --padding-end: 6px;
+  font-size: 12px;
+}
+
+/* Likert scale chips */
+.likert-chips-section {
+  padding: 4px 10px 8px 10px;
+}
+
+.likert-chips-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.likert-chip {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.likert-chip:hover {
+  background: #e0e7ff;
+  border-color: #818cf8;
+  color: #4338ca;
+}
+
+.likert-chip:active {
+  background: #c7d2fe;
+  transform: scale(0.97);
+}
+
+/* Tag-based input for multiselect */
+.label-list-section {
+  padding: 4px 10px 8px 10px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.label-list-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.label-list-pos {
+  min-width: 22px;
+  height: 22px;
+  background: #e0e7ff;
+  color: #4338ca;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.label-list-input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 5px;
+  font-size: 12px;
+  color: #1e293b;
+  background: #f8fafc;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.label-list-input:focus {
+  border-color: var(--ion-color-primary);
+  background: #ffffff;
+}
+
+.label-list-input::placeholder {
+  color: #94a3b8;
+}
+
+.label-list-hint {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 6px;
+}
+
 /* ---- Canvas area ---- */
 .canvas-toolbar {
   display: flex;
@@ -845,9 +1756,20 @@ export default {
   transition: background 0.15s;
 }
 
-.zoom-btn:hover { background: #e2e8f0; }
-.zoom-fit { width: auto; padding: 0 8px; font-size: 12px; }
-.zoom-value { font-size: 13px; color: #64748b; min-width: 38px; text-align: center; }
+.zoom-btn:hover {
+  background: #e2e8f0;
+}
+.zoom-fit {
+  width: auto;
+  padding: 0 8px;
+  font-size: 12px;
+}
+.zoom-value {
+  font-size: 13px;
+  color: #64748b;
+  min-width: 38px;
+  text-align: center;
+}
 
 .canvas-legend {
   display: flex;
@@ -879,15 +1801,19 @@ export default {
 .canvas-scroll-container {
   flex: 1;
   overflow: auto;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 24px;
+  padding: 16px;
+  box-sizing: border-box;
+  text-align: center;
 }
 
 .canvas-scaled-wrapper {
   display: inline-block;
+  margin: 0 auto;
   transform-origin: top left;
+}
+
+.canvas-scaled-wrapper canvas {
+  display: block;
 }
 
 .omr-canvas {

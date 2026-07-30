@@ -47,6 +47,21 @@ export function getAnchorPositions(width, height) {
 }
 
 /**
+ * Returns the scannable area: the rectangle INSIDE the 4 corner markers.
+ * Sections placed here will be correctly detected by the OMR scanner.
+ */
+export function getScannableBounds(width, height) {
+  const anchors = getAnchorPositions(width, height);
+  const half = MARKER_SIZE / 2;
+  return {
+    x: anchors.TL.x + half,
+    y: anchors.TL.y + half,
+    width: anchors.TR.x - anchors.TL.x - MARKER_SIZE,
+    height: anchors.BL.y - anchors.TL.y - MARKER_SIZE,
+  };
+}
+
+/**
  * Returns the reserved zone rectangles that sections cannot overlap
  */
 export function getReservedZones(width, height) {
@@ -93,7 +108,7 @@ export function getSectionBounds(sec, dims) {
     const writingRowH = cellSize + 8;
     const bubbleMatrixH = 10 * (bubbleSpacing * 0.85);
     const totalHeight = writingRowH + bubbleMatrixH + 30;
-    return { x: startX, y: startY, width: totalWidth, height: totalHeight };
+  return { x: startX, y: startY, width: totalWidth, height: totalHeight };
   }
 
   const labelsXOffset = sec.showLabels ? sec.labelWidth || 60 : 0;
@@ -101,13 +116,68 @@ export function getSectionBounds(sec, dims) {
   const rows = sec.rows || 1;
   const colSpacing = sec.colSpacing || 40;
   const rowSpacing = sec.rowSpacing || 32;
+  const radius = sec.radius || 12;
+
+  if (sec.type === "multiselect") {
+    const titleH = sec.title ? 24 : 0;
+    const lineHeight = 11;
+    const labelGap = 6;
+    const padX = 6;
+
+    // Column width = colSpacing
+    let totalW = labelsXOffset;
+    for (let c = 0; c < cols; c++) {
+      const colW = Math.max(radius * 2, colSpacing);
+      totalW += colW;
+    }
+
+    // Find tallest row by approximate label height
+    let maxRowLabelLines = 1;
+    for (let r = 0; r < rows; r++) {
+      let rowLines = 1;
+      for (let c = 0; c < cols; c++) {
+        const label = sec.labels && sec.labels[r] && sec.labels[r][c];
+        if (label) {
+          const maxLabelW = String(label).length * 6;
+          const availW = colSpacing - padX;
+          const approxLines = Math.max(1, Math.ceil(maxLabelW / availW));
+          if (approxLines > rowLines) rowLines = approxLines;
+        }
+      }
+      if (rowLines > maxRowLabelLines) maxRowLabelLines = rowLines;
+    }
+
+    const tallestLabelH = maxRowLabelLines * lineHeight;
+    const totalHeight = titleH + (rows - 1) * rowSpacing + tallestLabelH + labelGap + radius * 2 + 10;
+    return { x: startX, y: startY, width: totalW, height: totalHeight };
+  }
+
+  // Question type: column width based on colSpacing, labels wrap within
   const titleH = sec.title ? 22 : 0;
-  const colHeaderH = sec.showLabels ? 26 : 0;
+  const padX = 6;
+  const lineHeight = 14;
+  const headerPadding = 12;
 
-  const totalWidth = labelsXOffset + (cols - 1) * colSpacing + (sec.radius || 12) * 2 + 10;
-  const totalHeight = titleH + colHeaderH + (rows - 1) * rowSpacing + (sec.radius || 12) * 2 + 10;
+  // Column width = colSpacing (bubble-to-bubble distance)
+  let totalW = labelsXOffset;
+  let maxHeaderLines = 1;
+  for (let c = 0; c < cols; c++) {
+    const label = sec.labels && sec.labels[c] ? String(sec.labels[c]) : String(c + 1);
+    const colW = Math.max(radius * 2, colSpacing);
+    totalW += colW;
+    if (c < cols - 1) totalW += 0; // no gap between columns, colSpacing IS the width
+    // Approximate wrapped lines
+    const maxLabelW = label.length * 7;
+    const availW = colW - padX;
+    const approxLines = Math.max(1, Math.ceil(maxLabelW / availW));
+    if (approxLines > maxHeaderLines) maxHeaderLines = approxLines;
+  }
 
-  return { x: startX, y: startY, width: totalWidth, height: totalHeight };
+  const colHeaderH = sec.showLabels ? maxHeaderLines * lineHeight + headerPadding : 12;
+
+  const totalHeight = titleH + colHeaderH + (rows - 1) * rowSpacing + radius * 2 + 10;
+
+  return { x: startX, y: startY, width: totalW, height: totalHeight };
 }
 
 /**
@@ -162,6 +232,15 @@ export function renderSheet(canvas, config, options = {}) {
       ctx.strokeRect(z.x, z.y, z.w, z.h);
     });
     ctx.restore();
+
+    // Scannable area border (red dashed rectangle inside the 4 markers)
+    const area = getScannableBounds(dims.width, dims.height);
+    ctx.save();
+    ctx.strokeStyle = "#ef4444";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([8, 5]);
+    ctx.strokeRect(area.x, area.y, area.width, area.height);
+    ctx.restore();
   }
 
   // 4. Render each section
@@ -211,12 +290,12 @@ function renderCodeSection(ctx, sec, dims) {
   const startY = (sec.percentY / 100) * dims.height;
 
   const digits = sec.digits || 6;
-  const cellSize = sec.cellSize || 36;  // writing square size
-  const colSpacing = sec.colSpacing || (cellSize + 4);
-  const bubbleRowSpacing = sec.rowSpacing || 30;
+  const cellSize = sec.cellSize || 36;
+  const colSpacing = sec.colSpacing || (cellSize + 20);
+  const bubbleRowSpacing = sec.rowSpacing || 38;
   const bubbleRadius = sec.radius || 10;
 
-  const digitLabels = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
+  const digitLabels = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
 
   ctx.save();
 
@@ -235,10 +314,10 @@ function renderCodeSection(ctx, sec, dims) {
     ctx.strokeRect(cx, startY, cellSize, cellSize);
   }
 
-  // Bubble matrix starts below the handwriting row
-  const matrixStartY = startY + cellSize + 14;
+  // Bubble matrix starts below the handwriting row (more space)
+  const matrixStartY = startY + cellSize + 32;
 
-  // Digit column header labels (0-9) on the left side
+  // Digit column header labels (1-9,0) on the left side
   for (let row = 0; row < 10; row++) {
     const by = matrixStartY + row * bubbleRowSpacing;
 
@@ -279,7 +358,7 @@ function renderQuestionSection(ctx, sec, dims) {
   const startY = (sec.percentY / 100) * dims.height;
 
   const rows = sec.rows || 1;
-  const cols = sec.cols || 4;
+  const cols = sec.cols || 1;
   const radius = sec.radius || 11;
   const colSpacing = sec.colSpacing || 42;
   const rowSpacing = sec.rowSpacing || 32;
@@ -287,47 +366,141 @@ function renderQuestionSection(ctx, sec, dims) {
 
   ctx.save();
 
-  // Section title
-  if (sec.title) {
-    ctx.fillStyle = "#1e293b";
-    ctx.font = "bold 14px sans-serif";
-    ctx.textAlign = "left";
-    ctx.fillText(sec.title, startX, startY - 6);
-  }
+  if (sec.type === "multiselect") {
+    // ---- MULTISELECT: colSpacing as column width, labels wrap ----
+    const lineHeight = 11;
+    const labelGap = 6;
+    const titleH = sec.title ? 24 : 0;
+    const padX = 6;
 
-  // Column header labels
-  if (sec.showLabels && sec.labels && sec.labels.length > 0) {
-    ctx.fillStyle = "#475569";
-    ctx.font = "12px sans-serif";
-    ctx.textAlign = "center";
+    ctx.font = "10px sans-serif";
+
+    // Column width = colSpacing (same as question type)
+    const colWidths = [];
     for (let c = 0; c < cols; c++) {
-      const label = sec.labels[c] || String(c + 1);
-      const cx = startX + labelsXOffset + c * colSpacing;
-      // Wrap long labels
-      const maxW = colSpacing - 4;
-      drawWrappedText(ctx, String(label), cx, startY + 10, maxW, 14);
+      colWidths[c] = Math.max(radius * 2, colSpacing);
     }
-  }
 
-  // Grid of bubbles
-  const gridStartY = startY + (sec.showLabels ? 28 : 8);
+    // Calculate column center X positions
+    const colCentersX = [];
+    let curX = startX + labelsXOffset;
+    for (let c = 0; c < cols; c++) {
+      colCentersX[c] = curX + colWidths[c] / 2;
+      curX += colWidths[c];
+    }
 
-  for (let r = 0; r < rows; r++) {
-    const cy = gridStartY + r * rowSpacing;
-
-    // Row label
-    if (sec.showLabels) {
+    // Section title
+    if (sec.title) {
       ctx.fillStyle = "#1e293b";
-      ctx.font = "bold 12px sans-serif";
-      ctx.textAlign = "right";
-      const rowLabel = sec.rowPrefix ? `${sec.rowPrefix}${r + 1}` : `Q${r + 1}`;
-      ctx.fillText(rowLabel, startX + labelsXOffset - 8, cy + 4);
+      ctx.font = "bold 14px sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(sec.title, startX, startY + 14);
     }
 
-    // Bubbles
+    const gridStartY = startY + titleH;
+
+    for (let r = 0; r < rows; r++) {
+      const rowTopY = gridStartY + r * rowSpacing;
+
+      // Calculate max wrapped lines for THIS row only
+      let rowMaxLines = 1;
+      for (let c = 0; c < cols; c++) {
+        const cellLabel = sec.labels && sec.labels[r] && sec.labels[r][c];
+        if (cellLabel) {
+          const maxW = colWidths[c] - padX;
+          const lines = measureWrappedLines(ctx, String(cellLabel), maxW);
+          if (lines > rowMaxLines) rowMaxLines = lines;
+        }
+      }
+      const rowLabelH = rowMaxLines * lineHeight;
+      const cy = rowTopY + rowLabelH + labelGap + radius;
+
+      for (let c = 0; c < cols; c++) {
+        const cx = colCentersX[c];
+        const cellLabel = sec.labels && sec.labels[r] && sec.labels[r][c];
+
+        // Label wraps within column width
+        if (cellLabel) {
+          ctx.fillStyle = "#1e293b";
+          ctx.font = "10px sans-serif";
+          ctx.textAlign = "center";
+          const maxW = colWidths[c] - padX;
+          drawWrappedText(ctx, String(cellLabel), cx, rowTopY, maxW, lineHeight);
+        }
+
+        drawDottedBubble(ctx, cx, cy, radius);
+      }
+    }
+  } else {
+    // ---- QUESTION: column headers + row labels + bubble grid ----
+    const padX = 6;
+
+    ctx.font = "12px sans-serif";
+
+    // Column width is based on colSpacing (bubble-to-bubble distance)
+    // Labels wrap when wider than this
+    const colWidths = [];
     for (let c = 0; c < cols; c++) {
-      const cx = startX + labelsXOffset + c * colSpacing;
-      drawDottedBubble(ctx, cx, cy, radius);
+      const minW = radius * 2;
+      colWidths[c] = Math.max(minW, colSpacing);
+    }
+
+    // Calculate column center X positions
+    const colCentersX = [];
+    let curX = startX + labelsXOffset;
+    for (let c = 0; c < cols; c++) {
+      colCentersX[c] = curX + colWidths[c] / 2;
+      curX += colWidths[c];
+    }
+
+    // Section title
+    if (sec.title) {
+      ctx.fillStyle = "#1e293b";
+      ctx.font = "bold 14px sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(sec.title, startX, startY - 6);
+    }
+
+    // Column header labels (wrap within column width)
+    let maxHeaderLines = 1;
+    if (sec.showLabels && sec.labels && sec.labels.length > 0) {
+      ctx.fillStyle = "#475569";
+      ctx.font = "12px sans-serif";
+      ctx.textAlign = "center";
+      for (let c = 0; c < cols; c++) {
+        const label = sec.labels[c] || String(c + 1);
+        const cx = colCentersX[c];
+        const maxW = colWidths[c] - padX;
+        const lines = measureWrappedLines(ctx, String(label), maxW);
+        if (lines > maxHeaderLines) maxHeaderLines = lines;
+        drawWrappedText(ctx, String(label), cx, startY + 10, maxW, 14);
+      }
+    }
+
+    // Grid of bubbles (gap adapts to header text height)
+    const lineHeight = 14;
+    const headerPadding = 12;
+    const headerGap = sec.showLabels ? maxHeaderLines * lineHeight + headerPadding : 12;
+    const gridStartY = startY + headerGap;
+
+    for (let r = 0; r < rows; r++) {
+      const cy = gridStartY + r * rowSpacing;
+
+      // Row label (shifted left so it doesn't touch bubbles)
+      if (sec.showLabels) {
+        ctx.fillStyle = "#1e293b";
+        ctx.font = "bold 12px sans-serif";
+        ctx.textAlign = "right";
+        const rowLabel = sec.rowPrefix ? `${sec.rowPrefix}${r + 1}` : `Q${r + 1}`;
+        const labelOffset = radius + 10;
+        ctx.fillText(rowLabel, startX + labelsXOffset - labelOffset, cy + 4);
+      }
+
+      // Bubbles
+      for (let c = 0; c < cols; c++) {
+        const cx = colCentersX[c];
+        drawDottedBubble(ctx, cx, cy, radius);
+      }
     }
   }
 
@@ -352,6 +525,25 @@ function drawWrappedText(ctx, text, cx, y, maxWidth, lineHeight) {
     }
   }
   ctx.fillText(line.trim(), cx, lineY);
+}
+
+/**
+ * Counts how many lines a label will wrap to within maxWidth
+ */
+function measureWrappedLines(ctx, text, maxWidth) {
+  const words = text.split(" ");
+  let line = "";
+  let lines = 1;
+  for (let i = 0; i < words.length; i++) {
+    const testLine = line + words[i] + " ";
+    if (ctx.measureText(testLine).width > maxWidth && i > 0) {
+      lines++;
+      line = words[i] + " ";
+    } else {
+      line = testLine;
+    }
+  }
+  return lines;
 }
 
 /**
@@ -399,14 +591,51 @@ export function exportTemplateJSON(config) {
           CBR: { percent_x: parseFloat((endX / dims.width * 100).toFixed(2)), percent_y: parseFloat((endY / dims.height * 100).toFixed(2)) },
         },
         radius: sec.radius || 10,
-        labels: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+        labels: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
       };
     }
 
-    const labelsXOffset = sec.showLabels ? (sec.labelWidth || 60) : 0;
-    const gridStartY = startY + (sec.showLabels ? 28 : 8);
-    const endX = startX + labelsXOffset + (sec.cols - 1) * sec.colSpacing;
-    const endY = gridStartY + (sec.rows - 1) * sec.rowSpacing;
+  const labelsXOffset = sec.showLabels ? (sec.labelWidth || 60) : 0;
+  const radius = sec.radius || 11;
+  const colSpacing = sec.colSpacing || 40;
+  const rowSpacing = sec.rowSpacing || 32;
+
+  if (sec.type === "multiselect") {
+    const lineHeight = 11;
+    const labelGap = 6;
+    const padX = 6;
+
+    const titleH = sec.title ? 24 : 0;
+
+    // Column width = colSpacing (same as rendering)
+    const colCentersX = [];
+    let curX = startX + labelsXOffset;
+    for (let c = 0; c < sec.cols; c++) {
+      const colW = Math.max(radius * 2, colSpacing);
+      colCentersX[c] = curX + colW / 2;
+      curX += colW;
+    }
+
+    // Calculate max wrapped lines per row for endY
+    let maxRowLabelLines = 1;
+    for (let r = 0; r < sec.rows; r++) {
+      let rowLines = 1;
+      for (let c = 0; c < sec.cols; c++) {
+        const label = sec.labels && sec.labels[r] && sec.labels[r][c];
+        if (label) {
+          const maxLabelW = String(label).length * 6;
+          const availW = colSpacing - padX;
+          const approxLines = Math.max(1, Math.ceil(maxLabelW / availW));
+          if (approxLines > rowLines) rowLines = approxLines;
+        }
+      }
+      if (rowLines > maxRowLabelLines) maxRowLabelLines = rowLines;
+    }
+
+    const tallestLabelH = maxRowLabelLines * lineHeight;
+    const gridStartY = startY + titleH;
+    const endX = colCentersX[sec.cols - 1];
+    const endY = gridStartY + (sec.rows - 1) * rowSpacing + tallestLabelH + labelGap + radius * 2 + 10;
 
     return {
       type: sec.type || "question",
@@ -414,14 +643,59 @@ export function exportTemplateJSON(config) {
       rows: sec.rows,
       cols: sec.cols,
       circles: {
-        CTL: { percent_x: parseFloat(((startX + labelsXOffset) / dims.width * 100).toFixed(2)), percent_y: parseFloat((gridStartY / dims.height * 100).toFixed(2)) },
+        CTL: { percent_x: parseFloat((colCentersX[0] / dims.width * 100).toFixed(2)), percent_y: parseFloat((gridStartY / dims.height * 100).toFixed(2)) },
         CTR: { percent_x: parseFloat((endX / dims.width * 100).toFixed(2)), percent_y: parseFloat((gridStartY / dims.height * 100).toFixed(2)) },
-        CBL: { percent_x: parseFloat(((startX + labelsXOffset) / dims.width * 100).toFixed(2)), percent_y: parseFloat((endY / dims.height * 100).toFixed(2)) },
+        CBL: { percent_x: parseFloat((colCentersX[0] / dims.width * 100).toFixed(2)), percent_y: parseFloat((endY / dims.height * 100).toFixed(2)) },
         CBR: { percent_x: parseFloat((endX / dims.width * 100).toFixed(2)), percent_y: parseFloat((endY / dims.height * 100).toFixed(2)) },
       },
       radius: sec.radius,
       labels: sec.labels || [],
     };
+  }
+
+  // Question type (default): column width based on colSpacing, labels wrap within
+  const padX = 6;
+  const lineHeight = 14;
+  const headerPadding = 12;
+
+  // Calculate dynamic header height (labels wrap within colSpacing width)
+  let maxHeaderLines = 1;
+  for (let c = 0; c < sec.cols; c++) {
+    const label = sec.labels && sec.labels[c] ? String(sec.labels[c]) : String(c + 1);
+    const maxLabelW = label.length * 7;
+    const colW = Math.max(radius * 2, sec.colSpacing || 40);
+    const availW = colW - padX;
+    const approxLines = Math.max(1, Math.ceil(maxLabelW / availW));
+    if (approxLines > maxHeaderLines) maxHeaderLines = approxLines;
+  }
+  const gridStartY = startY + (sec.showLabels ? maxHeaderLines * lineHeight + headerPadding : 12);
+
+  // Column centers based on colSpacing
+  const colCentersX = [];
+  let curX = startX + labelsXOffset;
+  for (let c = 0; c < sec.cols; c++) {
+    const colW = Math.max(radius * 2, sec.colSpacing || 40);
+    colCentersX[c] = curX + colW / 2;
+    curX += colW;
+  }
+
+  const endX = colCentersX[sec.cols - 1];
+  const endY = gridStartY + (sec.rows - 1) * sec.rowSpacing;
+
+  return {
+    type: sec.type || "question",
+    name: sec.name || `seccion${i + 1}`,
+    rows: sec.rows,
+    cols: sec.cols,
+    circles: {
+      CTL: { percent_x: parseFloat((colCentersX[0] / dims.width * 100).toFixed(2)), percent_y: parseFloat((gridStartY / dims.height * 100).toFixed(2)) },
+      CTR: { percent_x: parseFloat((endX / dims.width * 100).toFixed(2)), percent_y: parseFloat((gridStartY / dims.height * 100).toFixed(2)) },
+      CBL: { percent_x: parseFloat((colCentersX[0] / dims.width * 100).toFixed(2)), percent_y: parseFloat((endY / dims.height * 100).toFixed(2)) },
+      CBR: { percent_x: parseFloat((endX / dims.width * 100).toFixed(2)), percent_y: parseFloat((endY / dims.height * 100).toFixed(2)) },
+    },
+    radius: sec.radius,
+    labels: sec.labels || [],
+  };
   });
 
   return {
