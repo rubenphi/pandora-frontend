@@ -38,21 +38,6 @@
           <!-- Sheet config -->
           <div class="panel-card">
             <div class="panel-card-title">Hoja</div>
-            <ion-item lines="full">
-              <ion-label>Orientación</ion-label>
-              <ion-select
-                v-model="config.orientation"
-                @ionChange="drawPreview"
-                interface="action-sheet"
-              >
-                <ion-select-option value="portrait"
-                  >Vertical (Portrait)</ion-select-option
-                >
-                <ion-select-option value="landscape"
-                  >Horizontal (Landscape)</ion-select-option
-                >
-              </ion-select>
-            </ion-item>
             <ion-item lines="none">
               <ion-label position="stacked">Nombre de Plantilla</ion-label>
               <ion-input
@@ -533,9 +518,32 @@
                   />
                 </div>
               </div>
-            </div>
+              </div>
 
-            <div class="num-row">
+              <div class="num-row" v-if="selectedSection.type === 'question'">
+                <div class="num-field">
+                  <label>Grupos de columnas</label>
+                  <div class="num-input-row">
+                    <ion-range
+                      v-model="selectedSection.columnGroups"
+                      min="1"
+                      max="6"
+                      step="1"
+                      @ionChange="drawPreview"
+                    ></ion-range>
+                    <input
+                      class="num-input-box"
+                      type="number"
+                      v-model.number="selectedSection.columnGroups"
+                      min="1"
+                      max="6"
+                      @change="drawPreview"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="num-row">
               <div class="num-field">
                 <label>Tamaño sección (escala %)</label>
                 <div class="num-input-row">
@@ -553,6 +561,92 @@
                     min="50"
                     max="200"
                     @change="applyScale"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="props-group-title">Área escaneable (márgenes)</div>
+            <div class="num-row two-col">
+              <div class="num-field">
+                <label>Superior (px)</label>
+                <div class="num-input-row">
+                  <ion-range
+                    v-model="config.margins.top"
+                    min="30"
+                    max="200"
+                    step="1"
+                    @ionChange="drawPreview"
+                  ></ion-range>
+                  <input
+                    class="num-input-box"
+                    type="number"
+                    v-model.number="config.margins.top"
+                    min="30"
+                    max="200"
+                    @change="drawPreview"
+                  />
+                </div>
+              </div>
+              <div class="num-field">
+                <label>Inferior (px)</label>
+                <div class="num-input-row">
+                  <ion-range
+                    v-model="config.margins.bottom"
+                    min="30"
+                    max="200"
+                    step="1"
+                    @ionChange="drawPreview"
+                  ></ion-range>
+                  <input
+                    class="num-input-box"
+                    type="number"
+                    v-model.number="config.margins.bottom"
+                    min="30"
+                    max="200"
+                    @change="drawPreview"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="num-row two-col">
+              <div class="num-field">
+                <label>Izquierdo (px)</label>
+                <div class="num-input-row">
+                  <ion-range
+                    v-model="config.margins.left"
+                    min="30"
+                    max="200"
+                    step="1"
+                    @ionChange="drawPreview"
+                  ></ion-range>
+                  <input
+                    class="num-input-box"
+                    type="number"
+                    v-model.number="config.margins.left"
+                    min="30"
+                    max="200"
+                    @change="drawPreview"
+                  />
+                </div>
+              </div>
+              <div class="num-field">
+                <label>Derecho (px)</label>
+                <div class="num-input-row">
+                  <ion-range
+                    v-model="config.margins.right"
+                    min="30"
+                    max="200"
+                    step="1"
+                    @ionChange="drawPreview"
+                  ></ion-range>
+                  <input
+                    class="num-input-box"
+                    type="number"
+                    v-model.number="config.margins.right"
+                    min="30"
+                    max="200"
+                    @change="drawPreview"
                   />
                 </div>
               </div>
@@ -652,7 +746,6 @@ import {
   getSectionBounds,
   getScannableBounds,
   CANVAS_PORTRAIT,
-  CANVAS_LANDSCAPE,
 } from "@/components/functions/omr/omrSheetGenerator.js";
 
 export default {
@@ -683,15 +776,19 @@ export default {
     const customLabelsInput = ref("");
     const tagInputValue = ref("");
     const tagInputRef = ref(null);
-    const zoom = ref(0.6);
+    const zoom = ref(1);
 
     // Drag state
     const dragging = ref(false);
+    const dragType = ref(null); // 'section' or 'marker'
+    const dragMarkerName = ref(null); // 'TL', 'TR', 'BL', 'BR'
     const hoverSectionIdx = ref(-1);
     const dragStartCanvasX = ref(0);
     const dragStartCanvasY = ref(0);
     const dragStartPercentX = ref(0);
     const dragStartPercentY = ref(0);
+    const dragStartMargins = ref({ top: 0, bottom: 0, left: 0, right: 0 });
+    const tempMargins = ref(null);
 
     const likertScales = {
       frecuencia: {
@@ -746,7 +843,12 @@ export default {
 
     const config = ref({
       name: "Nueva Plantilla OMR",
-      orientation: "portrait",
+      margins: {
+        top: 75,
+        bottom: 75,
+        left: 75,
+        right: 75,
+      },
       sections: [
         {
           name: "codigo",
@@ -767,6 +869,7 @@ export default {
           type: "question",
           rows: 10,
           cols: 5,
+          columnGroups: 1,
           colSpacing: 58,
           rowSpacing: 38,
           radius: 11,
@@ -797,11 +900,27 @@ export default {
       return null;
     });
 
-    const dims = computed(() =>
-      config.value.orientation === "landscape"
-        ? CANVAS_LANDSCAPE
-        : CANVAS_PORTRAIT,
-    );
+    const dims = computed(() => {
+      const base = CANVAS_PORTRAIT;
+      const m = config.value.margins;
+      const defaultMarginX = base.width * 0.06;
+      const defaultMarginY = base.height * 0.06;
+
+      const extraLeft = Math.max(0, m.left - defaultMarginX);
+      const extraRight = Math.max(0, m.right - defaultMarginX);
+      const extraTop = Math.max(0, m.top - defaultMarginY);
+      const extraBottom = Math.max(0, m.bottom - defaultMarginY);
+
+      const shrinkLeft = Math.max(0, defaultMarginX - m.left);
+      const shrinkRight = Math.max(0, defaultMarginX - m.right);
+      const shrinkTop = Math.max(0, defaultMarginY - m.top);
+      const shrinkBottom = Math.max(0, defaultMarginY - m.bottom);
+
+      return {
+        width: Math.max(100, base.width + extraLeft + extraRight - shrinkLeft - shrinkRight),
+        height: Math.max(100, base.height + extraTop + extraBottom - shrinkTop - shrinkBottom),
+      };
+    });
 
     const goBack = () => router.back();
 
@@ -817,10 +936,15 @@ export default {
     };
 
     // ---- Canvas Rendering ----
+    
+
     const clampToScannableArea = () => {
       if (!selectedSection.value) return;
       const d = dims.value;
-      const area = getScannableBounds(d.width, d.height);
+      const area = getScannableBounds(d.width, d.height, config.value.margins);
+      const secIdx = selectedIndex.value;
+
+      // Clamp to scannable area
       const bounds = getSectionBounds(selectedSection.value, d);
       let dx = 0, dy = 0;
       if (bounds.x < area.x) dx = area.x - bounds.x;
@@ -831,6 +955,37 @@ export default {
         selectedSection.value.percentX = parseFloat((selectedSection.value.percentX + (dx / d.width) * 100).toFixed(2));
         selectedSection.value.percentY = parseFloat((selectedSection.value.percentY + (dy / d.height) * 100).toFixed(2));
       }
+
+      // Prevent overlap with other sections
+      const myBounds = getSectionBounds(selectedSection.value, d);
+      for (let i = 0; i < config.value.sections.length; i++) {
+        if (i === secIdx) continue;
+        const other = config.value.sections[i];
+        const ob = getSectionBounds(other, d);
+        const overlaps =
+          myBounds.x < ob.x + ob.width &&
+          myBounds.x + myBounds.width > ob.x &&
+          myBounds.y < ob.y + ob.height &&
+          myBounds.y + myBounds.height > ob.y;
+        if (overlaps) {
+          // Push down below the other section
+          const pushDown = ob.y + ob.height - myBounds.y + 4;
+          const newPercentY = selectedSection.value.percentY + (pushDown / d.height) * 100;
+          // Check if still within scannable area
+          const testBounds = { ...myBounds, y: myBounds.y + pushDown };
+          if (testBounds.y + testBounds.height <= area.y + area.height) {
+            selectedSection.value.percentY = parseFloat(newPercentY.toFixed(2));
+          } else {
+            // Push right of the other section
+            const pushRight = ob.x + ob.width - myBounds.x + 4;
+            const newPercentX = selectedSection.value.percentX + (pushRight / d.width) * 100;
+            const testBoundsX = { ...myBounds, x: myBounds.x + pushRight };
+            if (testBoundsX.x + testBoundsX.width <= area.x + area.width) {
+              selectedSection.value.percentX = parseFloat(newPercentX.toFixed(2));
+            }
+          }
+        }
+      }
     };
 
     const clampAndDraw = () => {
@@ -838,13 +993,16 @@ export default {
       drawPreview();
     };
 
-    const drawPreview = async () => {
+    const drawPreview = async (marginsOverride) => {
       await nextTick();
       if (canvasRef.value) {
-        renderSheet(canvasRef.value, config.value, {
+        const opts = {
           isPreview: true,
           selectedSectionIndex: selectedIndex.value,
-        });
+          dims: dims.value,
+        };
+        if (marginsOverride) opts.margins = marginsOverride;
+        renderSheet(canvasRef.value, config.value, opts);
       }
     };
 
@@ -855,7 +1013,7 @@ export default {
         const containerH = scrollContainer.value.clientHeight - 32;
         const d = dims.value;
         zoom.value = Math.max(
-          1,
+          0.1,
           Math.min(containerW / d.width, containerH / d.height, 1),
         );
       }
@@ -868,7 +1026,6 @@ export default {
     // ---- Canvas coordinate helpers ----
     const getCanvasPos = (evt, canvas) => {
       const rect = canvas.getBoundingClientRect();
-      // Account for CSS zoom scaling
       const scaleX = canvas.width / rect.width;
       const scaleY = canvas.height / rect.height;
       return {
@@ -894,14 +1051,59 @@ export default {
       return -1;
     };
 
+    const hitTestMarker = (canvasX, canvasY) => {
+      const d = dims.value;
+      const m = config.value.margins;
+      const hitRadius = 30;
+
+      const markers = [
+        { name: 'TL', x: m.left, y: 60 + m.top },
+        { name: 'TR', x: d.width - m.right, y: 60 + m.top },
+        { name: 'BL', x: m.left, y: d.height - m.bottom },
+        { name: 'BR', x: d.width - m.right, y: d.height - m.bottom },
+      ];
+
+      for (const mk of markers) {
+        const dx = canvasX - mk.x;
+        const dy = canvasY - mk.y;
+        if (Math.abs(dx) <= hitRadius && Math.abs(dy) <= hitRadius) {
+          return mk.name;
+        }
+      }
+      return null;
+    };
+
+    const markerToSide = (markerName, dx, dy) => {
+      if (markerName === 'TL') return Math.abs(dx) > Math.abs(dy) ? 'left' : 'top';
+      if (markerName === 'TR') return Math.abs(dx) > Math.abs(dy) ? 'right' : 'top';
+      if (markerName === 'BL') return Math.abs(dx) > Math.abs(dy) ? 'left' : 'bottom';
+      if (markerName === 'BR') return Math.abs(dx) > Math.abs(dy) ? 'right' : 'bottom';
+      return null;
+    };
+
     // ---- Mouse events ----
     const onCanvasMouseDown = (evt) => {
       if (!canvasRef.value) return;
       const pos = getCanvasPos(evt, canvasRef.value);
+
+      // Check marker hit first
+      const markerName = hitTestMarker(pos.x, pos.y);
+      if (markerName) {
+        dragging.value = true;
+        dragType.value = 'marker';
+        dragMarkerName.value = markerName;
+        dragStartCanvasX.value = evt.clientX;
+        dragStartCanvasY.value = evt.clientY;
+        dragStartMargins.value = { ...config.value.margins };
+        return;
+      }
+
       const hitIdx = hitTestSection(pos.x, pos.y);
       if (hitIdx >= 0) {
         selectSection(hitIdx);
         dragging.value = true;
+        dragType.value = 'section';
+        dragMarkerName.value = null;
         dragStartCanvasX.value = pos.x;
         dragStartCanvasY.value = pos.y;
         const sec = config.value.sections[hitIdx];
@@ -915,9 +1117,117 @@ export default {
 
     const onCanvasMouseMove = (evt) => {
       if (!canvasRef.value) return;
-      const pos = getCanvasPos(evt, canvasRef.value);
 
-      if (dragging.value && selectedSection.value) {
+      if (dragging.value) {
+        if (dragType.value === 'marker' && dragMarkerName.value) {
+          const dx = evt.clientX - dragStartCanvasX.value;
+          const dy = evt.clientY - dragStartCanvasY.value;
+          const side = markerToSide(dragMarkerName.value, dx, dy);
+          const startM = dragStartMargins.value;
+          const newMargins = { ...startM };
+
+          if (side === 'top') {
+            newMargins.top = startM.top + dy;
+          } else if (side === 'bottom') {
+            newMargins.bottom = startM.bottom - dy;
+          } else if (side === 'left') {
+            newMargins.left = startM.left + dx;
+          } else if (side === 'right') {
+            newMargins.right = startM.right - dx;
+          }
+          tempMargins.value = newMargins;
+          drawPreview(newMargins);
+        } else if (dragType.value === 'section' && selectedSection.value) {
+          const pos = getCanvasPos(evt, canvasRef.value);
+          const d = dims.value;
+          const dx = pos.x - dragStartCanvasX.value;
+          const dy = pos.y - dragStartCanvasY.value;
+          const newPX = Math.max(
+            0,
+            Math.min(95, dragStartPercentX.value + (dx / d.width) * 100),
+          );
+          const newPY = Math.max(
+            0,
+            Math.min(95, dragStartPercentY.value + (dy / d.height) * 100),
+          );
+          selectedSection.value.percentX = parseFloat(newPX.toFixed(2));
+          selectedSection.value.percentY = parseFloat(newPY.toFixed(2));
+          drawPreview();
+        }
+      } else {
+        const pos = getCanvasPos(evt, canvasRef.value);
+        hoverSectionIdx.value = hitTestSection(pos.x, pos.y);
+      }
+    };
+
+    const onCanvasMouseUp = () => {
+      if (dragging.value && dragType.value === 'marker' && tempMargins.value) {
+        config.value.margins = { ...tempMargins.value };
+        tempMargins.value = null;
+        drawPreview();
+        fitZoom();
+      } else if (dragging.value && dragType.value === 'section' && selectedSection.value) {
+        clampToScannableArea();
+        drawPreview();
+      }
+      dragging.value = false;
+      dragType.value = null;
+      dragMarkerName.value = null;
+    };
+
+    // ---- Touch events ----
+    const onCanvasTouchStart = (evt) => {
+      if (!canvasRef.value || !evt.touches[0]) return;
+      const pos = getCanvasPos(evt.touches[0], canvasRef.value);
+
+      const markerName = hitTestMarker(pos.x, pos.y);
+      if (markerName) {
+        dragging.value = true;
+        dragType.value = 'marker';
+        dragMarkerName.value = markerName;
+        dragStartCanvasX.value = evt.touches[0].clientX;
+        dragStartCanvasY.value = evt.touches[0].clientY;
+        dragStartMargins.value = { ...config.value.margins };
+        return;
+      }
+
+      const hitIdx = hitTestSection(pos.x, pos.y);
+      if (hitIdx >= 0) {
+        selectSection(hitIdx);
+        dragging.value = true;
+        dragType.value = 'section';
+        dragMarkerName.value = null;
+        dragStartCanvasX.value = pos.x;
+        dragStartCanvasY.value = pos.y;
+        const sec = config.value.sections[hitIdx];
+        dragStartPercentX.value = sec.percentX;
+        dragStartPercentY.value = sec.percentY;
+      }
+    };
+
+    const onCanvasTouchMove = (evt) => {
+      if (!dragging.value || !canvasRef.value || !evt.touches[0]) return;
+
+      if (dragType.value === 'marker' && dragMarkerName.value) {
+        const dx = evt.touches[0].clientX - dragStartCanvasX.value;
+        const dy = evt.touches[0].clientY - dragStartCanvasY.value;
+        const side = markerToSide(dragMarkerName.value, dx, dy);
+        const startM = dragStartMargins.value;
+        const newMargins = { ...startM };
+
+        if (side === 'top') {
+          newMargins.top = startM.top + dy;
+        } else if (side === 'bottom') {
+          newMargins.bottom = startM.bottom - dy;
+        } else if (side === 'left') {
+          newMargins.left = startM.left + dx;
+        } else if (side === 'right') {
+          newMargins.right = startM.right - dx;
+        }
+        tempMargins.value = newMargins;
+        drawPreview(newMargins);
+      } else if (dragType.value === 'section' && selectedSection.value) {
+        const pos = getCanvasPos(evt.touches[0], canvasRef.value);
         const d = dims.value;
         const dx = pos.x - dragStartCanvasX.value;
         const dy = pos.y - dragStartCanvasY.value;
@@ -932,62 +1242,22 @@ export default {
         selectedSection.value.percentX = parseFloat(newPX.toFixed(2));
         selectedSection.value.percentY = parseFloat(newPY.toFixed(2));
         drawPreview();
-      } else {
-        hoverSectionIdx.value = hitTestSection(pos.x, pos.y);
-      }
-    };
-
-    const onCanvasMouseUp = () => {
-      if (dragging.value && selectedSection.value) {
-        clampToScannableArea();
-        drawPreview();
-      }
-      dragging.value = false;
-    };
-
-    // ---- Touch events ----
-    const onCanvasTouchStart = (evt) => {
-      if (!canvasRef.value || !evt.touches[0]) return;
-      const pos = getCanvasPos(evt.touches[0], canvasRef.value);
-      const hitIdx = hitTestSection(pos.x, pos.y);
-      if (hitIdx >= 0) {
-        selectSection(hitIdx);
-        dragging.value = true;
-        dragStartCanvasX.value = pos.x;
-        dragStartCanvasY.value = pos.y;
-        const sec = config.value.sections[hitIdx];
-        dragStartPercentX.value = sec.percentX;
-        dragStartPercentY.value = sec.percentY;
-      }
-    };
-
-    const onCanvasTouchMove = (evt) => {
-      if (!dragging.value || !canvasRef.value || !evt.touches[0]) return;
-      const pos = getCanvasPos(evt.touches[0], canvasRef.value);
-      const d = dims.value;
-      const dx = pos.x - dragStartCanvasX.value;
-      const dy = pos.y - dragStartCanvasY.value;
-      const newPX = Math.max(
-        0,
-        Math.min(95, dragStartPercentX.value + (dx / d.width) * 100),
-      );
-      const newPY = Math.max(
-        0,
-        Math.min(95, dragStartPercentY.value + (dy / d.height) * 100),
-      );
-      if (selectedSection.value) {
-        selectedSection.value.percentX = parseFloat(newPX.toFixed(2));
-        selectedSection.value.percentY = parseFloat(newPY.toFixed(2));
-        drawPreview();
       }
     };
 
     const onCanvasTouchEnd = () => {
-      if (dragging.value && selectedSection.value) {
+      if (dragging.value && dragType.value === 'marker' && tempMargins.value) {
+        config.value.margins = { ...tempMargins.value };
+        tempMargins.value = null;
+        drawPreview();
+        fitZoom();
+      } else if (dragging.value && dragType.value === 'section' && selectedSection.value) {
         clampToScannableArea();
         drawPreview();
       }
       dragging.value = false;
+      dragType.value = null;
+      dragMarkerName.value = null;
     };
 
     // ---- Section management ----
@@ -999,6 +1269,7 @@ export default {
         type: "question",
         rows: 5,
         cols: 4,
+        columnGroups: 1,
         colSpacing: 58,
         rowSpacing: 38,
         radius: 11,
@@ -1065,6 +1336,7 @@ export default {
         // Restore question defaults
         selectedSection.value.rows = selectedSection.value.rows || 5;
         selectedSection.value.cols = selectedSection.value.cols || 4;
+        selectedSection.value.columnGroups = selectedSection.value.columnGroups || 1;
         selectedSection.value.labels = selectedSection.value.labels || [
           "A",
           "B",
@@ -1348,7 +1620,7 @@ export default {
     const downloadPNG = () => {
       if (!canvasRef.value) return;
       const exportCanvas = document.createElement("canvas");
-      renderSheet(exportCanvas, config.value, { isPreview: false });
+      renderSheet(exportCanvas, config.value, { isPreview: false, dims: dims.value });
       const safeName = (config.value.name || "plantilla_omr")
         .toLowerCase()
         .replace(/[^a-z0-9]/g, "_");
@@ -1736,41 +2008,6 @@ export default {
   flex: 1;
 }
 
-.canvas-zoom-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.zoom-btn {
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  border-radius: 5px;
-  width: 28px;
-  height: 28px;
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s;
-}
-
-.zoom-btn:hover {
-  background: #e2e8f0;
-}
-.zoom-fit {
-  width: auto;
-  padding: 0 8px;
-  font-size: 12px;
-}
-.zoom-value {
-  font-size: 13px;
-  color: #64748b;
-  min-width: 38px;
-  text-align: center;
-}
-
 .canvas-legend {
   display: flex;
   align-items: center;
@@ -1814,6 +2051,41 @@ export default {
 
 .canvas-scaled-wrapper canvas {
   display: block;
+}
+
+.canvas-zoom-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.zoom-btn {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 5px;
+  width: 28px;
+  height: 28px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.zoom-btn:hover {
+  background: #e2e8f0;
+}
+.zoom-fit {
+  width: auto;
+  padding: 0 8px;
+  font-size: 12px;
+}
+.zoom-value {
+  font-size: 13px;
+  color: #64748b;
+  min-width: 38px;
+  text-align: center;
 }
 
 .omr-canvas {

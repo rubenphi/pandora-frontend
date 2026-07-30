@@ -5,7 +5,6 @@
 
 // Canvas dimensions for high-resolution rendering (A4 aspect ratio at ~150dpi)
 export const CANVAS_PORTRAIT = { width: 1240, height: 1754 };
-export const CANVAS_LANDSCAPE = { width: 1754, height: 1240 };
 
 // Fixed reserved zones margin ratio
 const ANCHOR_MARGIN_RATIO_X = 0.06;
@@ -34,24 +33,34 @@ export function drawConcentricSquareMarker(ctx, cx, cy, outerSize = MARKER_SIZE)
 
 /**
  * Returns anchor pixel positions based on canvas dimensions
+ * @param {number} width
+ * @param {number} height
+ * @param {object} margins - optional { top, bottom, left, right } in pixels
  */
-export function getAnchorPositions(width, height) {
-  const marginX = width * ANCHOR_MARGIN_RATIO_X;
-  const marginY = height * ANCHOR_MARGIN_RATIO_Y;
+export function getAnchorPositions(width, height, margins) {
+  const defaultMarginX = width * ANCHOR_MARGIN_RATIO_X;
+  const defaultMarginY = height * ANCHOR_MARGIN_RATIO_Y;
+  const left = margins?.left ?? defaultMarginX;
+  const right = margins?.right ?? defaultMarginX;
+  const top = margins?.top ?? defaultMarginY;
+  const bottom = margins?.bottom ?? defaultMarginY;
   return {
-    TL: { x: marginX, y: HEADER_HEIGHT + marginY },
-    TR: { x: width - marginX, y: HEADER_HEIGHT + marginY },
-    BL: { x: marginX, y: height - marginY },
-    BR: { x: width - marginX, y: height - marginY },
+    TL: { x: left, y: HEADER_HEIGHT + top },
+    TR: { x: width - right, y: HEADER_HEIGHT + top },
+    BL: { x: left, y: height - bottom },
+    BR: { x: width - right, y: height - bottom },
   };
 }
 
 /**
  * Returns the scannable area: the rectangle INSIDE the 4 corner markers.
  * Sections placed here will be correctly detected by the OMR scanner.
+ * @param {number} width
+ * @param {number} height
+ * @param {object} margins - optional { top, bottom, left, right } in pixels
  */
-export function getScannableBounds(width, height) {
-  const anchors = getAnchorPositions(width, height);
+export function getScannableBounds(width, height, margins) {
+  const anchors = getAnchorPositions(width, height, margins);
   const half = MARKER_SIZE / 2;
   return {
     x: anchors.TL.x + half,
@@ -63,9 +72,12 @@ export function getScannableBounds(width, height) {
 
 /**
  * Returns the reserved zone rectangles that sections cannot overlap
+ * @param {number} width
+ * @param {number} height
+ * @param {object} margins - optional { top, bottom, left, right } in pixels
  */
-export function getReservedZones(width, height) {
-  const anchors = getAnchorPositions(width, height);
+export function getReservedZones(width, height, margins) {
+  const anchors = getAnchorPositions(width, height, margins);
   const half = MARKER_SIZE / 2 + 18;
   return [
     // Header strip
@@ -103,12 +115,12 @@ export function getSectionBounds(sec, dims) {
   if (sec.type === "code") {
     const cols = sec.digits || 6;
     const cellSize = sec.cellSize || 36;
-    const bubbleSpacing = sec.colSpacing || 36;
-    const totalWidth = cols * cellSize + cols * 4; // cells with small gap
-    const writingRowH = cellSize + 8;
-    const bubbleMatrixH = 10 * (bubbleSpacing * 0.85);
-    const totalHeight = writingRowH + bubbleMatrixH + 30;
-  return { x: startX, y: startY, width: totalWidth, height: totalHeight };
+    const colSpacing = sec.colSpacing || (cellSize + 20);
+    const bubbleRowSpacing = sec.rowSpacing || 38;
+    const totalWidth = (cols - 1) * colSpacing + cellSize;
+    const matrixStartY = startY + cellSize + 32;
+    const totalHeight = (matrixStartY - startY) + 10 * bubbleRowSpacing + 10;
+    return { x: startX, y: startY, width: totalWidth, height: totalHeight };
   }
 
   const labelsXOffset = sec.showLabels ? sec.labelWidth || 60 : 0;
@@ -157,16 +169,18 @@ export function getSectionBounds(sec, dims) {
   const padX = 6;
   const lineHeight = 14;
   const headerPadding = 12;
+  const columnGroups = sec.columnGroups || 1;
+  const groupGap = 50;
 
-  // Column width = colSpacing (bubble-to-bubble distance)
-  let totalW = labelsXOffset;
+  // Single group width
+  const groupWidth = cols * colSpacing;
+  const totalW = labelsXOffset + columnGroups * groupWidth + (columnGroups - 1) * groupGap;
+
+  // Approximate max header lines
   let maxHeaderLines = 1;
   for (let c = 0; c < cols; c++) {
     const label = sec.labels && sec.labels[c] ? String(sec.labels[c]) : String(c + 1);
     const colW = Math.max(radius * 2, colSpacing);
-    totalW += colW;
-    if (c < cols - 1) totalW += 0; // no gap between columns, colSpacing IS the width
-    // Approximate wrapped lines
     const maxLabelW = label.length * 7;
     const availW = colW - padX;
     const approxLines = Math.max(1, Math.ceil(maxLabelW / availW));
@@ -174,8 +188,9 @@ export function getSectionBounds(sec, dims) {
   }
 
   const colHeaderH = sec.showLabels ? maxHeaderLines * lineHeight + headerPadding : 12;
+  const rowsPerGroup = Math.ceil(rows / columnGroups);
 
-  const totalHeight = titleH + colHeaderH + (rows - 1) * rowSpacing + radius * 2 + 10;
+  const totalHeight = titleH + colHeaderH + (rowsPerGroup - 1) * rowSpacing + radius * 2 + 10;
 
   return { x: startX, y: startY, width: totalW, height: totalHeight };
 }
@@ -184,37 +199,55 @@ export function getSectionBounds(sec, dims) {
  * Renders the entire OMR sheet onto a canvas
  */
 export function renderSheet(canvas, config, options = {}) {
-  const { isPreview = false, selectedSectionIndex = -1 } = options;
-  const { orientation = "portrait", sections = [] } = config;
+  const { isPreview = false, selectedSectionIndex = -1, margins: marginsOverride } = options;
+  const { sections = [] } = config;
+  const margins = marginsOverride || config.margins;
 
-  const dims = orientation === "landscape" ? CANVAS_LANDSCAPE : CANVAS_PORTRAIT;
-  canvas.width = dims.width;
-  canvas.height = dims.height;
+  // Dynamic canvas size based on margins
+  const base = CANVAS_PORTRAIT;
+  const defaultMarginX = base.width * ANCHOR_MARGIN_RATIO_X;
+  const defaultMarginY = base.height * ANCHOR_MARGIN_RATIO_Y;
+
+  const extraLeft = Math.max(0, margins.left - defaultMarginX);
+  const extraRight = Math.max(0, margins.right - defaultMarginX);
+  const extraTop = Math.max(0, margins.top - defaultMarginY);
+  const extraBottom = Math.max(0, margins.bottom - defaultMarginY);
+
+  const shrinkLeft = Math.max(0, defaultMarginX - margins.left);
+  const shrinkRight = Math.max(0, defaultMarginX - margins.right);
+  const shrinkTop = Math.max(0, defaultMarginY - margins.top);
+  const shrinkBottom = Math.max(0, defaultMarginY - margins.bottom);
+
+  const canvasWidth = Math.max(100, base.width + extraLeft + extraRight - shrinkLeft - shrinkRight);
+  const canvasHeight = Math.max(100, base.height + extraTop + extraBottom - shrinkTop - shrinkBottom);
+
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
 
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
   // Background
   ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, dims.width, dims.height);
+  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
   // 1. Top Orientation Header
   ctx.save();
   ctx.fillStyle = "#111111";
   ctx.font = "bold 22px sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("▲  PARTE SUPERIOR / ARRIBA  ▲", dims.width / 2, 40);
+  ctx.fillText("▲  PARTE SUPERIOR / ARRIBA  ▲", canvasWidth / 2, 40);
   ctx.strokeStyle = "#bbbbbb";
   ctx.lineWidth = 1;
   ctx.setLineDash([6, 4]);
   ctx.beginPath();
   ctx.moveTo(50, 55);
-  ctx.lineTo(dims.width - 50, 55);
+  ctx.lineTo(canvasWidth - 50, 55);
   ctx.stroke();
   ctx.restore();
 
   // 2. Concentric Anchor Markers
-  const anchors = getAnchorPositions(dims.width, dims.height);
+  const anchors = getAnchorPositions(canvasWidth, canvasHeight, margins);
   drawConcentricSquareMarker(ctx, anchors.TL.x, anchors.TL.y);
   drawConcentricSquareMarker(ctx, anchors.TR.x, anchors.TR.y);
   drawConcentricSquareMarker(ctx, anchors.BL.x, anchors.BL.y);
@@ -227,14 +260,14 @@ export function renderSheet(canvas, config, options = {}) {
     ctx.strokeStyle = "rgba(239, 68, 68, 0.28)";
     ctx.lineWidth = 1.2;
     ctx.setLineDash([4, 3]);
-    getReservedZones(dims.width, dims.height).forEach((z) => {
+    getReservedZones(canvasWidth, canvasHeight, margins).forEach((z) => {
       ctx.fillRect(z.x, z.y, z.w, z.h);
       ctx.strokeRect(z.x, z.y, z.w, z.h);
     });
     ctx.restore();
 
     // Scannable area border (red dashed rectangle inside the 4 markers)
-    const area = getScannableBounds(dims.width, dims.height);
+    const area = getScannableBounds(canvasWidth, canvasHeight, margins);
     ctx.save();
     ctx.strokeStyle = "#ef4444";
     ctx.lineWidth = 1.5;
@@ -244,6 +277,7 @@ export function renderSheet(canvas, config, options = {}) {
   }
 
   // 4. Render each section
+  const dims = { width: canvasWidth, height: canvasHeight };
   sections.forEach((sec, idx) => {
     renderSection(ctx, sec, dims, {
       isSelected: isPreview && selectedSectionIndex === idx,
@@ -434,24 +468,20 @@ function renderQuestionSection(ctx, sec, dims) {
   } else {
     // ---- QUESTION: column headers + row labels + bubble grid ----
     const padX = 6;
+    const columnGroups = sec.columnGroups || 1;
+    const groupGap = 50;
 
     ctx.font = "12px sans-serif";
 
     // Column width is based on colSpacing (bubble-to-bubble distance)
-    // Labels wrap when wider than this
     const colWidths = [];
     for (let c = 0; c < cols; c++) {
       const minW = radius * 2;
       colWidths[c] = Math.max(minW, colSpacing);
     }
 
-    // Calculate column center X positions
-    const colCentersX = [];
-    let curX = startX + labelsXOffset;
-    for (let c = 0; c < cols; c++) {
-      colCentersX[c] = curX + colWidths[c] / 2;
-      curX += colWidths[c];
-    }
+    // Single group width (one set of columns)
+    const groupWidth = cols * colSpacing;
 
     // Section title
     if (sec.title) {
@@ -461,45 +491,73 @@ function renderQuestionSection(ctx, sec, dims) {
       ctx.fillText(sec.title, startX, startY - 6);
     }
 
-    // Column header labels (wrap within column width)
+    // Calculate max header lines across all groups
     let maxHeaderLines = 1;
     if (sec.showLabels && sec.labels && sec.labels.length > 0) {
-      ctx.fillStyle = "#475569";
       ctx.font = "12px sans-serif";
-      ctx.textAlign = "center";
       for (let c = 0; c < cols; c++) {
         const label = sec.labels[c] || String(c + 1);
-        const cx = colCentersX[c];
         const maxW = colWidths[c] - padX;
         const lines = measureWrappedLines(ctx, String(label), maxW);
         if (lines > maxHeaderLines) maxHeaderLines = lines;
-        drawWrappedText(ctx, String(label), cx, startY + 10, maxW, 14);
       }
     }
 
-    // Grid of bubbles (gap adapts to header text height)
     const lineHeight = 14;
     const headerPadding = 12;
     const headerGap = sec.showLabels ? maxHeaderLines * lineHeight + headerPadding : 12;
     const gridStartY = startY + headerGap;
 
-    for (let r = 0; r < rows; r++) {
-      const cy = gridStartY + r * rowSpacing;
+    // Rows per group
+    const rowsPerGroup = Math.ceil(rows / columnGroups);
 
-      // Row label (shifted left so it doesn't touch bubbles)
-      if (sec.showLabels) {
-        ctx.fillStyle = "#1e293b";
-        ctx.font = "bold 12px sans-serif";
-        ctx.textAlign = "right";
-        const rowLabel = sec.rowPrefix ? `${sec.rowPrefix}${r + 1}` : `Q${r + 1}`;
-        const labelOffset = radius + 10;
-        ctx.fillText(rowLabel, startX + labelsXOffset - labelOffset, cy + 4);
+    for (let g = 0; g < columnGroups; g++) {
+      const groupStartX = startX + labelsXOffset + g * (groupWidth + groupGap);
+
+      // Column centers for this group
+      const colCentersX = [];
+      let curX = groupStartX;
+      for (let c = 0; c < cols; c++) {
+        colCentersX[c] = curX + colWidths[c] / 2;
+        curX += colWidths[c];
       }
 
-      // Bubbles
-      for (let c = 0; c < cols; c++) {
-        const cx = colCentersX[c];
-        drawDottedBubble(ctx, cx, cy, radius);
+      // Column headers for this group
+      if (sec.showLabels && sec.labels && sec.labels.length > 0) {
+        ctx.fillStyle = "#475569";
+        ctx.font = "12px sans-serif";
+        ctx.textAlign = "center";
+        for (let c = 0; c < cols; c++) {
+          const label = sec.labels[c] || String(c + 1);
+          const cx = colCentersX[c];
+          const maxW = colWidths[c] - padX;
+          drawWrappedText(ctx, String(label), cx, startY + 10, maxW, 14);
+        }
+      }
+
+      // Rows for this group
+      const groupStartRow = g * rowsPerGroup;
+      const groupEndRow = Math.min(groupStartRow + rowsPerGroup, rows);
+
+      for (let r = groupStartRow; r < groupEndRow; r++) {
+        const localRow = r - groupStartRow;
+        const cy = gridStartY + localRow * rowSpacing;
+
+        // Row label
+        if (sec.showLabels) {
+          ctx.fillStyle = "#1e293b";
+          ctx.font = "bold 12px sans-serif";
+          ctx.textAlign = "right";
+          const rowLabel = sec.rowPrefix ? `${sec.rowPrefix}${r + 1}` : `Q${r + 1}`;
+          const labelOffset = radius + 10;
+          ctx.fillText(rowLabel, groupStartX - labelOffset, cy + 4);
+        }
+
+        // Bubbles
+        for (let c = 0; c < cols; c++) {
+          const cx = colCentersX[c];
+          drawDottedBubble(ctx, cx, cy, radius);
+        }
       }
     }
   }
@@ -562,8 +620,8 @@ export function downloadCanvasAsPNG(canvas, filename = "plantilla_omr.png") {
  * Generates JSON template schema for the OMR scanner
  */
 export function exportTemplateJSON(config) {
-  const { orientation, name, sections } = config;
-  const dims = orientation === "landscape" ? CANVAS_LANDSCAPE : CANVAS_PORTRAIT;
+  const { name, sections, margins } = config;
+  const dims = CANVAS_PORTRAIT;
 
   const formattedSections = sections.map((sec, i) => {
     const startX = (sec.percentX / 100) * dims.width;
@@ -572,9 +630,9 @@ export function exportTemplateJSON(config) {
     if (sec.type === "code") {
       const digits = sec.digits || 6;
       const cellSize = sec.cellSize || 36;
-      const colSpacing = sec.colSpacing || (cellSize + 4);
-      const bubbleRowSpacing = sec.rowSpacing || 30;
-      const matrixStartY = startY + cellSize + 14;
+      const colSpacing = sec.colSpacing || (cellSize + 20);
+      const bubbleRowSpacing = sec.rowSpacing || 38;
+      const matrixStartY = startY + cellSize + 32;
       const endX = startX + (digits - 1) * colSpacing + cellSize;
       const endY = matrixStartY + 9 * bubbleRowSpacing;
 
@@ -657,6 +715,9 @@ export function exportTemplateJSON(config) {
   const padX = 6;
   const lineHeight = 14;
   const headerPadding = 12;
+  const columnGroups = sec.columnGroups || 1;
+  const groupGap = 50;
+  const groupWidth = sec.cols * (sec.colSpacing || 40);
 
   // Calculate dynamic header height (labels wrap within colSpacing width)
   let maxHeaderLines = 1;
@@ -668,29 +729,25 @@ export function exportTemplateJSON(config) {
     const approxLines = Math.max(1, Math.ceil(maxLabelW / availW));
     if (approxLines > maxHeaderLines) maxHeaderLines = approxLines;
   }
-  const gridStartY = startY + (sec.showLabels ? maxHeaderLines * lineHeight + headerPadding : 12);
+  const colHeaderH = sec.showLabels ? maxHeaderLines * lineHeight + headerPadding : 12;
+  const rowsPerGroup = Math.ceil(sec.rows / columnGroups);
+  const gridStartY = startY + colHeaderH;
 
-  // Column centers based on colSpacing
-  const colCentersX = [];
-  let curX = startX + labelsXOffset;
-  for (let c = 0; c < sec.cols; c++) {
-    const colW = Math.max(radius * 2, sec.colSpacing || 40);
-    colCentersX[c] = curX + colW / 2;
-    curX += colW;
-  }
-
-  const endX = colCentersX[sec.cols - 1];
-  const endY = gridStartY + (sec.rows - 1) * sec.rowSpacing;
+  // Total width spans all column groups
+  const totalWidth = labelsXOffset + columnGroups * groupWidth + (columnGroups - 1) * groupGap;
+  const endX = startX + totalWidth;
+  const endY = gridStartY + (rowsPerGroup - 1) * sec.rowSpacing;
 
   return {
     type: sec.type || "question",
     name: sec.name || `seccion${i + 1}`,
     rows: sec.rows,
     cols: sec.cols,
+    columnGroups: columnGroups,
     circles: {
-      CTL: { percent_x: parseFloat((colCentersX[0] / dims.width * 100).toFixed(2)), percent_y: parseFloat((gridStartY / dims.height * 100).toFixed(2)) },
+      CTL: { percent_x: parseFloat((startX / dims.width * 100).toFixed(2)), percent_y: parseFloat((gridStartY / dims.height * 100).toFixed(2)) },
       CTR: { percent_x: parseFloat((endX / dims.width * 100).toFixed(2)), percent_y: parseFloat((gridStartY / dims.height * 100).toFixed(2)) },
-      CBL: { percent_x: parseFloat((colCentersX[0] / dims.width * 100).toFixed(2)), percent_y: parseFloat((endY / dims.height * 100).toFixed(2)) },
+      CBL: { percent_x: parseFloat((startX / dims.width * 100).toFixed(2)), percent_y: parseFloat((endY / dims.height * 100).toFixed(2)) },
       CBR: { percent_x: parseFloat((endX / dims.width * 100).toFixed(2)), percent_y: parseFloat((endY / dims.height * 100).toFixed(2)) },
     },
     radius: sec.radius,
@@ -700,7 +757,7 @@ export function exportTemplateJSON(config) {
 
   return {
     template_name: name || "Plantilla OMR Personalizada",
-    orientation: orientation,
+    margins: margins || { top: 75, bottom: 75, left: 75, right: 75 },
     sections: formattedSections,
   };
 }
