@@ -46,11 +46,14 @@
                 interface="action-sheet"
                 class="editable-answer-select"
               >
-                <ion-select-option
-                  v-for="opt in answerOptions"
-                  :key="opt"
-                  :value="opt.toLowerCase()"
-                >
+                 <ion-select-option :value="null"
+                   >En blanco</ion-select-option
+                 >
+                 <ion-select-option
+                   v-for="opt in answerOptions"
+                   :key="opt"
+                   :value="opt.toLowerCase()"
+                 >
                   {{ opt }}
                 </ion-select-option>
               </ion-select>
@@ -375,7 +378,7 @@ export default {
         const row = [response.code];
         for (let i = 0; i < maxQuestions; i++) {
           const answer = response.answers[i];
-          row.push(answer ? answer.answer.toUpperCase() : "");
+          row.push(answer && answer.answer ? answer.answer.toUpperCase() : "");
         }
         return row;
       });

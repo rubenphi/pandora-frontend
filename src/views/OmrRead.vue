@@ -187,11 +187,14 @@
                     !answer.isCorrect && answer.selectedOption !== null,
                 }"
               >
-                <ion-select-option
-                  v-for="option in answer.options"
-                  :key="option.id"
-                  :value="option.id"
-                >
+              <ion-select-option :value="null"
+                >En blanco</ion-select-option
+              >
+              <ion-select-option
+                v-for="option in answer.options"
+                :key="option.id"
+                :value="option.id"
+              >
                   {{ option.identifier }}
                 </ion-select-option>
               </ion-select>

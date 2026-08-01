@@ -59,6 +59,9 @@
                 interface="action-sheet"
                 class="editable-answer-select"
               >
+                <ion-select-option :value="null"
+                  >En blanco</ion-select-option
+                >
                 <ion-select-option value="Sí">Sí</ion-select-option>
                 <ion-select-option value="No">No</ion-select-option>
               </ion-select>
@@ -82,6 +85,9 @@
                 interface="action-sheet"
                 class="editable-answer-select"
               >
+                <ion-select-option :value="null"
+                  >En blanco</ion-select-option
+                >
                 <ion-select-option
                   v-for="opt in likertOptions"
                   :key="opt"
@@ -110,6 +116,9 @@
                 interface="action-sheet"
                 class="editable-answer-select"
               >
+                <ion-select-option :value="null"
+                  >En blanco</ion-select-option
+                >
                 <ion-select-option
                   v-for="opt in likertOptions"
                   :key="opt"
