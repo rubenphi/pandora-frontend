@@ -2,7 +2,7 @@
   <div class="multi-qr-scanner">
     <div v-if="isLoading" class="loading-indicator">
       <ion-spinner name="crescent"></ion-spinner>
-      <p>Iniciando escáner QR...</p>
+      <p>Iniciando escáner QR de alta sensibilidad...</p>
     </div>
 
     <div v-show="!isLoading" class="scanner-wrapper">
@@ -15,7 +15,7 @@
         <!-- Live scanning indicator -->
         <div class="scanning-live-indicator">
           <span class="live-dot"></span>
-          <span class="live-text">ESCANEANDO</span>
+          <span class="live-text">ESCANEANDO MULTI-PASO</span>
         </div>
 
         <!-- QR counter badge (Clickable to view modal) -->
@@ -181,6 +181,7 @@ export default {
     let animationFrameId = null;
     let isRunning        = false;
     let isVideoReady     = false;
+    let frameCounter     = 0;
 
     // Accumulated QR codes — unique strings like "42:A" or "EST01:A"
     const accumulatedCodes = new Set();
@@ -191,6 +192,7 @@ export default {
     let qrDetector = null;
     let srcMat     = null;
     let grayMat    = null;
+    let bwMat      = null;
 
     // ─── Digital Zoom setter ──────────────────────────────────────
     const setZoom = async (z) => {
@@ -211,14 +213,13 @@ export default {
       }
     };
 
-    // ─── Fetch Student Detail (supports ID or Code string) ────────
+    // ─── Fetch Student Detail ─────────────────────────────────────
     const fetchStudentDetail = async (studentCodeOrId) => {
       if (!studentCodeOrId || studentCache[studentCodeOrId]) return;
       try {
         tokenHeader();
         let student = null;
 
-        // 1. Try by numeric ID if purely digits
         if (/^\d+$/.test(String(studentCodeOrId))) {
           try {
             const res = await axios.get(`/users/${studentCodeOrId}`);
@@ -226,7 +227,6 @@ export default {
           } catch (_) { /* ignore */ }
         }
 
-        // 2. Search by code property if not found by ID
         if (!student || !student.id) {
           const searchRes = await axios.get(`/users?code=${encodeURIComponent(studentCodeOrId)}`);
           if (searchRes.data && searchRes.data.length > 0) {
@@ -295,12 +295,25 @@ export default {
       try {
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
-            width:      { ideal: 1920 },
-            height:     { ideal: 1080 },
+            width:      { ideal: 3840, min: 1920 },
+            height:     { ideal: 2160, min: 1080 },
             facingMode: 'environment',
+            focusMode:  'continuous',
           },
           audio: false,
         });
+
+        // Try applying continuous auto-focus constraint if supported by device
+        try {
+          const track = stream.getVideoTracks()[0];
+          if (track && typeof track.getCapabilities === 'function') {
+            const caps = track.getCapabilities();
+            if (caps.focusMode && caps.focusMode.includes('continuous')) {
+              await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+            }
+          }
+        } catch (_) { /* ignore focus constraint warning */ }
+
         if (video.value) {
           video.value.srcObject = stream;
           await video.value.play();
@@ -320,6 +333,7 @@ export default {
     const cleanupOpenCvResources = () => {
       if (srcMat)     { try { srcMat.delete();     srcMat     = null; } catch (_) { /* ignore */ } }
       if (grayMat)    { try { grayMat.delete();    grayMat    = null; } catch (_) { /* ignore */ } }
+      if (bwMat)      { try { bwMat.delete();      bwMat      = null; } catch (_) { /* ignore */ } }
       if (qrDetector) { try { qrDetector.delete(); qrDetector = null; } catch (_) { /* ignore */ } }
     };
 
@@ -329,15 +343,17 @@ export default {
       if (!srcMat || srcMat.cols !== width || srcMat.rows !== height) {
         if (srcMat)  { try { srcMat.delete();  } catch (_) { /* ignore */ } }
         if (grayMat) { try { grayMat.delete(); } catch (_) { /* ignore */ } }
+        if (bwMat)   { try { bwMat.delete();   } catch (_) { /* ignore */ } }
 
         srcMat  = markRaw(new cv.Mat(height, width, cv.CV_8UC4));
         grayMat = markRaw(new cv.Mat(height, width, cv.CV_8UC1));
+        bwMat   = markRaw(new cv.Mat(height, width, cv.CV_8UC1));
       }
 
       return true;
     };
 
-    // ─── Main Processing Loop ─────────────────────────────────────
+    // ─── Main Processing Loop (Multi-Pass: Alternate Grayscale / Otsu Binary) ─────
     const processingLoop = () => {
       if (!isRunning || !video.value || video.value.paused || video.value.ended) return;
 
@@ -352,7 +368,7 @@ export default {
         return;
       }
 
-      // Match canvas internal resolution 1:1 with video stream (1080p high res)
+      // Match canvas internal resolution 1:1 with high-res camera stream
       if (canvas.width !== vw || canvas.height !== vh) {
         canvas.width  = vw;
         canvas.height = vh;
@@ -368,20 +384,33 @@ export default {
       // Draw clear video frame
       ctx.drawImage(video.value, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
 
-      // OpenCV QR Detection directly on clear grayscale frame
+      // Multi-pass OpenCV QR Detection
       if (cvReady && qrDetector && ensureOpenCvResources(canvas.width, canvas.height)) {
         try {
+          frameCounter++;
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
           srcMat.data.set(imageData.data);
 
-          // Direct Grayscale
+          // Convert to Grayscale
           cv.cvtColor(srcMat, grayMat, cv.COLOR_RGBA2GRAY);
+
+          // Alternate passes:
+          // Odd frames  (1,3,5...): Direct Grayscale Mat (natural gradients)
+          // Even frames (2,4,6...): Otsu Binarized Mat (high-contrast for paper shadows/glare)
+          let targetMat = grayMat;
+          if (frameCounter % 2 === 0) {
+            try {
+              cv.threshold(grayMat, bwMat, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
+              targetMat = bwMat;
+            } catch (_) {
+              targetMat = grayMat;
+            }
+          }
 
           let decodedVec = new cv.StringVector();
           let pointsMat  = new cv.Mat();
 
-          // detectAndDecodeMulti
-          qrDetector.detectAndDecodeMulti(grayMat, decodedVec, pointsMat);
+          qrDetector.detectAndDecodeMulti(targetMat, decodedVec, pointsMat);
 
           const numDetected = decodedVec.size();
           const pointsRows  = pointsMat.rows;
@@ -418,7 +447,6 @@ export default {
                   ctx.strokeStyle = isNew ? '#00e5ff' : '#00e676';
                   ctx.fillStyle   = isNew ? 'rgba(0,229,255,0.22)' : 'rgba(0,230,118,0.22)';
                 } else {
-                  // Shape detected but not decoded yet
                   ctx.strokeStyle = '#ff9800';
                   ctx.fillStyle   = 'rgba(255,152,0,0.15)';
                 }
