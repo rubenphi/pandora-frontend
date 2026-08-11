@@ -18,9 +18,16 @@
       <ion-grid>
         <ion-row>
           <ion-col size="12" size-md="6">
-            <ion-card @click="navigateTo('/herramientas/tingo-tango')" class="tool-card">
+            <ion-card
+              @click="navigateTo('/herramientas/tingo-tango')"
+              class="tool-card"
+            >
               <ion-card-content class="tool-content">
-                <ion-icon :icon="timeOutline" class="tool-icon" color="primary"></ion-icon>
+                <ion-icon
+                  :icon="timeOutline"
+                  class="tool-icon"
+                  color="primary"
+                ></ion-icon>
                 <ion-label>
                   <h2>Tingo Tango</h2>
                   <p>Juego de selección aleatoria</p>
@@ -30,9 +37,16 @@
           </ion-col>
 
           <ion-col size="12" size-md="6">
-            <ion-card @click="navigateTo('/herramientas/ruleta')" class="tool-card">
+            <ion-card
+              @click="navigateTo('/herramientas/ruleta')"
+              class="tool-card"
+            >
               <ion-card-content class="tool-content">
-                <ion-icon :icon="discOutline" class="tool-icon" color="secondary"></ion-icon>
+                <ion-icon
+                  :icon="discOutline"
+                  class="tool-icon"
+                  color="primary"
+                ></ion-icon>
                 <ion-label>
                   <h2>Ruleta</h2>
                   <p>Selección de estudiantes al azar</p>
@@ -44,7 +58,11 @@
           <ion-col size="12" size-md="6">
             <ion-card @click="navigateTo('/encuestas')" class="tool-card">
               <ion-card-content class="tool-content">
-                <ion-icon :icon="barChartOutline" class="tool-icon" color="tertiary"></ion-icon>
+                <ion-icon
+                  :icon="barChartOutline"
+                  class="tool-icon"
+                  color="tertiary"
+                ></ion-icon>
                 <ion-label>
                   <h2>Encuestas</h2>
                   <p>Crea y gestiona encuestas para tu curso</p>
@@ -52,9 +70,40 @@
               </ion-card-content>
             </ion-card>
           </ion-col>
+
+          <ion-col size="12" size-md="6" v-if="wikipediaAvailable">
+            <ion-card @click="openExternal(wikipediaUrl)" class="tool-card">
+              <ion-card-content class="tool-content">
+                <ion-icon
+                  :icon="libraryOutline"
+                  class="tool-icon"
+                  color="primary"
+                ></ion-icon>
+                <ion-label>
+                  <h2>Wikipedia</h2>
+                  <p>Visor offline de Wikipedia</p>
+                </ion-label>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+
+          <ion-col size="12" size-md="6" v-if="modelsAvailable">
+            <ion-card @click="openExternal(modelsUrl)" class="tool-card">
+              <ion-card-content class="tool-content">
+                <ion-icon
+                  :icon="hardwareChipOutline"
+                  class="tool-icon"
+                  color="primary"
+                ></ion-icon>
+                <ion-label>
+                  <h2>IA</h2>
+                  <p>Modelo de IA configurado para la clase</p>
+                </ion-label>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
         </ion-row>
       </ion-grid>
-
     </ion-content>
   </ion-page>
 </template>
@@ -76,9 +125,15 @@ import {
   IonIcon,
   IonLabel,
 } from "@ionic/vue";
-import { defineComponent } from "vue";
+import { defineComponent, ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
-import { timeOutline, discOutline, barChartOutline } from "ionicons/icons";
+import {
+  timeOutline,
+  discOutline,
+  barChartOutline,
+  libraryOutline,
+  hardwareChipOutline,
+} from "ionicons/icons";
 
 export default defineComponent({
   name: "HerramientasPage",
@@ -100,16 +155,68 @@ export default defineComponent({
   },
   setup() {
     const router = useRouter();
+    const wikipediaAvailable = ref(false);
+    const modelsAvailable = ref(false);
+
+    const checkServiceAvailability = async (url) => {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        await fetch(url, {
+          signal: controller.signal,
+          mode: "no-cors",
+        });
+        clearTimeout(timeoutId);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    const checkServices = async () => {
+      const hostname = window.location.hostname;
+      wikipediaAvailable.value = await checkServiceAvailability(
+        `http://${hostname}:8080/`,
+      );
+      modelsAvailable.value = await checkServiceAvailability(
+        `http://${hostname}:8081/api/v1/models`,
+      );
+    };
+
+    onMounted(() => {
+      checkServices();
+    });
 
     const navigateTo = (path) => {
       router.push(path);
     };
 
+    const openExternal = (url) => {
+      window.open(url, "_blank", "noopener,noreferrer");
+    };
+
+    const wikipediaUrl = computed(() => {
+      const hostname = window.location.hostname;
+      return `http://${hostname}:8080/viewer#wiki-es/Wikipedia%3AOffline`;
+    });
+
+    const modelsUrl = computed(() => {
+      const hostname = window.location.hostname;
+      return `http://${hostname}:8081`;
+    });
+
     return {
       timeOutline,
       discOutline,
       barChartOutline,
+      libraryOutline,
+      hardwareChipOutline,
+      wikipediaAvailable,
+      modelsAvailable,
+      wikipediaUrl,
+      modelsUrl,
       navigateTo,
+      openExternal,
     };
   },
 });

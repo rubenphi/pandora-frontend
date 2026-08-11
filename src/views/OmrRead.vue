@@ -187,14 +187,12 @@
                     !answer.isCorrect && answer.selectedOption !== null,
                 }"
               >
-              <ion-select-option :value="null"
-                >En blanco</ion-select-option
-              >
-              <ion-select-option
-                v-for="option in answer.options"
-                :key="option.id"
-                :value="option.id"
-              >
+                <ion-select-option :value="null">En blanco</ion-select-option>
+                <ion-select-option
+                  v-for="option in answer.options"
+                  :key="option.id"
+                  :value="option.id"
+                >
                   {{ option.identifier }}
                 </ion-select-option>
               </ion-select>
@@ -330,7 +328,7 @@ export default {
       return answersToSend.value.filter(
         (answer) =>
           answer.selectedOption !== null &&
-          answer.selectedOption === answer.correctOptionId
+          answer.selectedOption === answer.correctOptionId,
       ).length;
     });
 
@@ -338,7 +336,7 @@ export default {
       return answersToSend.value.filter(
         (answer) =>
           answer.selectedOption !== null &&
-          answer.selectedOption !== answer.correctOptionId
+          answer.selectedOption !== answer.correctOptionId,
       ).length;
     });
 
@@ -433,7 +431,7 @@ export default {
         const alert = await alertController.create({
           header: "Códigos no coinciden",
           message: `El código en la(s) sección(es) ${mismatchedSections.join(
-            ", "
+            ", ",
           )} no coincide con el de la primera sección (${referenceCode}). Por favor, vuelva a escanear las secciones incorrectas.`,
           buttons: [
             {
@@ -479,17 +477,37 @@ export default {
       }
 
       if (!foundStudent) {
-        student.value = { id: null, name: "No encontrado", lastName: "" };
+        student.value = { id: null, name: "o", lastName: "" };
         activeGroup.value = null;
         if (context === "scan") {
           const alert = await alertController.create({
             header: "Estudiante no encontrado",
             message: `No se encontró ningún estudiante con el código "${code}".`,
+            inputs: [
+              {
+                name: "manualCode",
+                type: "text",
+                placeholder: "Código de estudiante",
+                value: code || "",
+              },
+            ],
             buttons: [
               {
-                text: "OK",
+                text: "Reescanear",
+                role: "cancel",
                 handler: () => {
                   setTimeout(() => startScan(), 300);
+                },
+              },
+              {
+                text: "Ingresar",
+                handler: (data) => {
+                  const inputCode = data?.manualCode?.trim();
+                  if (inputCode) {
+                    findStudentByCode(inputCode, "manual");
+                  } else {
+                    studentCodeInput.value = "";
+                  }
                 },
               },
             ],
@@ -500,7 +518,7 @@ export default {
         student.value = foundStudent;
         try {
           const coursesResponse = await axios.get(
-            `/users/${student.value.id}/courses`
+            `/users/${student.value.id}/courses`,
           );
           const studentCourses = coursesResponse.data;
           const activeUserCourse = studentCourses.find((uc) => uc.active);
@@ -550,7 +568,7 @@ export default {
 
         try {
           const groupsResponse = await axios.get(
-            `/users/${student.value.id}/groups?active=true`
+            `/users/${student.value.id}/groups?active=true`,
           );
           const activeUserToGroup = groupsResponse.data.find((g) => g.active);
           activeGroup.value = activeUserToGroup
@@ -568,7 +586,7 @@ export default {
       sectionScanImageUrls.value[sectionIndex] = payload.imageUrl;
 
       const questionsArrayBlockResults = payload.results.filter(
-        (r) => r.typeOrigin === "question"
+        (r) => r.typeOrigin === "question",
       );
       const concatedAnswers = [];
       questionsArrayBlockResults.forEach((block) => {
@@ -583,14 +601,14 @@ export default {
           const option = question.options.find(
             (opt) =>
               opt.identifier.toLowerCase() ===
-              scannedAnswer.answer.toLowerCase()
+              scannedAnswer.answer.toLowerCase(),
           );
           if (option) question.selectedOption = option.id;
         }
       });
 
       const studentCode = payload.results.find(
-        (r) => r.typeOrigin === "numeric"
+        (r) => r.typeOrigin === "numeric",
       );
       // Remove leading zeros to match database format
       sectionStudentCodes.value[sectionIndex] = studentCode
@@ -727,7 +745,7 @@ export default {
       };
 
       numberOfSections.value = Math.ceil(
-        cuestionario.value.questions.length / 20
+        cuestionario.value.questions.length / 20,
       );
 
       sectionScanImageUrls.value = Array(numberOfSections.value).fill(null);
@@ -757,7 +775,8 @@ export default {
         questionReactive.isCorrect = computed(
           () =>
             questionReactive.selectedOption !== null &&
-            questionReactive.selectedOption === questionReactive.correctOptionId
+            questionReactive.selectedOption ===
+              questionReactive.correctOptionId,
         );
 
         return questionReactive;
