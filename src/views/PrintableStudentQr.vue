@@ -240,17 +240,19 @@ export default {
       const columns = perPage === 6 ? 2 : 1;
 
       // Tamaño del QR y fuente según hojas por página
-      const qrMaxWidth = perPage === 1 ? "185mm" : perPage === 2 ? "145mm" : "90mm";
-      const qrFontSize = perPage === 1 ? "16pt" : perPage === 2 ? "13pt" : "10pt";
-      const boxWidth   = columns === 2 ? "45%" : "90%";
+      const qrMaxWidth =
+        perPage === 1 ? "185mm" : perPage === 2 ? "145mm" : "90mm";
+      const qrFontSize =
+        perPage === 1 ? "16pt" : perPage === 2 ? "13pt" : "10pt";
+      const boxWidth = columns === 2 ? "45%" : "90%";
 
       const styles = `
         <style>
           .print-page { page-break-after: always; width: 216mm; ${
             perPage === 1 ? "height: 345mm;" : ""
           } padding: 5px; background: white; box-sizing: border-box; display: flex; flex-wrap: wrap; justify-content: space-around; align-content: ${
-            perPage === 1 ? "center" : "flex-start"
-          }; align-items: center; overflow: hidden; }
+        perPage === 1 ? "center" : "flex-start"
+      }; align-items: center; overflow: hidden; }
           .qr-box { border: 1px solid #eee; padding: 2px; text-align: center; width: ${boxWidth}; margin-bottom: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; }
           .qr-img { width: 100%; max-width: ${qrMaxWidth}; max-height: ${qrMaxWidth}; height: auto; display: block; object-fit: contain; }
           .qr-txt { font-size: ${qrFontSize}; font-family: sans-serif; font-weight: light; margin-top: 5mm; text-align: center; color: black; line-height: 1.2; width: 100%; }
@@ -277,7 +279,7 @@ export default {
           html += `
              <div class="qr-box">
                <img src="${dataUrl}" class="qr-img" />
-               <p class="qr-txt">Código: ${student.lastName} ${student.name} || Opción: ${letter}</p>
+               <p class="qr-txt">Nombre: ${student.lastName} ${student.name} || Opción: ${letter}</p>
              </div>
            `;
           currentIdx++;
@@ -292,11 +294,14 @@ export default {
       // This avoids loading all canvases into memory simultaneously, which
       // causes blank PDFs on mobile due to RAM exhaustion.
       const tempContainer = document.createElement("div");
-      tempContainer.style.cssText = "position:absolute;left:-9999px;top:-9999px;";
+      tempContainer.style.cssText =
+        "position:absolute;left:-9999px;top:-9999px;";
       tempContainer.innerHTML = htmlContent;
       document.body.appendChild(tempContainer);
 
-      const pageNodes = Array.from(tempContainer.querySelectorAll(".print-page"));
+      const pageNodes = Array.from(
+        tempContainer.querySelectorAll(".print-page"),
+      );
 
       // Lower scale on native mobile to save RAM
       const isNative = Capacitor.isNativePlatform();
@@ -306,7 +311,11 @@ export default {
       const { default: html2canvas } = await import("html2canvas");
 
       // Legal page in mm: 215.9 x 355.6
-      const pdf = new jsPDF({ unit: "mm", format: "legal", orientation: "portrait" });
+      const pdf = new jsPDF({
+        unit: "mm",
+        format: "legal",
+        orientation: "portrait",
+      });
       const pageWidthMm = 215.9;
       const pageHeightMm = 355.6;
 
@@ -326,7 +335,16 @@ export default {
         // Use the canvas's real aspect ratio to avoid stretching
         const canvasAspect = canvas.height / canvas.width;
         const imgHeightMm = Math.min(pageWidthMm * canvasAspect, pageHeightMm);
-        pdf.addImage(imgData, "JPEG", 0, 0, pageWidthMm, imgHeightMm, undefined, "FAST");
+        pdf.addImage(
+          imgData,
+          "JPEG",
+          0,
+          0,
+          pageWidthMm,
+          imgHeightMm,
+          undefined,
+          "FAST",
+        );
 
         // Free canvas memory immediately after use
         canvas.width = 0;
@@ -342,7 +360,10 @@ export default {
       if (action === "save") {
         pdf.save("QRs_estudiantes.pdf");
       } else if (action === "base64") {
-        return "data:application/pdf;base64," + pdf.output("datauristring").split(",")[1];
+        return (
+          "data:application/pdf;base64," +
+          pdf.output("datauristring").split(",")[1]
+        );
       }
     };
 
@@ -377,11 +398,10 @@ export default {
             const msg = (e?.message || "").toLowerCase();
             const isCancel =
               msg.includes("cancelled") ||
-            msg.includes("user_cancelled") ||
-            msg.includes("dismiss") ||
-            msg.includes("user back") ||
-            msg.includes("back button");
-
+              msg.includes("user_cancelled") ||
+              msg.includes("dismiss") ||
+              msg.includes("user back") ||
+              msg.includes("back button");
 
             if (!isCancel) {
               console.error("Error sharing PDF:", e);
@@ -495,7 +515,7 @@ export default {
 
       try {
         const qrValue = `${student.id}:${letter}`;
-        const labelText = `Código: ${student.lastName} ${student.name} || Opción: ${letter}`;
+        const labelText = `Nombre: ${student.lastName} ${student.name} || Opción: ${letter}`;
 
         // Generate QR on an internal canvas
         const canvas = document.createElement("canvas");
@@ -545,11 +565,11 @@ export default {
       } catch (e) {
         const msg = (e.message || "").toLowerCase();
         const isCancel =
-           msg.includes("cancelled") ||
-            msg.includes("user_cancelled") ||
-            msg.includes("dismiss") ||
-            msg.includes("user back") ||
-            msg.includes("back button");
+          msg.includes("cancelled") ||
+          msg.includes("user_cancelled") ||
+          msg.includes("dismiss") ||
+          msg.includes("user back") ||
+          msg.includes("back button");
 
         if (!isCancel) {
           console.error("Error generating single QR image:", e);

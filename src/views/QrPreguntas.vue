@@ -93,6 +93,7 @@
     <!-- Full-screen multi-QR scanner overlay -->
     <div v-if="isShowingScanner" class="scanner-overlay-container">
       <multi-qr-scanner
+        :students="students"
         @scan-complete="onMultiScanComplete"
         @scan-cancelled="isShowingScanner = false"
       ></multi-qr-scanner>
@@ -122,7 +123,7 @@ import {
 import { trashOutline, arrowBackOutline } from "ionicons/icons";
 import MultiQrScanner from "@/components/MultiQrScanner.vue";
 import axios from "axios";
-import { tokenHeader } from "../globalService";
+import { tokenHeader, selectedYear } from "../globalService";
 
 export default {
   name: "QrScannerMultiple",
@@ -159,6 +160,7 @@ export default {
       question: null,
       lessonQuizType: "individual",
       questionCourseId: null,
+      students: [],
     };
   },
   computed: {
@@ -201,8 +203,31 @@ export default {
         if (!lessonId) return;
         const res = await axios.get(`/lessons/${lessonId}`);
         this.questionCourseId = res.data.course?.id ?? null;
+
+        // Load the grade roster so the scanner can highlight students not yet scanned
+        if (this.questionCourseId) {
+          await this.fetchRoster(this.questionCourseId);
+        }
       } catch (e) {
         console.error("Could not cache questionCourseId:", e);
+      }
+    },
+
+    async fetchRoster(courseId) {
+      if (!courseId) return;
+      try {
+        tokenHeader();
+        const year = selectedYear();
+        const res = await axios.get(
+          `/courses/${courseId}/users?active=true&year=${year}`
+        );
+        const users = res.data || [];
+        // The API returns enrollment objects { user, rol, ... }; keep the student users
+        this.students = users
+          .filter((u) => u.rol === "student")
+          .map((u) => u.user || u);
+      } catch (e) {
+        console.error("Error fetching grade roster:", e);
       }
     },
 

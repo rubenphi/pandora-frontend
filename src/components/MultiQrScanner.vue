@@ -8,38 +8,137 @@
     <div v-show="!isLoading" class="scanner-wrapper">
       <video ref="video" playsinline autoplay muted style="display: none"></video>
 
-      <!-- Canvas with overlaid badge & controls -->
-      <div class="canvas-container">
-        <canvas ref="outputCanvas" class="video-feed"></canvas>
+      <!-- Camera pane + scanned students sidebar -->
+      <div class="scanner-row">
+        <div class="canvas-container">
+          <canvas ref="outputCanvas" class="video-feed"></canvas>
 
-        <!-- Live scanning indicator -->
-        <div class="scanning-live-indicator">
-          <span class="live-dot"></span>
-          <span class="live-text">ESCANEANDO MULTI-PASO</span>
-        </div>
+         <!-- Live scanning indicator -->
+         <div class="scanning-live-indicator">
+           <span class="live-dot"></span>
+           <span class="live-text">ESCANEANDO MULTI-PASO</span>
+         </div>
 
-        <!-- QR counter badge (Clickable to view modal) -->
-        <div
-          class="qr-count-badge"
-          :class="{ 'qr-count-badge--active': detectedCount > 0 }"
-          @click="openPreviewModal"
-        >
-          <span class="qr-count-number">{{ detectedCount }}</span>
-          <span class="qr-count-label">QRs (Ver lista)</span>
-        </div>
+         <!-- Camera picker (only when more than one camera is available) -->
+         <div
+           v-if="cameras.length > 1"
+           class="camera-picker"
+         >
+           <span class="camera-picker-icon"><ion-icon :icon="cameraOutline"></ion-icon></span>
+           <select :value="selectedCamera || ''" @change="onCameraChange">
+             <option value="" disabled>Cámara predeterminada</option>
+             <option
+               v-for="(c, i) in cameras"
+               :key="c.deviceId"
+               :value="c.deviceId"
+             >
+               {{ c.label || `Cámara ${i + 1}` }}
+             </option>
+           </select>
+         </div>
 
-        <!-- Zoom controls -->
-        <div class="zoom-controls">
-          <span class="zoom-title">Zoom:</span>
-          <button
-            v-for="z in [1, 1.5, 2, 2.5, 3]"
-            :key="z"
-            class="zoom-btn"
-            :class="{ 'zoom-btn--active': currentZoom === z }"
-            @click="setZoom(z)"
+          <!-- QR counter badge (Clickable to view full modal) -->
+          <div
+            class="qr-count-badge"
+            :class="{ 'qr-count-badge--active': detectedCount > 0 }"
+            @click="openPreviewModal"
           >
-            {{ z }}x
-          </button>
+            <span class="qr-count-number">{{ detectedCount }}</span>
+            <span class="qr-count-label">QRs (Ver lista)</span>
+          </div>
+
+         <!-- Zoom controls (continuous encoder-style slider) -->
+         <div class="zoom-controls">
+           <span class="zoom-title">Zoom:</span>
+           <input
+             type="range"
+             class="zoom-slider"
+             :min="1"
+             :max="zoomMax"
+             :step="0.1"
+             :value="zoomLevel"
+             @input="onZoomInput"
+           />
+           <span class="zoom-value">{{ Math.round(zoomLevel * 10) / 10 }}x</span>
+         </div>
+        </div>
+
+        <!-- Scanned students sidebar (collapsible) -->
+        <div class="scanned-sidebar" :class="{ 'scanned-sidebar--collapsed': isSidebarCollapsed }">
+          <!-- Header visible only when expanded -->
+          <div v-if="!isSidebarCollapsed" class="sidebar-header">
+            <span class="sidebar-title">Escaneados ({{ detectedCount }})</span>
+            <button
+              class="sidebar-toggle"
+              :title="'Ocultar lista'"
+              @click="toggleSidebar"
+            >
+              <ion-icon :icon="chevronBackOutline"></ion-icon>
+            </button>
+          </div>
+
+           <div class="sidebar-content">
+             <!-- Collapsed state: centered count + toggle -->
+             <div v-if="isSidebarCollapsed" class="sidebar-collapsed-badge">
+               <button
+                 class="sidebar-toggle sidebar-toggle--centered"
+                 :title="'Mostrar lista'"
+                 @click="toggleSidebar"
+               >
+                 <ion-icon :icon="chevronForwardOutline"></ion-icon>
+               </button>
+               <span class="sidebar-collapsed-count">{{ detectedCount }}</span>
+             </div>
+
+             <!-- Expanded state: scrollable list (scanned + pending) -->
+             <div v-else class="sidebar-list">
+               <div v-if="scannedListItems.length === 0 && missingStudents.length === 0" class="sidebar-empty">
+                 <p>No hay códigos escaneados.</p>
+               </div>
+
+               <div v-else>
+                 <!-- Summary -->
+                 <div class="sidebar-summary">
+                   <span class="sidebar-summary-item sidebar-summary-item--scanned">
+                     Scaneados: {{ scannedListItems.length }}
+                   </span>
+                   <span
+                     v-if="missingStudents.length > 0"
+                     class="sidebar-summary-item sidebar-summary-item--missing"
+                   >
+                     Faltan: {{ missingStudents.length }}
+                   </span>
+                 </div>
+
+                 <!-- Scanned students (removable) -->
+                 <div
+                   v-for="item in scannedListItems"
+                   :key="item.rawCode"
+                   class="sidebar-item"
+                 >
+                   <div class="sidebar-item-main">
+                     <span class="sidebar-item-name">{{ item.name }} {{ item.lastName }}</span>
+                     <span class="sidebar-item-option">{{ item.option }}</span>
+                   </div>
+                   <button class="sidebar-item-remove" title="Eliminar" @click="removeItem(item.rawCode)">
+                     ✕
+                   </button>
+                 </div>
+
+                 <!-- Pending (not yet scanned) students from the grade roster -->
+                 <div
+                   v-for="s in missingStudents"
+                   :key="String(s.id ?? s.code)"
+                   class="sidebar-item sidebar-item--missing"
+                 >
+                   <div class="sidebar-item-main">
+                     <span class="sidebar-item-name">{{ s.name }} {{ s.lastName }}</span>
+                     <span class="sidebar-item-option sidebar-item--missing-label">Pendiente</span>
+                   </div>
+                 </div>
+               </div>
+             </div>
+           </div>
         </div>
       </div>
 
@@ -128,6 +227,9 @@ import {
   checkmarkCircleOutline,
   refreshOutline,
   trashOutline,
+  chevronBackOutline,
+  chevronForwardOutline,
+  cameraOutline,
 } from 'ionicons/icons';
 import { CapacitorFlash } from '@capgo/capacitor-flash';
 import cv from '@techstark/opencv-js';
@@ -167,7 +269,13 @@ export default {
     IonButtons,
   },
   emits: ['scan-complete', 'scan-cancelled'],
-  setup(_, { emit, expose }) {
+  props: {
+    // Full roster of the grade/course: [{ id, code, name, lastName, ... }]
+    // When provided, scanned students are shown normally and the remaining
+    // (pending) students appear in the sidebar with a distinct style.
+    students: { type: Array, default: () => [] },
+  },
+  setup(props, { emit, expose }) {
     const video        = ref(null);
     const outputCanvas = ref(null);
     const isLoading    = ref(true);
@@ -175,13 +283,34 @@ export default {
     const isFlashOn    = ref(false);
     const detectedCount = ref(0);
     const isPreviewModalOpen = ref(false);
-    const currentZoom  = ref(1);
+    const isSidebarCollapsed = ref(false);
+    const currentZoom  = ref(1); // digital crop factor used by the detection loop
+    const zoomLevel    = ref(1); // perceived zoom level (what the UI/slider shows)
+    const zoomMax      = ref(20); // slider upper bound (adapts to each camera's max zoom)
+
+    // Camera selection (enumerateDevices) so the user can pick a non-Ultra-Wide camera
+    const cameras        = ref([]);
+    const selectedCamera = ref(null);
 
     let stream           = null;
     let animationFrameId = null;
     let isRunning        = false;
     let isVideoReady     = false;
     let frameCounter     = 0;
+    let detectCounter    = 0;
+
+    // ─── Performance tuning (mobile vs desktop) ──────────────────────
+    // OpenCV runs on the main thread, so high resolutions make the mobile feed
+    // lag. We adapt the camera stream and decode size to the viewport.
+    const isMobileView =
+      (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) ||
+      (window.innerWidth <= 768);
+
+    // Cap the decode canvas width (display is upscaled/downscaled by CSS).
+    // 960px on mobile keeps small (ultra-wide) QRs detectable; 1080px on desktop.
+    const MAX_DETECT_WIDTH = isMobileView ? 960 : 1080;
+    // Run OpenCV detection only every N frames (still draw live video every frame)
+    const DETECT_EVERY = isMobileView ? 2 : 1;
 
     // Accumulated QR codes — unique strings like "42:A" or "EST01:A"
     const accumulatedCodes = new Set();
@@ -194,23 +323,42 @@ export default {
     let grayMat    = null;
     let bwMat      = null;
 
-    // ─── Digital Zoom setter ──────────────────────────────────────
+    // ─── Unified zoom setter ─────────────────────────────────────────
+    // Perceived zoom `z` is split into:
+    //   - hardware zoom (1..device max)   → applied via applyConstraints
+    //   - the remainder                   → digital crop (currentZoom.value)
+    // so the two never compound into an uncontrolled x² effect, and it is
+    // device-agnostic: the slider range adapts to each camera's max zoom.
     const setZoom = async (z) => {
-      currentZoom.value = z;
+      const level = Math.min(Math.max(z, 1), zoomMax.value);
+      zoomLevel.value = level;
+
+      let hwZoom = 1;
       if (stream) {
         try {
           const track = stream.getVideoTracks()[0];
           if (track && typeof track.getCapabilities === 'function') {
             const caps = track.getCapabilities();
-            if (caps.zoom) {
-              const targetZoom = Math.min(Math.max(z, caps.zoom.min || 1), caps.zoom.max || 5);
-              await track.applyConstraints({ advanced: [{ zoom: targetZoom }] });
+            if (caps.zoom && caps.zoom.max) {
+              // allow the slider to reach the device's native zoom ceiling,
+              // and beyond (digital crop) so small / ultra-wide QRs can be acercados
+              zoomMax.value = Math.max(20, caps.zoom.max);
+              hwZoom = Math.min(level, caps.zoom.max);
+              await track.applyConstraints({ advanced: [{ zoom: hwZoom }] });
             }
           }
         } catch (_) {
-          /* ignore hardware zoom error, digital zoom is active */
+          /* hardware zoom unavailable — fall back to digital crop only */
+          hwZoom = 1;
         }
       }
+      // digital crop factor consumed by the detection loop
+      currentZoom.value = level / hwZoom;
+    };
+
+    const onZoomInput = (e) => {
+      const v = parseFloat(e.target.value);
+      if (!Number.isNaN(v)) setZoom(v);
     };
 
     // ─── Fetch Student Detail ─────────────────────────────────────
@@ -253,7 +401,13 @@ export default {
       }
     };
 
+    // Reactive computed list for chips & preview modal
+    // Note: referencing detectedCount.value ensures Vue tracks changes when Set updates!
     const scannedListItems = computed(() => {
+      // Register reactivity dependency on detectedCount & studentCache
+      const _trigger = detectedCount.value;
+      if (_trigger < 0) return [];
+
       return Array.from(accumulatedCodes).map((rawCode) => {
         const parts = rawCode.split(':');
         const studentCodeOrId = parts[0] || '';
@@ -268,6 +422,31 @@ export default {
           lastName: student ? student.lastName : `${studentCodeOrId}`,
         };
       });
+    });
+
+    // ─── Pending (not yet scanned) students from the grade roster ─────
+    // The QR encodes either the student id or a string "code"; match by both.
+    const scannedKeys = computed(() => {
+      // Register reactivity on detectedCount so this recomputes when the Set mutates
+      void detectedCount.value;
+      const keys = new Set();
+      accumulatedCodes.forEach((raw) => keys.add(raw.split(':')[0]));
+      return keys;
+    });
+
+    const isStudentScanned = (student) => {
+      const keys = scannedKeys.value;
+      if (student.id != null && keys.has(String(student.id))) return true;
+      if (student.code != null && keys.has(String(student.code))) return true;
+      return false;
+    };
+
+    const missingStudents = computed(() => {
+      // force recompute when codes change; isStudentScanned reads scannedKeys.value
+      void detectedCount.value;
+      const roster = props.students;
+      if (!roster || roster.length === 0) return [];
+      return roster.filter((s) => !isStudentScanned(s));
     });
 
     // ─── Flash helpers ────────────────────────────────────────────
@@ -293,17 +472,21 @@ export default {
     // ─── Camera ───────────────────────────────────────────────────
     const startCamera = async () => {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            width:      { ideal: 3840, min: 1920 },
-            height:     { ideal: 2160, min: 1080 },
-            facingMode: 'environment',
-            focusMode:  'continuous',
-          },
-          audio: false,
-        });
+        // If the user picked a specific camera, use its deviceId; otherwise fall
+        // back to a rear-facing camera (avoids the ultra-wide default on some phones)
+        const videoConstraints = {
+          width:      { ideal: isMobileView ? 1280 : 1920, min: isMobileView ? 640 : 1280 },
+          height:     { ideal: isMobileView ? 720 : 1080, min: isMobileView ? 480 : 720 },
+          facingMode: 'environment',
+          focusMode:  'continuous',
+        };
+        if (selectedCamera.value) {
+          videoConstraints.deviceId = { exact: selectedCamera.value };
+          delete videoConstraints.facingMode;
+        }
 
-        // Try applying continuous auto-focus constraint if supported by device
+        stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: false });
+
         try {
           const track = stream.getVideoTracks()[0];
           if (track && typeof track.getCapabilities === 'function') {
@@ -368,37 +551,57 @@ export default {
         return;
       }
 
-      // Match canvas internal resolution 1:1 with high-res camera stream
-      if (canvas.width !== vw || canvas.height !== vh) {
-        canvas.width  = vw;
-        canvas.height = vh;
-      }
-
-      // Digital Zoom crop calculations
+      // Digital Zoom crop (centered) on the high-res video source
       const z  = currentZoom.value;
       const sw = vw / z;
       const sh = vh / z;
       const sx = (vw - sw) / 2;
       const sy = (vh - sh) / 2;
 
-      // Draw clear video frame
-      ctx.drawImage(video.value, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+      // Scale the zoomed crop down to a capped width for BOTH display (upscaled
+      // by CSS) and OpenCV detection. This is what makes the feed fluid on mobile.
+      let dw = sw;
+      let dh = sh;
+      if (dw > MAX_DETECT_WIDTH) {
+        const ratio = MAX_DETECT_WIDTH / dw;
+        dw = MAX_DETECT_WIDTH;
+        dh = Math.round(sh * ratio);
+      }
+      // CV prefers even dimensions
+      dw -= dw % 2;
+      dh -= dh % 2;
 
-      // Multi-pass OpenCV QR Detection
-      if (cvReady && qrDetector && ensureOpenCvResources(canvas.width, canvas.height)) {
+      // Match canvas internal resolution to the capped detection size
+      if (canvas.width !== dw || canvas.height !== dh) {
+        canvas.width  = dw;
+        canvas.height = dh;
+      }
+
+      frameCounter++;
+
+      // Always draw the (scaled) video frame so the live feed stays smooth
+      ctx.drawImage(video.value, sx, sy, sw, sh, 0, 0, dw, dh);
+
+      // Run OpenCV detection only every DETECT_EVERY-th frame to ease the CPU
+      if (
+        cvReady
+        && qrDetector
+        && frameCounter % DETECT_EVERY === 1
+        && ensureOpenCvResources(dw, dh)
+      ) {
         try {
-          frameCounter++;
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const imageData = ctx.getImageData(0, 0, dw, dh);
           srcMat.data.set(imageData.data);
+          detectCounter++;
 
           // Convert to Grayscale
           cv.cvtColor(srcMat, grayMat, cv.COLOR_RGBA2GRAY);
 
-          // Alternate passes:
-          // Odd frames  (1,3,5...): Direct Grayscale Mat (natural gradients)
-          // Even frames (2,4,6...): Otsu Binarized Mat (high-contrast for paper shadows/glare)
+          // Alternate passes (based on detection passes, not every frame):
+          // Odd passes: Direct Grayscale
+          // Even passes: Otsu Binarized
           let targetMat = grayMat;
-          if (frameCounter % 2 === 0) {
+          if (detectCounter % 2 === 0) {
             try {
               cv.threshold(grayMat, bwMat, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
               targetMat = bwMat;
@@ -505,6 +708,67 @@ export default {
       processingLoop();
     };
 
+    // ─── Camera enumeration ─────────────────────────────────────────
+    const loadCameras = async () => {
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+          cameras.value = [];
+          return;
+        }
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        cameras.value = devices.filter((d) => d.kind === 'videoinput');
+        // If the previously selected camera is no longer available, fall back to null
+        if (cameras.value.length && !selectedCamera.value) {
+          selectedCamera.value = null; // keep default (environment) on first load
+        }
+      } catch (e) {
+        cameras.value = [];
+        console.warn('No se pudieron enumerar los dispositivos de cámara:', e);
+      }
+    };
+
+    const onCameraChange = async (e) => {
+      const deviceId = e.target.value;
+      if (!deviceId) return;
+      await setCamera(deviceId);
+    };
+
+    // Restart the stream on a different physical camera (e.g. switch away from ultra-wide)
+    const setCamera = async (deviceId) => {
+      selectedCamera.value = deviceId;
+      if (!isRunning || !stream) return; // stream not started yet, will use this deviceId
+
+      // stop current loop + stream
+      isRunning = false;
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+      if (video.value) {
+        video.value.pause();
+        video.value.srcObject = null;
+        video.value.removeEventListener('loadedmetadata', handleVideoReady);
+      }
+      stream.getTracks().forEach((t) => t.stop());
+      stream = null;
+      isVideoReady = false;
+
+      try {
+        video.value.addEventListener('loadedmetadata', handleVideoReady);
+        await startCamera();
+        if (video.value && video.value.videoWidth > 0) {
+          handleVideoReady();
+        }
+      } catch (error) {
+        const alert = await alertController.create({
+          header:  'Error de Cámara',
+          message: `No se pudo cambiar de cámara: ${error?.message || error}`,
+          buttons: ['OK'],
+        });
+        await alert.present();
+      }
+    };
+
     // ─── Initialization ───────────────────────────────────────────
     const initialize = async () => {
       try {
@@ -518,15 +782,23 @@ export default {
           video.value.addEventListener('loadedmetadata', handleVideoReady);
         }
 
-        await startCamera();
+         await startCamera();
 
-        if (video.value && video.value.videoWidth > 0) {
-          handleVideoReady();
-        }
+         // permission granted now → enumerate with labels so the user can switch
+         await loadCameras();
+
+         if (video.value && video.value.videoWidth > 0) {
+           handleVideoReady();
+         }
       } catch (err) {
         console.error('Error al inicializar MultiQrScanner:', err);
         isLoading.value = false;
       }
+    };
+
+    // ─── Sidebar toggle ────────────────────────────────────────────
+    const toggleSidebar = () => {
+      isSidebarCollapsed.value = !isSidebarCollapsed.value;
     };
 
     // ─── User actions ─────────────────────────────────────────────
@@ -604,10 +876,19 @@ export default {
       isFlashOn,
       detectedCount,
       isPreviewModalOpen,
+      isSidebarCollapsed,
+      cameras,
+      selectedCamera,
       scannedListItems,
+      missingStudents,
       currentZoom,
+      zoomLevel,
+      zoomMax,
       setZoom,
+      onZoomInput,
+      onCameraChange,
       openPreviewModal,
+      toggleSidebar,
       removeItem,
       captureResults,
       clearAccumulated,
@@ -615,6 +896,9 @@ export default {
       toggleFlash,
       flashlight,
       flashlightOutline,
+      chevronBackOutline,
+      chevronForwardOutline,
+      cameraOutline,
       closeCircleOutline,
       checkmarkCircleOutline,
       refreshOutline,
@@ -648,9 +932,51 @@ export default {
   height: 100%;
 }
 
+/* Camera (2/3) + sidebar (1/3) row */
+.scanner-row {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  height: 100%;
+  gap: 1px;
+}
+
+/* Portrait: camera on top (2/3), sidebar at the bottom (1/3) */
+@media (orientation: portrait) {
+  .scanner-row {
+    flex-direction: column;
+  }
+
+  .scanned-sidebar {
+    border-left: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* collapsed sidebar becomes a slim horizontal strip at the bottom */
+  .scanned-sidebar--collapsed {
+    flex: 0 0 64px;
+    width: 100%;
+    max-width: none;
+    height: 64px;
+  }
+
+  /* keep right-safe-area spacing on edge items */
+  .scanned-sidebar,
+  .sidebar-header,
+  .sidebar-list {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  .sidebar-list {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 8px);
+  }
+}
+
 .canvas-container {
   position: relative;
-  flex: 1;
+  flex: 2;
+  min-width: 0;
+  min-height: 0;
   overflow: hidden;
   background: #000;
 }
@@ -665,8 +991,8 @@ export default {
 /* ── Live indicator ── */
 .scanning-live-indicator {
   position: absolute;
-  top: 12px;
-  left: 12px;
+  top: max(12px, env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
   display: flex;
   align-items: center;
   gap: 6px;
@@ -699,11 +1025,56 @@ export default {
   letter-spacing: 0.8px;
 }
 
+/* ── Camera picker ── */
+.camera-picker {
+  position: absolute;
+  top: calc(48px + env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  z-index: 10;
+}
+
+.camera-picker-icon {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.camera-picker select {
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 28px 6px 8px;
+  font-size: 13px;
+  font-weight: 500;
+  outline: none;
+  min-width: 150px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23fff' fill-opacity='0.5' d='M0 0l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 10px 6px;
+}
+
+.camera-picker select option {
+  background: #121212;
+  color: #fff;
+}
+
 /* ── Badge ── */
 .qr-count-badge {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -743,15 +1114,241 @@ export default {
   text-transform: uppercase;
 }
 
+/* ── Scanned students sidebar (collapsible) ── */
+.scanned-sidebar {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #121212;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+  overflow: hidden;
+  transition: flex-basis 0.25s ease, width 0.25s ease;
+}
+
+.scanned-sidebar--collapsed {
+  flex: 0 0 64px;
+  max-width: 64px;
+  width: 64px;
+}
+
+.sidebar-content {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.sidebar-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.5px;
+}
+
+.sidebar-toggle {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-size: 18px;
+  padding: 4px 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.8;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+}
+
+.sidebar-toggle:hover {
+  opacity: 1;
+  color: #00e5ff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: env(safe-area-inset-bottom);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.sidebar-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 3px;
+}
+
+.sidebar-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-empty {
+  padding: 16px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ── Scanned / pending summary ── */
+.sidebar-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.sidebar-summary-item {
+  display: inline-flex;
+}
+
+.sidebar-summary-item--scanned {
+  color: #00e676;
+}
+
+.sidebar-summary-item--missing {
+  color: #ff9800;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 13px;
+}
+
+.sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-item--missing {
+  opacity: 0.65;
+}
+
+.sidebar-item--missing .sidebar-item-name {
+  color: rgba(255, 255, 255, 0.55);
+  font-style: italic;
+}
+
+.sidebar-item--missing-label {
+  color: #ff9800;
+  background: rgba(255, 152, 0, 0.15);
+}
+
+.sidebar-item-remove {
+  display: none;
+}
+
+.sidebar-item:not(.sidebar-item--missing) .sidebar-item-remove {
+  display: inline-flex;
+}
+
+.sidebar-item-main {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.sidebar-item-name {
+  color: #fff;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-item-option {
+  color: #00e5ff;
+  font-weight: 700;
+  font-size: 12px;
+  background: rgba(0, 229, 255, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+  align-self: flex-start;
+}
+
+.sidebar-item-remove {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: #ff5252;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sidebar-item-remove:hover {
+  color: #fff;
+  background: rgba(255, 82, 82, 0.2);
+}
+
+.sidebar-collapsed-badge {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.sidebar-toggle--centered {
+  font-size: 16px;
+  padding: 2px 2px;
+}
+
+.sidebar-collapsed-count {
+  font-size: 32px;
+  font-weight: 700;
+  color: #00e5ff;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
+}
+
 /* ── Digital Zoom Controls ── */
 .zoom-controls {
   position: absolute;
-  bottom: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   background: rgba(0, 0, 0, 0.75);
   padding: 6px 12px;
   border-radius: 20px;
@@ -766,21 +1363,50 @@ export default {
   margin-right: 4px;
 }
 
-.zoom-btn {
-  background: rgba(255, 255, 255, 0.15);
-  border: none;
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
-  padding: 6px 10px;
-  border-radius: 12px;
+.zoom-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  width: 140px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  outline: none;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
 }
 
-.zoom-btn--active {
+.zoom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
   background: #00e5ff;
-  color: #000;
+  border: 2px solid #000;
+  box-shadow: 0 0 8px #00e5ff;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.zoom-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #00e5ff;
+  border: 2px solid #000;
+  box-shadow: 0 0 8px #00e5ff;
+  cursor: pointer;
+}
+
+.zoom-slider:hover::-webkit-slider-thumb {
+  background: #00e5ff;
+}
+
+.zoom-value {
+  color: #00e5ff;
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 3ch;
+  text-align: right;
 }
 
 /* ── Controls ── */
@@ -789,6 +1415,9 @@ export default {
   align-items: center;
   gap: 6px;
   padding: 8px 10px;
+  padding-left: max(10px, env(safe-area-inset-left));
+  padding-right: max(10px, env(safe-area-inset-right));
+  padding-bottom: calc(8px + env(safe-area-inset-bottom));
   background: rgba(0, 0, 0, 0.85);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
