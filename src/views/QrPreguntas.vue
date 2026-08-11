@@ -18,6 +18,9 @@
             No hay respuestas escaneadas aún. Presione "Escanear QR" para
             comenzar.
           </p>
+          <p v-if="isScanning" class="processing-message">
+            <ion-spinner name="dots"></ion-spinner> Procesando códigos...
+          </p>
         </div>
 
         <ion-list>
@@ -52,8 +55,8 @@
     <ion-footer>
       <ion-toolbar>
         <div class="ion-padding">
-          <ion-button expand="block" @click="scanQR">
-            {{ isScanning ? "Escaneando..." : "Escanear QR" }}
+          <ion-button expand="block" @click="openScanner" :disabled="isScanning">
+            {{ isScanning ? "Procesando..." : "Escanear QR" }}
           </ion-button>
           <ion-button
             v-if="scannedCodes.length > 0"
@@ -77,15 +80,23 @@
       </ion-toolbar>
     </ion-footer>
 
-    <!-- Toast para mostrar código recién escaneado -->
+    <!-- Toast para mostrar errores o notificaciones de batch -->
     <ion-toast
       :is-open="showToast"
       :message="toastMessage"
-      :duration="2000"
+      :duration="3000"
       position="top"
-      color="success"
+      :color="toastColor"
       @didDismiss="showToast = false"
     ></ion-toast>
+
+    <!-- Full-screen multi-QR scanner overlay -->
+    <div v-if="isShowingScanner" class="scanner-overlay-container">
+      <multi-qr-scanner
+        @scan-complete="onMultiScanComplete"
+        @scan-cancelled="isShowingScanner = false"
+      ></multi-qr-scanner>
+    </div>
   </ion-page>
 </template>
 
@@ -104,15 +115,12 @@ import {
   IonLabel,
   IonIcon,
   IonToast,
-  IonButtons, // Added IonButtons
+  IonButtons,
+  IonSpinner,
 } from "@ionic/vue";
 
-import {
-  CapacitorBarcodeScanner,
-  CapacitorBarcodeScannerTypeHint,
-} from "@capacitor/barcode-scanner";
-import { trashOutline, arrowBackOutline } from "ionicons/icons"; // Added arrowBackOutline
-
+import { trashOutline, arrowBackOutline } from "ionicons/icons";
+import MultiQrScanner from "@/components/MultiQrScanner.vue";
 import axios from "axios";
 import { tokenHeader } from "../globalService";
 
@@ -131,27 +139,26 @@ export default {
     IonLabel,
     IonIcon,
     IonToast,
-    IonButtons, // Added IonButtons
+    IonButtons,
+    IonSpinner,
+    MultiQrScanner,
   },
   data() {
     return {
-      scannedCodes: [], // Array of { user: {id, name, lastName}, group: {id, name}, optionSelected: { identifier } }
+      scannedCodes: [],
       isScanning: false,
+      isShowingScanner: false,
       showToast: false,
       toastMessage: "",
+      toastColor: "success",
       trashOutline,
-      arrowBackOutline, // Added arrowBackOutline to data
-      lastScan: null,
-      scannerResult: null,
-      scanFormat: null,
+      arrowBackOutline,
+      qrCount: 0,
+      isSubmitting: false,
       questionId: null,
       question: null,
       lessonQuizType: "individual",
-      student: { id: null, name: "", lastName: "" }, // Initialize student with id
-      activeGroup: { id: null, name: "" }, // Initialize activeGroup with id
-      qrCount: 0,
-      isSubmitting: false, // Added isSubmitting
-      mutationObserver: null, // To store the MutationObserver instance
+      questionCourseId: null,
     };
   },
   computed: {
@@ -162,73 +169,20 @@ export default {
   mounted() {
     this.questionId = this.$route.params.d;
     this.fetchQuestionDetails();
-
-    // Create a MutationObserver to watch for the close button being added to the DOM
-    this.mutationObserver = new MutationObserver((mutationsList) => {
-      for (const mutation of mutationsList) {
-        if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
-          const closeButton = document.querySelector(
-            ".scanner-dialog-inner .close-button"
-          );
-          if (closeButton) {
-            closeButton.addEventListener(
-              "click",
-              this.handleNativeCloseButtonClick
-            );
-            this.mutationObserver.disconnect(); // Stop observing once found
-            break;
-          }
-        }
-      }
-    });
-
-    // Start observing the document body for child list changes
-    this.mutationObserver.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
-  },
-
-  beforeUnmount() {
-    // Ensure scanning state is reset when component is unmounted
-    this.isScanning = false;
-    // Attempt to stop the scanner explicitly, especially for web
-    if (
-      typeof CapacitorBarcodeScanner !== "undefined" &&
-      CapacitorBarcodeScanner.stopScan
-    ) {
-      CapacitorBarcodeScanner.stopScan().catch((e) =>
-        console.error("Error stopping barcode scanner:", e)
-      );
-    }
-
-    // Disconnect the MutationObserver
-    if (this.mutationObserver) {
-      this.mutationObserver.disconnect();
-    }
-
-    // Also ensure the event listener is removed if it was attached
-    const closeButton = document.querySelector(
-      ".scanner-dialog-inner .close-button"
-    );
-    if (closeButton) {
-      closeButton.removeEventListener(
-        "click",
-        this.handleNativeCloseButtonClick
-      );
-    }
   },
   methods: {
+    // ─── Data fetching ─────────────────────────────────────────────
     async fetchQuestionDetails() {
       try {
         tokenHeader();
         const response = await axios.get(`/questions/${this.questionId}`);
         this.question = response.data;
-        // Assuming quizType is nested under lesson or quiz within the question object
         this.lessonQuizType =
           this.question.lesson?.quizType ||
           this.question.quiz?.quizType ||
           "individual";
+
+        await this.fetchAndCacheQuestionCourseId();
       } catch (error) {
         console.error("Error fetching question details:", error);
         const alert = await alertController.create({
@@ -239,299 +193,174 @@ export default {
         await alert.present();
       }
     },
-    async fetchStudentAndGroup(studentCode) {
-      this.student = { id: null, name: "", lastName: "" };
-      this.activeGroup = { id: null, name: "" };
 
-      if (!studentCode) return;
-
+    async fetchAndCacheQuestionCourseId() {
+      if (this.questionCourseId) return;
       try {
-        tokenHeader();
-        const studentResponse = await axios.get(`/users?code=${studentCode}`);
-        if (studentResponse.data.length > 0) {
-          const foundStudent = studentResponse.data[0];
+        const lessonId = this.question?.quiz?.lesson?.id;
+        if (!lessonId) return;
+        const res = await axios.get(`/lessons/${lessonId}`);
+        this.questionCourseId = res.data.course?.id ?? null;
+      } catch (e) {
+        console.error("Could not cache questionCourseId:", e);
+      }
+    },
 
-          // --- Validation Start ---
-          try {
-            const coursesResponse = await axios.get(
-              `/users/${foundStudent.id}/courses`
-            );
-            const studentCourses = coursesResponse.data;
-            const activeUserCourse = studentCourses.find((uc) => uc.active);
+    // ─── Scanner lifecycle ─────────────────────────────────────────
+    openScanner() {
+      this.isShowingScanner = true;
+    },
 
-            // Determine the courseId from the question
-            // The structure might vary, so we check multiple paths
-            const questionCourseId = await axios
-              .get("/lessons/" + this.question.quiz.lesson.id)
-              .then((res) => res.data.course?.id);
+    // Called by MultiQrScanner when the user presses "Capturar"
+    // rawCodes: string[] — each entry is "{studentCodeOrId}:{opcion}" e.g. "42:A" or "EST01:A"
+    async onMultiScanComplete(rawCodes) {
+      this.isShowingScanner = false;
+      if (!rawCodes || rawCodes.length === 0) return;
 
-            if (questionCourseId) {
-              if (
-                !activeUserCourse ||
-                activeUserCourse.course.id !== questionCourseId
-              ) {
-                const alert = await alertController.create({
-                  header: "Estudiante no Autorizado",
-                  message: `El estudiante ${foundStudent.name} ${foundStudent.lastName} no pertenece al curso activo de esta pregunta.`,
-                  buttons: ["OK"],
-                });
-                await alert.present();
-                return; // Stop processing this student
-              }
-            } else {
-              console.warn(
-                "Could not determine courseId from question details. Skipping course validation."
-              );
-            }
-          } catch (error) {
-            console.error("Error validating student course:", error);
-            // We allow to proceed if validation fails due to network/server error?
-            // Or we block? OmrRead blocks. Let's block to be safe and consistent.
-            const alert = await alertController.create({
-              header: "Error de Verificación",
-              message:
-                "No se pudo verificar la inscripción del estudiante al curso. Por favor, inténtelo de nuevo.",
-              buttons: ["OK"],
-            });
-            await alert.present();
-            return;
-          }
-          // --- Validation End ---
+      this.isScanning = true;
+      const errors = [];
 
-          this.student = foundStudent;
+      if (!this.questionCourseId) {
+        await this.fetchAndCacheQuestionCourseId();
+      }
 
-          if (this.lessonQuizType === "group" && this.student.id) {
-            const groupsResponse = await axios.get(
-              `/users/${this.student.id}/groups?active=true`
-            );
-            const activeUserToGroup = groupsResponse.data.find((g) => g.active);
-            if (activeUserToGroup) {
-              this.activeGroup = activeUserToGroup.group;
-            }
-          }
-        } else {
-          console.warn(`Student with code ${studentCode} not found.`);
-          this.student = { id: null, name: "", lastName: "" }; // Ensure id is null if not found
-
-          const alert = await alertController.create({
-            header: "Estudiante no encontrado",
-            message: `No se encontró ningún estudiante con el código "${studentCode}".`,
-            buttons: ["OK"],
-          });
-          await alert.present();
+      for (const raw of rawCodes) {
+        const parts = raw.split(":");
+        if (parts.length < 2) {
+          errors.push(`Formato inválido: "${raw}"`);
+          continue;
         }
-      } catch (error) {
-        console.error("Error fetching student or group data:", error);
-        this.student = { id: null, name: "", lastName: "" }; // Ensure id is null on error
-        this.activeGroup = { id: null, name: "" }; // Ensure id is null on error
+
+        const studentCodeOrId = parts[0]?.trim();
+        const opcion          = parts[1]?.trim();
+
+        if (!studentCodeOrId || !opcion) {
+          errors.push(`Datos no válidos en: "${raw}"`);
+          continue;
+        }
+
+        // Validate option exists in question
+        const validOptions = this.question.options.map((o) => o.identifier);
+        if (!validOptions.includes(opcion)) {
+          errors.push(`Opción "${opcion}" no existe para el estudiante (${studentCodeOrId})`);
+          continue;
+        }
+
+        const result = await this.processStudentCode(studentCodeOrId, opcion);
+        if (result.error) {
+          errors.push(result.error);
+        }
+      }
+
+      this.isScanning = false;
+
+      // Show aggregated error summary if any failed
+      if (errors.length > 0) {
         const alert = await alertController.create({
-          header: "Error",
-          message: "No se pudo cargar los datos del estudiante o grupo.",
+          header:  `${errors.length} código(s) no procesado(s)`,
+          message: errors.join("\n"),
           buttons: ["OK"],
         });
         await alert.present();
+      } else if (rawCodes.length > 0) {
+        this.toastMessage = `✓ ${rawCodes.length} código(s) procesado(s)`;
+        this.toastColor   = "success";
+        this.showToast    = true;
       }
     },
-    async scanQR() {
-      if (this.isScanning) return;
 
+    // Fetches student by numeric ID OR string code, validates course enrollment and group.
+    async processStudentCode(studentCodeOrId, opcion) {
       try {
-        this.isScanning = true;
+        tokenHeader();
+        let student = null;
 
-        // Construct scanInstructions based on the *previous* lastScan and current qrCount
-        let currentScanInstructions = `Escanee un código QR. Total escaneados: ${this.qrCount}`;
-        if (this.lastScan) {
-          currentScanInstructions = `${this.lastScan}. || Total escaneados: ${this.qrCount}.`;
+        // 1. Try numeric ID first if digits only
+        if (/^\d+$/.test(String(studentCodeOrId))) {
+          try {
+            const studentRes = await axios.get(`/users/${studentCodeOrId}`);
+            student = studentRes.data;
+          } catch (_) { /* fallback to search by code */ }
         }
 
-        const result = await CapacitorBarcodeScanner.scanBarcode({
-          hint: CapacitorBarcodeScannerTypeHint.QR_CODE,
-          scanInstructions: currentScanInstructions,
-          scanButton: false, // No manual close button
-        });
-
-        this.isScanning = false;
-
-        if (result.cancelled) {
-          console.log("Scanner closed by user.");
-          // Do not auto-restart, effectively stopping the continuous scanning
-          return;
-        }
-
-        // If not cancelled, but no ScanResult, it means the scanner closed without a scan.
-        // In this case, we should also ensure isScanning is false and not auto-restart.
-        if (!result.ScanResult) {
-          return;
-        }
-
-        // If we reach here, it means a ScanResult was found.
-        // Proceed only if a QR code was scanned
-        const [codigoEstudiante, opcion] = result.ScanResult.split(":");
-
-        if (!codigoEstudiante || !opcion) {
-          const alert = await alertController.create({
-            header: "Formato de QR inválido",
-            message:
-              "El código QR debe tener el formato 'codigoEstudiante:opcion'.",
-            buttons: [
-              {
-                text: "OK",
-                handler: () => {
-                  setTimeout(() => this.scanQR(), 300); // Auto-restart after dismissing alert
-                },
-              },
-            ],
-          });
-          await alert.present();
-          return; // Stop further processing for invalid format
-        }
-
-        await this.fetchStudentAndGroup(codigoEstudiante);
-
-        // If student not found, an alert is shown in fetchStudentAndGroup.
-        // We stop the scan loop here as requested for invalid data.
-        if (!this.student.id) {
-          this.isScanning = false;
-          return;
-        }
-
-        // --- New Validation Logic ---
-        const validOptions = this.question.options.map((opt) => opt.identifier);
-        if (!validOptions.includes(opcion)) {
-          this.isScanning = false; // Stop the scanning loop
-
-          let entityName = "";
-          if (this.lessonQuizType === "group" && this.activeGroup.name) {
-            entityName = `el grupo ${this.activeGroup.name}`;
-          } else if (this.student.name) {
-            entityName = `${this.student.lastName} ${this.student.name}`;
-          } else {
-            entityName = `el código ${codigoEstudiante}`; // Fallback
+        // 2. Fallback search by code property
+        if (!student || !student.id) {
+          const searchRes = await axios.get(`/users?code=${encodeURIComponent(studentCodeOrId)}`);
+          if (searchRes.data && searchRes.data.length > 0) {
+            student = searchRes.data[0];
           }
-
-          const alert = await alertController.create({
-            header: "Opción Inválida",
-            message: `La respuesta seleccionada por ${entityName} no existe entre las opciones. Seleccionó ${opcion}.`,
-            buttons: ["OK"],
-          });
-          await alert.present();
-          return; // Stop execution and the scan loop.
         }
-        // --- End of Validation Logic ---
 
-        const scannedObject = {
-          user: { ...this.student }, // Clone student object
-          group: { ...this.activeGroup }, // Clone activeGroup object
+        if (!student || !student.id) {
+          return { error: `Estudiante "${studentCodeOrId}" no encontrado` };
+        }
+
+        // Validate course enrollment
+        if (this.questionCourseId) {
+          const coursesRes = await axios.get(`/users/${student.id}/courses`);
+          const activeEnrollment = coursesRes.data.find((uc) => uc.active);
+          if (
+            !activeEnrollment ||
+            activeEnrollment.course.id !== this.questionCourseId
+          ) {
+            return {
+              error: `${student.name} ${student.lastName} no está inscrito en el curso activo`,
+            };
+          }
+        }
+
+        // Resolve active group (if group quiz)
+        let activeGroup = { id: null, name: "" };
+        if (this.lessonQuizType === "group") {
+          const groupsRes = await axios.get(
+            `/users/${student.id}/groups?active=true`
+          );
+          const activeUserToGroup = groupsRes.data.find((g) => g.active);
+          if (activeUserToGroup) {
+            activeGroup = activeUserToGroup.group;
+          }
+        }
+
+        // Duplicate check
+        const isDuplicate =
+          this.lessonQuizType === "individual"
+            ? this.scannedCodes.some((item) => item.user.id === student.id)
+            : this.scannedCodes.some((item) => item.group.id === activeGroup.id);
+
+        if (isDuplicate) {
+          return {
+            error: `Ya existe una respuesta para ${
+              this.lessonQuizType === "group"
+                ? activeGroup.name || `grupo de ${student.name}`
+                : `${student.name} ${student.lastName}`
+            }`,
+          };
+        }
+
+        // Add to scanned codes
+        this.scannedCodes.unshift({
+          user: {
+            id:       student.id,
+            name:     student.name,
+            lastName: student.lastName,
+          },
+          group: { ...activeGroup },
           optionSelected: { identifier: opcion },
-          lessonQuizType: this.lessonQuizType, // Add lessonQuizType to the scanned object
-        };
-
-        let formattedLastScan = "";
-        if (this.lessonQuizType === "individual") {
-          formattedLastScan = `${this.student.name} ${this.student.lastName}: ${opcion}`;
-        } else if (this.lessonQuizType === "group" && this.activeGroup.name) {
-          formattedLastScan = `${this.activeGroup.name}: ${opcion}`;
-        } else {
-          formattedLastScan = `${codigoEstudiante}: ${opcion}`; // Fallback if group name not found or type unknown
-        }
-
-        // Verificar si ya existe una respuesta para este estudiante/grupo
-        let codeExists = false;
-        if (scannedObject.lessonQuizType === "individual") {
-          codeExists = this.scannedCodes.some(
-            (item) => item.user.id === scannedObject.user.id
-          );
-        } else if (scannedObject.lessonQuizType === "group") {
-          codeExists = this.scannedCodes.some(
-            (item) => item.group.id === scannedObject.group.id
-          );
-        }
-
-        if (codeExists) {
-          this.toastMessage = `Ya existe una respuesta para este ${
-            scannedObject.lessonQuizType === "individual"
-              ? "estudiante"
-              : "grupo"
-          }.`;
-          this.showToast = true;
-          setTimeout(() => this.scanQR(), 300);
-          return;
-        }
-
-        // Agregar el nuevo código
-        this.scannedCodes.unshift(scannedObject); // Add the new object
-        this.lastScan = formattedLastScan;
-        this.qrCount++; // Increment QR count only for valid, new codes
-
-        // Mostrar toast de éxito
-        this.toastMessage = `✓ Código #${this.scannedCodes.length} escaneado`;
-        this.showToast = true;
-        // Always restart the scanner after processing, without alerts for success/duplicate
-        setTimeout(() => this.scanQR(), 300);
-      } catch (error) {
-        this.isScanning = false; // Ensure scanning state is reset
-
-        // Check for user cancellation error
-        const isUserCancellation = error.code === "OS-PLUG-BARC-0006";
-        if (isUserCancellation) {
-          // No alert, no auto-restart for user cancellation
-          return;
-        }
-
-        // For other genuine errors, show alert and auto-restart
-        console.error("Error al escanear QR:", error);
-        const alert = await alertController.create({
-          header: "Error",
-          message:
-            "Ocurrió un error al escanear el QR: " + JSON.stringify(error),
-          buttons: [
-            {
-              text: "OK",
-              handler: () => {
-                setTimeout(() => this.scanQR(), 300); // Auto-restart after dismissing alert
-              },
-            },
-          ],
+          lessonQuizType: this.lessonQuizType,
         });
-        await alert.present();
+        this.qrCount++;
+
+        return { success: true };
+      } catch (error) {
+        console.error(`Error processing student "${studentCodeOrId}":`, error);
+        return { error: `Error al procesar estudiante "${studentCodeOrId}"` };
       }
     },
 
-    handleNativeCloseButtonClick(event) {
-      if (event) event.preventDefault(); // Prevent default action if necessary
-
-      this.isScanning = false;
-      if (
-        typeof CapacitorBarcodeScanner !== "undefined" &&
-        CapacitorBarcodeScanner.stopScan
-      ) {
-        CapacitorBarcodeScanner.stopScan().catch((e) =>
-          console.error(
-            "Error stopping barcode scanner from native close button:",
-            e
-          )
-        );
-      }
-    },
+    // ─── List management ───────────────────────────────────────────
     removeCode(index) {
       this.scannedCodes.splice(index, 1);
-      this.qrCount--; // Decrement qrCount when a code is removed
-
-      // Update lastScan logic
-      if (this.scannedCodes.length > 0) {
-        // If there are still codes, update lastScan to the most recent one (first in array)
-        const latestScannedObject = this.scannedCodes[0];
-        if (latestScannedObject.lessonQuizType === "individual") {
-          this.lastScan = `${latestScannedObject.user.name} ${latestScannedObject.user.lastName}: ${latestScannedObject.optionSelected.identifier}`;
-        } else if (latestScannedObject.lessonQuizType === "group") {
-          this.lastScan = `${latestScannedObject.group.name}: ${latestScannedObject.optionSelected.identifier}`;
-        } else {
-          this.lastScan = `${latestScannedObject.user.name} ${latestScannedObject.user.lastName} (Individual): ${latestScannedObject.optionSelected.identifier}`;
-        }
-      } else {
-        // If no codes left, clear lastScan
-        this.lastScan = null;
-      }
+      this.qrCount--;
     },
 
     async clearCodes() {
@@ -539,17 +368,13 @@ export default {
         header: "Confirmar",
         message: `¿Desea eliminar todos los ${this.scannedCodes.length} códigos escaneados?`,
         buttons: [
-          {
-            text: "Cancelar",
-            role: "cancel",
-          },
+          { text: "Cancelar", role: "cancel" },
           {
             text: "Eliminar Todo",
             role: "destructive",
             handler: () => {
               this.scannedCodes = [];
-              this.qrCount = 0; // Reset qrCount
-              this.lastScan = null; // Reset lastScan
+              this.qrCount      = 0;
             },
           },
         ],
@@ -557,10 +382,11 @@ export default {
       await alert.present();
     },
 
+    // ─── Submit ────────────────────────────────────────────────────
     async submitAnswersBulk() {
       if (this.scannedCodes.length === 0) {
         const alert = await alertController.create({
-          header: "Sin respuestas",
+          header:  "Sin respuestas",
           message: "No hay ninguna respuesta escaneada para enviar.",
           buttons: ["OK"],
         });
@@ -572,27 +398,25 @@ export default {
       try {
         const answersPayload = await Promise.all(
           this.scannedCodes.map(async (scannedCode) => {
-            // Find the optionId based on the identifier
             const option = this.question.options.find(
               (opt) => opt.identifier === scannedCode.optionSelected.identifier
             );
-
             if (!option) {
               throw new Error(
-                `Option with identifier ${scannedCode.optionSelected.identifier} not found for question.`
+                `Opción "${scannedCode.optionSelected.identifier}" no encontrada en la pregunta.`
               );
             }
-
             return {
-              optionId: option.id,
-              questionId: this.question.id,
-              quizId: this.question.quiz?.id || this.question.lesson?.quiz?.id, // Adjust based on actual structure
+              optionId:    option.id,
+              questionId:  this.question.id,
+              quizId:
+                this.question.quiz?.id || this.question.lesson?.quiz?.id,
               instituteId:
                 this.question.institute?.id ||
-                this.question.lesson?.institute?.id, // Adjust based on actual structure
-              userId: scannedCode.user.id,
+                this.question.lesson?.institute?.id,
+              userId:  scannedCode.user.id,
               groupId: scannedCode.group?.id || null,
-              exist: true,
+              exist:   true,
             };
           })
         );
@@ -600,15 +424,14 @@ export default {
         await axios.post("/answers/bulk", answersPayload);
 
         const alert = await alertController.create({
-          header: "Éxito",
+          header:  "Éxito",
           message: "Las respuestas se han guardado correctamente.",
           buttons: [
             {
               text: "OK",
               handler: () => {
                 this.scannedCodes = [];
-                this.qrCount = 0;
-                this.lastScan = null;
+                this.qrCount      = 0;
                 this.$router.push(this.backUrl);
               },
             },
@@ -622,7 +445,7 @@ export default {
           "Ocurrió un error al guardar las respuestas: " +
             JSON.stringify(error);
         const alert = await alertController.create({
-          header: "Error al Guardar",
+          header:  "Error al Guardar",
           message: message,
           buttons: ["OK"],
         });
@@ -659,6 +482,15 @@ export default {
   padding: 0 20px;
 }
 
+.processing-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--ion-color-primary);
+  font-size: 0.95em;
+}
+
 .code-number {
   font-size: 0.85em;
   color: var(--ion-color-medium);
@@ -679,5 +511,15 @@ ion-item h3 {
 ion-footer ion-button {
   margin-top: 5px;
   margin-bottom: 5px;
+}
+
+.scanner-overlay-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  background: #000;
 }
 </style>

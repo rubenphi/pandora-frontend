@@ -267,7 +267,7 @@ export default {
             html += '<div class="print-page">';
           }
 
-          const qrValue = `${student.code}:${letter}`;
+          const qrValue = `${student.id}:${letter}`;
           const dataUrl = await QRCode.toDataURL(qrValue, {
             width: 900,
             margin: 1,
@@ -494,7 +494,7 @@ export default {
       await loading.present();
 
       try {
-        const qrValue = `${student.code}:${letter}`;
+        const qrValue = `${student.id}:${letter}`;
         const labelText = `Código: ${student.lastName} ${student.name} || Opción: ${letter}`;
 
         // Generate QR on an internal canvas
