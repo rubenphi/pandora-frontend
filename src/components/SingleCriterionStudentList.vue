@@ -11,6 +11,13 @@
         <slot name="row-prefix" :student="student" />
         <span class="student-name">
           {{ student.lastName }} {{ student.name }}
+          <ion-icon
+            v-if="hasEvidence(student.id)"
+            :icon="attachOutline"
+            color="primary"
+            class="evidence-icon"
+            title="Tiene archivo anexo"
+          ></ion-icon>
         </span>
         <span class="student-grade">
           Nota: {{ computeGrade(student) }}
@@ -42,18 +49,22 @@
           Guardar
         </ion-button>
       </div>
+      <div class="row-suffix">
+        <slot name="row-suffix" :student="student" />
+      </div>
     </div>
   </div>
 </template>
 
 <script>
 import { ref } from "vue";
-import { IonButton } from "@ionic/vue";
+import { IonButton, IonIcon } from "@ionic/vue";
+import { attachOutline } from "ionicons/icons";
 import { calculateFinalGrade } from "../composables/useEvaluation";
 
 export default {
   name: "SingleCriterionStudentList",
-  components: { IonButton },
+  components: { IonButton, IonIcon },
   props: {
     students: { type: Array, required: true },
     criterion: { type: Object, required: true },
@@ -63,6 +74,7 @@ export default {
     criteria: { type: Array, required: true },
     /** Full evaluation object { [studentId]: { [criterionId]: { value, id } } } */
     evaluation: { type: Object, required: true },
+    studentsWithEvidence: { type: [Object, Set, Array], default: () => ({}) },
     isSaving: { type: Boolean, default: false },
   },
   emits: ["update:modelValue", "save"],
@@ -126,6 +138,17 @@ export default {
       }
     };
 
+    const hasEvidence = (studentId) => {
+      if (!props.studentsWithEvidence) return false;
+      if (props.studentsWithEvidence instanceof Set) {
+        return props.studentsWithEvidence.has(studentId);
+      }
+      if (Array.isArray(props.studentsWithEvidence)) {
+        return props.studentsWithEvidence.includes(studentId);
+      }
+      return !!props.studentsWithEvidence[studentId];
+    };
+
     return {
       focusedStudentId,
       setRef,
@@ -133,6 +156,8 @@ export default {
       computeGrade,
       onBlur,
       tabToStudent,
+      hasEvidence,
+      attachOutline,
     };
   },
 };
@@ -170,6 +195,15 @@ export default {
   flex: 1;
   font-weight: 600;
   font-size: 1em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.evidence-icon {
+  font-size: 1.2em;
+  color: var(--ion-color-primary);
+  vertical-align: middle;
 }
 
 .student-grade {

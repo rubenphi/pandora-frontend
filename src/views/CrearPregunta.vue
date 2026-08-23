@@ -24,7 +24,7 @@
     </ion-header>
     <ion-content>
       <ion-card class="ion-padding">
-        <ion-list v-if="editor" class="ion-no-padding">
+        <ion-list class="ion-no-padding">
           <ion-item
             class="ion-text-center"
             button
@@ -90,46 +90,10 @@
             </ion-toggle>
           </ion-item>
 
-          <ion-item class="ion-no-padding" lines="none">
-            <ion-button
-              class="margen"
-              color="light"
-              slot="start"
-              @click="editor.chain().focus().toggleBold().run()"
-              :class="{ 'is-active': editor.isActive('bold') }"
-            >
-              <b> B </b>
-            </ion-button>
-            <ion-button
-              class="margen"
-              slot="start"
-              color="light"
-              @click="editor.chain().focus().toggleItalic().run()"
-              :class="{ 'is-active': editor.isActive('italic') }"
-            >
-              <i> I </i>
-            </ion-button>
-            <ion-button
-              class="margen"
-              slot="start"
-              color="light"
-              @click="editor.chain().focus().toggleStrike().run()"
-              :class="{ 'is-active': editor.isActive('strike') }"
-            >
-              <s> T </s>
-            </ion-button>
-            <ion-button
-              class="margen"
-              slot="start"
-              color="light"
-              @click="editor.chain().focus().toggleUnderline().run()"
-              :class="{ 'is-active': editor.isActive('underline') }"
-            >
-              <u> S </u>
-            </ion-button>
-          </ion-item>
+          <div class="ion-padding">
+            <tiptap-editor v-model="pregunta.sentence" />
+          </div>
         </ion-list>
-        <editor-content :editor="editor" />
       </ion-card>
 
       <ion-card class="ion-padding">
@@ -182,8 +146,7 @@ import { useRoute } from "vue-router";
 import router from "../router";
 import axios from "axios";
 
-import { Editor, EditorContent } from "@tiptap/vue-3";
-import StarterKit from "@tiptap/starter-kit";
+import TiptapEditor from "../components/TiptapEditor.vue";
 
 import {
   IonThumbnail,
@@ -191,7 +154,6 @@ import {
   IonToggle,
   IonLabel,
   IonTitle,
-  onIonViewDidLeave,
   onIonViewWillEnter,
   IonHeader,
   IonToolbar,
@@ -231,7 +193,7 @@ export default {
     IonItem,
     IonButtons,
     IonButton,
-    EditorContent,
+    TiptapEditor,
     IonPage,
     IonContent,
     IonCard,
@@ -265,7 +227,6 @@ export default {
     const mroute = useRoute();
     const { cuestionario } = mroute.params;
     const { id } = mroute.params;
-    const editor = ref(null);
     const src = ref();
     const form_data = ref(new FormData());
     const file = ref({
@@ -344,22 +305,6 @@ export default {
 
         src.value = defaultFile("thumbnail");
       }
-
-      editor.value = new Editor({
-        extensions: [StarterKit],
-        autofocus: "start",
-        editable: true,
-        content: pregunta.value.sentence,
-        editorProps: {
-          attributes: {
-            class: "",
-          },
-        },
-      });
-    });
-
-    onIonViewDidLeave(() => {
-      editor.value.destroy();
     });
 
     const addOption = () => {
@@ -418,7 +363,6 @@ export default {
 
     return {
       async crearPregunta() {
-        pregunta.value.sentence = editor.value.getHTML();
         delete pregunta.value.institute;
         delete pregunta.value.quiz;
         // Temporarily store options to process them separately
@@ -585,7 +529,6 @@ export default {
       reader,
       file,
       pregunta,
-      editor,
       arrowBackOutline,
       checkmarkOutline,
       imageOutline,

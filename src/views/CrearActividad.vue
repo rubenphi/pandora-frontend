@@ -42,48 +42,12 @@
           </ion-select>
         </ion-item>
 
-        <ion-item>
+        <ion-item lines="none">
           <ion-label position="stacked">Instrucciones (Opcional)</ion-label>
         </ion-item>
-        <ion-item class="ion-no-padding" lines="none" v-if="editor">
-          <ion-button
-            class="margen"
-            color="light"
-            slot="start"
-            @click="editor.chain().focus().toggleBold().run()"
-            :class="{ 'is-active': editor.isActive('bold') }"
-          >
-            <b> B </b>
-          </ion-button>
-          <ion-button
-            class="margen"
-            slot="start"
-            color="light"
-            @click="editor.chain().focus().toggleItalic().run()"
-            :class="{ 'is-active': editor.isActive('italic') }"
-          >
-            <i> I </i>
-          </ion-button>
-          <ion-button
-            class="margen"
-            slot="start"
-            color="light"
-            @click="editor.chain().focus().toggleStrike().run()"
-            :class="{ 'is-active': editor.isActive('strike') }"
-          >
-            <s> T </s>
-          </ion-button>
-          <ion-button
-            class="margen"
-            slot="start"
-            color="light"
-            @click="editor.chain().focus().toggleUnderline().run()"
-            :class="{ 'is-active': editor.isActive('underline') }"
-          >
-            <u> S </u>
-          </ion-button>
-        </ion-item>
-        <editor-content class="editor-content" :editor="editor" />
+        <div class="ion-padding-start ion-padding-end ion-padding-bottom">
+          <tiptap-editor v-model="activityForm.instructions" />
+        </div>
 
         <!-- instituteId will be handled by globalService.usuario.institute.id -->
       </ion-list>
@@ -102,7 +66,6 @@ import axios from "axios";
 import { useRouter, useRoute } from "vue-router";
 import {
   onIonViewWillEnter,
-  onIonViewDidLeave,
   IonPage,
   IonHeader,
   IonToolbar,
@@ -120,8 +83,7 @@ import {
 } from "@ionic/vue";
 import { tokenHeader, usuarioGet } from "../globalService";
 import { arrowBackOutline } from "ionicons/icons";
-import { Editor, EditorContent } from "@tiptap/vue-3";
-import StarterKit from "@tiptap/starter-kit";
+import TiptapEditor from "../components/TiptapEditor.vue";
 
 export default {
   components: {
@@ -137,9 +99,9 @@ export default {
     IonButton,
     IonButtons,
     IonIcon,
-    EditorContent,
     IonSelect,
     IonSelectOption,
+    TiptapEditor,
   },
   setup() {
     const router = useRouter();
@@ -157,7 +119,6 @@ export default {
     });
     const usuario = ref(null);
     const lessonDetails = ref(null);
-    const editor = ref(null);
 
     const backUrl = ref("");
 
@@ -187,7 +148,6 @@ export default {
             tokenHeader()
           );
           activityForm.value.title = activityResponse.data.title;
-          activityForm.value.title = activityResponse.data.title;
           activityForm.value.instructions = activityResponse.data.instructions;
           activityForm.value.classifications = activityResponse.data.classifications?.length
             ? activityResponse.data.classifications
@@ -198,31 +158,11 @@ export default {
         }
       } catch (error) {
         console.error("Error fetching lesson or activity details:", error);
-        // Handle error, maybe redirect or show a message
         return;
-      }
-
-      editor.value = new Editor({
-        extensions: [StarterKit],
-        autofocus: "start",
-        editable: true,
-        content: activityForm.value.instructions,
-        editorProps: {
-          attributes: {
-            class: "tiptap-editor-area",
-          },
-        },
-      });
-    });
-
-    onIonViewDidLeave(() => {
-      if (editor.value) {
-        editor.value.destroy();
       }
     });
 
     const saveActivity = async () => {
-      activityForm.value.instructions = editor.value.getHTML();
       try {
         if (activityId) {
           // Update existing activity
@@ -262,7 +202,6 @@ export default {
       saveActivity,
       backUrl,
       arrowBackOutline,
-      editor,
       pageTitle,
       goBack,
     };

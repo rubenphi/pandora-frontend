@@ -193,7 +193,12 @@ export default {
             usuario.value.institute.id,
             10
           );
-          cuestionario.value.year = selectedYear();
+          if (cuestionario.value.date) {
+            const parsedYear = new Date(cuestionario.value.date + "T00:00:00").getFullYear();
+            cuestionario.value.year = !isNaN(parsedYear) ? parsedYear : selectedYear();
+          } else {
+            cuestionario.value.year = selectedYear();
+          }
 
           await axios
             .post("/lessons", cuestionario.value)
@@ -207,7 +212,7 @@ export default {
                   "/" +
                   periodoSelected.value +
                   "/" +
-                  year
+                  cuestionario.value.year
               );
 
               localStorage.setItem("error", response.data.message);
@@ -218,6 +223,13 @@ export default {
               error.value.data = "Error: no se pudo añadir el cuestionario";
             });
         } else if (id != undefined) {
+          if (cuestionario.value.date) {
+            const parsedYear = new Date(cuestionario.value.date + "T00:00:00").getFullYear();
+            if (!isNaN(parsedYear)) {
+              cuestionario.value.year = parsedYear;
+            }
+          }
+
           await axios
             .patch("/lessons/" + id, cuestionario.value)
             .then((response) => {

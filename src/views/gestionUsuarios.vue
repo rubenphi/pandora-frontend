@@ -1463,7 +1463,7 @@ export default {
         try {
           // Fetch groups
           const groupsResponse = await axios.get(
-            `/courses/${selectedCourseId.value}/groups`,
+            `/courses/${selectedCourseId.value}/groups?year=${selectedYear.value}&active=true`,
             {
               headers: tokenHeader(),
             }

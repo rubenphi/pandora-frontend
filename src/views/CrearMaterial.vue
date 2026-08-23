@@ -53,45 +53,9 @@
             >Contenido o descripción del archivo</ion-label
           >
         </ion-item>
-        <ion-item class="ion-no-padding" lines="none" v-if="editor">
-          <ion-button
-            class="margen"
-            color="light"
-            slot="start"
-            @click="editor.chain().focus().toggleBold().run()"
-            :class="{ 'is-active': editor.isActive('bold') }"
-          >
-            <b> B </b>
-          </ion-button>
-          <ion-button
-            class="margen"
-            slot="start"
-            color="light"
-            @click="editor.chain().focus().toggleItalic().run()"
-            :class="{ 'is-active': editor.isActive('italic') }"
-          >
-            <i> I </i>
-          </ion-button>
-          <ion-button
-            class="margen"
-            slot="start"
-            color="light"
-            @click="editor.chain().focus().toggleStrike().run()"
-            :class="{ 'is-active': editor.isActive('strike') }"
-          >
-            <s> T </s>
-          </ion-button>
-          <ion-button
-            class="margen"
-            slot="start"
-            color="light"
-            @click="editor.chain().focus().toggleUnderline().run()"
-            :class="{ 'is-active': editor.isActive('underline') }"
-          >
-            <u> S </u>
-          </ion-button>
-        </ion-item>
-        <editor-content class="editor-content" :editor="editor" />
+        <div class="ion-padding-start ion-padding-end ion-padding-bottom">
+          <tiptap-editor v-model="materialForm.content" />
+        </div>
 
         <ion-item v-if="!isTextType">
           <ion-label position="stacked">Archivo</ion-label>
@@ -168,7 +132,6 @@ import axios from "axios";
 import { useRouter, useRoute } from "vue-router";
 import {
   onIonViewWillEnter,
-  onIonViewDidLeave,
   IonPage,
   IonHeader,
   IonToolbar,
@@ -188,9 +151,7 @@ import {
 } from "@ionic/vue";
 import { basedeURL, tokenHeader, usuarioGet } from "../globalService";
 import { arrowBackOutline, trashOutline } from "ionicons/icons";
-import { Editor, EditorContent } from "@tiptap/vue-3";
-
-import StarterKit from "@tiptap/starter-kit";
+import TiptapEditor from "../components/TiptapEditor.vue";
 
 export default {
   components: {
@@ -208,8 +169,7 @@ export default {
     IonIcon,
     IonSelect,
     IonSelectOption,
-
-    EditorContent,
+    TiptapEditor,
     IonText,
   },
   setup() {
@@ -220,7 +180,6 @@ export default {
     const materialId = ref(null);
     const usuario = ref(null);
     const lessonDetails = ref(null);
-    const editor = ref(null);
     const uploadedFileUrl = ref(null);
     const originalFileUrl = ref(null);
     const materialSaved = ref(false);
@@ -339,24 +298,6 @@ export default {
       } catch (error) {
         console.error("Error fetching lesson or material details:", error);
       }
-
-      editor.value = new Editor({
-        extensions: [StarterKit],
-        autofocus: "start",
-        editable: true,
-        content: materialForm.value.content,
-        editorProps: {
-          attributes: {
-            class: "tiptap-editor-area",
-          },
-        },
-      });
-    });
-
-    onIonViewDidLeave(async () => {
-      if (editor.value) {
-        editor.value.destroy();
-      }
     });
 
     const handleFileUpload = async (event) => {
@@ -450,8 +391,6 @@ export default {
         return;
       }
 
-      materialForm.value.content = editor.value.getHTML();
-
       // If it's not a text type and a file was uploaded, set the URL
       if (!isTextType.value && uploadedFileUrl.value) {
         materialForm.value.url = uploadedFileUrl.value;
@@ -540,7 +479,6 @@ export default {
       backUrl,
       arrowBackOutline,
       pageTitle,
-      editor,
       goBack,
       uploadedFileUrl, // Make uploadedFileUrl available in the template
       previewSource,

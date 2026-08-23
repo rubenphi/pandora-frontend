@@ -28,7 +28,16 @@
         :isSaving="isSaving"
         @update:modelValue="onAllFlatUpdate"
         @save="saveSingleEvaluation"
-      />
+      >
+        <template #row-suffix="{ student }">
+          <evidence-uploader
+            :student-id="student.id"
+            :activity-id="activityId"
+            :institute-id="usuario?.institute?.id"
+            read-only
+          />
+        </template>
+      </single-criterion-student-list>
 
       <!-- ── Multi-criterion mode: accordion per student ── -->
       <ion-accordion-group v-else>
@@ -50,6 +59,12 @@
           </IonItem>
 
           <div class="ion-padding" slot="content">
+            <evidence-uploader
+              :student-id="student.id"
+              :activity-id="activityId"
+              :institute-id="usuario?.institute?.id"
+              read-only
+            />
             <ion-button
               expand="block"
               @click="saveSingleEvaluation(student)"
@@ -188,6 +203,7 @@ import { useRoute } from "vue-router";
 import { arrowBackOutline, saveOutline } from "ionicons/icons";
 import CriterionList from "../components/CriterionList.vue";
 import SingleCriterionStudentList from "../components/SingleCriterionStudentList.vue";
+import EvidenceUploader from "../components/EvidenceUploader.vue";
 
 export default {
   name: "EvaluarPares",
@@ -214,6 +230,7 @@ export default {
     IonModal,
     CriterionList,
     SingleCriterionStudentList,
+    EvidenceUploader,
   },
   setup() {
     const mroute = useRoute();

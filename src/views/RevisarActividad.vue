@@ -35,6 +35,7 @@
         :criteria="criteria"
         :evaluation="evaluation"
         :isSaving="isSaving"
+        :students-with-evidence="evidences"
         @update:modelValue="onAllFlatUpdate"
         @save="saveSingleEvaluation"
       >
@@ -43,6 +44,14 @@
             :checked="selectedStudents.has(student.id)"
             @ionChange="handleStudentSelection(student.id, $event.detail.checked)"
             @click.stop
+          />
+        </template>
+        <template #row-suffix="{ student }">
+          <evidence-uploader
+            :student-id="student.id"
+            :activity-id="activityId"
+            :institute-id="instituteId"
+            @evidence-changed="handleEvidenceChanged"
           />
         </template>
       </single-criterion-student-list>
@@ -61,7 +70,16 @@
               @ionChange="handleStudentSelection(student.id, $event.detail.checked)"
               @click.stop
             ></ion-checkbox>
-            <IonLabel>{{ student.lastName + " " + student.name }}</IonLabel>
+            <IonLabel>
+              {{ student.lastName + " " + student.name }}
+              <ion-icon
+                v-if="hasEvidence(student.id)"
+                :icon="attachOutline"
+                color="primary"
+                class="evidence-indicator-icon"
+                title="Tiene archivo anexo"
+              ></ion-icon>
+            </IonLabel>
             <IonNote slot="end"
               >Nota:
               {{
@@ -72,6 +90,12 @@
             >
           </IonItem>
           <div class="ion-padding" slot="content">
+            <evidence-uploader
+              :student-id="student.id"
+              :activity-id="activityId"
+              :institute-id="instituteId"
+              @evidence-changed="handleEvidenceChanged"
+            />
             <ion-button expand="block" @click="saveSingleEvaluation(student)" :disabled="isSaving"
               >Guardar</ion-button
             >
@@ -149,9 +173,16 @@ import {
   IonFab,
   IonFabButton,
 } from "@ionic/vue";
-import { arrowBackOutline, saveOutline, checkmarkDoneOutline, closeOutline } from "ionicons/icons";
+import {
+  arrowBackOutline,
+  saveOutline,
+  checkmarkDoneOutline,
+  closeOutline,
+  attachOutline,
+} from "ionicons/icons";
 import CriterionList from "../components/CriterionList.vue";
 import SingleCriterionStudentList from "../components/SingleCriterionStudentList.vue";
+import EvidenceUploader from "../components/EvidenceUploader.vue";
 
 export default {
   components: {
@@ -174,6 +205,7 @@ export default {
     IonFabButton,
     CriterionList,
     SingleCriterionStudentList,
+    EvidenceUploader,
   },
   setup() {
     const mroute = useRoute();
@@ -190,6 +222,7 @@ export default {
     const currentlyOpenStudentId = ref(null);
     const isSaving = ref(false);
     const selectedStudents = ref(new Set());
+    const evidences = ref({});
 
     const {
       isSuccessToastOpen,
@@ -616,16 +649,13 @@ export default {
 
     // ─── Student selection ────────────────────────────────────────────────────
 
-   const handleStudentSelection = (studentId, isChecked) => {
-  // Evitar que el checkbox "Seleccionar Todos" dispare cambios individuales
-  if (!isChecked && areAllSelected.value) return;
-
-  if (isChecked) {
-    selectedStudents.value.add(studentId);
-  } else {
-    selectedStudents.value.delete(studentId);
-  }
-};
+    const handleStudentSelection = (studentId, isChecked) => {
+      if (isChecked) {
+        selectedStudents.value.add(studentId);
+      } else {
+        selectedStudents.value.delete(studentId);
+      }
+    };
 
 
     const areAllSelected = computed(
@@ -652,6 +682,18 @@ export default {
           studentIds: Array.from(selectedStudents.value),
         },
       });
+    };
+
+    const handleEvidenceChanged = ({ studentId, evidence }) => {
+      if (evidence) {
+        evidences.value[studentId] = evidence;
+      } else {
+        delete evidences.value[studentId];
+      }
+    };
+
+    const hasEvidence = (studentId) => {
+      return !!evidences.value[studentId];
     };
 
     return {
@@ -689,6 +731,11 @@ export default {
       isSingleCriterion,
       getAllFlat,
       onAllFlatUpdate,
+      instituteId,
+      attachOutline,
+      evidences,
+      handleEvidenceChanged,
+      hasEvidence,
     };
   },
 };

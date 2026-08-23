@@ -29,6 +29,12 @@
             >
           </IonItem>
           <div class="ion-padding" slot="content">
+            <evidence-uploader
+              :student-id="student.id"
+              :activity-id="activityId"
+              :institute-id="instituteId"
+              read-only
+            />
             <ion-list>
               <template v-for="criterion in criteria" :key="criterion.id">
                 <ion-item>
@@ -96,6 +102,7 @@ import {
   IonNote,
 } from "@ionic/vue";
 import { arrowBackOutline } from "ionicons/icons";
+import EvidenceUploader from "../components/EvidenceUploader.vue";
 
 export default {
   components: {
@@ -114,6 +121,7 @@ export default {
     IonRange,
     IonIcon,
     IonNote,
+    EvidenceUploader,
   },
   setup() {
     const mroute = useRoute();
@@ -278,6 +286,7 @@ export default {
       fetchStudentCriterionScores,
       studentGrades,
       updateGrade,
+      instituteId,
     };
   },
 };

@@ -20,8 +20,7 @@
     <ion-content :fullscreen="true">
       <ion-card>
         <ion-card-header>
-          <ion-card-title class="ion-text-center">
-            {{ question.title }}
+          <ion-card-title class="ion-text-center" v-html="question.title">
           </ion-card-title>
           <ion-card-subtitle class="ion-text-center">
             Esta pregunta vale: + {{ question.points }} puntos
@@ -89,7 +88,7 @@
               >
                 <ion-label class="ion-text-wrap"
                   ><b>{{ option.identifier }}. </b>
-                  {{ option.sentence }}</ion-label
+                  <span v-html="option.sentence"></span></ion-label
                 >
 
                 <ion-radio
@@ -110,7 +109,7 @@
             >
               <ion-label class="ion-text-wrap" :color="showCorrectAnswer && option.correct ? 'success' : ''"
                 ><b>{{ option.identifier }}. </b>
-                {{ option.sentence }}</ion-label
+                <span v-html="option.sentence"></span></ion-label
               >
              
             </ion-item>
@@ -446,3 +445,26 @@ export default {
   },
 };
 </script>
+
+<style>
+code {
+  background-color: rgba(135, 131, 120, 0.15);
+  color: #eb5757;
+  font-family: monospace, monospace;
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+pre {
+  background-color: #282c34;
+  color: #abb2bf;
+  padding: 1em;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+pre code {
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+}
+</style>
