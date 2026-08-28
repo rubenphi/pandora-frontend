@@ -12,7 +12,7 @@
             <ion-icon :icon="checkmarkOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
-        <ion-title>Criterios de Actividad</ion-title>
+        <ion-title>Criterios - {{ activityDetails?.title || "" }}</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -21,7 +21,10 @@
           <ion-label :color="error.color">{{ error.data }}</ion-label>
         </ion-item>
 
-        <ion-reorder-group :disabled="false" @ionItemReorder="handleReorder($event)">
+        <ion-reorder-group
+          :disabled="false"
+          @ionItemReorder="handleReorder($event)"
+        >
           <div
             v-for="(criterion, index) in criteriaForms"
             :key="index"
@@ -33,7 +36,10 @@
           >
             <ion-item>
               <ion-label position="stacked">Descripción</ion-label>
-              <ion-input v-model="criterion.description" type="text"></ion-input>
+              <ion-input
+                v-model="criterion.description"
+                type="text"
+              ></ion-input>
               <ion-reorder slot="end"></ion-reorder>
             </ion-item>
             <ion-item>
@@ -63,7 +69,11 @@
           </ion-button>
         </ion-item>
         <ion-item>
-          <ion-button expand="full" @click="openActivityImportModal" color="secondary">
+          <ion-button
+            expand="full"
+            @click="openActivityImportModal"
+            color="secondary"
+          >
             Importar desde Actividad
           </ion-button>
         </ion-item>
@@ -137,7 +147,7 @@ export default {
       color: "",
     });
     const usuario = ref(null);
-    const activityDetails = ref(null);
+    const activityDetails = ref({});
     const isImportModalOpen = ref(false);
 
     const backUrl = `/actividades/${activityId}`;
@@ -215,12 +225,12 @@ export default {
                 try {
                   await axios.delete(
                     `/criteria/${criterionToRemove.id}`,
-                    tokenHeader()
+                    tokenHeader(),
                   );
                   criteriaForms.value.splice(index, 1); // Remove from frontend array after successful backend deletion
                   localStorage.setItem(
                     "error",
-                    "Criterio eliminado exitosamente."
+                    "Criterio eliminado exitosamente.",
                   );
                 } catch (err) {
                   console.error("Error deleting criterion:", err);
@@ -257,11 +267,11 @@ export default {
 
         // Fetch existing criteria for this activity
         const criteriaResponse = await axios.get(
-          `/criteria?activityId=${activityId}`
+          `/criteria?activityId=${activityId}`,
         );
         if (criteriaResponse.data.length > 0) {
           criteriaForms.value = criteriaResponse.data.sort(
-            (a, b) => a.id - b.id
+            (a, b) => a.id - b.id,
           );
         } else {
           // If no existing criteria, add one empty criterion by default
@@ -308,7 +318,11 @@ export default {
         try {
           if (criterion.id) {
             // Update existing criterion
-            await axios.patch(`/criteria/${criterion.id}`, payload, tokenHeader());
+            await axios.patch(
+              `/criteria/${criterion.id}`,
+              payload,
+              tokenHeader(),
+            );
           } else {
             // Create new criterion
             await axios.post("/criteria", payload, tokenHeader());
@@ -328,6 +342,7 @@ export default {
     };
 
     return {
+      activityDetails,
       criteriaForms,
       error,
       backUrl,
@@ -350,5 +365,3 @@ export default {
 <style scoped>
 /* Add any specific styles for this page here */
 </style>
-
-

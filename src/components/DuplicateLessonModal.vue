@@ -15,39 +15,62 @@
       <ion-list>
         <ion-item>
           <ion-label position="stacked">Curso</ion-label>
-          <ion-select v-model="filters.courseId" placeholder="Selecciona un curso" @ionChange="onCourseChange">
-            <ion-select-option v-for="c in courses" :key="c.id" :value="c.id">{{ c.name }}</ion-select-option>
+          <ion-select
+            v-model="filters.courseId"
+            placeholder="Selecciona un curso"
+            @ionChange="onCourseChange"
+          >
+            <ion-select-option v-for="c in courses" :key="c.id" :value="c.id">{{
+              c.name
+            }}</ion-select-option>
           </ion-select>
         </ion-item>
         <ion-item>
           <ion-label position="stacked">Área</ion-label>
           <ion-select v-model="filters.areaId" placeholder="Selecciona un área">
-            <ion-select-option v-for="a in areas" :key="a.id" :value="a.id">{{ a.name }}</ion-select-option>
+            <ion-select-option v-for="a in areas" :key="a.id" :value="a.id">{{
+              a.name
+            }}</ion-select-option>
           </ion-select>
         </ion-item>
         <ion-item>
           <ion-label position="stacked">Año</ion-label>
           <ion-select v-model="filters.year" placeholder="Selecciona un año">
-            <ion-select-option v-for="y in years" :key="y" :value="y">{{ y }}</ion-select-option>
+            <ion-select-option v-for="y in years" :key="y" :value="y">{{
+              y
+            }}</ion-select-option>
           </ion-select>
         </ion-item>
         <ion-item>
           <ion-label position="stacked">Periodo</ion-label>
-          <ion-select v-model="filters.periodId" placeholder="Selecciona un periodo">
-            <ion-select-option v-for="p in periods" :key="p.id" :value="p.id">{{ p.name }}</ion-select-option>
+          <ion-select
+            v-model="filters.periodId"
+            placeholder="Selecciona un periodo"
+          >
+            <ion-select-option v-for="p in periods" :key="p.id" :value="p.id">{{
+              p.name
+            }}</ion-select-option>
           </ion-select>
         </ion-item>
         <ion-button expand="block" @click="searchLessons">Buscar</ion-button>
       </ion-list>
 
       <ion-list v-if="isSearching">
-        <ion-item><ion-label>Buscando lecciones...</ion-label><ion-spinner slot="end"></ion-spinner></ion-item>
+        <ion-item
+          ><ion-label>Buscando lecciones...</ion-label
+          ><ion-spinner slot="end"></ion-spinner
+        ></ion-item>
       </ion-list>
       <ion-list v-else-if="searchDone && lessons.length === 0">
         <ion-item><ion-label>No se encontraron lecciones.</ion-label></ion-item>
       </ion-list>
       <ion-list v-else-if="searchDone && lessons.length > 0">
-        <ion-item v-for="lesson in lessons" :key="lesson.id" button @click="selectLesson(lesson)">
+        <ion-item
+          v-for="lesson in lessons"
+          :key="lesson.id"
+          button
+          @click="selectLesson(lesson)"
+        >
           <ion-label>
             <h2>{{ lesson.topic }}</h2>
             <p>{{ lesson.date?.substring(0, 10) }}</p>
@@ -91,7 +114,7 @@
         </ion-item>
 
         <ion-button expand="block" :disabled="isImporting" @click="startImport">
-          {{ isImporting ? 'Importando...' : 'Importar' }}
+          {{ isImporting ? "Importando..." : "Importar" }}
         </ion-button>
 
         <ion-item v-if="isImporting">
@@ -128,7 +151,12 @@ import {
 } from "@ionic/vue";
 import { closeOutline, chevronForwardOutline } from "ionicons/icons";
 import axios from "axios";
-import { tokenHeader, usuarioGet, periodosGet, selectedYear } from "../globalService";
+import {
+  tokenHeader,
+  usuarioGet,
+  periodosGet,
+  selectedYear,
+} from "../globalService";
 
 export default {
   name: "DuplicateLessonModal",
@@ -195,7 +223,9 @@ export default {
       periods.value = periodosGet();
 
       try {
-        const res = await axios.get(`/courses?instituteId=${usuario.institute.id}&exist=true`);
+        const res = await axios.get(
+          `/courses?instituteId=${usuario.institute.id}&exist=true`,
+        );
         courses.value = res.data;
         if (courses.value.length > 0) {
           filters.courseId = courses.value[0].id;
@@ -226,12 +256,18 @@ export default {
     };
 
     const searchLessons = async () => {
-      if (!filters.courseId || !filters.areaId || !filters.year || !filters.periodId) return;
+      if (
+        !filters.courseId ||
+        !filters.areaId ||
+        !filters.year ||
+        !filters.periodId
+      )
+        return;
       isSearching.value = true;
       searchDone.value = false;
       try {
         const res = await axios.get(
-          `/lessons?courseId=${filters.courseId}&areaId=${filters.areaId}&year=${filters.year}&periodId=${filters.periodId}&exist=true&type=${props.lessonType}`
+          `/lessons?courseId=${filters.courseId}&areaId=${filters.areaId}&year=${filters.year}&periodId=${filters.periodId}&exist=true&type=${props.lessonType}`,
         );
         lessons.value = res.data;
       } catch (e) {
@@ -245,7 +281,7 @@ export default {
 
     const selectLesson = (lesson) => {
       selectedLesson.value = lesson;
-      form.topic = `Copia de ${lesson.topic}`;
+      form.topic = `${lesson.topic}`;
       step.value = "config";
     };
 
@@ -270,7 +306,10 @@ export default {
 
         if (include.quizzes) {
           statusMessage.value = "Copiando cuestionarios...";
-          const quizzesRes = await axios.get(`/lessons/${sourceId}/quizzes`, tokenHeader());
+          const quizzesRes = await axios.get(
+            `/lessons/${sourceId}/quizzes`,
+            tokenHeader(),
+          );
           for (const quiz of quizzesRes.data) {
             const newQuizRes = await axios.post("/quizzes", {
               title: quiz.title,
@@ -281,7 +320,10 @@ export default {
               category: quiz.category,
             });
             const newQuizId = newQuizRes.data.id;
-            const questionsRes = await axios.get(`/quizzes/${quiz.id}/questions`, tokenHeader());
+            const questionsRes = await axios.get(
+              `/quizzes/${quiz.id}/questions`,
+              tokenHeader(),
+            );
             if (questionsRes.data.length > 0) {
               const questions = questionsRes.data.map((q) => ({
                 id: q.id,
@@ -297,35 +339,50 @@ export default {
 
         if (include.materials) {
           statusMessage.value = "Copiando material de apoyo...";
-          const materialsRes = await axios.get(`/materials?lessonId=${sourceId}`, tokenHeader());
+          const materialsRes = await axios.get(
+            `/materials?lessonId=${sourceId}`,
+            tokenHeader(),
+          );
           for (const mat of materialsRes.data) {
-            await axios.post("/materials", {
-              title: mat.title,
-              type: mat.type || "PDF",
-              lessonId: newLessonId,
-              instituteId: Number(usuario.institute.id),
-              exist: true,
-              content: mat.content || "",
-              url: mat.url || "",
-            }, tokenHeader());
+            await axios.post(
+              "/materials",
+              {
+                title: mat.title,
+                type: mat.type || "PDF",
+                lessonId: newLessonId,
+                instituteId: Number(usuario.institute.id),
+                exist: true,
+                content: mat.content || "",
+                url: mat.url || "",
+              },
+              tokenHeader(),
+            );
           }
         }
 
         if (include.activities) {
           statusMessage.value = "Copiando actividades...";
-          const activitiesRes = await axios.get(`/activities?lessonId=${sourceId}`, tokenHeader());
+          const activitiesRes = await axios.get(
+            `/activities?lessonId=${sourceId}`,
+            tokenHeader(),
+          );
           if (activitiesRes.data.length > 0) {
-            await axios.post("/activities/import", {
-              lessonId: newLessonId,
-              sourceActivityIds: activitiesRes.data.map(a => a.id),
-            }, tokenHeader());
+            await axios.post(
+              "/activities/import",
+              {
+                lessonId: newLessonId,
+                sourceActivityIds: activitiesRes.data.map((a) => a.id),
+              },
+              tokenHeader(),
+            );
           }
         }
 
         modalController.dismiss({ imported: true });
       } catch (e) {
         statusMessage.value = "Error al importar";
-        statusDetail.value = e.response?.data?.message || "Ocurrió un error inesperado";
+        statusDetail.value =
+          e.response?.data?.message || "Ocurrió un error inesperado";
         isImporting.value = false;
       }
     };

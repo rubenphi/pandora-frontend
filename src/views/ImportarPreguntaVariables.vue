@@ -370,8 +370,44 @@ export default {
       }
     };
 
-    const copyPlaceholder = () => {
-      navigator.clipboard.writeText(placeholderText.value);
+    const copyPlaceholder = async () => {
+      let exitoso = false;
+
+      if (navigator.clipboard && window.isSecureContext) {
+        try {
+          await navigator.clipboard.writeText(placeholderText.value);
+          exitoso = true;
+        } catch (err) {
+          console.log("Clipboard API falló, intentando método alternativo:", err);
+        }
+      }
+
+      if (!exitoso) {
+        const textarea = document.createElement("textarea");
+        textarea.value = placeholderText.value;
+        document.body.appendChild(textarea);
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        textarea.style.left = "0";
+        textarea.style.top = "0";
+        textarea.select();
+        try {
+          exitoso = document.execCommand("copy");
+        } catch (err) {
+          console.error("Error al copiar:", err);
+        } finally {
+          document.body.removeChild(textarea);
+        }
+      }
+
+      if (exitoso) {
+        toastErrorMessage.value = "Ejemplo copiado al portapapeles";
+        isSuccessToastOpen.value = true;
+        setTimeout(() => { isSuccessToastOpen.value = false; }, 2000);
+      } else {
+        toastErrorMessage.value = "No se pudo copiar el ejemplo";
+        isErrorToastOpen.value = true;
+      }
     };
 
     onIonViewWillEnter(async () => {
