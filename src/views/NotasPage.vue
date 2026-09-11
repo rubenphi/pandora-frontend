@@ -622,6 +622,8 @@
       :usuarios-estudiantes="usuariosEstudiantes"
       @close="mostrarModalGeneradorPlanilla = false"
     ></generador-planilla>
+
+
     <!-- Contenedor oculto para la generación de PDFs -->
     <div style="position: absolute; left: -9999px; top: 0;">
       <div id="hidden-pdf-container">
@@ -784,6 +786,7 @@ export default {
     });
     const estudiantesReporte = ref([]);
     const estudiantesNuevos = ref([]); // Students in report enrolled < 1 month ago
+
 
     const processStudentGrades = (
       allGrades,
@@ -1646,6 +1649,8 @@ export default {
       mostrarModalGeneradorPlanilla.value = true;
     };
 
+
+
     const isGeneratingZip = ref(false);
     const zipProgressValue = ref(0);
     const zipProgressText = ref("");
@@ -1804,6 +1809,7 @@ export default {
               descargarPlanilla();
             },
           },
+
           {
             text: "Cancelar",
             role: "cancel",
@@ -1867,7 +1873,7 @@ export default {
       zipProgressText,
       studentToRender,
       cancelarGeneracionZip,
-      isZipGenerationCancelled,
+
     };
   },
 };
@@ -1942,5 +1948,11 @@ export default {
 .new-students-warning ul {
   margin: 8px 0 4px 16px;
   padding: 0;
+}
+
+.pending-grade {
+  color: #888;
+  font-style: italic;
+  font-weight: bold;
 }
 </style>

@@ -333,7 +333,7 @@ export default {
 
         if (grupoUsuario.value != null) {
           const permisosGrupales = await axios.get(
-            `/student-criterion-scores/permissions?reviserId=${grupoUsuario.value.id}&activityId=${activityId.value}&expired=falsereviserType=Group`,
+            `/student-criterion-scores/permissions?reviserId=${grupoUsuario.value.id}&activityId=${activityId.value}&expired=false&reviserType=Group`,
             tokenHeader()
           );
           userPermissions.value.push(...permisosGrupales.data);
@@ -461,6 +461,9 @@ export default {
     /** Saves one student's criterion scores. EvaluarPares-specific: adds permissionId. */
     const saveEvaluation = async (student) => {
       try {
+        // Force any focused slider to commit its pending value before reading evaluation
+        document.activeElement?.blur();
+
         for (const criterionId in evaluation.value[student.id]) {
           const entry = evaluation.value[student.id][criterionId];
           if (entry.value !== null) {
@@ -485,8 +488,25 @@ export default {
               throw new Error("No permission to evaluate this student.");
             }
 
-            const savedData = await saveCriterionScore(entry.id, payload);
-            if (!entry.id && savedData?.id) {
+            let savedData;
+            try {
+              savedData = await saveCriterionScore(entry.id, payload);
+            } catch (err) {
+              // 409: score already exists -> reload to grab its id and PATCH instead
+              if (err.response?.status === 409 && entry.id == null) {
+                await fetchStudentCriterionScores();
+                const existingId =
+                  evaluation.value[student.id]?.[criterionId]?.id;
+                if (existingId) {
+                  savedData = await saveCriterionScore(existingId, payload);
+                } else {
+                  throw err;
+                }
+              } else {
+                throw err;
+              }
+            }
+            if (savedData?.id) {
               evaluation.value[student.id][criterionId].id = savedData.id;
             }
           }
