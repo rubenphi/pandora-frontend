@@ -27,13 +27,24 @@
       </ion-item>
 
       <ion-item>
+        <ion-label position="stacked">Pregunta Inicial</ion-label>
+        <ion-input
+          type="number"
+          v-model="questionStart"
+          @ionChange="onRangeChange"
+          :min="1"
+          :max="localQuestions.length"
+        ></ion-input>
+      </ion-item>
+
+      <ion-item>
         <ion-label position="stacked"
-          >Cantidad de Preguntas (Máx: {{ localQuestions.length }})</ion-label
+          >Pregunta Final (Máx: {{ localQuestions.length }})</ion-label
         >
         <ion-input
           type="number"
-          v-model="questionsLimit"
-          @ionChange="generateQuestionnaire"
+          v-model="questionEnd"
+          @ionChange="onRangeChange"
           :min="1"
           :max="localQuestions.length"
         ></ion-input>
@@ -85,9 +96,10 @@ import {
   alertController,
 } from "@ionic/vue";
 import { downloadOutline, printOutline } from "ionicons/icons";
-import html2pdf from "html2pdf.js";
+import html2canvas from "html2canvas";
 import { FileSharer } from "@byteowls/capacitor-filesharer";
 import { Capacitor } from "@capacitor/core";
+import { basedeURL } from "../globalService";
 
 export default defineComponent({
   name: "CuestionarioGeneratorModal",
@@ -114,7 +126,8 @@ export default defineComponent({
   },
   setup(props, { emit }) {
     const questionnaireType = ref("variable");
-    const questionsLimit = ref(0);
+    const questionStart = ref(1);
+    const questionEnd = ref(0);
     const generatedHtml = ref("");
     const localQuestions = ref([]);
 
@@ -128,7 +141,8 @@ export default defineComponent({
       (newQuestions) => {
         if (newQuestions) {
           localQuestions.value = JSON.parse(JSON.stringify(newQuestions));
-          questionsLimit.value = localQuestions.value.length;
+          questionStart.value = 1;
+          questionEnd.value = localQuestions.value.length;
         }
       },
       { immediate: true },
@@ -143,15 +157,17 @@ export default defineComponent({
       let htmlOutput = `<h2>LECCIÓN: ${props.lessonData.topic}</h2> <h2> CUESTIONARIO: ${props.title}</h2><h3>Grado: ${props.lessonData.course.name}</h3>`;
       const type = questionnaireType.value;
 
-      let limit = parseInt(questionsLimit.value);
-      if (isNaN(limit) || limit < 1) limit = 1;
-      if (limit > localQuestions.value.length)
-        limit = localQuestions.value.length;
+      let start = parseInt(questionStart.value);
+      let end = parseInt(questionEnd.value);
+      if (isNaN(start) || start < 1) start = 1;
+      if (isNaN(end) || end < start) end = start;
+      if (end > localQuestions.value.length)
+        end = localQuestions.value.length;
 
-      const limitedQuestions = localQuestions.value.slice(0, limit);
+      const limitedQuestions = localQuestions.value.slice(start - 1, end);
 
       if (type === "fixed" && limitedQuestions.length > 0) {
-        htmlOutput += `<p>Responda la pregunta 1 a la ${limitedQuestions.length} teniendo como opciones de respuesta las siguientes:</p>`;
+        htmlOutput += `<p>Responda la pregunta ${start} a la ${end} teniendo como opciones de respuesta las siguientes:</p>`;
         htmlOutput += `<div class="fixed-options-container">`;
 
         const firstQuestionOptions = limitedQuestions[0].options || [];
@@ -182,8 +198,15 @@ export default defineComponent({
 
         htmlOutput += `<div class="question-item">`;
         htmlOutput += `<p class="question-title"><strong>${
-          index + 1
+          start + index
         }. </strong>${processedSentence}</p>`;
+
+        if (question.photo) {
+          const photoUrl = question.photo.startsWith("http")
+            ? question.photo
+            : (basedeURL() || "") + question.photo;
+          htmlOutput += `<img src="${photoUrl}" style="max-width:100%;margin:4px 0 12px 0;display:block;" />`;
+        }
 
         if (type === "variable") {
           htmlOutput += `<div class="question-options">`;
@@ -234,6 +257,94 @@ export default defineComponent({
       });
 
       generatedHtml.value = htmlOutput;
+    };
+
+    const getBase64ImageFromUrl = async (imageUrl) => {
+      try {
+        const res = await fetch(imageUrl);
+        const blob = await res.blob();
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      } catch {
+        return null;
+      }
+    };
+
+    const convertImagesToBase64 = async (html) => {
+      const baseUrl = basedeURL() || "";
+      const imgRegex = /<img\s+[^>]*src="([^"]+)"[^>]*>/gi;
+      const matches = [...html.matchAll(imgRegex)];
+
+      for (const match of matches) {
+        const fullMatch = match[0];
+        const src = match[1];
+        let absoluteUrl = src;
+        if (src.startsWith("/")) {
+          absoluteUrl = baseUrl + src;
+        } else if (!src.startsWith("http") && !src.startsWith("data:")) {
+          absoluteUrl = baseUrl + "/" + src;
+        }
+        if (absoluteUrl.startsWith("data:")) continue;
+        const base64 = await getBase64ImageFromUrl(absoluteUrl);
+        if (base64) {
+          html = html.replace(fullMatch, fullMatch.replace(src, base64));
+        }
+      }
+      return html;
+    };
+
+    const atkinsonDither = (base64Image) => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0);
+
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+          const w = canvas.width;
+          const h = canvas.height;
+
+          for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+              const idx = (y * w + x) * 4;
+              const old = data[idx];
+              const newVal = old > 128 ? 255 : 0;
+              data[idx] = newVal;
+              data[idx + 1] = newVal;
+              data[idx + 2] = newVal;
+              const err = (old - newVal) / 8;
+
+              const neighbors = [
+                [1, 0], [2, 0],
+                [-1, 1], [0, 1], [1, 1], [2, 1],
+              ];
+              for (const [dx, dy] of neighbors) {
+                const nx = x + dx;
+                const ny = y + dy;
+                if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
+                  const nIdx = (ny * w + nx) * 4;
+                  data[nIdx] = Math.max(0, Math.min(255, data[nIdx] + err));
+                  data[nIdx + 1] = data[nIdx];
+                  data[nIdx + 2] = data[nIdx];
+                }
+              }
+            }
+          }
+
+          ctx.putImageData(imageData, 0, 0);
+          resolve(canvas.toDataURL("image/png"));
+        };
+        img.onerror = () => resolve(base64Image);
+        img.src = base64Image;
+      });
     };
 
     /**
@@ -298,6 +409,8 @@ export default defineComponent({
               font-weight: bold;
               margin: 0 0 2mm 0;
               letter-spacing: 0.5px;
+              overflow-wrap: break-word;
+              word-break: break-word;
             }
             
             .pdf-header h3 {
@@ -383,66 +496,86 @@ export default defineComponent({
           </style>
         `;
 
-        const htmlContent = `
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              ${thermalStyles}
-            </head>
-            <body>
-              <div class="pdf-container">
-                <div class="pdf-header">
-                  <h2>${props.title || "CUESTIONARIO"}</h2>
-                  <h3>${props.lessonData?.topic || ""}</h3>
-                  <h3>${props.lessonData?.course?.name || ""}</h3>
-                </div>
-                <div class="pdf-content">
-                  ${generatedHtml.value || "No hay contenido disponible."}
-                </div>
-              </div>
-            </body>
-          </html>
+        const headerHtml = `
+          <div class="pdf-header">
+            <h2>${props.title || "CUESTIONARIO"}</h2>
+            <h3>${props.lessonData?.topic || ""}</h3>
+            <h3>${props.lessonData?.course?.name || ""}</h3>
+          </div>
         `;
 
-        const element = document.createElement("div");
-        element.innerHTML = htmlContent;
-        element.style.width = "210mm";
-        element.style.margin = "0";
-        element.style.padding = "0";
+        const contentHtml = generatedHtml.value || "";
 
-        // Configuración html2pdf optimizada
-        const opt = {
-          margin: 0,
-          filename: filename,
-          image: {
-            type: "jpeg",
-            quality: 0.98,
-          },
-          html2canvas: {
+        // 1. Dividir contenido por question-item
+        const chunks = [];
+        if (contentHtml.includes("question-item")) {
+          const parts = contentHtml.split(/(?=<div class="question-item">)/);
+          for (const part of parts) {
+            if (part.trim()) chunks.push(part);
+          }
+        } else {
+          chunks.push(contentHtml);
+        }
+
+        // 2. Crear contenedor off-screen
+        const container = document.createElement("div");
+        container.style.cssText =
+          "position:absolute;left:-9999px;top:0;width:210mm;padding:8mm;box-sizing:border-box;font-family:Arial,sans-serif;background:#fff;";
+        document.body.appendChild(container);
+
+        const { jsPDF } = await import("jspdf");
+        const pdf = new jsPDF({
+          unit: "mm",
+          format: "a4",
+          orientation: "portrait",
+          compress: true,
+        });
+
+        // 3. Renderizar chunk por chunk
+        for (let i = 0; i < chunks.length; i++) {
+          // Convertir imágenes de este chunk
+          let convertedChunk = await convertImagesToBase64(chunks[i]);
+
+          // Aplicar dithering Atkinson a cada imagen del chunk
+          const imgMatches = [...convertedChunk.matchAll(/<img\s+[^>]*src="(data:image[^"]+)"[^>]*>/gi)];
+          for (const match of imgMatches) {
+            const dithered = await atkinsonDither(match[1]);
+            convertedChunk = convertedChunk.replace(match[1], dithered);
+          }
+
+          container.innerHTML = `
+            <!DOCTYPE html><html><head>${thermalStyles}</head><body>
+            <div class="pdf-container">
+              ${i === 0 ? headerHtml : ""}
+              <div class="pdf-content">${convertedChunk}</div>
+            </div></body></html>
+          `;
+
+          const canvas = await html2canvas(container, {
             scale: 2,
             useCORS: true,
             logging: false,
             allowTaint: true,
             backgroundColor: "#ffffff",
-            windowHeight: 1400,
-          },
-          jsPDF: {
-            unit: "mm",
-            format: "a4",
-            orientation: "portrait",
-            compress: true,
-          },
-          pagebreak: {
-            mode: ["avoid-all", "css", "legacy"],
-          },
-        };
+            windowWidth: 210,
+          });
 
-        const worker = html2pdf().from(element).set(opt);
+          const imgData = canvas.toDataURL("image/jpeg", 0.95);
+          const imgW = 210;
+          const imgH = (canvas.height * imgW) / canvas.width;
+
+          if (i > 0) pdf.addPage("a4", "portrait");
+          pdf.addImage(imgData, "JPEG", 0, 0, imgW, imgH);
+
+          canvas.width = 0;
+          canvas.height = 0;
+          container.innerHTML = "";
+        }
+
+        document.body.removeChild(container);
 
         if (Capacitor.isNativePlatform()) {
-          const pdfDataUri = await worker.outputPdf("datauristring");
+          const pdfDataUri = pdf.output("datauristring");
           if (!pdfDataUri || pdfDataUri.length < 1000) {
             throw new Error("El PDF generado parece estar vacío.");
           }
@@ -453,7 +586,7 @@ export default defineComponent({
             base64Data: base64Data,
           });
         } else {
-          await worker.save();
+          pdf.save(filename);
         }
       } catch (e) {
         const msg = (e.message || "").toLowerCase();
@@ -532,9 +665,18 @@ export default defineComponent({
           pdf.setFontSize(9);
           pdf.setTextColor(100, 116, 139);
           const rightText = props.title || "Cuestionario";
+          const leftLabelWidth = pdf.getTextWidth("Cuestionario");
+          const maxRightWidth = pageWidth - marginX * 2 - leftLabelWidth - 6;
+          let displayTitle = rightText;
+          if (pdf.getTextWidth(displayTitle) > maxRightWidth) {
+            while (pdf.getTextWidth(displayTitle + "...") > maxRightWidth && displayTitle.length > 0) {
+              displayTitle = displayTitle.slice(0, -1);
+            }
+            displayTitle += "...";
+          }
           pdf.text(
-            rightText,
-            pageWidth - marginX - pdf.getTextWidth(rightText),
+            displayTitle,
+            pageWidth - marginX - pdf.getTextWidth(displayTitle),
             14,
           );
 
@@ -577,11 +719,16 @@ export default defineComponent({
             const qNumText = qNumStrong
               ? qNumStrong.innerText || qNumStrong.textContent
               : "";
-            let qText = titleNode.innerText || titleNode.textContent || "";
-            if (qNumText && qText.startsWith(qNumText)) {
-              qText = qText.substring(qNumText.length);
-            }
-            qText = qText.trim();
+            const qHtml = titleNode.innerHTML || "";
+            const qFrags = extractFragments(qHtml);
+            const qFragmentsWithoutNum = (() => {
+              let text = "";
+              for (const f of qFrags) text += f.text;
+              if (qNumText && text.startsWith(qNumText)) {
+                return [{ text: text.substring(qNumText.length), bold: false, italic: false, underline: false }];
+              }
+              return qFrags;
+            })();
 
             pdf.setFont("helvetica", "bold");
             pdf.setFontSize(11);
@@ -589,11 +736,41 @@ export default defineComponent({
             const textIndent = Math.max(numWidth + 1.2, 5);
             const textWidth = colWidth - textIndent;
 
-            pdf.setFont("helvetica", "normal");
-            pdf.setFontSize(10.5);
-            const lines = pdf.splitTextToSize(qText, textWidth);
-            height += lines.length * 5.5;
+            const qLines = wrapFragments(qFragmentsWithoutNum, textWidth, 10.5);
+            height += qLines.length * 5.5;
             height += 1.5;
+          }
+
+          const imgNodes = node.querySelectorAll("img");
+          for (const imgNode of imgNodes) {
+            const imgSrc = imgNode.getAttribute("src") || "";
+            if (!imgSrc) continue;
+            if (imgSrc.startsWith("data:image")) {
+              try {
+                const imgProps = pdf.getImageProperties(imgSrc);
+                const imgWidth = colWidth;
+                let imgHeight = (imgProps.height / imgProps.width) * imgWidth;
+                if (imgHeight > 120) imgHeight = 120;
+                height += imgHeight + 8;
+              } catch {
+                height += 48;
+              }
+            } else {
+              height += 68;
+            }
+          }
+
+          const allParagraphs = node.querySelectorAll("p");
+          for (const pNode of allParagraphs) {
+            if (
+              pNode.classList.contains("question-title") ||
+              pNode.classList.contains("question-option")
+            ) continue;
+            const pHtml = pNode.innerHTML || pNode.textContent || "";
+            if (!pHtml.trim()) continue;
+            const pFrags = extractFragments(pHtml);
+            const pLines = wrapFragments(pFrags, colWidth, 10);
+            height += pLines.length * 5 + 2;
           }
 
           if (optionsNode) {
@@ -604,11 +781,19 @@ export default defineComponent({
               const optNumText = optStrong
                 ? optStrong.innerText || optStrong.textContent
                 : "";
-              let optText = optNode.innerText || optNode.textContent || "";
-              if (optNumText && optText.startsWith(optNumText)) {
-                optText = optText.substring(optNumText.length);
+              const optHtml = optNode.innerHTML || "";
+              const optFrags = extractFragments(optHtml);
+              const allText = optFrags.reduce((acc, f) => acc + f.text, "");
+              let trimmedFrags = optFrags;
+              if (optNumText && allText.startsWith(optNumText)) {
+                let charsToRemove = optNumText.length;
+                trimmedFrags = [];
+                for (const f of optFrags) {
+                  if (charsToRemove <= 0) { trimmedFrags.push(f); continue; }
+                  if (charsToRemove >= f.text.length) { charsToRemove -= f.text.length; }
+                  else { trimmedFrags.push({ text: f.text.substring(charsToRemove), bold: f.bold, italic: f.italic, underline: f.underline }); charsToRemove = 0; }
+                }
               }
-              optText = optText.trim();
 
               pdf.setFont("helvetica", "bold");
               pdf.setFontSize(9.5);
@@ -616,77 +801,137 @@ export default defineComponent({
               const optTextIndent = Math.max(optNumWidth + 1.2, 4);
               const optTextWidth = colWidth - 4 - optTextIndent;
 
-              pdf.setFont("helvetica", "normal");
-              pdf.setFontSize(9.5);
-              const lines = pdf.splitTextToSize(optText, optTextWidth);
-              height += lines.length * 5;
+              const optLines = wrapFragments(trimmedFrags, optTextWidth, 9.5);
+              height += optLines.length * 5;
               height += 1.2;
             }
           }
           return height;
         };
 
-        const drawListItem = (numberStr, textStr, isQuestion) => {
+        const extractFragments = (htmlStr) => {
+          const div = document.createElement("div");
+          div.innerHTML = htmlStr;
+          const frags = [];
+          const walk = (node, bold, italic, underline) => {
+            if (node.nodeType === 3) {
+              const t = node.textContent;
+              if (t) frags.push({ text: t, bold, italic, underline });
+              return;
+            }
+            const tag = node.tagName;
+            if (tag === "BR") {
+              frags.push({ text: "\n", bold, italic, underline });
+              return;
+            }
+            const b = bold || tag === "STRONG" || tag === "B";
+            const i = italic || tag === "EM" || tag === "I";
+            const u = underline || tag === "U";
+            for (const ch of node.childNodes) walk(ch, b, i, u);
+          };
+          for (const ch of div.childNodes) walk(ch, false, false, false);
+          return frags;
+        };
+
+        const setFragmentFont = (frag) => {
+          const style = frag.bold
+            ? frag.italic ? "bolditalic" : "bold"
+            : frag.italic ? "italic" : "normal";
+          pdf.setFont("helvetica", style);
+        };
+
+        const drawFormattedLine = (frags, x, y, maxWidth, fontSize, color) => {
+          pdf.setFontSize(fontSize);
+          pdf.setTextColor(color[0], color[1], color[2]);
+          let cursorX = x;
+          for (const frag of frags) {
+            setFragmentFont(frag);
+            pdf.text(frag.text, cursorX, y);
+            cursorX += pdf.getTextWidth(frag.text);
+            if (frag.underline) {
+              const w = pdf.getTextWidth(frag.text);
+              const underlineY = y + fontSize * 0.12;
+              pdf.setDrawColor(color[0], color[1], color[2]);
+              pdf.setLineWidth(0.25);
+              pdf.line(cursorX - w, underlineY, cursorX, underlineY);
+            }
+          }
+        };
+
+        const wrapFragments = (fragments, maxWidth, fontSize) => {
+          const lines = [];
+          let currentLine = [];
+          let currentWidth = 0;
+
+          for (const frag of fragments) {
+            const parts = frag.text.split("\n");
+            for (let pi = 0; pi < parts.length; pi++) {
+              if (pi > 0) {
+                lines.push(currentLine);
+                currentLine = [];
+                currentWidth = 0;
+              }
+              const segment = parts[pi];
+              if (!segment) continue;
+              const words = segment.split(/(\s+)/);
+              for (const word of words) {
+                if (!word) continue;
+                pdf.setFont("helvetica", frag.bold ? "bold" : "normal");
+                pdf.setFontSize(fontSize);
+                const wordWidth = pdf.getTextWidth(word);
+                if (currentWidth + wordWidth > maxWidth && currentLine.length > 0) {
+                  lines.push(currentLine);
+                  currentLine = [];
+                  currentWidth = 0;
+                }
+                currentLine.push({ text: word, bold: frag.bold, italic: frag.italic, underline: frag.underline });
+                currentWidth += wordWidth;
+              }
+            }
+          }
+          if (currentLine.length > 0) lines.push(currentLine);
+          return lines;
+        };
+
+        const drawListItem = (numberStr, htmlStr, isQuestion) => {
           const fontSizeNumber = isQuestion ? 11 : 9.5;
           const fontSizeText = isQuestion ? 10.5 : 9.5;
           const fontColorNumber = [15, 23, 42];
           const fontColorText = isQuestion ? [51, 65, 85] : [71, 85, 105];
 
           const colW = inTwoColumns ? colWidth : maxContentWidth;
-
           const currentWidth = isQuestion ? colW : colW - 4;
           const lineHeight = isQuestion ? 5.5 : 5;
 
-          // Set font for measuring number
           pdf.setFont("helvetica", "bold");
           pdf.setFontSize(fontSizeNumber);
           const numWidth = pdf.getTextWidth(numberStr);
-
-          // Fixed indent based on number width
           const textIndent = Math.max(numWidth + 1.2, isQuestion ? 5 : 4);
           const textWidth = currentWidth - textIndent;
 
-          // Split text
-          pdf.setFont("helvetica", "normal");
-          pdf.setFontSize(fontSizeText);
-          const lines = pdf.splitTextToSize(textStr, textWidth);
-
-          // Height required
+          const fragments = extractFragments(htmlStr);
+          const lines = wrapFragments(fragments, textWidth, fontSizeText);
           const neededHeight = lines.length * lineHeight;
           checkPageBreak(neededHeight);
 
-          // Re-evaluate positions in case of column/page switch
           const finalColX = inTwoColumns
-            ? currentColumn === 0
-              ? col1X
-              : col2X
+            ? currentColumn === 0 ? col1X : col2X
             : marginX;
           const finalMarginX = isQuestion ? finalColX : finalColX + 4;
 
-          // Draw number
           pdf.setFont("helvetica", "bold");
           pdf.setFontSize(fontSizeNumber);
-          pdf.setTextColor(
-            fontColorNumber[0],
-            fontColorNumber[1],
-            fontColorNumber[2],
-          );
+          pdf.setTextColor(fontColorNumber[0], fontColorNumber[1], fontColorNumber[2]);
           pdf.text(numberStr, finalMarginX, currentY);
 
-          // Draw text lines
-          pdf.setFont("helvetica", "normal");
-          pdf.setFontSize(fontSizeText);
-          pdf.setTextColor(
-            fontColorText[0],
-            fontColorText[1],
-            fontColorText[2],
-          );
-
-          lines.forEach((line, idx) => {
-            pdf.text(
-              line,
+          lines.forEach((lineFrags, idx) => {
+            drawFormattedLine(
+              lineFrags,
               finalMarginX + textIndent,
               currentY + idx * lineHeight,
+              textWidth,
+              fontSizeText,
+              fontColorText,
             );
           });
 
@@ -745,14 +990,89 @@ export default defineComponent({
                   ? qNumStrong.innerText || qNumStrong.textContent
                   : "";
 
-                let qText = titleNode.innerText || titleNode.textContent || "";
-                if (qNumText && qText.startsWith(qNumText)) {
-                  qText = qText.substring(qNumText.length);
+                const qHtml = titleNode.innerHTML || "";
+                let trimmedHtml = qHtml;
+                if (qNumText) {
+                  const tmp = document.createElement("div");
+                  tmp.innerHTML = qHtml;
+                  const fullText = tmp.textContent || "";
+                  if (fullText.startsWith(qNumText)) {
+                    const charsToRemove = qNumText.length;
+                    let removed = 0;
+                    const walkAndTrim = (node) => {
+                      if (removed >= charsToRemove) return;
+                      if (node.nodeType === 3) {
+                        const len = Math.min(node.textContent.length, charsToRemove - removed);
+                        node.textContent = node.textContent.substring(len);
+                        removed += len;
+                      } else {
+                        for (const ch of node.childNodes) walkAndTrim(ch);
+                      }
+                    };
+                    walkAndTrim(tmp);
+                    trimmedHtml = tmp.innerHTML;
+                  }
                 }
-                qText = qText.trim();
 
-                drawListItem(qNumText, qText, true);
+                drawListItem(qNumText, trimmedHtml, true);
                 currentY += 1.5;
+              }
+
+              const imgNodes = node.querySelectorAll("img");
+              for (const imgNode of imgNodes) {
+                let imgSrc = imgNode.getAttribute("src") || "";
+                if (!imgSrc) continue;
+                if (!imgSrc.startsWith("data:image")) {
+                  try {
+                    imgSrc = await getBase64ImageFromUrl(imgSrc);
+                  } catch { continue; }
+                  if (!imgSrc) continue;
+                }
+                try {
+                  const imgProps = pdf.getImageProperties(imgSrc);
+                  const maxImgWidth = inTwoColumns ? colWidth : maxContentWidth;
+                  let imgWidth = maxImgWidth;
+                  let imgHeight =
+                    (imgProps.height / imgProps.width) * imgWidth;
+                  if (imgHeight > 120) {
+                    imgHeight = 120;
+                    imgWidth = (imgProps.width / imgProps.height) * imgHeight;
+                  }
+                  checkPageBreak(imgHeight + 8);
+                  const imgX = inTwoColumns
+                    ? currentColumn === 0
+                      ? col1X
+                      : col2X
+                    : marginX;
+                  pdf.addImage(imgSrc, "JPEG", imgX, currentY, imgWidth, imgHeight);
+                  currentY += imgHeight + 8;
+                } catch {
+                  // skip broken image
+                }
+              }
+
+              const allParagraphs = node.querySelectorAll("p");
+              for (const pNode of allParagraphs) {
+                if (
+                  pNode.classList.contains("question-title") ||
+                  pNode.classList.contains("question-option")
+                ) continue;
+                const pHtml = pNode.innerHTML || pNode.textContent || "";
+                if (!pHtml.trim()) continue;
+                const colW = inTwoColumns ? colWidth : maxContentWidth;
+                const pFrags = extractFragments(pHtml);
+                const pLines = wrapFragments(pFrags, colW, 10);
+                const pColor = [51, 65, 85];
+                const pLh = 5;
+                for (const lineFrags of pLines) {
+                  checkPageBreak(pLh);
+                  const lx = inTwoColumns
+                    ? currentColumn === 0 ? col1X : col2X
+                    : marginX;
+                  drawFormattedLine(lineFrags, lx, currentY, colW, 10, pColor);
+                  currentY += pLh;
+                }
+                currentY += 2;
               }
 
               if (optionsNode) {
@@ -764,13 +1084,31 @@ export default defineComponent({
                     ? optStrong.innerText || optStrong.textContent
                     : "";
 
-                  let optText = optNode.innerText || optNode.textContent || "";
-                  if (optNumText && optText.startsWith(optNumText)) {
-                    optText = optText.substring(optNumText.length);
+                  const optHtml = optNode.innerHTML || "";
+                  let trimmedHtml = optHtml;
+                  if (optNumText) {
+                    const tmp = document.createElement("div");
+                    tmp.innerHTML = optHtml;
+                    const fullText = tmp.textContent || "";
+                    if (fullText.startsWith(optNumText)) {
+                      const charsToRemove = optNumText.length;
+                      let removed = 0;
+                      const walkAndTrim = (node) => {
+                        if (removed >= charsToRemove) return;
+                        if (node.nodeType === 3) {
+                          const len = Math.min(node.textContent.length, charsToRemove - removed);
+                          node.textContent = node.textContent.substring(len);
+                          removed += len;
+                        } else {
+                          for (const ch of node.childNodes) walkAndTrim(ch);
+                        }
+                      };
+                      walkAndTrim(tmp);
+                      trimmedHtml = tmp.innerHTML;
+                    }
                   }
-                  optText = optText.trim();
 
-                  drawListItem(optNumText, optText, false);
+                  drawListItem(optNumText, trimmedHtml, false);
                   currentY += 1.2;
                 }
               }
@@ -837,7 +1175,7 @@ export default defineComponent({
               pdf.setFontSize(fontSize);
               pdf.setTextColor(15, 23, 42);
 
-              const lines = pdf.splitTextToSize(text, maxContentWidth);
+              const lines = pdf.splitTextToSize(text, colWidth);
               currentY += 2;
               checkPageBreak(lineHeight);
 
@@ -927,16 +1265,18 @@ export default defineComponent({
     const generateAnswerKeyCsv = () => {
       let csvContent = '"Q No","KEY"\n';
 
-      let limit = parseInt(questionsLimit.value);
-      if (isNaN(limit) || limit < 1) limit = 1;
-      if (limit > localQuestions.value.length)
-        limit = localQuestions.value.length;
+      let start = parseInt(questionStart.value);
+      let end = parseInt(questionEnd.value);
+      if (isNaN(start) || start < 1) start = 1;
+      if (isNaN(end) || end < start) end = start;
+      if (end > localQuestions.value.length)
+        end = localQuestions.value.length;
 
-      const limitedQuestions = localQuestions.value.slice(0, limit);
+      const limitedQuestions = localQuestions.value.slice(start - 1, end);
 
       limitedQuestions.forEach((question, index) => {
         const correctOption = question.options.find((option) => option.correct);
-        csvContent += `"${index + 1}","${
+        csvContent += `"${start + index}","${
           correctOption ? correctOption.identifier : ""
         }"\n`;
       });
@@ -1049,6 +1389,20 @@ export default defineComponent({
       await actionSheet.present();
     };
 
+    const onRangeChange = () => {
+      let start = parseInt(questionStart.value);
+      let end = parseInt(questionEnd.value);
+      if (isNaN(start) || start < 1) start = 1;
+      if (start > localQuestions.value.length)
+        start = localQuestions.value.length;
+      if (isNaN(end) || end < start) end = start;
+      if (end > localQuestions.value.length)
+        end = localQuestions.value.length;
+      questionStart.value = start;
+      questionEnd.value = end;
+      generateQuestionnaire();
+    };
+
     const isNative = Capacitor.isNativePlatform();
 
     watch(
@@ -1062,11 +1416,13 @@ export default defineComponent({
 
     return {
       questionnaireType,
-      questionsLimit,
+      questionStart,
+      questionEnd,
       generatedHtml,
       localQuestions,
       isNative,
       generateQuestionnaire,
+      onRangeChange,
       exportData,
       printData,
       downloadOutline,

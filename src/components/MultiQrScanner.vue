@@ -1,8 +1,23 @@
 <template>
   <div class="multi-qr-scanner">
+    <div class="scanner-primary-actions">
+      <button
+        type="button"
+        class="scanner-submit-action"
+        :disabled="detectedCount === 0"
+        @click="submitResults"
+      >
+        Enviar respuestas<span v-if="detectedCount > 0"> ({{ detectedCount }})</span>
+      </button>
+      <button type="button" class="scanner-close-action" @click="cancelScan">
+        <ion-icon :icon="closeCircleOutline"></ion-icon>
+        Cerrar cámara
+      </button>
+    </div>
+
     <div v-if="isLoading" class="loading-indicator">
       <ion-spinner name="crescent"></ion-spinner>
-      <p>Iniciando escáner QR de alta sensibilidad...</p>
+      <p>Iniciando escáner de marcadores...</p>
     </div>
 
     <div v-show="!isLoading" class="scanner-wrapper">
@@ -16,7 +31,7 @@
          <!-- Live scanning indicator -->
          <div class="scanning-live-indicator">
            <span class="live-dot"></span>
-           <span class="live-text">ESCANEANDO MULTI-PASO</span>
+            <span class="live-text">ESCANEANDO MATRICES</span>
          </div>
 
          <!-- Camera picker (only when more than one camera is available) -->
@@ -44,7 +59,7 @@
             @click="openPreviewModal"
           >
             <span class="qr-count-number">{{ detectedCount }}</span>
-            <span class="qr-count-label">QRs (Ver lista)</span>
+            <span class="qr-count-label">Marcadores (Ver lista)</span>
           </div>
 
          <!-- Zoom controls (continuous encoder-style slider) -->
@@ -93,7 +108,7 @@
              <!-- Expanded state: scrollable list (scanned + pending) -->
              <div v-else class="sidebar-list">
                <div v-if="scannedListItems.length === 0 && missingStudents.length === 0" class="sidebar-empty">
-                 <p>No hay códigos escaneados.</p>
+                 <p>No hay marcadores escaneados.</p>
                </div>
 
                <div v-else>
@@ -161,10 +176,6 @@
         <ion-button v-if="isFlashSupported" fill="clear" @click="toggleFlash">
           <ion-icon slot="icon-only" :icon="isFlashOn ? flashlight : flashlightOutline"></ion-icon>
         </ion-button>
-
-        <ion-button fill="clear" color="danger" @click="cancelScan">
-          <ion-icon slot="icon-only" :icon="closeCircleOutline"></ion-icon>
-        </ion-button>
       </div>
     </div>
 
@@ -172,7 +183,7 @@
     <ion-modal :is-open="isPreviewModalOpen" @didDismiss="isPreviewModalOpen = false">
       <ion-header>
         <ion-toolbar>
-          <ion-title>QRs Escaneados ({{ detectedCount }})</ion-title>
+          <ion-title>Marcadores escaneados ({{ detectedCount }})</ion-title>
           <ion-buttons slot="end">
             <ion-button @click="isPreviewModalOpen = false">Cerrar</ion-button>
           </ion-buttons>
@@ -180,7 +191,7 @@
       </ion-header>
       <ion-content class="ion-padding">
         <div v-if="scannedListItems.length === 0" class="ion-text-center ion-padding">
-          <p style="color: var(--ion-color-medium)">No hay códigos escaneados.</p>
+          <p style="color: var(--ion-color-medium)">No hay marcadores escaneados.</p>
         </div>
         <ion-list v-else>
           <ion-item v-for="item in scannedListItems" :key="item.rawCode">
@@ -235,6 +246,10 @@ import { CapacitorFlash } from '@capgo/capacitor-flash';
 import cv from '@techstark/opencv-js';
 import axios from 'axios';
 import { tokenHeader } from '../globalService';
+import { decodeMarkGrid, idFromPattern, GRID_SIZE } from '../utils/matrixPattern';
+
+const PAPER_MIN_THRESHOLD = 180;
+const PAPER_MIN_AREA_RATIO = 0.01;
 
 function waitForOpenCv(cvModule) {
   return new Promise((resolve) => {
@@ -250,6 +265,194 @@ function waitForOpenCv(cvModule) {
       resolve();
     }
   });
+}
+
+function polygonArea(points) {
+  let area = 0;
+  for (let i = 0; i < points.length; i += 1) {
+    const current = points[i];
+    const next = points[(i + 1) % points.length];
+    area += current.x * next.y - next.x * current.y;
+  }
+  return Math.abs(area) / 2;
+}
+
+function orderQuad(points) {
+  if (!Array.isArray(points) || points.length !== 4) return null;
+
+  const centerX = points.reduce((sum, point) => sum + point.x, 0) / 4;
+  const centerY = points.reduce((sum, point) => sum + point.y, 0) / 4;
+  const ordered = points
+    .map((point) => ({
+      ...point,
+      angle: Math.atan2(point.y - centerY, point.x - centerX),
+    }))
+    .sort((a, b) => a.angle - b.angle)
+    .map((point) => ({ x: point.x, y: point.y }));
+
+  let startIndex = 0;
+  let minSum = Number.POSITIVE_INFINITY;
+  ordered.forEach((point, index) => {
+    const sum = point.x + point.y;
+    if (sum < minSum) {
+      minSum = sum;
+      startIndex = index;
+    }
+  });
+
+  return ordered.map((_, index) => ordered[(startIndex + index) % 4]);
+}
+
+function quadFromContour(contour) {
+  const rect = cv.minAreaRect(contour);
+  const points = cv.boxPoints(rect).map((point) => ({ x: point.x, y: point.y }));
+  return orderQuad(points);
+}
+
+function markerQuadFromContour(contour) {
+  const area = cv.contourArea(contour);
+  const rect = cv.minAreaRect(contour);
+  const width = rect.size.width;
+  const height = rect.size.height;
+
+  if (width < 48 || height < 48 || width / height < 0.72 || width / height > 1.38) {
+    return null;
+  }
+  if (area < 48 * 48 * 0.68) return null;
+
+  const quad = quadFromContour(contour);
+  if (!quad || polygonArea(quad) < 48 * 48 * 0.68) return null;
+  return quad;
+}
+
+function paperQuadFromContour(contour, frameWidth, frameHeight) {
+  const rect = cv.minAreaRect(contour);
+  const width = rect.size.width;
+  const height = rect.size.height;
+  const aspect = width / height;
+  const quad = quadFromContour(contour);
+
+  if (width < 64 || height < 64 || aspect < 0.15 || aspect > 6.5) {
+    return null;
+  }
+  if (!quad || polygonArea(quad) < frameWidth * frameHeight * PAPER_MIN_AREA_RATIO) return null;
+  return quad;
+}
+
+function paperQuadsFromContours(contours, frameWidth, frameHeight) {
+  const quads = [];
+
+  for (let index = 0; index < contours.size(); index += 1) {
+    const quad = paperQuadFromContour(contours.get(index), frameWidth, frameHeight);
+    if (quad) quads.push(quad);
+  }
+
+  return quads;
+}
+
+function fillQuadMask(mask, quads) {
+  mask.setTo(new cv.Scalar(0));
+
+  for (const quad of quads) {
+    const points = cv.matFromArray(
+      4,
+      1,
+      cv.CV_32SC2,
+      new Int32Array(
+        quad.flatMap((point) => [Math.round(point.x), Math.round(point.y)]),
+      ),
+    );
+    try {
+      cv.fillConvexPoly(mask, points, new cv.Scalar(255), cv.LINE_8, 0);
+    } finally {
+      points.delete();
+    }
+  }
+}
+
+function gridFromWarpedMarker(warped, size = GRID_SIZE * 36) {
+  const cellSize = size / GRID_SIZE;
+  const means = [];
+
+  for (let row = 0; row < GRID_SIZE; row += 1) {
+    for (let col = 0; col < GRID_SIZE; col += 1) {
+      const startY = Math.floor(row * cellSize + cellSize * 0.3);
+      const endY = Math.ceil(row * cellSize + cellSize * 0.7);
+      const startX = Math.floor(col * cellSize + cellSize * 0.3);
+      const endX = Math.ceil(col * cellSize + cellSize * 0.7);
+      let sum = 0;
+      let count = 0;
+
+      for (let y = startY; y < endY; y += 1) {
+        for (let x = startX; x < endX; x += 1) {
+          sum += warped.ucharPtr(y, x)[0];
+          count += 1;
+        }
+      }
+
+      means.push(sum / count);
+    }
+  }
+
+  const sorted = [...means].sort((a, b) => a - b);
+  const dark = sorted[Math.floor((sorted.length - 1) * 0.25)];
+  const light = sorted[Math.floor((sorted.length - 1) * 0.75)];
+  if (light - dark < 45) return null;
+
+  const threshold = (dark + light) / 2;
+  const bits = means.map((mean) => (mean < threshold ? 1 : 0));
+  return Array.from({ length: GRID_SIZE }, (_, row) =>
+    bits.slice(row * GRID_SIZE, (row + 1) * GRID_SIZE),
+  );
+}
+
+function decodeMarkerContour(contour, gray) {
+  const quad = markerQuadFromContour(contour);
+  if (!quad) return null;
+
+  const size = GRID_SIZE * 36;
+  const source = cv.matFromArray(
+    4,
+    1,
+    cv.CV_32FC2,
+    new Float32Array(quad.flatMap((point) => [point.x, point.y])),
+  );
+  const destination = cv.matFromArray(
+    4,
+    1,
+    cv.CV_32FC2,
+    new Float32Array([0, 0, size, 0, size, size, 0, size]),
+  );
+  const transform = cv.getPerspectiveTransform(source, destination);
+  const warped = new cv.Mat();
+
+  try {
+    cv.warpPerspective(
+      gray,
+      warped,
+      transform,
+      new cv.Size(size, size),
+      cv.INTER_LINEAR,
+      cv.BORDER_CONSTANT,
+      new cv.Scalar(255, 255, 255, 255),
+    );
+
+    const grid = gridFromWarpedMarker(warped, size);
+    if (!grid) return null;
+
+    const decoded = decodeMarkGrid(grid);
+    if (!decoded.valid) return null;
+
+    const studentId = idFromPattern(decoded.mask);
+    if (studentId === null) return null;
+
+    return { quad, studentId, optionIndex: decoded.optionIndex };
+  } finally {
+    source.delete();
+    destination.delete();
+    transform.delete();
+    warped.delete();
+  }
 }
 
 export default {
@@ -268,12 +471,13 @@ export default {
     IonLabel,
     IonButtons,
   },
-  emits: ['scan-complete', 'scan-cancelled'],
+  emits: ['scan-complete', 'scan-submit', 'scan-cancelled'],
   props: {
     // Full roster of the grade/course: [{ id, code, name, lastName, ... }]
     // When provided, scanned students are shown normally and the remaining
     // (pending) students appear in the sidebar with a distinct style.
     students: { type: Array, default: () => [] },
+    options: { type: Array, default: () => ['A', 'B', 'C', 'D'] },
   },
   setup(props, { emit, expose }) {
     const video        = ref(null);
@@ -312,16 +516,37 @@ export default {
     // Run OpenCV detection only every N frames (still draw live video every frame)
     const DETECT_EVERY = isMobileView ? 2 : 1;
 
-    // Accumulated QR codes — unique strings like "42:A" or "EST01:A"
     const accumulatedCodes = new Set();
-    const studentCache     = reactive({});
+    const accumulatedStudents = new Map();
+    const candidateStreaks = new Map();
+    const studentCache = reactive({});
+    const optionIdentifiers = computed(() => {
+      const sourceOptions = props.options.length > 0 ? props.options : ['A', 'B', 'C', 'D'];
+      const identifiers = sourceOptions
+        .map((option) => (typeof option === 'string' ? option : option?.identifier))
+        .filter((option) => option !== null && option !== undefined && option !== '')
+        .map(String);
+      return [...new Set(identifiers)].slice(0, 4);
+    });
+    const rosterByMarker = computed(() => {
+      const entries = new Map();
+      for (const entry of props.students || []) {
+        const student = entry?.user || entry;
+        if (student?.id === null || student?.id === undefined) continue;
+        entries.set(String(student.id), String(student.id));
+        if (student.code !== null && student.code !== undefined) {
+          entries.set(String(student.code), String(student.id));
+        }
+      }
+      return entries;
+    });
 
-    // OpenCV resources
-    let cvReady    = false;
-    let qrDetector = null;
-    let srcMat     = null;
-    let grayMat    = null;
-    let bwMat      = null;
+    let cvReady = false;
+    let srcMat  = null;
+    let grayMat = null;
+    let bwMat   = null;
+    let paperMask = null;
+    let detectionGrayMat = null;
 
     // ─── Unified zoom setter ─────────────────────────────────────────
     // Perceived zoom `z` is split into:
@@ -514,26 +739,108 @@ export default {
 
     // ─── OpenCV resource lifecycle ────────────────────────────────
     const cleanupOpenCvResources = () => {
-      if (srcMat)     { try { srcMat.delete();     srcMat     = null; } catch (_) { /* ignore */ } }
-      if (grayMat)    { try { grayMat.delete();    grayMat    = null; } catch (_) { /* ignore */ } }
-      if (bwMat)      { try { bwMat.delete();      bwMat      = null; } catch (_) { /* ignore */ } }
-      if (qrDetector) { try { qrDetector.delete(); qrDetector = null; } catch (_) { /* ignore */ } }
+      if (srcMat)  { try { srcMat.delete(); } catch (_) { void 0; } finally { srcMat = null; } }
+      if (grayMat) { try { grayMat.delete(); } catch (_) { void 0; } finally { grayMat = null; } }
+      if (bwMat)   { try { bwMat.delete(); } catch (_) { void 0; } finally { bwMat = null; } }
+      if (paperMask) { try { paperMask.delete(); } catch (_) { void 0; } finally { paperMask = null; } }
+      if (detectionGrayMat) { try { detectionGrayMat.delete(); } catch (_) { void 0; } finally { detectionGrayMat = null; } }
     };
 
     const ensureOpenCvResources = (width, height) => {
       if (!cvReady || width <= 0 || height <= 0) return false;
 
-      if (!srcMat || srcMat.cols !== width || srcMat.rows !== height) {
+      if (
+        !srcMat
+        || srcMat.cols !== width
+        || srcMat.rows !== height
+        || !paperMask
+        || !detectionGrayMat
+      ) {
         if (srcMat)  { try { srcMat.delete();  } catch (_) { /* ignore */ } }
         if (grayMat) { try { grayMat.delete(); } catch (_) { /* ignore */ } }
         if (bwMat)   { try { bwMat.delete();   } catch (_) { /* ignore */ } }
+        if (paperMask) { try { paperMask.delete(); } catch (_) { /* ignore */ } }
+        if (detectionGrayMat) { try { detectionGrayMat.delete(); } catch (_) { /* ignore */ } }
 
         srcMat  = markRaw(new cv.Mat(height, width, cv.CV_8UC4));
         grayMat = markRaw(new cv.Mat(height, width, cv.CV_8UC1));
         bwMat   = markRaw(new cv.Mat(height, width, cv.CV_8UC1));
+        paperMask = markRaw(new cv.Mat(height, width, cv.CV_8UC1));
+        detectionGrayMat = markRaw(new cv.Mat(height, width, cv.CV_8UC1));
       }
 
       return true;
+    };
+
+    const prepareDetectionImage = (gray, width, height) => {
+      if (!paperMask || !detectionGrayMat) return gray;
+
+      const paperContours = new cv.MatVector();
+      const hierarchy = new cv.Mat();
+
+      try {
+        const otsuThreshold = cv.threshold(
+          gray,
+          bwMat,
+          0,
+          255,
+          cv.THRESH_BINARY + cv.THRESH_OTSU,
+        );
+        const paperThreshold = Math.max(PAPER_MIN_THRESHOLD, otsuThreshold);
+        cv.threshold(gray, bwMat, paperThreshold, 255, cv.THRESH_BINARY);
+        cv.findContours(
+          bwMat,
+          paperContours,
+          hierarchy,
+          cv.RETR_EXTERNAL,
+          cv.CHAIN_APPROX_SIMPLE,
+        );
+        const paperQuads = paperQuadsFromContours(paperContours, width, height);
+        if (paperQuads.length === 0) return gray;
+
+        fillQuadMask(paperMask, paperQuads);
+        detectionGrayMat.setTo(new cv.Scalar(255));
+        gray.copyTo(detectionGrayMat, paperMask);
+        return detectionGrayMat;
+      } catch (_) {
+        return gray;
+      } finally {
+        hierarchy.delete();
+        paperContours.delete();
+      }
+    };
+
+    const drawDetectedMarker = (ctx, quad, color, fillColor, label) => {
+      ctx.beginPath();
+      ctx.moveTo(quad[0].x, quad[0].y);
+      ctx.lineTo(quad[1].x, quad[1].y);
+      ctx.lineTo(quad[2].x, quad[2].y);
+      ctx.lineTo(quad[3].x, quad[3].y);
+      ctx.closePath();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = color;
+      ctx.fillStyle = fillColor;
+      ctx.stroke();
+      ctx.fill();
+
+      const centerX = (quad[0].x + quad[1].x + quad[2].x + quad[3].x) / 4;
+      const centerY = (quad[0].y + quad[1].y + quad[2].y + quad[3].y) / 4;
+      ctx.font = 'bold 20px sans-serif';
+      const textWidth = ctx.measureText(label).width;
+      ctx.fillStyle = 'rgba(0,0,0,0.82)';
+      ctx.beginPath();
+      if (typeof ctx.roundRect === 'function') {
+        ctx.roundRect(centerX - textWidth / 2 - 8, centerY - 14, textWidth + 16, 26, 8);
+      } else {
+        ctx.rect(centerX - textWidth / 2 - 8, centerY - 14, textWidth + 16, 26);
+      }
+      ctx.fill();
+      ctx.fillStyle = color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, centerX, centerY);
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
     };
 
     // ─── Main Processing Loop (Multi-Pass: Alternate Grayscale / Otsu Binary) ─────
@@ -542,7 +849,7 @@ export default {
 
       const canvas = outputCanvas.value;
       if (!canvas) return;
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
       const vw = video.value.videoWidth;
       const vh = video.value.videoHeight;
@@ -585,115 +892,90 @@ export default {
       // Run OpenCV detection only every DETECT_EVERY-th frame to ease the CPU
       if (
         cvReady
-        && qrDetector
-        && frameCounter % DETECT_EVERY === 1
+        && frameCounter % DETECT_EVERY === 0
         && ensureOpenCvResources(dw, dh)
       ) {
+        let contours = null;
         try {
-          const imageData = ctx.getImageData(0, 0, dw, dh);
-          srcMat.data.set(imageData.data);
-          detectCounter++;
+           const imageData = ctx.getImageData(0, 0, dw, dh);
+           srcMat.data.set(imageData.data);
+           detectCounter++;
+           cv.cvtColor(srcMat, grayMat, cv.COLOR_RGBA2GRAY);
+           const detectionGray = prepareDetectionImage(grayMat, dw, dh);
+           cv.threshold(detectionGray, bwMat, 0, 255, cv.THRESH_BINARY_INV + cv.THRESH_OTSU);
 
-          // Convert to Grayscale
-          cv.cvtColor(srcMat, grayMat, cv.COLOR_RGBA2GRAY);
 
-          // Alternate passes (based on detection passes, not every frame):
-          // Odd passes: Direct Grayscale
-          // Even passes: Otsu Binarized
-          let targetMat = grayMat;
-          if (detectCounter % 2 === 0) {
-            try {
-              cv.threshold(grayMat, bwMat, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
-              targetMat = bwMat;
-            } catch (_) {
-              targetMat = grayMat;
+          contours = new cv.MatVector();
+          const hierarchy = new cv.Mat();
+          try {
+            cv.findContours(
+              bwMat,
+              contours,
+              hierarchy,
+              cv.RETR_EXTERNAL,
+              cv.CHAIN_APPROX_SIMPLE,
+            );
+
+            const options = optionIdentifiers.value;
+            const roster = rosterByMarker.value;
+            const observed = new Map();
+
+            for (let index = 0; index < contours.size(); index += 1) {
+               const detection = decodeMarkerContour(contours.get(index), detectionGray);
+
+              if (!detection) continue;
+
+              const option = options[detection.optionIndex];
+              if (option === undefined) continue;
+
+              let studentId = String(detection.studentId);
+              if (roster.size > 0) {
+                const rosterId = roster.get(studentId);
+                if (rosterId !== undefined) studentId = rosterId;
+              }
+
+              observed.set(`${studentId}:${option}`, detection);
             }
-          }
 
-          let decodedVec = new cv.StringVector();
-          let pointsMat  = new cv.Mat();
+            for (const code of candidateStreaks.keys()) {
+              if (!observed.has(code)) candidateStreaks.delete(code);
+            }
 
-          qrDetector.detectAndDecodeMulti(targetMat, decodedVec, pointsMat);
+            observed.forEach((detection, code) => {
+              const studentId = code.split(':')[0];
+              const existingCode = accumulatedStudents.get(studentId);
+              if (existingCode !== undefined && existingCode !== code) return;
 
-          const numDetected = decodedVec.size();
-          const pointsRows  = pointsMat.rows;
+              const previous = candidateStreaks.get(code);
+              const count = previous?.frame === detectCounter - 1 ? previous.count + 1 : 1;
+              candidateStreaks.set(code, { frame: detectCounter, count });
 
-          if (numDetected > 0 || pointsRows > 0) {
-            const ptsData = pointsMat.data32F;
-            const countToIterate = numDetected > 0 ? numDetected : Math.floor(pointsRows / 4);
-
-            for (let i = 0; i < countToIterate; i++) {
-              const code = numDetected > i ? decodedVec.get(i) : '';
-              const base = i * 8; // 4 corners (x, y)
-
-              if (ptsData && ptsData.length >= base + 8) {
-                const pts = [
-                  { x: ptsData[base + 0], y: ptsData[base + 1] },
-                  { x: ptsData[base + 2], y: ptsData[base + 3] },
-                  { x: ptsData[base + 4], y: ptsData[base + 5] },
-                  { x: ptsData[base + 6], y: ptsData[base + 7] },
-                ];
-
-                const isValidCode = code && code.trim().length > 0;
-                const isNew       = isValidCode && !accumulatedCodes.has(code);
-
-                // Draw bounding polygon
-                ctx.beginPath();
-                ctx.moveTo(pts[0].x, pts[0].y);
-                ctx.lineTo(pts[1].x, pts[1].y);
-                ctx.lineTo(pts[2].x, pts[2].y);
-                ctx.lineTo(pts[3].x, pts[3].y);
-                ctx.closePath();
-                ctx.lineWidth = 4;
-
-                if (isValidCode) {
-                  ctx.strokeStyle = isNew ? '#00e5ff' : '#00e676';
-                  ctx.fillStyle   = isNew ? 'rgba(0,229,255,0.22)' : 'rgba(0,230,118,0.22)';
-                } else {
-                  ctx.strokeStyle = '#ff9800';
-                  ctx.fillStyle   = 'rgba(255,152,0,0.15)';
-                }
-                ctx.stroke();
-                ctx.fill();
-
-                // Pill label with option letter
-                if (isValidCode) {
-                  const label   = code.split(':')[1] || code;
-                  const centerX = (pts[0].x + pts[1].x + pts[2].x + pts[3].x) / 4;
-                  const centerY = (pts[0].y + pts[1].y + pts[2].y + pts[3].y) / 4;
-
-                  ctx.font = 'bold 22px sans-serif';
-                  const tw = ctx.measureText(label).width;
-
-                  ctx.fillStyle = 'rgba(0,0,0,0.8)';
-                  ctx.beginPath();
-                  ctx.roundRect(centerX - tw / 2 - 8, centerY - 15, tw + 16, 26, 8);
-                  ctx.fill();
-
-                  ctx.fillStyle    = isNew ? '#00e5ff' : '#00e676';
-                  ctx.textAlign    = 'center';
-                  ctx.textBaseline = 'middle';
-                  ctx.fillText(label, centerX, centerY);
-                  ctx.textAlign    = 'left';
-                  ctx.textBaseline = 'alphabetic';
-
-                  if (isNew) {
-                    accumulatedCodes.add(code);
-                    detectedCount.value = accumulatedCodes.size;
-                    const studentCodeOrId = code.split(':')[0];
-                    if (studentCodeOrId && !studentCache[studentCodeOrId]) {
-                      fetchStudentDetail(studentCodeOrId);
-                    }
-                  }
+              const isAccumulated = accumulatedCodes.has(code);
+              const isNew = !isAccumulated && count >= 2;
+              if (isNew) {
+                accumulatedStudents.set(studentId, code);
+                accumulatedCodes.add(code);
+                detectedCount.value = accumulatedCodes.size;
+                if (studentId && !studentCache[studentId]) {
+                  fetchStudentDetail(studentId);
                 }
               }
-            }
-          }
 
-          decodedVec.delete();
-          pointsMat.delete();
-        } catch (e) {
-          console.warn('Error en detección OpenCV:', e);
+              if (isNew) {
+                drawDetectedMarker(ctx, detection.quad, '#00e5ff', 'rgba(0,229,255,0.22)', code);
+              } else if (isAccumulated) {
+                drawDetectedMarker(ctx, detection.quad, '#00e676', 'rgba(0,230,118,0.22)', code);
+              } else {
+                drawDetectedMarker(ctx, detection.quad, '#ff9800', 'rgba(255,152,0,0.16)', code);
+              }
+            });
+          } finally {
+            hierarchy.delete();
+          }
+        } catch (error) {
+          console.warn('Error en detección OpenCV:', error);
+        } finally {
+          if (contours) contours.delete();
         }
       }
 
@@ -773,8 +1055,7 @@ export default {
     const initialize = async () => {
       try {
         await waitForOpenCv(cv);
-        cvReady    = true;
-        qrDetector = markRaw(new cv.QRCodeDetector());
+        cvReady = true;
 
         await checkFlashAvailability();
 
@@ -809,7 +1090,12 @@ export default {
     };
 
     const removeItem = (rawCode) => {
+      const studentId = rawCode.split(':')[0];
       accumulatedCodes.delete(rawCode);
+      accumulatedStudents.delete(studentId);
+      for (const code of candidateStreaks.keys()) {
+        if (code.split(':')[0] === studentId) candidateStreaks.delete(code);
+      }
       detectedCount.value = accumulatedCodes.size;
       if (detectedCount.value === 0) {
         isPreviewModalOpen.value = false;
@@ -825,8 +1111,15 @@ export default {
       emit('scan-complete', Array.from(accumulatedCodes));
     };
 
+    const submitResults = () => {
+      if (detectedCount.value === 0) return;
+      emit('scan-submit', Array.from(accumulatedCodes));
+    };
+
     const clearAccumulated = () => {
       accumulatedCodes.clear();
+      accumulatedStudents.clear();
+      candidateStreaks.clear();
       detectedCount.value = 0;
       isPreviewModalOpen.value = false;
     };
@@ -891,6 +1184,7 @@ export default {
       toggleSidebar,
       removeItem,
       captureResults,
+      submitResults,
       clearAccumulated,
       cancelScan,
       toggleFlash,
@@ -913,23 +1207,75 @@ export default {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
+  overflow: hidden;
   background: #000;
 }
 
 .loading-indicator {
   display: flex;
+  flex: 1;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100%;
+  min-height: 0;
   color: #fff;
   gap: 12px;
 }
 
+.scanner-primary-actions {
+  position: relative;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  flex: 0 0 auto;
+  gap: 8px;
+  padding: calc(8px + env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) 8px max(10px, env(safe-area-inset-left));
+  background: #080808;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.scanner-primary-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 10px;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.scanner-primary-actions button:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+
+.scanner-submit-action {
+  background: var(--ion-color-primary, #3880ff);
+}
+
+.scanner-submit-action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.scanner-close-action {
+  background: var(--ion-color-danger, #eb445a);
+}
+
 .scanner-wrapper {
   display: flex;
+  flex: 1;
   flex-direction: column;
-  height: 100%;
+  min-height: 0;
+  height: auto;
+  overflow: hidden;
 }
 
 /* Camera (2/3) + sidebar (1/3) row */
@@ -937,7 +1283,8 @@ export default {
   display: flex;
   flex-direction: row;
   flex: 1;
-  height: 100%;
+  min-height: 0;
+  height: auto;
   gap: 1px;
 }
 
@@ -1413,6 +1760,7 @@ export default {
 .controls-row {
   display: flex;
   align-items: center;
+  min-height: 56px;
   gap: 6px;
   padding: 8px 10px;
   padding-left: max(10px, env(safe-area-inset-left));
@@ -1425,6 +1773,7 @@ export default {
 
 .capture-btn {
   flex: 1;
+  min-width: 0;
   --border-radius: 10px;
 }
 </style>

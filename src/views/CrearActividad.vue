@@ -8,6 +8,11 @@
           </ion-button>
         </ion-buttons>
         <ion-title>{{ pageTitle }}</ion-title>
+        <ion-buttons v-if="activityId" slot="end">
+          <ion-button @click="eliminarActividad">
+            <ion-icon :icon="trashOutline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -80,9 +85,10 @@ import {
   IonIcon,
   IonSelect,
   IonSelectOption,
+  alertController,
 } from "@ionic/vue";
 import { tokenHeader, usuarioGet } from "../globalService";
-import { arrowBackOutline } from "ionicons/icons";
+import { arrowBackOutline, trashOutline } from "ionicons/icons";
 import TiptapEditor from "../components/TiptapEditor.vue";
 
 export default {
@@ -107,13 +113,13 @@ export default {
     const router = useRouter();
     const mroute = useRoute();
     const lessonId = parseInt(mroute.params.lessonId, 10);
-    let activityId = mroute.params.id ? parseInt(mroute.params.id, 10) : null; // Get optional activity ID
+    const activityId = ref(mroute.params.id ? parseInt(mroute.params.id, 10) : null);
 
     const activityForm = ref({
-      id: activityId, // Initialize with activityId
+      id: activityId.value,
       title: "",
       instructions: "",
-      classifications: ["execution"], // Default
+      classifications: ["execution"],
       lessonId: lessonId,
       instituteId: null,
     });
@@ -123,7 +129,7 @@ export default {
     const backUrl = ref("");
 
     const pageTitle = computed(() => {
-      return activityId ? "Editar Actividad" : "Crear Actividad";
+      return activityId.value ? "Editar Actividad" : "Crear Actividad";
     });
 
     onIonViewWillEnter(async () => {
@@ -134,17 +140,12 @@ export default {
         const response = await axios.get(`/lessons/${lessonId}`, tokenHeader());
         lessonDetails.value = response.data;
 
-        if (!activityId) {
-          const { course, area, period, year, type } = lessonDetails.value;
-          backUrl.value = `/lecciones/${course.id}/${area.id}/${period.id}/${year}${type ? '/' + type : ''}`;
-        } else if (activityId) {
-          backUrl.value = `/actividades/${activityId}`;
-        }
+        const { course, area, period, year, type } = lessonDetails.value;
+        backUrl.value = `/lecciones/${course.id}/${area.id}/${period.id}/${year}${type ? '/' + type : ''}`;
 
-        if (activityId) {
-          // If editing, fetch activity details
+        if (activityId.value) {
           const activityResponse = await axios.get(
-            `/activities/${activityId}`,
+            `/activities/${activityId.value}`,
             tokenHeader()
           );
           activityForm.value.title = activityResponse.data.title;
@@ -152,7 +153,6 @@ export default {
           activityForm.value.classifications = activityResponse.data.classifications?.length
             ? activityResponse.data.classifications
             : ["execution"];
-          // Ensure lessonId and instituteId are correctly set from fetched data if needed
           activityForm.value.lessonId = activityResponse.data.lesson.id;
           activityForm.value.instituteId = activityResponse.data.institute.id;
         }
@@ -164,25 +164,22 @@ export default {
 
     const saveActivity = async () => {
       try {
-        if (activityId) {
-          // Update existing activity
+        if (activityId.value) {
           delete activityForm.value.id;
           await axios.patch(
-            `/activities/${activityId}`,
+            `/activities/${activityId.value}`,
             activityForm.value,
             tokenHeader()
           );
         } else {
           delete activityForm.value.id;
-          // Create new activity
           await axios
             .post("/activities", activityForm.value, tokenHeader())
             .then((response) => {
-              activityId = response.data.id; // Set the ID of the newly created activity
+              activityId.value = response.data.id;
             });
         }
-        // Redirect to the activity view after saving
-        router.push(`/actividades/${activityId}`);
+        router.push(`/actividades/${activityId.value}`);
       } catch (error) {
         console.error("Error saving activity:", error);
         alert("Error al guardar la actividad. Por favor, intente de nuevo.");
@@ -197,13 +194,48 @@ export default {
       }
     };
 
+    const eliminarActividad = async () => {
+      const alert = await alertController.create({
+        header: "Confirmar eliminación",
+        message: "¿Estás seguro de que quieres eliminar esta actividad permanentemente?",
+        buttons: [
+          { text: "Cancelar", role: "cancel" },
+          {
+            text: "Eliminar",
+            role: "destructive",
+            handler: async () => {
+              try {
+                const criteriaRes = await axios.get(
+                  `/criteria?activityId=${activityId.value}`,
+                  tokenHeader()
+                );
+                const deleteCriteria = (criteriaRes.data || []).map((c) =>
+                  axios.delete(`/criteria/${c.id}`, tokenHeader())
+                );
+                await Promise.all(deleteCriteria);
+                await axios.delete(`/activities/${activityId.value}`, tokenHeader());
+                localStorage.setItem("error", "Actividad eliminada exitosamente.");
+                router.push(backUrl.value || "/lecciones");
+              } catch (err) {
+                console.error("Error deleting activity:", err);
+              }
+            },
+          },
+        ],
+      });
+      await alert.present();
+    };
+
     return {
+      activityId,
       activityForm,
       saveActivity,
       backUrl,
       arrowBackOutline,
+      trashOutline,
       pageTitle,
       goBack,
+      eliminarActividad,
     };
   },
 };

@@ -790,7 +790,7 @@ export default {
           },
         },
         {
-          text: "Imprimir QRs de Respuestas",
+          text: "Imprimir Marcadores de Respuestas",
           handler: () => {
             navigateToPrintableQr(curso);
           },

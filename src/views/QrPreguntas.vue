@@ -15,7 +15,7 @@
         <div class="info-section">
           <h2>Respuestas escaneadas: {{ scannedCodes.length }}</h2>
           <p v-if="scannedCodes.length === 0" class="empty-message">
-            No hay respuestas escaneadas aún. Presione "Escanear QR" para
+            No hay respuestas escaneadas aún. Presione "Escanear Marcador" para
             comenzar.
           </p>
           <p v-if="isScanning" class="processing-message">
@@ -56,7 +56,7 @@
       <ion-toolbar>
         <div class="ion-padding">
           <ion-button expand="block" @click="openScanner" :disabled="isScanning">
-            {{ isScanning ? "Procesando..." : "Escanear QR" }}
+            {{ isScanning ? "Procesando..." : "Escanear Marcador" }}
           </ion-button>
           <ion-button
             v-if="scannedCodes.length > 0"
@@ -72,9 +72,9 @@
             fill="outline"
             color="success"
             @click="submitAnswersBulk"
-            :disabled="scannedCodes.length === 0"
+            :disabled="scannedCodes.length === 0 || isSubmitting"
           >
-            Guardar Respuestas
+            {{ isSubmitting ? "Enviando..." : "Enviar respuestas escaneadas" }}
           </ion-button>
         </div>
       </ion-toolbar>
@@ -90,13 +90,15 @@
       @didDismiss="showToast = false"
     ></ion-toast>
 
-    <!-- Full-screen multi-QR scanner overlay -->
+    <!-- Full-screen matrix scanner overlay -->
     <div v-if="isShowingScanner" class="scanner-overlay-container">
-      <multi-qr-scanner
+      <matrix-scanner
         :students="students"
+        :options="scannerOptions"
         @scan-complete="onMultiScanComplete"
+        @scan-submit="onMultiScanSubmit"
         @scan-cancelled="isShowingScanner = false"
-      ></multi-qr-scanner>
+      ></matrix-scanner>
     </div>
   </ion-page>
 </template>
@@ -121,7 +123,7 @@ import {
 } from "@ionic/vue";
 
 import { trashOutline, arrowBackOutline } from "ionicons/icons";
-import MultiQrScanner from "@/components/MultiQrScanner.vue";
+import MatrixScanner from "@/components/MatrixScanner.vue";
 import axios from "axios";
 import { tokenHeader, selectedYear } from "../globalService";
 
@@ -142,7 +144,7 @@ export default {
     IonToast,
     IonButtons,
     IonSpinner,
-    MultiQrScanner,
+    MatrixScanner,
   },
   data() {
     return {
@@ -167,9 +169,20 @@ export default {
     backUrl() {
       return `/resultado/${this.questionId}`;
     },
+    scannerOptions() {
+      const options = (this.question?.options || [])
+        .map((option) => String(option.identifier || ""))
+        .filter((option) => option.length > 0)
+        .sort((a, b) =>
+          a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" })
+        )
+        .slice(0, 4);
+      return options.length > 0 ? options : ["A", "B", "C", "D"];
+    },
   },
   mounted() {
     this.questionId = this.$route.params.d;
+
     this.fetchQuestionDetails();
   },
   methods: {
@@ -199,7 +212,10 @@ export default {
     async fetchAndCacheQuestionCourseId() {
       if (this.questionCourseId) return;
       try {
-        const lessonId = this.question?.quiz?.lesson?.id;
+        const lessonId =
+          this.question?.quiz?.lesson?.id ||
+          this.question?.lesson?.id ||
+          this.question?.quiz?.lessonId;
         if (!lessonId) return;
         const res = await axios.get(`/lessons/${lessonId}`);
         this.questionCourseId = res.data.course?.id ?? null;
@@ -224,7 +240,13 @@ export default {
         const users = res.data || [];
         // The API returns enrollment objects { user, rol, ... }; keep the student users
         this.students = users
-          .filter((u) => u.rol === "student")
+          .filter(
+            (u) =>
+              u.rol === "student" ||
+              u.user?.rol === "student" ||
+              u.rol === "user" ||
+              u.user?.rol === "user"
+          )
           .map((u) => u.user || u);
       } catch (e) {
         console.error("Error fetching grade roster:", e);
@@ -236,20 +258,26 @@ export default {
       this.isShowingScanner = true;
     },
 
-    // Called by MultiQrScanner when the user presses "Capturar"
-    // rawCodes: string[] — each entry is "{studentCodeOrId}:{opcion}" e.g. "42:A" or "EST01:A"
-    async onMultiScanComplete(rawCodes) {
-      this.isShowingScanner = false;
-      if (!rawCodes || rawCodes.length === 0) return;
-
-      this.isScanning = true;
+    async processScanCodes(rawCodes) {
       const errors = [];
+      let processed = 0;
+      const uniqueCodes = [];
+      const seenStudents = new Set();
+
+      for (const raw of rawCodes || []) {
+        const studentKey = String(raw).split(":")[0]?.trim();
+        if (!studentKey || seenStudents.has(studentKey)) continue;
+        seenStudents.add(studentKey);
+        uniqueCodes.push(raw);
+      }
+
+      if (uniqueCodes.length === 0) return { errors, processed };
 
       if (!this.questionCourseId) {
         await this.fetchAndCacheQuestionCourseId();
       }
 
-      for (const raw of rawCodes) {
+      for (const raw of uniqueCodes) {
         const parts = raw.split(":");
         if (parts.length < 2) {
           errors.push(`Formato inválido: "${raw}"`);
@@ -264,8 +292,7 @@ export default {
           continue;
         }
 
-        // Validate option exists in question
-        const validOptions = this.question.options.map((o) => o.identifier);
+        const validOptions = this.scannerOptions;
         if (!validOptions.includes(opcion)) {
           errors.push(`Opción "${opcion}" no existe para el estudiante (${studentCodeOrId})`);
           continue;
@@ -274,23 +301,73 @@ export default {
         const result = await this.processStudentCode(studentCodeOrId, opcion);
         if (result.error) {
           errors.push(result.error);
+        } else if (!result.duplicate) {
+          processed += 1;
         }
       }
 
-      this.isScanning = false;
+      return { errors, processed };
+    },
 
-      // Show aggregated error summary if any failed
-      if (errors.length > 0) {
+    // Called by MatrixScanner when the user presses "Capturar"
+    // rawCodes: string[] — each entry is "{studentId}:{opcion}" e.g. "42:A"
+    async onMultiScanComplete(rawCodes) {
+      this.isShowingScanner = false;
+      if (!rawCodes || rawCodes.length === 0) return;
+
+      this.isScanning = true;
+      let result = { errors: [], processed: 0 };
+      try {
+        result = await this.processScanCodes(rawCodes);
+      } catch (error) {
+        result.errors.push(error?.message || "No se pudieron procesar los códigos escaneados.");
+      } finally {
+        this.isScanning = false;
+      }
+
+      if (result.errors.length > 0) {
         const alert = await alertController.create({
-          header:  `${errors.length} código(s) no procesado(s)`,
-          message: errors.join("\n"),
+          header:  `${result.errors.length} código(s) no procesado(s)`,
+          message: result.errors.join("\n"),
           buttons: ["OK"],
         });
         await alert.present();
-      } else if (rawCodes.length > 0) {
-        this.toastMessage = `✓ ${rawCodes.length} código(s) procesado(s)`;
+      } else if (result.processed > 0) {
+        this.toastMessage = `✓ ${result.processed} código(s) procesado(s)`;
         this.toastColor   = "success";
         this.showToast    = true;
+      }
+    },
+
+    async onMultiScanSubmit(rawCodes) {
+      if (this.isScanning || this.isSubmitting) return;
+      if (!rawCodes || rawCodes.length === 0) return;
+
+      this.isScanning = true;
+      try {
+        const result = await this.processScanCodes(rawCodes);
+        if (result.errors.length > 0) {
+          const alert = await alertController.create({
+            header:  `${result.errors.length} código(s) no procesado(s)`,
+            message: result.errors.join("\n"),
+            buttons: ["OK"],
+          });
+          await alert.present();
+          return;
+        }
+
+        if (this.scannedCodes.length === 0) return;
+        const submitted = await this.submitAnswersBulk();
+        if (submitted) this.isShowingScanner = false;
+      } catch (error) {
+        const alert = await alertController.create({
+          header: "Error al procesar",
+          message: error?.message || "No se pudieron procesar los códigos escaneados.",
+          buttons: ["OK"],
+        });
+        await alert.present();
+      } finally {
+        this.isScanning = false;
       }
     },
 
@@ -323,11 +400,14 @@ export default {
         // Validate course enrollment
         if (this.questionCourseId) {
           const coursesRes = await axios.get(`/users/${student.id}/courses`);
-          const activeEnrollment = coursesRes.data.find((uc) => uc.active);
-          if (
-            !activeEnrollment ||
-            activeEnrollment.course.id !== this.questionCourseId
-          ) {
+          const enrollments = Array.isArray(coursesRes.data) ? coursesRes.data : [];
+          const isEnrolled = enrollments.some(
+            (uc) =>
+              uc.active &&
+              (uc.course?.id === this.questionCourseId ||
+                uc.courseId === this.questionCourseId)
+          );
+          if (!isEnrolled) {
             return {
               error: `${student.name} ${student.lastName} no está inscrito en el curso activo`,
             };
@@ -346,20 +426,19 @@ export default {
           }
         }
 
-        // Duplicate check
         const isDuplicate =
           this.lessonQuizType === "individual"
-            ? this.scannedCodes.some((item) => item.user.id === student.id)
-            : this.scannedCodes.some((item) => item.group.id === activeGroup.id);
+            ? this.scannedCodes.some(
+                (item) => String(item.user?.id) === String(student.id)
+              )
+            : activeGroup.id !== null &&
+              activeGroup.id !== undefined &&
+              this.scannedCodes.some(
+                (item) => String(item.group?.id) === String(activeGroup.id)
+              );
 
         if (isDuplicate) {
-          return {
-            error: `Ya existe una respuesta para ${
-              this.lessonQuizType === "group"
-                ? activeGroup.name || `grupo de ${student.name}`
-                : `${student.name} ${student.lastName}`
-            }`,
-          };
+          return { success: true, duplicate: true };
         }
 
         // Add to scanned codes
@@ -409,6 +488,7 @@ export default {
 
     // ─── Submit ────────────────────────────────────────────────────
     async submitAnswersBulk() {
+      if (this.isSubmitting) return false;
       if (this.scannedCodes.length === 0) {
         const alert = await alertController.create({
           header:  "Sin respuestas",
@@ -416,7 +496,7 @@ export default {
           buttons: ["OK"],
         });
         await alert.present();
-        return;
+        return false;
       }
 
       this.isSubmitting = true;
@@ -463,6 +543,7 @@ export default {
           ],
         });
         await alert.present();
+        return true;
       } catch (error) {
         console.error("Error al guardar respuestas en bulk:", error);
         const message =
@@ -475,6 +556,7 @@ export default {
           buttons: ["OK"],
         });
         await alert.present();
+        return false;
       } finally {
         this.isSubmitting = false;
       }

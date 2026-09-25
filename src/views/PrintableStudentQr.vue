@@ -7,7 +7,7 @@
             default-href="/admin/gestionar/usuarios"
           ></ion-back-button>
         </ion-buttons>
-        <ion-title>QR de Respuestas</ion-title>
+        <ion-title>Marcadores de Respuestas</ion-title>
         <ion-buttons slot="end" v-if="configConfirmed">
           <ion-button @click="() => printAllQrs()" :disabled="isRangeTooBig">
             <ion-icon :icon="printOutline" slot="start"></ion-icon>
@@ -50,7 +50,7 @@
             expand="block"
             class="ion-margin-top"
             @click="confirmConfig"
-            :disabled="startLetter === endLetter"
+            :disabled="startLetter === endLetter || isRangeTooBig"
           >
             Siguiente
           </ion-button>
@@ -79,7 +79,7 @@
         </div>
       </div>
 
-      <!-- Single Student QRs Modal -->
+      <!-- Single Student Marker Modal -->
       <ion-modal
         :is-open="isStudentModalOpen"
         @didDismiss="isStudentModalOpen = false"
@@ -105,21 +105,25 @@
         <ion-content class="ion-padding">
           <div v-if="selectedStudent">
             <p class="ion-text-center">
-              Seleccione una opción para descargar el QR individual o imprima
-              todas las opciones juntas.
+              Imprima el marcador único del estudiante. Para responder se rota
+              la hoja según la opción: {{ optionRange[0] }} arriba,
+              {{ optionRange[1] || "-" }} derecha,
+              {{ optionRange[2] || "-" }} abajo,
+              {{ optionRange[3] || "-" }} izquierda.
             </p>
-            <ion-list>
-              <ion-item v-for="letter in optionRange" :key="letter">
-                <ion-label>Opción {{ letter }}</ion-label>
-                <ion-button
-                  slot="end"
-                  fill="clear"
-                  @click="printQrItem(selectedStudent, letter)"
-                >
-                  <ion-icon :icon="printOutline" slot="icon-only"></ion-icon>
-                </ion-button>
-              </ion-item>
-            </ion-list>
+            <ion-item>
+              <ion-label
+                >{{ selectedStudent.lastName }}
+                {{ selectedStudent.name }}</ion-label
+              >
+              <ion-button
+                slot="end"
+                fill="clear"
+                @click="printQrItem(selectedStudent)"
+              >
+                <ion-icon :icon="printOutline" slot="icon-only"></ion-icon>
+              </ion-button>
+            </ion-item>
           </div>
         </ion-content>
       </ion-modal>
@@ -153,7 +157,7 @@ import { ref, computed, onMounted } from "vue";
 import { FileSharer } from "@byteowls/capacitor-filesharer";
 import { Capacitor } from "@capacitor/core";
 // html2pdf replaced by direct jspdf + html2canvas (dynamic imports in processQrPDF)
-import QRCode from "qrcode";
+import { markGridForId, GRID_SIZE } from "../utils/matrixPattern";
 import router from "../router";
 
 export default {
@@ -212,16 +216,17 @@ export default {
     });
 
     const confirmConfig = async () => {
-      configConfirmed.value = true;
       if (isRangeTooBig.value) {
         const alert = await alertController.create({
           header: "Advertencia",
           message:
-            "El rango escogido es muy grande, solo podrá imprimir los QR estudiante por estudiante",
+            "El rango escogido es muy grande. La matriz de respuestas soporta hasta 4 opciones (una por orientación: A arriba, B derecha, C abajo, D izquierda). Ajuste el rango a un máximo de 4 letras.",
           buttons: ["OK"],
         });
         await alert.present();
+        return;
       }
+      configConfirmed.value = true;
     };
 
     const openSingleStudentQr = (student) => {
@@ -233,6 +238,72 @@ export default {
       if (!configConfirmed.value) {
         router.push("/admin/gestionar/usuarios");
       }
+    };
+
+    // Dibuja el marcador 6x6 del alumno en un canvas y devuelve un PNG.
+    // Las letras de opción se colocan alrededor según la orientación canónica:
+    // [0]=A arriba, [1]=B derecha, [2]=C abajo, [3]=D izquierda.
+    const drawMarkerToDataURL = (
+      studentId,
+      letters,
+      footerText,
+      cellPx = 64,
+    ) => {
+      return new Promise((resolve, reject) => {
+        try {
+          const grid = markGridForId(studentId);
+          const markerSize = GRID_SIZE * cellPx;
+          const pad = 56;
+          const footerHeight = 90;
+          const canvas = document.createElement("canvas");
+          canvas.width = markerSize + pad * 2;
+          canvas.height = markerSize + pad * 2 + footerHeight;
+          const ctx = canvas.getContext("2d");
+
+          ctx.fillStyle = "white";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          // células del marcador (solo los bits a 1 piden pintarse de negro)
+          for (let r = 0; r < GRID_SIZE; r++) {
+            for (let c = 0; c < GRID_SIZE; c++) {
+              if (grid[r][c] === 1) {
+                ctx.fillStyle = "black";
+                ctx.fillRect(
+                  pad + c * cellPx,
+                  pad + r * cellPx,
+                  cellPx,
+                  cellPx,
+                );
+              }
+            }
+          }
+
+          // letras de orientación alrededor del marcador
+          const cx = canvas.width / 2;
+          const my = pad + markerSize / 2;
+          ctx.fillStyle = "black";
+          ctx.font = "bold 30px sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          const letterPos = [
+            { text: letters[0] || "", x: cx, y: pad / 2 }, // A arriba
+            { text: letters[1] || "", x: canvas.width - pad / 2, y: my }, // B derecha
+            { text: letters[2] || "", x: cx, y: pad + markerSize + pad / 2 }, // C abajo
+            { text: letters[3] || "", x: pad / 2, y: my }, // D izquierda
+          ];
+          for (const p of letterPos) {
+            if (p.text) ctx.fillText(p.text, p.x, p.y);
+          }
+
+          // pie con el nombre del estudiante
+          ctx.font = "bold 16px sans-serif";
+          ctx.fillText(footerText || "", cx, canvas.height - footerHeight / 2);
+
+          resolve(canvas.toDataURL("image/png"));
+        } catch (e) {
+          reject(e);
+        }
+      });
     };
 
     const generatePdfContent = async (studentsList, range) => {
@@ -263,27 +334,28 @@ export default {
       let currentIdx = 0;
       for (let i = 0; i < studentsList.length; i++) {
         const student = studentsList[i];
-        for (const letter of range) {
-          if (currentIdx % perPage === 0) {
-            if (currentIdx > 0) html += "</div>";
-            html += '<div class="print-page">';
-          }
-
-          const qrValue = `${student.id}:${letter}`;
-          const dataUrl = await QRCode.toDataURL(qrValue, {
-            width: 900,
-            margin: 1,
-            errorCorrectionLevel: "high",
-          });
-
-          html += `
-             <div class="qr-box">
-               <img src="${dataUrl}" class="qr-img" />
-               <p class="qr-txt">Nombre: ${student.lastName} ${student.name} || Opción: ${letter}</p>
-             </div>
-           `;
-          currentIdx++;
+        if (currentIdx % perPage === 0) {
+          if (currentIdx > 0) html += "</div>";
+          html += '<div class="print-page">';
         }
+
+        // Un único marcador por alumno: la rotación de la hoja elige la opción.
+        // Resolución mayor cuanto más grande se imprime el marcador.
+        const cellPx = perPage === 1 ? 220 : perPage === 2 ? 170 : 110;
+        const dataUrl = await drawMarkerToDataURL(
+          student.id,
+          range,
+          `${student.lastName} ${student.name}`,
+          cellPx,
+        );
+
+        html += `
+           <div class="qr-box">
+             <img src="${dataUrl}" class="qr-img" />
+             <p class="qr-txt">Nombre: ${student.lastName} ${student.name}</p>
+           </div>
+         `;
+        currentIdx++;
       }
       if (currentIdx > 0) html += "</div>";
       return html;
@@ -358,7 +430,7 @@ export default {
       document.body.removeChild(tempContainer);
 
       if (action === "save") {
-        pdf.save("QRs_estudiantes.pdf");
+        pdf.save("Marcadores_estudiantes.pdf");
       } else if (action === "base64") {
         return (
           "data:application/pdf;base64," +
@@ -370,7 +442,7 @@ export default {
     const presentOutputOptions = async (students, range) => {
       const loading = await alertController.create({
         header: "Preparando Contenido",
-        message: "Generando códigos QR, esto puede tardar...",
+        message: "Generando marcadores, esto puede tardar...",
         backdropDismiss: false,
       });
       await loading.present();
@@ -390,7 +462,7 @@ export default {
             const pdfDataUri = await processQrPDF(htmlContent, "base64");
             const base64Data = pdfDataUri.split(",")[1];
             await FileSharer.share({
-              filename: `QRs_${Date.now()}.pdf`,
+              filename: `Marcadores_${Date.now()}.pdf`,
               contentType: "application/pdf",
               base64Data: base64Data,
             });
@@ -428,7 +500,7 @@ export default {
                   if (printWindow) {
                     printWindow.document.write(`
                       <html>
-                        <head><title>Imprimir QRs</title></head>
+                        <head><title>Imprimir Marcadores</title></head>
                         <body>${htmlContent}</body>
                       </html>`);
                     printWindow.document.close();
@@ -505,50 +577,24 @@ export default {
 
     const printAllQrsForStudent = (student) => printAllQrs([student]);
 
-    const shareQrImage = async (student, letter) => {
+    const shareQrImage = async (student) => {
       const loading = await alertController.create({
-        header: "Generando QR",
+        header: "Generando Marcador",
         message: "Espere un momento...",
         backdropDismiss: false,
       });
       await loading.present();
 
       try {
-        const qrValue = `${student.id}:${letter}`;
-        const labelText = `Nombre: ${student.lastName} ${student.name} || Opción: ${letter}`;
+        const labelText = `Nombre: ${student.lastName} ${student.name}`;
 
-        // Generate QR on an internal canvas
-        const canvas = document.createElement("canvas");
-        const qrSize = 1000;
-        const padding = 60;
-        const footerHeight = 120;
-
-        canvas.width = qrSize;
-        canvas.height = qrSize + footerHeight;
-        const ctx = canvas.getContext("2d");
-
-        // White background
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Draw QR
-        const qrCanvas = document.createElement("canvas");
-        await QRCode.toCanvas(qrCanvas, qrValue, {
-          width: qrSize - padding,
-          margin: 2,
-          errorCorrectionLevel: "high",
-        });
-        ctx.drawImage(qrCanvas, padding / 2, padding / 2);
-
-        // Draw text
-        ctx.fillStyle = "black";
-        ctx.font = "bold 30px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText(labelText, canvas.width / 2, qrSize + footerHeight / 2);
-
-        const dataUrl = canvas.toDataURL("image/png");
+        const dataUrl = await drawMarkerToDataURL(
+          student.id,
+          optionRange.value,
+          labelText,
+        );
         const base64Content = dataUrl.split(",")[1];
-        const filename = `QR_${student.lastName}_${letter}.png`;
+        const filename = `Marcador_${student.lastName}.png`;
 
         if (Capacitor.isNativePlatform()) {
           await FileSharer.share({
@@ -572,11 +618,11 @@ export default {
           msg.includes("back button");
 
         if (!isCancel) {
-          console.error("Error generating single QR image:", e);
+          console.error("Error generating single marker image:", e);
           const errorAlert = await alertController.create({
             header: "Error",
             message:
-              "No se pudo generar el QR individual. " + (e.message || ""),
+              "No se pudo generar el marcador individual. " + (e.message || ""),
             buttons: ["OK"],
           });
           await errorAlert.present();
@@ -586,7 +632,7 @@ export default {
       }
     };
 
-    const printQrItem = (student, letter) => shareQrImage(student, letter);
+    const printQrItem = (student) => shareQrImage(student);
 
     return {
       isRangeTooBig,
