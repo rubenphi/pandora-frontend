@@ -456,9 +456,7 @@
                     >
                       Nota examen:
                       {{
-                        parseFloat(selectedStudentForImprovement.nota).toFixed(
-                          1,
-                        )
+                        parseFloat(selectedStudentForImprovement.nota).toFixed(1)
                       }}
                     </ion-badge>
                   </div>
@@ -475,14 +473,11 @@
                 style="vertical-align: middle; margin-right: 4px"
               ></ion-icon>
               Seleccione uno o varios temas a mejorar. Solo se actualizará la
-              nota de cada tema si la nueva calificación es superior a la
-              anterior.
+              nota de cada tema si la nueva calificación es superior a la anterior.
             </p>
 
             <ion-item>
-              <ion-label position="stacked"
-                >Temas / Cuestionarios a Mejorar</ion-label
-              >
+              <ion-label position="stacked">Temas / Cuestionarios a Mejorar</ion-label>
               <ion-select
                 :multiple="true"
                 v-model="selectedQuizIdsToImprove"
@@ -521,10 +516,7 @@
                 class="ion-padding-horizontal"
                 style="color: var(--ion-color-dark); font-size: 1em"
               >
-                Comparación por tema ({{
-                  studentComparisonList.length
-                }}
-                seleccionados)
+                Comparación por tema ({{ studentComparisonList.length }} seleccionados)
               </h4>
               <ion-card
                 v-for="item in studentComparisonList"
@@ -599,7 +591,8 @@
                   style="display: block; margin-bottom: 12px; font-size: 0.85em"
                 >
                   {{ studentComparisonList.filter((i) => i.improves).length }}
-                  de {{ studentComparisonList.length }} temas mejorarán su nota.
+                  de {{ studentComparisonList.length }} temas mejorarán su
+                  nota.
                 </ion-note>
                 <ion-button
                   expand="block"
@@ -622,16 +615,12 @@
             <div
               v-else-if="
                 !loadingExistingGrades &&
-                (!selectedQuizIdsToImprove ||
-                  selectedQuizIdsToImprove.length === 0)
+                (!selectedQuizIdsToImprove || selectedQuizIdsToImprove.length === 0)
               "
               class="ion-text-center ion-padding"
               style="color: var(--ion-color-medium)"
             >
-              <p>
-                Seleccione uno o más temas en el selector para ver la
-                comparación.
-              </p>
+              <p>Seleccione uno o más temas en el selector para ver la comparación.</p>
             </div>
           </ion-content>
         </ion-modal>
@@ -1260,10 +1249,7 @@ export default {
     }
 
     async function confirmarRegistroMejora() {
-      if (
-        !selectedQuizIdsToImprove.value ||
-        selectedQuizIdsToImprove.value.length === 0
-      ) {
+      if (!selectedQuizIdsToImprove.value || selectedQuizIdsToImprove.value.length === 0) {
         setErrorToastOpen(true, "Seleccione al menos un tema a mejorar.");
         return;
       }
