@@ -31,6 +31,7 @@
         />
         <div ref="textLayerRef" class="text-layer"></div>
         <div ref="digitLayerRef" class="digit-layer"></div>
+        <div ref="numberLayerRef" class="number-layer"></div>
         <div ref="gridOverlayRef" class="grid-overlay"></div>
       </div>
     </div>
@@ -40,6 +41,7 @@
 <script>
 import { onBeforeUnmount, ref, watch, nextTick } from "vue";
 import html2canvas from "html2canvas";
+import { questionNumbers } from "@/answerSheetNumbers";
 
 export default {
   props: {
@@ -51,10 +53,19 @@ export default {
       type: String,
       default: "",
     },
+    startNumber: {
+      type: Number,
+      default: 1,
+    },
+    questionCount: {
+      type: Number,
+      default: 20,
+    },
   },
   setup(props) {
     const textLayerRef = ref(null);
     const digitLayerRef = ref(null);
+    const numberLayerRef = ref(null);
     const gridOverlayRef = ref(null);
     const sourceElementRef = ref(null);
 
@@ -115,7 +126,12 @@ export default {
     };
 
     watch(
-      [() => props.student, () => props.courseName],
+      [
+        () => props.student,
+        () => props.courseName,
+        () => props.startNumber,
+        () => props.questionCount,
+      ],
       () => {
         generatedImageSrc.value = null; // Resetear imagen mientras carga
         nextTick(() => {
@@ -319,6 +335,36 @@ export default {
       return { adjusted: str, matrix };
     };
 
+    const putQuestionNumbers = (startNumber, count) => {
+      const layer = numberLayerRef.value;
+      if (!layer) return;
+
+      layer.innerHTML = "";
+
+      questionNumbers(startNumber, count).forEach((item) => {
+        const div = document.createElement("div");
+        div.textContent = item.value;
+        div.style.cssText = `
+          position: absolute;
+          left: ${item.left}%;
+          top: ${item.top}%;
+          width: ${item.width}%;
+          height: ${item.height}%;
+          font-size: ${item.fontSize}px;
+          line-height: 1;
+          font-weight: bold;
+          color: black;
+          background: transparent;
+          border: none;
+          font-family: Arial, sans-serif;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        `;
+        layer.appendChild(div);
+      });
+    };
+
     const initializeSheet = () => {
       const overlay = createGridOverlay();
       if (!overlay) return;
@@ -329,6 +375,8 @@ export default {
 
       if (textLayer) textLayer.innerHTML = "";
       if (digitLayer) digitLayer.innerHTML = "";
+
+      putQuestionNumbers(props.startNumber, props.questionCount);
 
       if (student.name && student.lastName) {
         putText(
@@ -371,16 +419,19 @@ export default {
     onBeforeUnmount(() => {
       const textLayer = textLayerRef.value;
       const digitLayer = digitLayerRef.value;
+      const numberLayer = numberLayerRef.value;
       const overlay = gridOverlayRef.value;
 
       if (textLayer) textLayer.innerHTML = "";
       if (digitLayer) digitLayer.innerHTML = "";
+      if (numberLayer) numberLayer.innerHTML = "";
       if (overlay) overlay.innerHTML = "";
     });
 
     return {
       textLayerRef,
       digitLayerRef,
+      numberLayerRef,
       gridOverlayRef,
       sourceElementRef,
       newImageWidth,

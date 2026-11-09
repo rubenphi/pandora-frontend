@@ -481,10 +481,17 @@ export default {
       await axios
         .get(`/materials?lessonId=${lessonId}`)
         .then((response) => {
-          materialsList.value = response.data.map((material) => ({
-            ...material,
-            name: material.title, // Keep name for display in Tab3Page
-          }));
+          materialsList.value = response.data
+            .map((material) => ({
+              ...material,
+              name: material.title, // Keep name for display in Tab3Page
+            }))
+            .sort((a, b) => {
+              if (a.createdAt && b.createdAt) {
+                return new Date(a.createdAt) - new Date(b.createdAt);
+              }
+              return (a.id || 0) - (b.id || 0);
+            });
         })
         .catch((error) => {
           console.error("Error fetching materials:", error);

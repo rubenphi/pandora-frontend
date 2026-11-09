@@ -156,6 +156,7 @@ import {
   usuarioGet,
   periodosGet,
   selectedYear,
+  numerosOrdinales,
 } from "../globalService";
 
 export default {
@@ -325,9 +326,15 @@ export default {
               tokenHeader(),
             );
             if (questionsRes.data.length > 0) {
-              const questions = questionsRes.data.map((q) => ({
+              // The new quiz is empty, so the ordinals start at 0. Sorting by
+              // the source id keeps the original order, and re-stamping the
+              // title avoids the backend dedup skipping questions.
+              const sourceQuestions = questionsRes.data.sort(
+                (a, b) => a.id - b.id,
+              );
+              const questions = sourceQuestions.map((q, index) => ({
                 id: q.id,
-                title: q.title,
+                title: numerosOrdinales[index] || `Pregunta ${index + 1}`,
               }));
               await axios.post(`/quizzes/${newQuizId}/import-questions-mix`, {
                 toQuizId: newQuizId,

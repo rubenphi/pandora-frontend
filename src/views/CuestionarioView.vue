@@ -238,6 +238,7 @@ import MarcarDisponibleModal from "../components/MarcarDisponibleModal.vue";
 
 import { useRoute } from "vue-router";
 import router from "../router";
+import { notifyCourseAccessDenied } from "../courseAccessService";
 
 export default {
   components: {
@@ -309,44 +310,55 @@ export default {
       tokenHeader();
 
       if (cuestionario.value.id !== id) {
-        await axios.get(`/quizzes/${id}`).then((response) => {
-          cuestionario.value = {
-            ...response.data,
+        await axios
+          .get(`/quizzes/${id}`)
+          .then((response) => {
+            cuestionario.value = {
+              ...response.data,
 
-            id: response.data.id,
-            topic: response.data.title,
-            //order by title with ordinal number
-            questions: response.data.questions
-              .slice() // Create a shallow copy before sorting
-              .sort((a, b) => a.id - b.id) // o a.number - b.number
-              .map((question, index) => ({
-                ...question,
-                title:
-                  numeroOrdinal(index, question.title) + ". " + question.title,
-              }))
-              //only exist
-              .filter((question) => question.exist),
+              id: response.data.id,
+              topic: response.data.title,
+              //order by title with ordinal number
+              questions: response.data.questions
+                .slice() // Create a shallow copy before sorting
+                .sort((a, b) => a.id - b.id) // o a.number - b.number
+                .map((question, index) => ({
+                  ...question,
+                  title:
+                    numeroOrdinal(index, question.title) + ". " + question.title,
+                }))
+                //only exist
+                .filter((question) => question.exist),
 
-            course: response.data.course,
-            institute: response.data.institute,
-          };
+              course: response.data.course,
+              institute: response.data.institute,
+            };
 
-          if (!admin) {
-            cuestionario.value.questions = cuestionario.value.questions.filter(
+            if (!admin) {
+              cuestionario.value.questions = cuestionario.value.questions.filter(
+                (question) => question.visible
+              );
+            }
+            localStorage.setItem(
+              "quizSelected",
+              JSON.stringify(cuestionario.value)
+            );
+
+            allVisible.value = cuestionario.value.questions.every(
               (question) => question.visible
             );
-          }
-          localStorage.setItem(
-            "quizSelected",
-            JSON.stringify(cuestionario.value)
-          );
 
-          allVisible.value = cuestionario.value.questions.every(
-            (question) => question.visible
-          );
-
-          year.value = cuestionario.value.year;
-        });
+            year.value = cuestionario.value.year;
+          })
+          .catch((fallo) => {
+            if (fallo?.response?.status === 403) {
+              notifyCourseAccessDenied(
+                fallo?.response?.data?.message ||
+                  "No tienes acceso a este cuestionario."
+              );
+              router.push("/inicio");
+            }
+          });
       }
     });
 

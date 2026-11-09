@@ -4,7 +4,7 @@
       <ion-header>
         <ion-toolbar>
           <ion-title size="large" class="ion-text-center"
-            >{{ cuestionario ? cuestionario.topic : 'Cargando...' }}
+            >{{ cuestionario ? cuestionario.topic : "Cargando..." }}
           </ion-title>
           <ion-buttons slot="start" class="ion-margin-start">
             <ion-button v-if="id" :href="'/cuestionario/' + id">
@@ -65,7 +65,8 @@
               <ion-note slot="end">
                 <ion-text
                   v-if="
-                    index === 0 && cuestionario?.evaluationType === 'relative'
+                    respuesta.nota == 5 &&
+                    cuestionario?.evaluationType === 'relative'
                   "
                   color="warning"
                 >
@@ -107,11 +108,12 @@
                   <div>
                     <strong>
                       <span v-if="respuestaDetallada.length > 0">
-                      Tienes un total de
-                      {{ respuestaDetallada.length }} preguntas resueltas.
+                        Tienes un total de
+                        {{ respuestaDetallada.length }} preguntas resueltas.
                       </span>
                       <span v-else>
-                        No tienes preguntas resueltas o las preguntas no estan disponibles para verlas.
+                        No tienes preguntas resueltas o las preguntas no estan
+                        disponibles para verlas.
                       </span>
                       <p
                         v-if="respuesta.points != respuestaMAyor.points"
@@ -205,7 +207,10 @@
         ></ion-toast>
 
         <!-- Statistics Modal -->
-        <ion-modal :is-open="showStatsModal" @didDismiss="showStatsModal = false">
+        <ion-modal
+          :is-open="showStatsModal"
+          @didDismiss="showStatsModal = false"
+        >
           <ion-header>
             <ion-toolbar color="primary">
               <ion-title>Análisis de Desempeño</ion-title>
@@ -230,54 +235,157 @@
               <p>Analizando respuestas...</p>
             </div>
             <div v-else>
-              <p class="ion-padding-horizontal" style="font-size: 0.9em; color: var(--ion-color-medium);">
-                <ion-icon :icon="informationCircleOutline" style="vertical-align: middle;"></ion-icon>
-                Este análisis permite identificar las preguntas con menor y mayor índice de aciertos.
+              <p
+                class="ion-padding-horizontal"
+                style="font-size: 0.9em; color: var(--ion-color-medium)"
+              >
+                <ion-icon
+                  :icon="informationCircleOutline"
+                  style="vertical-align: middle"
+                ></ion-icon>
+                Este análisis permite identificar las preguntas con menor y
+                mayor índice de aciertos.
               </p>
-              
-              <ion-card v-for="(stat, index) in sortedStats" :key="stat.id" class="stats-card">
+
+              <ion-card
+                v-for="(stat, index) in sortedStats"
+                :key="stat.id"
+                class="stats-card"
+              >
                 <ion-card-header>
-                  <div style="display: flex; justify-content: space-between; align-items: start;">
-                    <ion-card-title style="font-size: 1.1em; font-weight: bold;">
+                  <div
+                    style="
+                      display: flex;
+                      justify-content: space-between;
+                      align-items: start;
+                    "
+                  >
+                    <ion-card-title style="font-size: 1.1em; font-weight: bold">
                       Pregunta {{ index + 1 }}
                     </ion-card-title>
-                    <ion-badge :color="stat.successRate < 60 ? 'danger' : (stat.successRate < 80 ? 'warning' : 'success')">
+                    <ion-badge
+                      :color="
+                        stat.successRate < 60
+                          ? 'danger'
+                          : stat.successRate < 80
+                          ? 'warning'
+                          : 'success'
+                      "
+                    >
                       {{ Math.round(stat.successRate) }}% Éxito
                     </ion-badge>
                   </div>
                 </ion-card-header>
                 <ion-card-content>
-                  <p style="font-size: 1.1em; color: var(--ion-text-color); margin-bottom: 12px; font-weight: 500;">
+                  <p
+                    style="
+                      font-size: 1.1em;
+                      color: var(--ion-text-color);
+                      margin-bottom: 12px;
+                      font-weight: 500;
+                    "
+                  >
                     {{ stat.title }}
                   </p>
-                  
-                  <div v-if="stat.sentence" class="question-sentence ion-padding" style="background: var(--ion-color-light); border-radius: 8px; margin-bottom: 12px;">
+
+                  <div
+                    v-if="stat.sentence"
+                    class="question-sentence ion-padding"
+                    style="
+                      background: var(--ion-color-light);
+                      border-radius: 8px;
+                      margin-bottom: 12px;
+                    "
+                  >
                     <div v-html="stat.sentence"></div>
                   </div>
 
                   <div v-if="stat.photo" class="ion-margin-bottom">
-                    <img :src="stat.photo" style="border-radius: 8px; width: 100%; max-height: 200px; object-fit: contain;" />
+                    <img
+                      :src="stat.photo"
+                      style="
+                        border-radius: 8px;
+                        width: 100%;
+                        max-height: 200px;
+                        object-fit: contain;
+                      "
+                    />
                   </div>
 
-                  <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px; padding: 12px; border-radius: 8px; background: rgba(var(--ion-color-primary-rgb), 0.05);">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                      <ion-icon :icon="checkmarkCircle" color="success"></ion-icon>
-                      <span style="font-weight: 600; font-size: 0.9em;">Respuesta correcta:</span>
-                      <span style="font-size: 0.9em;">{{ stat.correctOption?.sentence }}</span>
+                  <div
+                    style="
+                      display: flex;
+                      flex-direction: column;
+                      gap: 8px;
+                      margin-top: 10px;
+                      padding: 12px;
+                      border-radius: 8px;
+                      background: rgba(var(--ion-color-primary-rgb), 0.05);
+                    "
+                  >
+                    <div style="display: flex; align-items: center; gap: 8px">
+                      <ion-icon
+                        :icon="checkmarkCircle"
+                        color="success"
+                      ></ion-icon>
+                      <span style="font-weight: 600; font-size: 0.9em"
+                        >Respuesta correcta:</span
+                      >
+                      <span style="font-size: 0.9em">{{
+                        stat.correctOption?.sentence
+                      }}</span>
                     </div>
 
-                    <div v-if="stat.mostSelectedOption" style="display: flex; align-items: center; gap: 8px;">
-                      <ion-icon :icon="stat.mostSelectedOption.correct ? checkmarkCircle : closeCircle" :color="stat.mostSelectedOption.correct ? 'success' : 'danger'"></ion-icon>
-                      <span style="font-weight: 600; font-size: 0.9em;">Opción más frecuente:</span>
-                      <span style="font-size: 0.9em;">{{ stat.mostSelectedOption.sentence }} ({{ stat.mostSelectedCount }} votos)</span>
+                    <div
+                      v-if="stat.mostSelectedOption"
+                      style="display: flex; align-items: center; gap: 8px"
+                    >
+                      <ion-icon
+                        :icon="
+                          stat.mostSelectedOption.correct
+                            ? checkmarkCircle
+                            : closeCircle
+                        "
+                        :color="
+                          stat.mostSelectedOption.correct ? 'success' : 'danger'
+                        "
+                      ></ion-icon>
+                      <span style="font-weight: 600; font-size: 0.9em"
+                        >Opción más frecuente:</span
+                      >
+                      <span style="font-size: 0.9em"
+                        >{{ stat.mostSelectedOption.sentence }} ({{
+                          stat.mostSelectedCount
+                        }}
+                        votos)</span
+                      >
                     </div>
                   </div>
 
-                  <div style="margin-top: 15px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.85em;">
-                      <span>{{ stat.correct }} aciertos de {{ stat.total }} respuestas</span>
+                  <div style="margin-top: 15px">
+                    <div
+                      style="
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 5px;
+                        font-size: 0.85em;
+                      "
+                    >
+                      <span
+                        >{{ stat.correct }} aciertos de
+                        {{ stat.total }} respuestas</span
+                      >
                     </div>
-                    <ion-progress-bar :value="stat.successRate / 100" :color="stat.successRate < 60 ? 'danger' : (stat.successRate < 80 ? 'warning' : 'success')"></ion-progress-bar>
+                    <ion-progress-bar
+                      :value="stat.successRate / 100"
+                      :color="
+                        stat.successRate < 60
+                          ? 'danger'
+                          : stat.successRate < 80
+                          ? 'warning'
+                          : 'success'
+                      "
+                    ></ion-progress-bar>
                   </div>
                 </ion-card-content>
               </ion-card>
@@ -286,19 +394,31 @@
         </ion-modal>
 
         <!-- Modal de Mejora de Nota -->
-        <ion-modal :is-open="showImprovementModal" @didDismiss="showImprovementModal = false">
+        <ion-modal
+          :is-open="showImprovementModal"
+          @didDismiss="showImprovementModal = false"
+        >
           <ion-header>
             <ion-toolbar color="warning">
               <ion-title>Mejora de Nota</ion-title>
               <ion-buttons slot="end">
-                <ion-button @click="showImprovementModal = false">Cerrar</ion-button>
+                <ion-button @click="showImprovementModal = false"
+                  >Cerrar</ion-button
+                >
               </ion-buttons>
             </ion-toolbar>
           </ion-header>
           <ion-content class="ion-padding">
-            <p class="ion-padding-horizontal" style="font-size: 0.9em; color: var(--ion-color-medium);">
-              <ion-icon :icon="informationCircleOutline" style="vertical-align: middle;"></ion-icon>
-              Seleccione el cuestionario cuya nota desea mejorar. Solo se actualizará la nota si la nueva calificación es superior.
+            <p
+              class="ion-padding-horizontal"
+              style="font-size: 0.9em; color: var(--ion-color-medium)"
+            >
+              <ion-icon
+                :icon="informationCircleOutline"
+                style="vertical-align: middle"
+              ></ion-icon>
+              Seleccione el cuestionario cuya nota desea mejorar. Solo se
+              actualizará la nota si la nueva calificación es superior.
             </p>
 
             <ion-item>
@@ -313,36 +433,84 @@
                   :key="q.id"
                   :value="q.id"
                 >
-                  {{ q.title }} ({{ q.lesson?.title || 'Lección' }})
+                  {{ q.title }} ({{ q.lesson?.title || "Lección" }})
                 </ion-select-option>
               </ion-select>
             </ion-item>
 
-            <div v-if="loadingExistingGrades" class="ion-text-center ion-padding">
+            <div
+              v-if="loadingExistingGrades"
+              class="ion-text-center ion-padding"
+            >
               <ion-spinner name="crescent"></ion-spinner>
               <p>Cargando notas existentes...</p>
             </div>
 
-            <div v-else-if="selectedQuizToImproveId && improvementComparison.length > 0" class="ion-margin-top">
-              <h4 class="ion-padding-horizontal" style="color: var(--ion-color-dark); font-size: 1em;">
-                Comparación de notas ({{ improvementComparison.length }} estudiantes)
+            <div
+              v-else-if="
+                selectedQuizToImproveId && improvementComparison.length > 0
+              "
+              class="ion-margin-top"
+            >
+              <h4
+                class="ion-padding-horizontal"
+                style="color: var(--ion-color-dark); font-size: 1em"
+              >
+                Comparación de notas ({{ improvementComparison.length }}
+                estudiantes)
               </h4>
-              <ion-card v-for="item in improvementComparison" :key="item.userId" class="improvement-card">
-                <ion-card-content style="padding: 12px;">
-                  <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
-                    <div style="flex: 1;">
-                      <strong style="font-size: 0.95em;">{{ item.name }}</strong>
+              <ion-card
+                v-for="item in improvementComparison"
+                :key="item.userId"
+                class="improvement-card"
+              >
+                <ion-card-content style="padding: 12px">
+                  <div
+                    style="
+                      display: flex;
+                      justify-content: space-between;
+                      align-items: center;
+                      gap: 8px;
+                    "
+                  >
+                    <div style="flex: 1">
+                      <strong style="font-size: 0.95em">{{ item.name }}</strong>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9em;">
-                      <span style="color: var(--ion-color-medium);">
-                        Anterior: <strong>{{ parseFloat(item.previousGrade).toFixed(1) }}</strong>
+                    <div
+                      style="
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        font-size: 0.9em;
+                      "
+                    >
+                      <span style="color: var(--ion-color-medium)">
+                        Anterior:
+                        <strong>{{
+                          parseFloat(item.previousGrade).toFixed(1)
+                        }}</strong>
                       </span>
-                      <ion-icon :icon="arrowForwardOutline" style="font-size: 1.1em;"></ion-icon>
-                      <span :style="{ color: item.improves ? 'var(--ion-color-success)' : 'var(--ion-color-medium)' }">
-                        Nueva: <strong>{{ parseFloat(item.newGrade).toFixed(1) }}</strong>
+                      <ion-icon
+                        :icon="arrowForwardOutline"
+                        style="font-size: 1.1em"
+                      ></ion-icon>
+                      <span
+                        :style="{
+                          color: item.improves
+                            ? 'var(--ion-color-success)'
+                            : 'var(--ion-color-medium)',
+                        }"
+                      >
+                        Nueva:
+                        <strong>{{
+                          parseFloat(item.newGrade).toFixed(1)
+                        }}</strong>
                       </span>
-                      <ion-badge :color="item.improves ? 'success' : 'medium'" style="font-size: 0.75em;">
-                        {{ item.improves ? 'Mejorará' : 'Se mantiene' }}
+                      <ion-badge
+                        :color="item.improves ? 'success' : 'medium'"
+                        style="font-size: 0.75em"
+                      >
+                        {{ item.improves ? "Mejorará" : "Se mantiene" }}
                       </ion-badge>
                     </div>
                   </div>
@@ -350,8 +518,12 @@
               </ion-card>
 
               <div class="ion-padding">
-                <ion-note style="display: block; margin-bottom: 12px; font-size: 0.85em;">
-                  {{ improvementComparison.filter(i => i.improves).length }} de {{ improvementComparison.length }} estudiantes mejorarán su nota.
+                <ion-note
+                  style="display: block; margin-bottom: 12px; font-size: 0.85em"
+                >
+                  {{ improvementComparison.filter((i) => i.improves).length }}
+                  de {{ improvementComparison.length }} estudiantes mejorarán su
+                  nota.
                 </ion-note>
                 <ion-button
                   expand="block"
@@ -359,13 +531,24 @@
                   :disabled="registrandoMejora"
                   @click="confirmarRegistroMejora"
                 >
-                  <ion-spinner v-if="registrandoMejora" name="crescent" style="margin-right: 8px;"></ion-spinner>
+                  <ion-spinner
+                    v-if="registrandoMejora"
+                    name="crescent"
+                    style="margin-right: 8px"
+                  ></ion-spinner>
                   Confirmar Registro
                 </ion-button>
               </div>
             </div>
 
-            <div v-else-if="selectedQuizToImproveId && !loadingExistingGrades && improvementComparison.length === 0" class="ion-text-center ion-padding">
+            <div
+              v-else-if="
+                selectedQuizToImproveId &&
+                !loadingExistingGrades &&
+                improvementComparison.length === 0
+              "
+              class="ion-text-center ion-padding"
+            >
               <p>No hay datos de notas o respuestas para comparar.</p>
             </div>
           </ion-content>
@@ -562,14 +745,14 @@ export default {
     const handleScanComplete = async (payload) => {
       isScanning.value = false;
       const numericResult = payload.results.find(
-        (r) => r.typeOrigin === "numeric"
+        (r) => r.typeOrigin === "numeric",
       );
       const studentCode = numericResult ? numericResult.content : null;
 
       if (!studentCode) {
         setErrorToastOpen(
           true,
-          "No se pudo detectar el código del estudiante en el escaneo."
+          "No se pudo detectar el código del estudiante en el escaneo.",
         );
         return;
       }
@@ -635,7 +818,8 @@ export default {
             }
             // Track frequency
             const optId = ans.option.id;
-            qStat.optionFrequency[optId] = (qStat.optionFrequency[optId] || 0) + 1;
+            qStat.optionFrequency[optId] =
+              (qStat.optionFrequency[optId] || 0) + 1;
           }
         });
 
@@ -643,7 +827,7 @@ export default {
           // Find most selected option
           let mostSelectedId = null;
           let maxFreq = -1;
-          
+
           Object.entries(s.optionFrequency).forEach(([optId, freq]) => {
             if (freq > maxFreq) {
               maxFreq = freq;
@@ -651,7 +835,9 @@ export default {
             }
           });
 
-          const mostSelectedOption = s.options.find(o => o.id === mostSelectedId);
+          const mostSelectedOption = s.options.find(
+            (o) => o.id === mostSelectedId,
+          );
 
           return {
             ...s,
@@ -727,7 +913,7 @@ export default {
           .get(`/users/${usuario.value?.id}/groups`)
           .then((response) => {
             grupoUsuario.value = response.data.filter(
-              (g) => g.active
+              (g) => g.active,
             )[0]?.group;
           });
       tokenHeader();
@@ -754,13 +940,13 @@ export default {
             } else {
               // Fallback to relative if evaluationType is not explicitly set or unknown
               console.warn(
-                "Unknown evaluationType, defaulting to relative grading."
+                "Unknown evaluationType, defaulting to relative grading.",
               );
               e.nota =
                 e.points !== 0 ? (e.points * 5) / response.data[0].points : 0;
             }
 
-              e.nota = e.nota < 0 ? 0 : e.nota;
+            e.nota = e.nota < 0 ? 0 : e.nota;
             return e;
           });
         })
@@ -768,16 +954,19 @@ export default {
         .then(() => {
           if (respuestas.value.length > 0) {
             respuestaMAyor.value = respuestas.value.sort(
-              (a, b) => b.points - a.points
+              (a, b) => b.points - a.points,
             )[0];
           }
         });
-        
+
       if (!cuestionario.value) {
         try {
           const response = await axios.get(`/quizzes/${id}`, tokenHeader());
           cuestionario.value = response.data;
-          localStorage.setItem("quizSelected", JSON.stringify(cuestionario.value));
+          localStorage.setItem(
+            "quizSelected",
+            JSON.stringify(cuestionario.value),
+          );
         } catch (error) {
           console.error("Error fetching quiz data:", error);
           setErrorToastOpen(true, "Error al cargar los datos del cuestionario");
@@ -792,7 +981,7 @@ export default {
         const answers = await getRespuestas(
           targetId,
           id,
-          cuestionario.value?.lesson?.institute?.id || 1 // Fallback if missing
+          cuestionario.value?.lesson?.institute?.id || 1, // Fallback if missing
         );
         respuestaDetallada.value = answers
           .map((answer, index) => {
@@ -800,9 +989,11 @@ export default {
             return answer;
           })
           .sort((a, b) => a.numeroPregunta - b.numeroPregunta);
-          if(!adminOprofesor()){
-            respuestaDetallada.value = respuestaDetallada.value.filter(a => !a.question.available);
-          }
+        if (!adminOprofesor()) {
+          respuestaDetallada.value = respuestaDetallada.value.filter(
+            (a) => !a.question.available,
+          );
+        }
       } catch (error) {
         console.error("Error loading answers:", error);
       }
@@ -821,14 +1012,17 @@ export default {
         try {
           const { course, period, year, institute } = cuestionario.value.lesson;
           const response = await axios.get(
-            `/quizzes?courseId=${course.id}&periodId=${period.id}&year=${year}&instituteId=${institute.id}&category=regular`
+            `/quizzes?courseId=${course.id}&periodId=${period.id}&year=${year}&instituteId=${institute.id}&category=regular`,
           );
           quizzesInCourse.value = response.data;
           selectedQuizToImproveId.value = null;
           improvementComparison.value = [];
           showImprovementModal.value = true;
         } catch (e) {
-          setErrorToastOpen(true, "Error al cargar los cuestionarios del curso.");
+          setErrorToastOpen(
+            true,
+            "Error al cargar los cuestionarios del curso.",
+          );
         }
         return;
       }
@@ -853,12 +1047,12 @@ export default {
           if (!respuesta.group || !respuesta.group.id) {
             console.warn(
               "Skipping response due to missing group/user data:",
-              respuesta
+              respuesta,
             );
             continue;
           }
           const response = await axios.get(
-            `/groups/${respuesta.group.id}/${cuestionario.value.lesson.year}/users`
+            `/groups/${respuesta.group.id}/${cuestionario.value.lesson.year}/users`,
           );
           for (const relacionUsuario of response.data) {
             const data = {
@@ -909,7 +1103,7 @@ export default {
       improvementComparison.value = [];
       try {
         const gradesRes = await axios.get(
-          `/grades?gradableId=${selectedQuizToImproveId.value}&gradableType=quiz`
+          `/grades?gradableId=${selectedQuizToImproveId.value}&gradableType=quiz`,
         );
         existingGrades.value = gradesRes.data;
 
@@ -937,7 +1131,7 @@ export default {
           } else if (respuesta.group && respuesta.group.id) {
             // Cuestionario grupal: cargar integrantes del grupo
             const groupRes = await axios.get(
-              `/groups/${respuesta.group.id}/${cuestionario.value.lesson.year}/users`
+              `/groups/${respuesta.group.id}/${cuestionario.value.lesson.year}/users`,
             );
             for (const rel of groupRes.data) {
               const userId = rel.user.id;

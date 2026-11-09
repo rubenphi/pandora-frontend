@@ -37,7 +37,7 @@
             <ion-textarea
               v-model="textareaContent"
               placeholder='[
-  {"sentence": "¿Cuál es la capital de Francia?", "type": "geografia"},
+  {"sentence": "¿Cuál es la capital de Francia?", "type": "geografia", "photo": "mapa.png"},
   {"sentence": "¿Qué es 2+2?", "type": "matematicas"}
 ]
 
@@ -47,6 +47,45 @@ O también objetos separados:
               rows="8"
               @ionBlur="procesarObjetos"
             ></ion-textarea>
+          </ion-item>
+
+          <!-- Imágenes de las preguntas -->
+          <ion-item>
+            <ion-label position="stacked">
+              Imágenes (opcional)
+              <p v-if="selectedImages.length > 0">
+                {{ selectedImages.length }} imagen(es) seleccionada(s). En el JSON
+                referencie cada archivo por su nombre original en el campo
+                "photo".
+              </p>
+            </ion-label>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              class="image-picker"
+              ref="imageInput"
+              @change="onImagesSelected"
+            />
+            <ion-button slot="end" @click="pickImages">
+              <ion-icon :icon="imagesOutline"></ion-icon>
+            </ion-button>
+          </ion-item>
+
+          <ion-item v-if="selectedImages.length > 0">
+            <ion-label>
+              <p>Archivos: {{ selectedImageNames.join(", ") }}</p>
+            </ion-label>
+            <ion-button slot="end" color="medium" @click="clearImages">
+              <ion-icon :icon="trashOutline"></ion-icon>
+            </ion-button>
+          </ion-item>
+
+          <ion-item v-if="missingImages.length > 0" color="warning">
+            <ion-label>
+              <h3>El JSON referencia imágenes no seleccionadas</h3>
+              <p>{{ missingImages.join(", ") }}</p>
+            </ion-label>
           </ion-item>
 
           <!-- Botón para procesar objetos -->
@@ -109,9 +148,13 @@ O también objetos separados:
               v-for="(objeto, index) in preguntasFiltradas"
               :key="index"
             >
+              <ion-thumbnail slot="start" v-if="objeto.photo">
+                <img :src="previewForPhoto(objeto.photo)" />
+              </ion-thumbnail>
               <ion-label>
                 <h3>{{ objeto.sentence }}</h3>
                 <p>Tipo: {{ objeto.type }}</p>
+                <p v-if="objeto.photo">Imagen: {{ objeto.photo }}</p>
               </ion-label>
             </ion-item>
           </ion-item-group>
@@ -132,7 +175,7 @@ O también objetos separados:
       <!-- Toasts -->
       <ion-toast
         :is-open="isSuccessToastOpen"
-        message="Importación exitosa"
+        :message="toastSuccessMessage"
         :duration="3000"
         color="success"
         @didDismiss="isSuccessToastOpen = false"
@@ -149,12 +192,20 @@ O también objetos separados:
 </template>
 
 <script>
-import { ref, computed } from "vue";
+import { ref, computed, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
 
 import { usuarioGet, tokenHeader, shuffleArray } from "../globalService";
 import {
+  findMissingImages,
+  buildImagePreviews,
+  revokeImagePreviews,
+  previewForPhoto as previewForPhotoName,
+  resolveQuestionPhotos,
+} from "../questionImageService";
+import {
   onIonViewWillEnter,
+  alertController,
   IonToast,
   IonCheckbox,
   IonTextarea,
@@ -172,9 +223,14 @@ import {
   IonButton,
   IonButtons,
   IonInput,
+  IonThumbnail,
 } from "@ionic/vue";
 
-import { arrowBackOutline } from "ionicons/icons";
+import {
+  arrowBackOutline,
+  trashOutline,
+  imagesOutline,
+} from "ionicons/icons";
 import axios from "axios";
 
 export default {
@@ -186,6 +242,7 @@ export default {
     IonTextarea,
     IonItemGroup,
     IonItemDivider,
+    IonItem,
     IonIcon,
     IonInput,
     IonHeader,
@@ -194,8 +251,8 @@ export default {
     IonContent,
     IonPage,
     IonList,
-    IonItem,
     IonLabel,
+    IonThumbnail,
   },
   setup() {
     const mroute = useRoute();
@@ -212,6 +269,7 @@ export default {
     const isSuccessToastOpen = ref(false);
     const isErrorToastOpen = ref(false);
     const toastErrorMessage = ref("");
+    const toastSuccessMessage = ref("Importación exitosa");
     const debugMessage = ref("");
 
     const usuario = ref();
@@ -219,6 +277,38 @@ export default {
     const objetosValidos = ref([]);
     const tiposDetectados = ref([]);
     const tiposIncorrectos = ref([]);
+
+    const imageInput = ref(null);
+    const selectedImages = ref([]);
+    const imagePreviews = ref({});
+    const selectedImageNames = computed(() =>
+      selectedImages.value.map((file) => file.name),
+    );
+    const previewForPhoto = (name) =>
+      previewForPhotoName(imagePreviews.value, name);
+
+    const pickImages = () => {
+      if (imageInput.value) {
+        imageInput.value.click();
+      }
+    };
+
+    const clearImages = () => {
+      revokeImagePreviews(imagePreviews.value);
+      imagePreviews.value = {};
+      selectedImages.value = [];
+      if (imageInput.value) {
+        imageInput.value.value = "";
+      }
+    };
+
+    const onImagesSelected = (event) => {
+      revokeImagePreviews(imagePreviews.value);
+      selectedImages.value = Array.from(event.target.files || []);
+      imagePreviews.value = buildImagePreviews(selectedImages.value);
+    };
+
+    onUnmounted(() => revokeImagePreviews(imagePreviews.value));
 
     // Computed para filtrar preguntas excluyendo tipos incorrectos
     const preguntasFiltradas = computed(() => {
@@ -229,6 +319,22 @@ export default {
         (objeto) => !tiposIncorrectos.value.includes(objeto.type)
       );
     });
+
+    const missingImages = computed(() =>
+      findMissingImages(preguntasFiltradas.value, selectedImages.value),
+    );
+
+    const assertPhoto = (objeto, etiqueta) => {
+      if (
+        objeto.photo !== undefined &&
+        objeto.photo !== null &&
+        typeof objeto.photo !== "string"
+      ) {
+        throw new Error(
+          `El campo "photo" de ${etiqueta} debe ser el nombre original de la imagen.`
+        );
+      }
+    };
 
     const procesarObjetos = () => {
       try {
@@ -248,33 +354,35 @@ export default {
         try {
           const arrayObjetos = JSON.parse(contenido);
           if (Array.isArray(arrayObjetos)) {
-            arrayObjetos.forEach((objeto, index) => {
-              if (
-                !Object.prototype.hasOwnProperty.call(objeto, "sentence") ||
-                !Object.prototype.hasOwnProperty.call(objeto, "type")
-              ) {
-                throw new Error(
-                  `Objeto en posición ${
-                    index + 1
-                  } no tiene las propiedades 'sentence' y 'type' requeridas`
-                );
-              }
-              objetosProcesados.push(objeto);
-              tipos.add(objeto.type);
-            });
-          } else {
-            // Si no es array, tratar como objeto único
+          arrayObjetos.forEach((objeto, index) => {
             if (
-              !Object.prototype.hasOwnProperty.call(arrayObjetos, "sentence") ||
-              !Object.prototype.hasOwnProperty.call(arrayObjetos, "type")
+              !Object.prototype.hasOwnProperty.call(objeto, "sentence") ||
+              !Object.prototype.hasOwnProperty.call(objeto, "type")
             ) {
               throw new Error(
-                `El objeto no tiene las propiedades 'sentence' y 'type' requeridas`
+                `Objeto en posición ${
+                  index + 1
+                } no tiene las propiedades 'sentence' y 'type' requeridas`
               );
             }
-            objetosProcesados.push(arrayObjetos);
-            tipos.add(arrayObjetos.type);
+            assertPhoto(objeto, `el objeto en posición ${index + 1}`);
+            objetosProcesados.push(objeto);
+            tipos.add(objeto.type);
+          });
+        } else {
+          // Si no es array, tratar como objeto único
+          if (
+            !Object.prototype.hasOwnProperty.call(arrayObjetos, "sentence") ||
+            !Object.prototype.hasOwnProperty.call(arrayObjetos, "type")
+          ) {
+            throw new Error(
+              `El objeto no tiene las propiedades 'sentence' y 'type' requeridas`
+            );
           }
+          assertPhoto(arrayObjetos, "el objeto");
+          objetosProcesados.push(arrayObjetos);
+          tipos.add(arrayObjetos.type);
+        }
         } catch (parseError) {
           // Si falla como JSON válido, intentar extraer objetos individuales
           const regex = /\{[^{}]*\}/g;
@@ -299,6 +407,7 @@ export default {
                 );
               }
 
+              assertPhoto(objeto, `el objeto ${index + 1}`);
               objetosProcesados.push(objeto);
               tipos.add(objeto.type);
             } catch (objError) {
@@ -371,36 +480,64 @@ export default {
       isSuccessToastOpen.value = true;
     };
 
-    const importarPreguntas = () => {
-      axios
-        .post(
+    const confirmarImportacion = async () => {
+      if (missingImages.value.length === 0) {
+        return true;
+      }
+      const alert = await alertController.create({
+        header: "Imágenes sin archivo",
+        message: `No se encontró archivo para: ${missingImages.value.join(
+          ", ",
+        )}. Esas preguntas se importarán sin imagen.`,
+        buttons: [
+          { text: "Cancelar", role: "cancel" },
+          { text: "Importar de todos modos" },
+        ],
+      });
+      await alert.present();
+      const { role } = await alert.onDidDismiss();
+      return role !== "cancel";
+    };
+
+    const importarPreguntas = async () => {
+      isErrorToastOpen.value = false;
+      try {
+        if (!(await confirmarImportacion())) {
+          return;
+        }
+
+        const { questions, uploaded } = await resolveQuestionPhotos(
+          preguntasFiltradas.value,
+          selectedImages.value,
+        );
+
+        await axios.post(
           "/questions/import/types",
           {
             quizId: id ? id : 0,
             points: points.value,
-            questions: preguntasFiltradas.value.map((objeto) => ({
+            questions: questions.map((objeto) => ({
               type: objeto.type,
               sentence: objeto.sentence,
+              photo: objeto.photo,
             })),
             types: tiposDetectados.value,
           },
           {
             headers: tokenHeader(),
-          }
-        )
-        .then((response) => {
-          if (response.data.estatus === 1) {
-            isSuccessToastOpen.value = true;
-          } else {
-            toastErrorMessage.value = response.data.data || "Error al importar";
-            isErrorToastOpen.value = true;
-          }
-        })
-        .catch((err) => {
-          console.error("Error al importar preguntas:", err);
-          toastErrorMessage.value = "Error al importar preguntas: " + err.message;
-          isErrorToastOpen.value = true;
-        });
+          },
+        );
+
+        isSuccessToastOpen.value = true;
+        toastSuccessMessage.value =
+          uploaded > 0
+            ? `Importación exitosa. ${uploaded} imagen(es) subida(s).`
+            : "Importación exitosa";
+      } catch (err) {
+        console.error("Error al importar preguntas:", err);
+        toastErrorMessage.value = "Error al importar preguntas: " + err.message;
+        isErrorToastOpen.value = true;
+      }
     };
 
     onIonViewWillEnter(async () => {
@@ -420,6 +557,7 @@ export default {
       isSuccessToastOpen,
       isErrorToastOpen,
       toastErrorMessage,
+      toastSuccessMessage,
       opcion,
       textareaContent,
       objetosValidos,
@@ -429,7 +567,27 @@ export default {
       procesarObjetos,
       toggleTipoIncorrecto,
       importarPreguntas,
+      trashOutline,
+      imagesOutline,
+      imageInput,
+      selectedImages,
+      selectedImageNames,
+      missingImages,
+      pickImages,
+      clearImages,
+      onImagesSelected,
+      previewForPhoto,
     };
   },
 };
 </script>
+
+<style scoped>
+.image-picker {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+</style>

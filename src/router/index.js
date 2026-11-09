@@ -3,6 +3,7 @@ import TabsPage from "../views/TabsPage.vue";
 import QrScannerOnboarding from "../views/QrScannerOnboarding.vue";
 import axios from "axios";
 import { adminOprofesor, apiState } from "../globalService"; // <-- MODIFIED
+import { courseAccessGuard } from "../courseAccessService";
 import { Device } from "@capacitor/device";
 
 const routes = [
@@ -27,6 +28,7 @@ const routes = [
   {
     path: "/qr-preguntas/:d",
     component: () => import("@/views/QrPreguntas.vue"),
+    beforeEnter: courseAccessGuard("question", "d"),
   },
 
   {
@@ -225,6 +227,7 @@ const routes = [
       {
         path: "cuestionario/:id",
         component: () => import("@/views/CuestionarioView.vue"),
+        beforeEnter: courseAccessGuard("quiz"),
       },
       {
         path: "actividades/:id",
@@ -292,14 +295,17 @@ const routes = [
       {
         path: "pregunta/:id",
         component: () => import("@/views/PreguntaView.vue"),
+        beforeEnter: courseAccessGuard("question"),
       },
       {
         path: "resultado/:id",
         component: () => import("@/views/PreguntaResult.vue"),
+        beforeEnter: courseAccessGuard("question"),
       },
       {
         path: "ganadores/:id",
         component: () => import("@/views/CuestionarioResult.vue"),
+        beforeEnter: courseAccessGuard("quiz"),
       },
       {
         path: "cursos/",

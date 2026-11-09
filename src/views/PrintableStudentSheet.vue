@@ -17,6 +17,36 @@
       </ion-toolbar>
     </ion-header>
     <ion-content class="ion-padding" :fullscreen="true">
+      <ion-list>
+        <ion-item-group>
+          <ion-item-divider>
+            <ion-label>Configuración del cuestionario</ion-label>
+          </ion-item-divider>
+          <ion-item>
+            <ion-label position="stacked">Total de preguntas</ion-label>
+            <ion-input
+              v-model.number="totalQuestions"
+              type="number"
+              min="1"
+              placeholder="Ej. 34"
+            ></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-label>
+              <p>
+                {{ maxQuestionsPerSheet }} preguntas por hoja ·
+                {{ sheets.length }} hoja(s) por estudiante ·
+                {{ allStudents.length }} estudiante(s) ·
+                {{ allStudents.length * sheets.length }} hoja(s) en total
+              </p>
+              <p v-for="sheet in sheets" :key="sheet.index">
+                Hoja {{ sheet.index }}: preguntas {{ sheet.start }} - {{ sheet.end }}
+              </p>
+            </ion-label>
+          </ion-item>
+        </ion-item-group>
+      </ion-list>
+
       <ion-list v-if="allStudents.length > 0">
         <ion-list-header>
           <ion-label>Estudiantes</ion-label>
@@ -50,11 +80,29 @@
           </ion-toolbar>
         </ion-header>
         <ion-content class="ion-padding">
+          <div class="sheet-selector" v-if="sheets.length > 1">
+            <ion-button
+              v-for="sheet in sheets"
+              :key="sheet.index"
+              size="small"
+              :fill="
+                selectedSheetIndex === sheet.index - 1 ? 'solid' : 'outline'
+              "
+              :color="
+                selectedSheetIndex === sheet.index - 1 ? 'primary' : 'medium'
+              "
+              @click="selectedSheetIndex = sheet.index - 1"
+            >
+              {{ sheet.start }} - {{ sheet.end }}
+            </ion-button>
+          </div>
           <div class="modal-sheet-wrapper" v-if="selectedStudent">
             <AnswerSheet
               ref="answerSheetRef"
               :student="selectedStudent"
               :course-name="courseName"
+              :start-number="selectedSheet.start"
+              :question-count="selectedSheet.count"
               class="responsive-answer-sheet-modal"
             />
           </div>
@@ -80,12 +128,20 @@ import {
   IonLabel,
   IonListHeader,
   IonModal,
+  IonItemGroup,
+  IonItemDivider,
+  IonInput,
   alertController,
   actionSheetController,
 } from "@ionic/vue";
 import { printOutline } from "ionicons/icons";
 import { onMounted, ref, computed } from "vue";
 import AnswerSheet from "@/components/AnswerSheet.vue";
+import {
+  buildSheets,
+  questionNumbers,
+  MAX_QUESTIONS_PER_SHEET,
+} from "@/answerSheetNumbers";
 import { FileSharer } from "@byteowls/capacitor-filesharer";
 import { Capacitor } from "@capacitor/core";
 // html2pdf replaced by direct jspdf + html2canvas (dynamic imports in processPDF)
@@ -104,6 +160,9 @@ export default {
     IonList,
     IonItem,
     IonLabel,
+    IonItemGroup,
+    IonItemDivider,
+    IonInput,
     IonListHeader,
     IonModal,
 
@@ -116,8 +175,17 @@ export default {
     const selectedStudent = ref(null);
     const answerSheetRef = ref(null);
     const sheetsPerPage = ref(6);
+    const totalQuestions = ref(20);
+    const selectedSheetIndex = ref(0);
 
     const courseName = computed(() => studentData.value[0]?.name);
+    const sheets = computed(() =>
+      buildSheets(totalQuestions.value, MAX_QUESTIONS_PER_SHEET),
+    );
+    const selectedSheet = computed(
+      () => sheets.value[selectedSheetIndex.value] || sheets.value[0],
+    );
+    const maxQuestionsPerSheet = MAX_QUESTIONS_PER_SHEET;
 
     onMounted(async () => {
       if (window.history.state.studentData) {
@@ -159,7 +227,22 @@ export default {
       const scaledWidth = newImageWidth * scale;
       const scaledHeight = newImageHeight * scale;
 
-      const generateSheetCode = (student) => {
+      const generateQuestionNumbers = (sheet) => {
+        return questionNumbers(sheet.start, sheet.count)
+          .map(
+            (item) => `
+              <div style="position: absolute; left: ${item.left}%; top: ${item.top}%;
+                   width: ${item.width}%; height: ${item.height}%;
+                   display: flex; align-items: center; justify-content: center;
+                   font-size: ${item.fontSize}px; line-height: 1; font-weight: bold;
+                   color: black; font-family: Arial, sans-serif;">
+                ${item.value}
+              </div>`
+          )
+          .join("");
+      };
+
+      const generateSheetCode = (student, sheet) => {
         const originalCode = student.code || "";
         const name = student.name || "";
         const lastName = student.lastName || "";
@@ -269,23 +352,33 @@ export default {
              gap: ${matrixGapPx}px; z-index: 50; pointer-events: none;">
           ${cellsHTML}
         </div>
+
+        <!-- Números de pregunta -->
+        ${generateQuestionNumbers(sheet)}
       </div>
     `;
       };
 
       const perPage = sheetsPerPage.value;
+      const sheetUnits = [];
+      students.forEach((student) => {
+        sheets.value.forEach((sheet) => {
+          sheetUnits.push({ student, sheet });
+        });
+      });
+
       let pagesHTML = "";
-      for (let i = 0; i < students.length; i += perPage) {
-        const pageStudents = students.slice(i, i + perPage);
+      for (let i = 0; i < sheetUnits.length; i += perPage) {
+        const pageUnits = sheetUnits.slice(i, i + perPage);
         let sheetsHTML = "";
 
-        pageStudents.forEach((student) => {
+        pageUnits.forEach(({ student, sheet }) => {
           sheetsHTML += `
         <div class="grid-item">
           <!-- Contenedor que agrupa hoja y línea de corte -->
           <div style="display: flex; flex-direction: column; align-items: center;">
             <div style="width: ${scaledWidth}px; height: ${scaledHeight}px; position: relative; overflow: hidden; box-sizing: border-box;">
-              ${generateSheetCode(student)}
+              ${generateSheetCode(student, sheet)}
             </div>
             <!-- Línea de corte separada para asegurar visibilidad en PDF -->
             <div style="width: ${scaledWidth}px; height: 1px; border-top: 1px dashed black; margin-top: 5px;"></div>
@@ -672,7 +765,9 @@ export default {
         return;
       }
 
-      const filename = `hoja_respuesta_${selectedStudent.value.code}.png`;
+      const filename = `hoja_respuesta_${selectedStudent.value.code}_${
+        selectedSheet.value.start
+      }-${selectedSheet.value.end}.png`;
 
       if (Capacitor.isNativePlatform()) {
         const nativeLoading = await alertController.create({
@@ -730,6 +825,11 @@ export default {
       answerSheetRef,
       downloadSheet,
       sheetsPerPage,
+      totalQuestions,
+      maxQuestionsPerSheet,
+      sheets,
+      selectedSheet,
+      selectedSheetIndex,
     };
   },
 };
@@ -824,6 +924,14 @@ export default {
       font-size: 0.7vw !important; /* Example: Smaller font size on desktop */
     }
   }
+}
+
+.sheet-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 12px;
 }
 
 .modal-sheet-wrapper {

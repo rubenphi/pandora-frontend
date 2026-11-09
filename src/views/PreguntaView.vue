@@ -170,6 +170,7 @@ import {
 } from "../globalService";
 import { useRoute } from "vue-router";
 import router from "../router";
+import { notifyCourseAccessDenied } from "../courseAccessService";
 
 import {
   arrowBackOutline,
@@ -206,6 +207,7 @@ import {
   IonCardSubtitle,
   IonItem,
   IonList,
+  toastController,
 } from "@ionic/vue";
 
 export default {
@@ -269,27 +271,50 @@ export default {
     const disableRandomization = ref(false);
     const showCorrectAnswer = ref(false);
 
+    const showErrorToast = async (message) => {
+      const toast = await toastController.create({
+        message,
+        duration: 4000,
+        color: "danger",
+        position: "top",
+      });
+      await toast.present();
+    };
+
     onIonViewDidEnter(async () => {
       tokenHeader();
 
       // 1. Fetch question data first
-      await axios.get("/questions/" + id).then((response) => {
-        question.value = {
-          id: response.data.id,
-          points: response.data.points,
-          sentence: response.data.sentence,
-          quiz: response.data.quiz,
-          title: response.data.title,
-          photo: response.data.photo,
-          options: response.data.options, // Keep original options for now
-        };
+      await axios
+        .get("/questions/" + id)
+        .then((response) => {
+          question.value = {
+            id: response.data.id,
+            points: response.data.points,
+            sentence: response.data.sentence,
+            quiz: response.data.quiz,
+            title: response.data.title,
+            photo: response.data.photo,
+            options: response.data.options, // Keep original options for now
+          };
 
-        if (!question.value.photo) {
-          src.value = defaultFile("thumbnail");
-        }
-        var rem = new RegExp("<p></p>", "g");
-        question.value.sentence = question.value.sentence.replace(rem, "</br>");
-      });
+          if (!question.value.photo) {
+            src.value = defaultFile("thumbnail");
+          }
+          var rem = new RegExp("<p></p>", "g");
+          question.value.sentence = question.value.sentence.replace(rem, "</br>");
+        })
+        .catch((fallo) => {
+          const mensaje =
+            fallo?.response?.data?.message ||
+            "No se pudo cargar la pregunta.";
+          if (fallo?.response?.status === 403) {
+            notifyCourseAccessDenied(mensaje);
+            router.push("/inicio");
+            return;
+          }
+          showErrorToast(mensaje);
+        });
 
       // 2. Now that question.value is populated, proceed with randomization logic
       const storedRandomizationKey = localStorage.getItem("ordenOpcionesKey");
@@ -387,12 +412,14 @@ export default {
           error.value.estatus = 1;
           error.value.data =
             "Esta pregunta no tiene una respuesta correcta marcada. Por favor, informa a tu profesor.";
+          showErrorToast(error.value.data);
           return;
         }
 
         if (respuesta.value.optionId == "") {
           error.value.estatus = 1;
           error.value.data = "Debe seleccionar una opción.";
+          showErrorToast(error.value.data);
         } else {
           respuesta.value.questionId = question.value.id;
           if (question.value.quiz?.quizType !== "individual") {
@@ -415,9 +442,13 @@ export default {
             .catch((fallo) => {
               botonInactivo.value = false;
               loading.value = false;
+              const mensaje =
+                fallo?.response?.data?.message ||
+                "No se pudo registrar tu respuesta. Intenta de nuevo.";
               error.value.estatus = 1;
-              error.value.data = fallo.response.data.message;
-              localStorage.setItem("error", fallo.response.data.message);
+              error.value.data = mensaje;
+              localStorage.setItem("error", mensaje);
+              showErrorToast(mensaje);
             });
         }
       },

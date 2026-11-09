@@ -75,7 +75,7 @@
                   value="regular"
                   v-if="
                     estudiante.dimensionesRegular.some(
-                      (d) => d.notas.length > 0
+                      (d) => d.notas.length > 0,
                     )
                   "
                 >
@@ -150,7 +150,7 @@
                   value="reinforcement"
                   v-if="
                     estudiante.dimensionesReinforcement.some(
-                      (d) => d.notas.length > 0
+                      (d) => d.notas.length > 0,
                     )
                   "
                 >
@@ -225,7 +225,7 @@
                   value="remedial"
                   v-if="
                     estudiante.dimensionesRemedial.some(
-                      (d) => d.notas.length > 0
+                      (d) => d.notas.length > 0,
                     )
                   "
                 >
@@ -623,9 +623,8 @@
       @close="mostrarModalGeneradorPlanilla = false"
     ></generador-planilla>
 
-
     <!-- Contenedor oculto para la generación de PDFs -->
-    <div style="position: absolute; left: -9999px; top: 0;">
+    <div style="position: absolute; left: -9999px; top: 0">
       <div id="hidden-pdf-container">
         <student-report-p-d-f-template
           v-if="studentToRender"
@@ -644,18 +643,28 @@
         </ion-toolbar>
       </ion-header>
       <ion-content class="ion-padding ion-text-center">
-        <h2 style="margin-top: 20px;">Procesando Reportes</h2>
+        <h2 style="margin-top: 20px">Procesando Reportes</h2>
         <p>{{ zipProgressText }}</p>
-        <ion-progress-bar :value="zipProgressValue" style="margin-top: 20px;"></ion-progress-bar>
-        <p style="margin-top: 20px; font-size: 0.9em; color: gray;">
-          Por favor, no cierre esta ventana hasta que la descarga comience. El proceso puede tomar unos minutos dependiendo de la cantidad de estudiantes.
+        <ion-progress-bar
+          :value="zipProgressValue"
+          style="margin-top: 20px"
+        ></ion-progress-bar>
+        <p style="margin-top: 20px; font-size: 0.9em; color: gray">
+          Por favor, no cierre esta ventana hasta que la descarga comience. El
+          proceso puede tomar unos minutos dependiendo de la cantidad de
+          estudiantes.
         </p>
-        <ion-button color="danger" fill="outline" style="margin-top: 20px;" @click="cancelarGeneracionZip" :disabled="isZipGenerationCancelled">
+        <ion-button
+          color="danger"
+          fill="outline"
+          style="margin-top: 20px"
+          @click="cancelarGeneracionZip"
+          :disabled="isZipGenerationCancelled"
+        >
           Cancelar
         </ion-button>
       </ion-content>
     </ion-modal>
-
   </ion-page>
 </template>
 
@@ -663,7 +672,12 @@
 import axios from "axios";
 import { ref, computed, nextTick } from "vue";
 import { alertController, actionSheetController } from "@ionic/vue";
-import { periodosGet, tokenHeader, usuarioGet, currentServerDate } from "../globalService";
+import {
+  periodosGet,
+  tokenHeader,
+  usuarioGet,
+  currentServerDate,
+} from "../globalService";
 import DomToImage from "dom-to-image";
 import htmlToDocx from "html-to-docx";
 import { Capacitor } from "@capacitor/core";
@@ -787,14 +801,13 @@ export default {
     const estudiantesReporte = ref([]);
     const estudiantesNuevos = ref([]); // Students in report enrolled < 1 month ago
 
-
     const processStudentGrades = (
       allGrades,
       studentList,
       reinforcementStudents,
       remedialStudents,
       reinforcementMap, // studentId -> Set of lessonIds
-      remedialMap // studentId -> Set of lessonIds
+      remedialMap, // studentId -> Set of lessonIds
     ) => {
       // 1. Build Master List of ALL Gradable Items (we will filter per type/student later)
       const masterItemsMap = new Map();
@@ -815,13 +828,13 @@ export default {
 
       // Split Master List by Classification
       const masterKnowledge = Array.from(masterItemsMap.values()).filter(
-        (i) => i.classification === "knowledge"
+        (i) => i.classification === "knowledge",
       );
       const masterExecution = Array.from(masterItemsMap.values()).filter(
-        (i) => i.classification === "execution"
+        (i) => i.classification === "execution",
       );
       const masterBehavior = Array.from(masterItemsMap.values()).filter(
-        (i) => i.classification === "behavior"
+        (i) => i.classification === "behavior",
       );
 
       const mapToDisplayParamsWithMasterList = (studentGrades, masterList) => {
@@ -831,7 +844,7 @@ export default {
               (g) =>
                 g.gradableType === masterItem.type &&
                 g.gradableItem.id === masterItem.id &&
-                g.classification === masterItem.classification
+                g.classification === masterItem.classification,
             );
             if (foundGrade) {
               return {
@@ -857,7 +870,7 @@ export default {
           .sort(
             (a, b) =>
               new Date(a.gradableItem.lesson.date) -
-              new Date(b.gradableItem.lesson.date)
+              new Date(b.gradableItem.lesson.date),
           );
       };
 
@@ -871,7 +884,7 @@ export default {
           const foundGrade = studentGrades.find(
             (g) =>
               g.gradableType === masterItem.type &&
-              g.gradableItem.id === masterItem.id
+              g.gradableItem.id === masterItem.id,
           );
           // If grade exists and is not null, use it. Otherwise, treat as 0.
           totalScore +=
@@ -898,26 +911,26 @@ export default {
 
         // --- REGULAR GRADES LOGIC ---
         const masterKnowledgeRegular = masterKnowledge.filter(
-          (i) => i.item.lesson?.type === LessonType.STANDARD
+          (i) => i.item.lesson?.type === LessonType.STANDARD,
         );
         const masterExecutionRegular = masterExecution.filter(
-          (i) => i.item.lesson?.type === LessonType.STANDARD
+          (i) => i.item.lesson?.type === LessonType.STANDARD,
         );
         const masterBehaviorRegular = masterBehavior.filter(
-          (i) => i.item.lesson?.type === LessonType.STANDARD
+          (i) => i.item.lesson?.type === LessonType.STANDARD,
         );
 
         const promSaberRegular = calculateAverageFromMasterList(
           studentGrades,
-          masterKnowledgeRegular
+          masterKnowledgeRegular,
         );
         const promHacerRegular = calculateAverageFromMasterList(
           studentGrades,
-          masterExecutionRegular
+          masterExecutionRegular,
         );
         const promSerRegular = calculateAverageFromMasterList(
           studentGrades,
-          masterBehaviorRegular
+          masterBehaviorRegular,
         );
 
         const promedioFinalRegular =
@@ -932,29 +945,31 @@ export default {
           // In NotasPage, areaId is fixed from route, and we already filtered the students by area
           // So any reinforcement item in the master list for this area applies.
           const masterKnowledgeReinf = masterKnowledge.filter(
-            (i) => i.item.lesson?.type === LessonType.REINFORCEMENT
+            (i) => i.item.lesson?.type === LessonType.REINFORCEMENT,
           );
           const masterExecutionReinf = masterExecution.filter(
-            (i) => i.item.lesson?.type === LessonType.REINFORCEMENT
+            (i) => i.item.lesson?.type === LessonType.REINFORCEMENT,
           );
           const masterBehaviorReinf = masterBehavior.filter(
-            (i) => i.item.lesson?.type === LessonType.REINFORCEMENT
+            (i) => i.item.lesson?.type === LessonType.REINFORCEMENT,
           );
 
           promSaberReinf = calculateAverageFromMasterList(
             studentGrades,
-            masterKnowledgeReinf
+            masterKnowledgeReinf,
           );
           promHacerReinf = calculateAverageFromMasterList(
             studentGrades,
-            masterExecutionReinf
+            masterExecutionReinf,
           );
           promSerReinf = calculateAverageFromMasterList(
             studentGrades,
-            masterBehaviorReinf
+            masterBehaviorReinf,
           );
           promedioFinalReinf =
-            (promSaberReinf + promHacerReinf + promSerReinf) / 3 > 4 ? 4 : (promSaberReinf + promHacerReinf + promSerReinf) / 3;
+            (promSaberReinf + promHacerReinf + promSerReinf) / 3 > 4
+              ? 4
+              : (promSaberReinf + promHacerReinf + promSerReinf) / 3;
         }
 
         // --- REMEDIAL GRADES LOGIC ---
@@ -964,26 +979,26 @@ export default {
           promedioFinalRemedial = 0;
         if (hasRemedial) {
           const masterKnowledgeRemedial = masterKnowledge.filter(
-            (i) => i.item.lesson?.type === LessonType.REMEDIAL
+            (i) => i.item.lesson?.type === LessonType.REMEDIAL,
           );
           const masterExecutionRemedial = masterExecution.filter(
-            (i) => i.item.lesson?.type === LessonType.REMEDIAL
+            (i) => i.item.lesson?.type === LessonType.REMEDIAL,
           );
           const masterBehaviorRemedial = masterBehavior.filter(
-            (i) => i.item.lesson?.type === LessonType.REMEDIAL
+            (i) => i.item.lesson?.type === LessonType.REMEDIAL,
           );
 
           promSaberRemedial = calculateAverageFromMasterList(
             studentGrades,
-            masterKnowledgeRemedial
+            masterKnowledgeRemedial,
           );
           promHacerRemedial = calculateAverageFromMasterList(
             studentGrades,
-            masterExecutionRemedial
+            masterExecutionRemedial,
           );
           promSerRemedial = calculateAverageFromMasterList(
             studentGrades,
-            masterBehaviorRemedial
+            masterBehaviorRemedial,
           );
           promedioFinalRemedial =
             (promSaberRemedial + promHacerRemedial + promSerRemedial) / 3;
@@ -994,19 +1009,19 @@ export default {
         if (hasReinforcement && promedioFinalReinf > 0) {
           finalPromedio = Math.max(
             finalPromedio,
-            Math.max(promedioFinalReinf, 1.0)
+            Math.max(promedioFinalReinf, 1.0),
           );
         }
         if (hasRemedial && promedioFinalRemedial > 0) {
           finalPromedio = Math.max(
             finalPromedio,
-            Math.max(promedioFinalRemedial, 1.0)
+            Math.max(promedioFinalRemedial, 1.0),
           );
         }
 
         const getGradesByLessonType = (grades, lessonTypeFilter) => {
           return grades.filter(
-            (g) => g.gradableItem?.lesson?.type === lessonTypeFilter
+            (g) => g.gradableItem?.lesson?.type === lessonTypeFilter,
           );
         };
 
@@ -1018,8 +1033,8 @@ export default {
             notas: mapToDisplayParamsWithMasterList(
               getGradesByLessonType(studentGrades, LessonType.STANDARD),
               masterKnowledge.filter(
-                (i) => i.item.lesson?.type === LessonType.STANDARD
-              )
+                (i) => i.item.lesson?.type === LessonType.STANDARD,
+              ),
             ),
           },
           {
@@ -1029,8 +1044,8 @@ export default {
             notas: mapToDisplayParamsWithMasterList(
               getGradesByLessonType(studentGrades, LessonType.STANDARD),
               masterExecution.filter(
-                (i) => i.item.lesson?.type === LessonType.STANDARD
-              )
+                (i) => i.item.lesson?.type === LessonType.STANDARD,
+              ),
             ),
           },
           {
@@ -1040,8 +1055,8 @@ export default {
             notas: mapToDisplayParamsWithMasterList(
               getGradesByLessonType(studentGrades, LessonType.STANDARD),
               masterBehavior.filter(
-                (i) => i.item.lesson?.type === LessonType.STANDARD
-              )
+                (i) => i.item.lesson?.type === LessonType.STANDARD,
+              ),
             ),
           },
         ];
@@ -1061,8 +1076,8 @@ export default {
               masterKnowledge.filter(
                 (i) =>
                   i.item.lesson?.type === LessonType.REINFORCEMENT &&
-                  studentReinforcementLessons.has(i.item.lesson?.id)
-              )
+                  studentReinforcementLessons.has(i.item.lesson?.id),
+              ),
             ),
           },
           {
@@ -1074,8 +1089,8 @@ export default {
               masterExecution.filter(
                 (i) =>
                   i.item.lesson?.type === LessonType.REINFORCEMENT &&
-                  studentReinforcementLessons.has(i.item.lesson?.id)
-              )
+                  studentReinforcementLessons.has(i.item.lesson?.id),
+              ),
             ),
           },
           {
@@ -1087,8 +1102,8 @@ export default {
               masterBehavior.filter(
                 (i) =>
                   i.item.lesson?.type === LessonType.REINFORCEMENT &&
-                  studentReinforcementLessons.has(i.item.lesson?.id)
-              )
+                  studentReinforcementLessons.has(i.item.lesson?.id),
+              ),
             ),
           },
         ];
@@ -1103,8 +1118,8 @@ export default {
               masterKnowledge.filter(
                 (i) =>
                   i.item.lesson?.type === LessonType.REMEDIAL &&
-                  studentRemedialLessons.has(i.item.lesson?.id)
-              )
+                  studentRemedialLessons.has(i.item.lesson?.id),
+              ),
             ),
           },
           {
@@ -1116,8 +1131,8 @@ export default {
               masterExecution.filter(
                 (i) =>
                   i.item.lesson?.type === LessonType.REMEDIAL &&
-                  studentRemedialLessons.has(i.item.lesson?.id)
-              )
+                  studentRemedialLessons.has(i.item.lesson?.id),
+              ),
             ),
           },
           {
@@ -1129,8 +1144,8 @@ export default {
               masterBehavior.filter(
                 (i) =>
                   i.item.lesson?.type === LessonType.REMEDIAL &&
-                  studentRemedialLessons.has(i.item.lesson?.id)
-              )
+                  studentRemedialLessons.has(i.item.lesson?.id),
+              ),
             ),
           },
         ];
@@ -1141,7 +1156,7 @@ export default {
           hasReinforcement: hasReinforcement,
           hasRemedial: hasRemedial,
           promedioRegular: formatGrade(
-            Math.max(promedioFinalRegular, 1.0)
+            Math.max(promedioFinalRegular, 1.0),
           )?.toFixed(1),
           promedioRefuerzo: hasReinforcement
             ? formatGrade(Math.max(promedioFinalReinf, 1.0))?.toFixed(1)
@@ -1160,20 +1175,20 @@ export default {
       if (!periodoSelected.value) return;
       localStorage.setItem(
         "periodoSelected",
-        JSON.stringify(periodoSelected.value)
+        JSON.stringify(periodoSelected.value),
       );
 
       try {
         const allGradesResponse = await axios.get(
           `/grades?year=${year}&courseId=${cursoId}&areaId=${areaId}&periodId=${periodoSelected.value}&instituteId=${usuario.value.institute.id}`,
-          tokenHeader()
+          tokenHeader(),
         );
         const allGrades = allGradesResponse.data;
 
         const studentList = (
           await axios.get(
             `/courses/${cursoId}/users?&year=${year}&active=true`,
-            tokenHeader()
+            tokenHeader(),
           )
         ).data
           .filter((estudiante) => estudiante.rol === "student")
@@ -1182,7 +1197,7 @@ export default {
         // Fetch Reinforcements (all for course/period)
         const reinforcementsResponse = await axios.get(
           `/reinforcement/by-context?courseId=${cursoId}&areaId=${areaId}&periodId=${periodoSelected.value}&year=${year}&lessonType=${LessonType.REINFORCEMENT}`,
-          tokenHeader()
+          tokenHeader(),
         );
         // Map: studentId -> Set of reinforcement lessonIds
         const reinforcementMap = new Map();
@@ -1194,7 +1209,7 @@ export default {
 
         const remedialResponse = await axios.get(
           `/reinforcement/by-context?courseId=${cursoId}&areaId=${areaId}&periodId=${periodoSelected.value}&year=${year}&lessonType=${LessonType.REMEDIAL}`,
-          tokenHeader()
+          tokenHeader(),
         );
         // Map: studentId -> Set of remedial lessonIds
         const remedialMap = new Map();
@@ -1205,10 +1220,10 @@ export default {
         });
 
         const reinforcementStudents = new Set(
-          reinforcementsResponse.data.map((r) => r.student.id)
+          reinforcementsResponse.data.map((r) => r.student.id),
         );
         const remedialStudents = new Set(
-          remedialResponse.data.map((r) => r.student.id)
+          remedialResponse.data.map((r) => r.student.id),
         );
 
         usuariosEstudiantes.value = processStudentGrades(
@@ -1217,7 +1232,7 @@ export default {
           reinforcementStudents,
           remedialStudents,
           reinforcementMap,
-          remedialMap
+          remedialMap,
         ).sort((a, b) => {
           const lastNameA = a.lastName || "";
           const lastNameB = b.lastName || "";
@@ -1288,7 +1303,7 @@ export default {
       await cargarLessons();
       await cargarGradableItemsForLesson(
         nota.gradableItem.lesson.id,
-        nota.gradableItem.type
+        nota.gradableItem.type,
       );
       mostrarModal.value = true;
     };
@@ -1297,7 +1312,7 @@ export default {
       try {
         const response = await axios.get(
           `/lessons?courseId=${cursoId}&periodId=${periodoSelected.value}&year=${year}&areaId=${areaId}&instituteId=${usuario.value.institute.id}`,
-          tokenHeader()
+          tokenHeader(),
         );
         lessons.value = response.data;
       } catch (error) {
@@ -1310,7 +1325,7 @@ export default {
         const endpoint = type === "quiz" ? "quizzes" : "activities";
         const response = await axios.get(
           `/${endpoint}?lessonId=${lessonId}`,
-          tokenHeader()
+          tokenHeader(),
         );
         if (type === "quiz") {
           quizzes.value = response.data;
@@ -1328,7 +1343,7 @@ export default {
       if (notaForm.value.lessonId && gradableTypeSelected.value) {
         await cargarGradableItemsForLesson(
           notaForm.value.lessonId,
-          gradableTypeSelected.value
+          gradableTypeSelected.value,
         );
       }
     };
@@ -1338,7 +1353,7 @@ export default {
       if (notaForm.value.lessonId) {
         await cargarGradableItemsForLesson(
           notaForm.value.lessonId,
-          gradableTypeSelected.value
+          gradableTypeSelected.value,
         );
       }
     };
@@ -1363,22 +1378,20 @@ export default {
           classification: notaForm.value.classification,
           periodId: notaForm.value.periodId,
           grade: parseFloat(notaForm.value.grade),
-          instituteId: usuario.value.institute.id
+          instituteId: usuario.value.institute.id,
         };
 
-        
-        
         if (modoEdicion.value && notaForm.value?.id) {
           await axios.patch(
             `/grades/${notaForm.value?.id}`,
             { ...payload, exist: true },
-            tokenHeader()
+            tokenHeader(),
           );
         } else if (modoEdicion.value && !notaForm.value?.id) {
           await axios.post(
             "/grades",
             { ...payload, exist: true },
-            tokenHeader()
+            tokenHeader(),
           );
         } else {
           await axios.post("/grades", payload, tokenHeader());
@@ -1387,7 +1400,7 @@ export default {
         cerrarModal();
       } catch (error) {
         console.error("Error al guardar la nota:", error);
-        alert(error)
+        alert(error);
       }
     };
 
@@ -1433,11 +1446,14 @@ export default {
 
       // For "lower than" conditions, detect recently enrolled students (< 1 month)
       estudiantesNuevos.value = [];
-      if (reportConfig.value.condition === "lt" || reportConfig.value.condition === "lte") {
+      if (
+        reportConfig.value.condition === "lt" ||
+        reportConfig.value.condition === "lte"
+      ) {
         try {
           const enrollmentResponse = await axios.get(
             `/courses/${cursoId}/users?year=${year}&active=true`,
-            tokenHeader()
+            tokenHeader(),
           );
           const oneMonthAgo = currentServerDate();
           oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
@@ -1484,7 +1500,7 @@ export default {
     const lessonName = computed(() => {
       if (!notaForm.value.lessonId) return "";
       const lesson = lessons.value.find(
-        (l) => l.id === notaForm.value.lessonId
+        (l) => l.id === notaForm.value.lessonId,
       );
       return lesson
         ? `${lesson.topic} (${new Date(lesson.date).toLocaleDateString()})`
@@ -1542,7 +1558,11 @@ export default {
         loading.dismiss();
       });
 
-      const fileName = `reporte-notas-${cursoSelected.value.name}-${JSON.parse(localStorage.getItem("periodos")).find((p) => p.id === periodoSelected.value)?.name}-${year}.png`;
+      const fileName = `reporte-notas-${cursoSelected.value.name}-${
+        JSON.parse(localStorage.getItem("periodos")).find(
+          (p) => p.id === periodoSelected.value,
+        )?.name
+      }-${year}.png`;
 
       if (Capacitor.isNativePlatform()) {
         try {
@@ -1583,7 +1603,13 @@ export default {
 
         loading.dismiss();
 
-        const fileName = `reporte-notas-${cursoSelected.value.name}-${JSON.parse(localStorage.getItem("periodos")).find((p) => p.id === periodoSelected.value)?.name}-${year}.docx`;
+        const fileName = `reporte-notas-${cursoSelected.value.name}-${
+          areaSelected.value.name
+        }-${
+          JSON.parse(localStorage.getItem("periodos")).find(
+            (p) => p.id === periodoSelected.value,
+          )?.name
+        }-${year}.docx`;
         const blob = new Blob([fileBuffer], {
           type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         });
@@ -1649,8 +1675,6 @@ export default {
       mostrarModalGeneradorPlanilla.value = true;
     };
 
-
-
     const isGeneratingZip = ref(false);
     const zipProgressValue = ref(0);
     const zipProgressText = ref("");
@@ -1663,36 +1687,39 @@ export default {
       zipProgressText.value = "Cancelando, por favor espere...";
     };
 
-    
     // Función para ceder agresivamente el hilo principal al navegador
     // Permite que se procesen eventos de click y se pinte la pantalla
-    const yieldThread = (ms = 0) => new Promise(resolve => {
-      const { port1, port2 } = new MessageChannel();
-      port1.onmessage = () => setTimeout(resolve, ms);
-      port2.postMessage(null);
-    });
+    const yieldThread = (ms = 0) =>
+      new Promise((resolve) => {
+        const { port1, port2 } = new MessageChannel();
+        port1.onmessage = () => setTimeout(resolve, ms);
+        port2.postMessage(null);
+      });
 
     const descargarPaqueteReportes = async () => {
-      if (!usuariosEstudiantes.value || usuariosEstudiantes.value.length === 0) {
+      if (
+        !usuariosEstudiantes.value ||
+        usuariosEstudiantes.value.length === 0
+      ) {
         alert("No hay estudiantes para procesar.");
         return;
       }
-      
+
       isGeneratingZip.value = true;
       zipProgressValue.value = 0;
       isZipGenerationCancelled.value = false;
-      
+
       const zip = new JSZip();
       const total = usuariosEstudiantes.value.length;
-      
+
       // Pausa inicial generosa para que el modal se muestre y el botón sea clicable
-      await yieldThread(800); 
-      
+      await yieldThread(800);
+
       if (isZipGenerationCancelled.value) {
         isGeneratingZip.value = false;
         return;
       }
-      
+
       for (let i = 0; i < total; i++) {
         if (isZipGenerationCancelled.value) {
           zipProgressText.value = "Generación cancelada.";
@@ -1702,14 +1729,16 @@ export default {
         }
 
         const est = usuariosEstudiantes.value[i];
-        zipProgressText.value = `Generando reporte para ${est.lastName} ${est.name} (${i + 1}/${total})...`;
+        zipProgressText.value = `Generando reporte para ${est.lastName} ${
+          est.name
+        } (${i + 1}/${total})...`;
         zipProgressValue.value = i / total;
-        
+
         studentToRender.value = est;
         // Wait for Vue to mount and render the hidden component
         await nextTick();
         await yieldThread(400); // pausa más larga antes de renderizar para ventana de cancelación
-        
+
         // Revisar de nuevo por si cancelaron durante el renderizado
         if (isZipGenerationCancelled.value) {
           isGeneratingZip.value = false;
@@ -1718,34 +1747,37 @@ export default {
         }
 
         const element = document.getElementById("hidden-pdf-container");
-        
+
         // Use est.code as the password, fallback to a default if missing
         const password = est.code || est.document || "1234";
-        
+
         const opt = {
-          margin:       10,
-          filename:     `${est.lastName}_${est.name}.pdf`,
-          image:        { type: 'jpeg', quality: 0.98 },
-          html2canvas:  { scale: 1.5, useCORS: true, logging: false },
-          jsPDF:        { 
-            unit: 'mm', 
-            format: 'a4', 
-            orientation: 'portrait',
+          margin: 10,
+          filename: `${est.lastName}_${est.name}.pdf`,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 1.5, useCORS: true, logging: false },
+          jsPDF: {
+            unit: "mm",
+            format: "a4",
+            orientation: "portrait",
             encryption: {
               userPassword: password,
               ownerPassword: password,
-              userPermissions: ['print', 'copy']
-            }
-          }
+              userPermissions: ["print", "copy"],
+            },
+          },
         };
-        
+
         try {
-          const pdfArrayBuffer = await html2pdf().from(element).set(opt).outputPdf('arraybuffer');
+          const pdfArrayBuffer = await html2pdf()
+            .from(element)
+            .set(opt)
+            .outputPdf("arraybuffer");
           zip.file(`${est.lastName}_${est.name}_Reporte.pdf`, pdfArrayBuffer);
         } catch (err) {
           console.error("Error generando PDF para", est.name, err);
         }
-        
+
         // Pausa generosa POST-renderizado — aquí el usuario puede cancelar
         await yieldThread(300);
 
@@ -1755,7 +1787,7 @@ export default {
           return;
         }
       }
-      
+
       if (isZipGenerationCancelled.value) {
         isGeneratingZip.value = false;
         studentToRender.value = null;
@@ -1765,15 +1797,19 @@ export default {
       zipProgressText.value = "Comprimiendo archivo ZIP...";
       zipProgressValue.value = 1;
       await yieldThread(100);
-      
+
       try {
-        const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
-        
+        const blob = await zip.generateAsync({
+          type: "blob",
+          compression: "DEFLATE",
+          compressionOptions: { level: 6 },
+        });
+
         // Trigger download
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `Reportes_${cursoSelected.value?.name || 'Curso'}.zip`;
+        a.download = `Reportes_${cursoSelected.value?.name || "Curso"}.zip`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -1873,7 +1909,6 @@ export default {
       zipProgressText,
       studentToRender,
       cancelarGeneracionZip,
-
     };
   },
 };

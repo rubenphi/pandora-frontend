@@ -1137,7 +1137,8 @@ export default {
 
       for (const student of students.value) {
         const criterionPromises = criteria.value.map(async (criterion) => {
-          const entry = evaluation.value[student.id][criterion.id];
+          const entry = evaluation.value[student.id]?.[criterion.id];
+          if (!entry) return;
           const score = entry.value === null ? 0 : entry.value;
 
           const payload = {
@@ -1150,11 +1151,13 @@ export default {
 
           try {
             const savedData = await saveCriterionScore(entry.id, payload);
+            entry.value = score;
             if (!entry.id && savedData?.id) {
-              evaluation.value[student.id][criterion.id].id = savedData.id;
+              entry.id = savedData.id;
             }
           } catch (error) {
             console.error("Error saving criterion score", error);
+            entry.value = score;
           }
         });
 
@@ -1165,15 +1168,18 @@ export default {
               evaluation.value,
               criteria.value,
             );
+            const validFinalGrade =
+              finalGrade != null && !isNaN(finalGrade) ? finalGrade : 0;
             const payloadFinalGrade = {
               userId: student.id,
               gradableId: parseInt(activityId),
               gradableType: "activity",
               periodId: periodId.value,
               gradeType: "regular",
-              grade: parseFloat(finalGrade.toFixed(2)),
+              grade: parseFloat(validFinalGrade.toFixed(2)),
               instituteId: instituteId.value,
             };
+            studentGrades.value[student.id] = validFinalGrade;
             try {
               await axios.post("/grades", payloadFinalGrade, tokenHeader());
             } catch (error) {

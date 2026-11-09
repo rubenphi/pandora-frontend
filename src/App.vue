@@ -1,18 +1,31 @@
 <template>
   <ion-app>
     <ion-router-outlet />
+    <ion-toast
+      :is-open="courseAccessNotice !== ''"
+      :message="courseAccessNotice"
+      :duration="4000"
+      position="top"
+      color="danger"
+      @did-dismiss="clearCourseAccessNotice"
+    ></ion-toast>
   </ion-app>
 </template>
 
 <script>
-import { IonApp, IonRouterOutlet } from "@ionic/vue";
+import { IonApp, IonRouterOutlet, IonToast } from "@ionic/vue";
 import { defineComponent } from "vue";
+import { courseAccessNotice, clearCourseAccessNotice } from "./courseAccessService";
 
 export default defineComponent({
   name: "App",
   components: {
     IonApp,
     IonRouterOutlet,
+    IonToast,
+  },
+  setup() {
+    return { courseAccessNotice, clearCourseAccessNotice };
   },
 });
 </script>

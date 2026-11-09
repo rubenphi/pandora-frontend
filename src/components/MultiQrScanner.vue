@@ -250,6 +250,10 @@ import { decodeMarkGrid, idFromPattern, GRID_SIZE } from '../utils/matrixPattern
 
 const PAPER_MIN_THRESHOLD = 180;
 const PAPER_MIN_AREA_RATIO = 0.01;
+// Low-light boost: when the frame is dark or lit unevenly we run a second
+// detection pass over a histogram-equalized copy (see collectDetections).
+const LOW_LIGHT_OTSU = 180;
+const UNEVEN_LIGHT_DELTA = 20;
 
 function waitForOpenCv(cvModule) {
   return new Promise((resolve) => {
@@ -547,6 +551,8 @@ export default {
     let bwMat   = null;
     let paperMask = null;
     let detectionGrayMat = null;
+    let boostedGrayMat = null;
+    let bwBoostedMat = null;
 
     // ─── Unified zoom setter ─────────────────────────────────────────
     // Perceived zoom `z` is split into:
@@ -744,6 +750,8 @@ export default {
       if (bwMat)   { try { bwMat.delete(); } catch (_) { void 0; } finally { bwMat = null; } }
       if (paperMask) { try { paperMask.delete(); } catch (_) { void 0; } finally { paperMask = null; } }
       if (detectionGrayMat) { try { detectionGrayMat.delete(); } catch (_) { void 0; } finally { detectionGrayMat = null; } }
+      if (boostedGrayMat) { try { boostedGrayMat.delete(); } catch (_) { void 0; } finally { boostedGrayMat = null; } }
+      if (bwBoostedMat) { try { bwBoostedMat.delete(); } catch (_) { void 0; } finally { bwBoostedMat = null; } }
     };
 
     const ensureOpenCvResources = (width, height) => {
@@ -755,18 +763,24 @@ export default {
         || srcMat.rows !== height
         || !paperMask
         || !detectionGrayMat
+        || !boostedGrayMat
+        || !bwBoostedMat
       ) {
         if (srcMat)  { try { srcMat.delete();  } catch (_) { /* ignore */ } }
         if (grayMat) { try { grayMat.delete(); } catch (_) { /* ignore */ } }
         if (bwMat)   { try { bwMat.delete();   } catch (_) { /* ignore */ } }
         if (paperMask) { try { paperMask.delete(); } catch (_) { /* ignore */ } }
         if (detectionGrayMat) { try { detectionGrayMat.delete(); } catch (_) { /* ignore */ } }
+        if (boostedGrayMat) { try { boostedGrayMat.delete(); } catch (_) { /* ignore */ } }
+        if (bwBoostedMat) { try { bwBoostedMat.delete(); } catch (_) { /* ignore */ } }
 
         srcMat  = markRaw(new cv.Mat(height, width, cv.CV_8UC4));
         grayMat = markRaw(new cv.Mat(height, width, cv.CV_8UC1));
         bwMat   = markRaw(new cv.Mat(height, width, cv.CV_8UC1));
         paperMask = markRaw(new cv.Mat(height, width, cv.CV_8UC1));
         detectionGrayMat = markRaw(new cv.Mat(height, width, cv.CV_8UC1));
+        boostedGrayMat = markRaw(new cv.Mat(height, width, cv.CV_8UC1));
+        bwBoostedMat = markRaw(new cv.Mat(height, width, cv.CV_8UC1));
       }
 
       return true;
@@ -808,6 +822,79 @@ export default {
         hierarchy.delete();
         paperContours.delete();
       }
+    };
+
+    // Cheap shadow detector: compares the mean brightness of the four quadrants.
+    // A bright/dim split means the global Otsu pass may lose part of the marker.
+    const hasUnevenLighting = (gray) => {
+      const stepX = Math.max(1, Math.floor(gray.cols / 40));
+      const stepY = Math.max(1, Math.floor(gray.rows / 40));
+      let minMean = Number.POSITIVE_INFINITY;
+      let maxMean = Number.NEGATIVE_INFINITY;
+
+      for (let quadrant = 0; quadrant < 4; quadrant += 1) {
+        const startX = quadrant % 2 === 0 ? 0 : Math.floor(gray.cols / 2);
+        const startY = quadrant < 2 ? 0 : Math.floor(gray.rows / 2);
+        const endX = quadrant % 2 === 0 ? Math.floor(gray.cols / 2) : gray.cols;
+        const endY = quadrant < 2 ? Math.floor(gray.rows / 2) : gray.rows;
+        let sum = 0;
+        let count = 0;
+
+        for (let y = startY; y < endY; y += stepY) {
+          for (let x = startX; x < endX; x += stepX) {
+            sum += gray.ucharPtr(y, x)[0];
+            count += 1;
+          }
+        }
+
+        if (count === 0) continue;
+        const mean = sum / count;
+        if (mean < minMean) minMean = mean;
+        if (mean > maxMean) maxMean = mean;
+      }
+
+      return maxMean - minMean > UNEVEN_LIGHT_DELTA;
+    };
+
+    // Runs one full detection pass (contours + grid decode) over the given
+    // grayscale/binary pair and returns a map of "studentId:option" -> detection.
+    const collectDetections = (gray, binary) => {
+      const contours = new cv.MatVector();
+      const hierarchy = new cv.Mat();
+      const observed = new Map();
+      const options = optionIdentifiers.value;
+      const roster = rosterByMarker.value;
+
+      try {
+        cv.findContours(
+          binary,
+          contours,
+          hierarchy,
+          cv.RETR_EXTERNAL,
+          cv.CHAIN_APPROX_SIMPLE,
+        );
+
+        for (let index = 0; index < contours.size(); index += 1) {
+          const detection = decodeMarkerContour(contours.get(index), gray);
+          if (!detection) continue;
+
+          const option = options[detection.optionIndex];
+          if (option === undefined) continue;
+
+          let studentId = String(detection.studentId);
+          if (roster.size > 0) {
+            const rosterId = roster.get(studentId);
+            if (rosterId !== undefined) studentId = rosterId;
+          }
+
+          observed.set(`${studentId}:${option}`, detection);
+        }
+      } finally {
+        hierarchy.delete();
+        contours.delete();
+      }
+
+      return observed;
     };
 
     const drawDetectedMarker = (ctx, quad, color, fillColor, label) => {
@@ -895,87 +982,65 @@ export default {
         && frameCounter % DETECT_EVERY === 0
         && ensureOpenCvResources(dw, dh)
       ) {
-        let contours = null;
         try {
-           const imageData = ctx.getImageData(0, 0, dw, dh);
-           srcMat.data.set(imageData.data);
-           detectCounter++;
-           cv.cvtColor(srcMat, grayMat, cv.COLOR_RGBA2GRAY);
-           const detectionGray = prepareDetectionImage(grayMat, dw, dh);
-           cv.threshold(detectionGray, bwMat, 0, 255, cv.THRESH_BINARY_INV + cv.THRESH_OTSU);
+          const imageData = ctx.getImageData(0, 0, dw, dh);
+          srcMat.data.set(imageData.data);
+          detectCounter++;
+          cv.cvtColor(srcMat, grayMat, cv.COLOR_RGBA2GRAY);
+          const detectionGray = prepareDetectionImage(grayMat, dw, dh);
+          const frameOtsu = cv.threshold(detectionGray, bwMat, 0, 255, cv.THRESH_BINARY_INV + cv.THRESH_OTSU);
 
+          const observed = collectDetections(detectionGray, bwMat);
 
-          contours = new cv.MatVector();
-          const hierarchy = new cv.Mat();
-          try {
-            cv.findContours(
-              bwMat,
-              contours,
-              hierarchy,
-              cv.RETR_EXTERNAL,
-              cv.CHAIN_APPROX_SIMPLE,
-            );
-
-            const options = optionIdentifiers.value;
-            const roster = rosterByMarker.value;
-            const observed = new Map();
-
-            for (let index = 0; index < contours.size(); index += 1) {
-               const detection = decodeMarkerContour(contours.get(index), detectionGray);
-
-              if (!detection) continue;
-
-              const option = options[detection.optionIndex];
-              if (option === undefined) continue;
-
-              let studentId = String(detection.studentId);
-              if (roster.size > 0) {
-                const rosterId = roster.get(studentId);
-                if (rosterId !== undefined) studentId = rosterId;
-              }
-
-              observed.set(`${studentId}:${option}`, detection);
+          // Low light / shadow fallback: a second pass over a histogram-equalized
+          // copy recovers markers that the global threshold splits or dims away.
+          if (
+            observed.size === 0
+            || frameOtsu < LOW_LIGHT_OTSU
+            || hasUnevenLighting(detectionGray)
+          ) {
+            cv.equalizeHist(detectionGray, boostedGrayMat);
+            cv.threshold(boostedGrayMat, bwBoostedMat, 0, 255, cv.THRESH_BINARY_INV + cv.THRESH_OTSU);
+            const boosted = collectDetections(boostedGrayMat, bwBoostedMat);
+            for (const [code, detection] of boosted) {
+              if (!observed.has(code)) observed.set(code, detection);
             }
-
-            for (const code of candidateStreaks.keys()) {
-              if (!observed.has(code)) candidateStreaks.delete(code);
-            }
-
-            observed.forEach((detection, code) => {
-              const studentId = code.split(':')[0];
-              const existingCode = accumulatedStudents.get(studentId);
-              if (existingCode !== undefined && existingCode !== code) return;
-
-              const previous = candidateStreaks.get(code);
-              const count = previous?.frame === detectCounter - 1 ? previous.count + 1 : 1;
-              candidateStreaks.set(code, { frame: detectCounter, count });
-
-              const isAccumulated = accumulatedCodes.has(code);
-              const isNew = !isAccumulated && count >= 2;
-              if (isNew) {
-                accumulatedStudents.set(studentId, code);
-                accumulatedCodes.add(code);
-                detectedCount.value = accumulatedCodes.size;
-                if (studentId && !studentCache[studentId]) {
-                  fetchStudentDetail(studentId);
-                }
-              }
-
-              if (isNew) {
-                drawDetectedMarker(ctx, detection.quad, '#00e5ff', 'rgba(0,229,255,0.22)', code);
-              } else if (isAccumulated) {
-                drawDetectedMarker(ctx, detection.quad, '#00e676', 'rgba(0,230,118,0.22)', code);
-              } else {
-                drawDetectedMarker(ctx, detection.quad, '#ff9800', 'rgba(255,152,0,0.16)', code);
-              }
-            });
-          } finally {
-            hierarchy.delete();
           }
+
+          for (const code of candidateStreaks.keys()) {
+            if (!observed.has(code)) candidateStreaks.delete(code);
+          }
+
+          observed.forEach((detection, code) => {
+            const studentId = code.split(':')[0];
+            const existingCode = accumulatedStudents.get(studentId);
+            if (existingCode !== undefined && existingCode !== code) return;
+
+            const previous = candidateStreaks.get(code);
+            const count = previous?.frame === detectCounter - 1 ? previous.count + 1 : 1;
+            candidateStreaks.set(code, { frame: detectCounter, count });
+
+            const isAccumulated = accumulatedCodes.has(code);
+            const isNew = !isAccumulated && count >= 2;
+            if (isNew) {
+              accumulatedStudents.set(studentId, code);
+              accumulatedCodes.add(code);
+              detectedCount.value = accumulatedCodes.size;
+              if (studentId && !studentCache[studentId]) {
+                fetchStudentDetail(studentId);
+              }
+            }
+
+            if (isNew) {
+              drawDetectedMarker(ctx, detection.quad, '#00e5ff', 'rgba(0,229,255,0.22)', code);
+            } else if (isAccumulated) {
+              drawDetectedMarker(ctx, detection.quad, '#00e676', 'rgba(0,230,118,0.22)', code);
+            } else {
+              drawDetectedMarker(ctx, detection.quad, '#ff9800', 'rgba(255,152,0,0.16)', code);
+            }
+          });
         } catch (error) {
           console.warn('Error en detección OpenCV:', error);
-        } finally {
-          if (contours) contours.delete();
         }
       }
 

@@ -291,7 +291,12 @@ export default {
         );
         const lessonIndex = lessons.value.findIndex((l) => l.id === lessonId);
         if (lessonIndex !== -1) {
-          lessons.value[lessonIndex].materials = response.data;
+          lessons.value[lessonIndex].materials = response.data.sort((a, b) => {
+            if (a.createdAt && b.createdAt) {
+              return new Date(a.createdAt) - new Date(b.createdAt);
+            }
+            return (a.id || 0) - (b.id || 0);
+          });
         }
       } catch (error) {
         console.error(
