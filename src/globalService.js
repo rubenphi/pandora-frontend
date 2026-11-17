@@ -22,9 +22,9 @@ export function initializeBaseUrl(ip) {
   let url = null;
   const storedIp = localStorage.getItem("backend_ip");
 
-  if (storedIp && Capacitor.isNativePlatform()) {
-    url = `http://${storedIp}`;
-  } else if (!Capacitor.isNativePlatform()) {
+  if (Capacitor.isNativePlatform()) {
+    url = storedIp ? `http://${storedIp}` : "http://127.0.0.1:3000/";
+  } else {
     // Implementación para web
     const puerto = "3000";
     url =

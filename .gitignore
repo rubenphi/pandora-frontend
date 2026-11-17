@@ -42,3 +42,9 @@ android/app/build/outputs/
 android/capacitor-cordova-android-plugins/build/
 android/capacitor-cordova-android-plugins/src/main/assets/capacitor.config.json
 android/app/src/main/assets/public/
+
+# SQLite embedded DB
+*.sqlite
+*.sqlite3
+public/nodejs/data/*.sqlite
+!public/nodejs/data/.gitkeep

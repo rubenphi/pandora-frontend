@@ -5,6 +5,8 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
+    "sync:backend": "node -e \"const fs=require('fs'); fs.mkdirSync('public/nodejs/data',{recursive:true}); fs.copyFileSync('../pandora-nest/dist/bundle/index.js','public/nodejs/index.js'); if(fs.existsSync('../pandora-nest/data/pandora.sqlite')) fs.copyFileSync('../pandora-nest/data/pandora.sqlite','public/nodejs/data/pandora.sqlite'); console.log('Backend and database synced into frontend!');\"",
+    "build:standalone": "npm run sync:backend && vue-cli-service build && npx cap sync android",
     "test:unit": "vue-cli-service test:unit",
     "test:e2e": "vue-cli-service test:e2e",
     "lint": "vue-cli-service lint",
@@ -21,6 +23,7 @@
     "@capacitor/haptics": "^7.0.2",
     "@capacitor/keyboard": "^7.0.3",
     "@capacitor/status-bar": "^7.0.3",
+    "@capawesome/capacitor-nodejs": "^0.3.0",
     "@capgo/capacitor-flash": "^7.1.23",
     "@ionic/cli": "^7.2.0",
     "@ionic/vue": "^6.0.0",

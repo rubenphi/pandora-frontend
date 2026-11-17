@@ -9,5 +9,11 @@
 	"server": {
 		"androidScheme": "http",
 		"cleartext": true
+	},
+	"plugins": {
+		"Nodejs": {
+			"nodeDir": "nodejs",
+			"startMode": "auto"
+		}
 	}
 }
