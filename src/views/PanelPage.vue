@@ -17,23 +17,30 @@
         </ion-item>
 
         <ion-item v-if="admin" :href="'/admin/configuraciones'">
-          <ion-icon slot="start" :icon="settingsOutline"></ion-icon
-          ><ion-label>Configuraciones</ion-label>
+          <ion-icon slot="start" :icon="settingsOutline"></ion-icon>
+          <ion-label>Configuraciones</ion-label>
         </ion-item>
         <ion-item v-if="admin" :href="'/admin/registro/usuarios'">
-          <ion-icon slot="start" :icon="personAddOutline"></ion-icon
-          ><ion-label>Añadir usuario</ion-label>
+          <ion-icon slot="start" :icon="personAddOutline"></ion-icon>
+          <ion-label>Añadir usuario</ion-label>
         </ion-item>
 
         <ion-item v-if="admin" :href="'/admin/gestionar/usuarios'">
-          <ion-icon slot="start" :icon="peopleCircleOutline"></ion-icon
-          ><ion-label>Gestionar usuarios</ion-label>
+          <ion-icon slot="start" :icon="peopleCircleOutline"></ion-icon>
+          <ion-label>Gestionar usuarios</ion-label>
         </ion-item>
 
         <ion-item v-if="admin" href="/admin/gestion-academica">
           <ion-icon slot="start" :icon="schoolOutline"></ion-icon>
           <ion-label>Gestión Académica</ion-label>
         </ion-item>
+
+        <!-- Herramientas de Administrador (Solo si es admin y vista administrador activa) -->
+        <ion-item v-if="admin && adminView" :href="'/admin/herramientas'">
+          <ion-icon slot="start" :icon="buildOutline"></ion-icon>
+          <ion-label>Herramientas de Administrador</ion-label>
+        </ion-item>
+
         <ion-item :href="'/herramientas'">
           <ion-icon slot="start" :icon="constructOutline"></ion-icon>
           <ion-label>Herramientas</ion-label>
@@ -61,6 +68,7 @@ import {
   layersOutline,
   schoolOutline,
   constructOutline,
+  buildOutline,
 } from "ionicons/icons";
 
 import {
@@ -96,12 +104,14 @@ export default {
   setup() {
     const usuario = ref();
     const admin = esAdmin();
-
+    const adminView = ref(false);
     const cursos = ref([]);
+
     onIonViewWillEnter(async () => {
       usuario.value = usuarioGet();
       tokenHeader();
       cursos.value = JSON.parse(localStorage.getItem("cursosUsuario"));
+      adminView.value = localStorage.getItem("adminView") === "true";
     });
 
     return {
@@ -116,7 +126,9 @@ export default {
       layersOutline,
       schoolOutline,
       constructOutline,
+      buildOutline,
       admin,
+      adminView,
     };
   },
 };

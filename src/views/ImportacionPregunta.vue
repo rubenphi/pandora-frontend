@@ -50,26 +50,33 @@
                 </ion-select>
               </ion-item>
 
-        <ion-item>
-          <ion-label position="stacked">Área</ion-label>
-          <ion-select v-model="areaSelected" placeholder="Selecciona un área">
-            <ion-select-option
-              v-for="area in areas"
-              :key="area.id"
-              :value="area"
-            >
-              {{ area.name }}
-            </ion-select-option>
-          </ion-select>
-        </ion-item>
+              <ion-item>
+                <ion-label position="stacked">Área</ion-label>
+                <ion-select
+                  v-model="areaSelected"
+                  placeholder="Selecciona un área"
+                >
+                  <ion-select-option
+                    v-for="area in areas"
+                    :key="area.id"
+                    :value="area"
+                  >
+                    {{ area.name }}
+                  </ion-select-option>
+                </ion-select>
+              </ion-item>
 
-        <ion-item>
+              <ion-item>
                 <ion-select
                   slot="start"
                   v-model="yearSelected"
                   placeholder="Selecciona un año"
                 >
-                  <ion-select-option v-for="year in years" :key="year" :value="year">
+                  <ion-select-option
+                    v-for="year in years"
+                    :key="year"
+                    :value="year"
+                  >
                     <strong>Año: </strong> {{ year }}
                   </ion-select-option>
                 </ion-select>
@@ -102,7 +109,11 @@
             <ion-item slot="header" @click="loadQuizzesAndQuestions(lesson)">
               <ion-label>
                 {{ lesson.topic }}
-                <p v-if="searchQuery && searchQuery.trim() !== '' && lesson.course">
+                <p
+                  v-if="
+                    searchQuery && searchQuery.trim() !== '' && lesson.course
+                  "
+                >
                   <ion-badge color="medium">{{ lesson.course.name }}</ion-badge>
                 </p>
               </ion-label>
@@ -114,7 +125,9 @@
                 <ion-accordion v-for="quiz in lesson.quizzes" :key="quiz.id">
                   <ion-item slot="header">
                     <ion-label>{{ quiz.title }}</ion-label>
-                    <ion-badge v-if="questionsByQuiz[quiz.id]?.questions?.length">
+                    <ion-badge
+                      v-if="questionsByQuiz[quiz.id]?.questions?.length"
+                    >
                       {{ questionsByQuiz[quiz.id].questions.length }} preguntas
                     </ion-badge>
                   </ion-item>
@@ -124,21 +137,23 @@
                       <ion-checkbox
                         :checked="
                           questionsByQuiz[quiz.id]?.questions?.every(
-                            (p) => p.selected
+                            (p) => p.selected,
                           )
                         "
                         @ionChange="
-                          (event) => toggleSeleccionTodas(quiz.id, event.detail.checked)
+                          (event) =>
+                            toggleSeleccionTodas(quiz.id, event.detail.checked)
                         "
                       ></ion-checkbox>
                       <ion-label>Seleccionar todas</ion-label>
                     </ion-item>
 
                     <ion-item
-                      v-for="pregunta in questionsByQuiz[quiz.id]?.questions || []"
+                      v-for="pregunta in questionsByQuiz[quiz.id]?.questions ||
+                      []"
                       :key="pregunta.id"
                     >
-                      <ion-checkbox 
+                      <ion-checkbox
                         v-model="pregunta.selected"
                         @ionChange="toggleQuestionSelection(quiz.id, pregunta)"
                       ></ion-checkbox>
@@ -165,22 +180,40 @@
         </ion-button>
 
         <!-- Resumen de selección -->
-        <div v-if="selectedQuestionsSummary.length > 0" class="ion-padding summary-section">
+        <div
+          v-if="selectedQuestionsSummary.length > 0"
+          class="ion-padding summary-section"
+        >
           <h3>Resumen de selección</h3>
           <ion-list>
-            <ion-item v-for="item in selectedQuestionsSummary" :key="item.quizId">
+            <ion-item
+              v-for="item in selectedQuestionsSummary"
+              :key="item.quizId"
+            >
               <ion-label>
                 <h2>{{ item.quizTitle }}</h2>
-                <p>{{ item.lessonTopic }} ({{ item.year }}) - {{ item.courseName }}</p>
-                <p><strong>{{ item.count }} preguntas seleccionadas</strong></p>
+                <p>
+                  {{ item.lessonTopic }} ({{ item.year }}) -
+                  {{ item.courseName }}
+                </p>
+                <p>
+                  <strong>{{ item.count }} preguntas seleccionadas</strong>
+                </p>
               </ion-label>
-              <ion-button slot="end" fill="clear" color="danger" @click="removeQuizFromSelection(item.quizId)">
+              <ion-button
+                slot="end"
+                fill="clear"
+                color="danger"
+                @click="removeQuizFromSelection(item.quizId)"
+              >
                 <ion-icon :icon="trashOutline"></ion-icon>
               </ion-button>
             </ion-item>
           </ion-list>
           <div class="ion-text-center">
-            <p><strong>Total: {{ totalSelectedCount }} preguntas</strong></p>
+            <p>
+              <strong>Total: {{ totalSelectedCount }} preguntas</strong>
+            </p>
           </div>
         </div>
       </ion-list>
@@ -237,7 +270,13 @@ import {
   searchOutline,
   trashOutline,
 } from "ionicons/icons";
-import { periodosGet, numerosOrdinales, currentServerYear } from "../globalService";
+import {
+  periodosGet,
+  currentServerYear,
+  tokenHeader,
+  getOrdinalTitle,
+  getNextQuestionIndex,
+} from "../globalService";
 
 export default {
   components: {
@@ -263,7 +302,7 @@ export default {
   },
   setup() {
     const route = useRoute();
-    const idCuestionario = route.params.id;
+    const idCuestionario = computed(() => route.params.id);
 
     const cursos = ref([]);
     const cursoSelected = ref();
@@ -277,27 +316,29 @@ export default {
     const questionsByQuiz = ref({}); // Renamed from preguntasPorLeccion
     const searchQuery = ref("");
     const filtersAccordionState = ref("filters");
-    
+
     // Global state to persist selection
     const globalSelectedQuestions = ref({}); // { quizId: { quizData, questions: { questionId: questionData } } }
 
     const totalSelectedCount = computed(() => {
       let total = 0;
-      Object.values(globalSelectedQuestions.value).forEach(quiz => {
+      Object.values(globalSelectedQuestions.value).forEach((quiz) => {
         total += Object.keys(quiz.questions).length;
       });
       return total;
     });
 
     const selectedQuestionsSummary = computed(() => {
-      return Object.entries(globalSelectedQuestions.value).map(([quizId, data]) => ({
-        quizId,
-        quizTitle: data.quizTitle,
-        lessonTopic: data.lessonTopic,
-        year: data.year,
-        courseName: data.courseName,
-        count: Object.keys(data.questions).length
-      }));
+      return Object.entries(globalSelectedQuestions.value).map(
+        ([quizId, data]) => ({
+          quizId,
+          quizTitle: data.quizTitle,
+          lessonTopic: data.lessonTopic,
+          year: data.year,
+          courseName: data.courseName,
+          count: Object.keys(data.questions).length,
+        }),
+      );
     });
 
     const modoOrden = ref("mix");
@@ -317,7 +358,7 @@ export default {
       if (searchQuery.value && searchQuery.value.trim() !== "") {
         // Búsqueda por palabra clave globalmente
         url = `/lessons?topic=${encodeURIComponent(
-          searchQuery.value.trim()
+          searchQuery.value.trim(),
         )}&instituteId=${userLoged.value.institute.id}&exist=true`;
       } else {
         // Búsqueda por filtros tradicionales
@@ -337,7 +378,7 @@ export default {
 
       try {
         const res = await axios.get(url);
-        lessons.value = res.data.filter((c) => c.id != idCuestionario);
+        lessons.value = res.data.filter((c) => c.id != idCuestionario.value);
         if (searchQuery.value && searchQuery.value.trim() !== "") {
           filtersAccordionState.value = undefined; // Close accordion after text search
         }
@@ -365,10 +406,11 @@ export default {
       for (const quiz of lesson.quizzes) {
         const questionsRes = await axios.get(`/quizzes/${quiz.id}/questions`);
         const sortedQuestions = questionsRes.data.sort((a, b) => a.id - b.id);
-        
+
         // Sync with globalSelectedQuestions
         sortedQuestions.forEach((q) => {
-          const isSelected = !!globalSelectedQuestions.value[quiz.id]?.questions[q.id];
+          const isSelected =
+            !!globalSelectedQuestions.value[quiz.id]?.questions[q.id];
           q.selected = isSelected;
         });
 
@@ -376,7 +418,7 @@ export default {
           name: quiz.title,
           questions: sortedQuestions,
           lessonData: lesson, // Keep lesson data for summary
-          quizData: quiz
+          quizData: quiz,
         };
       }
     };
@@ -389,15 +431,21 @@ export default {
             quizTitle: quizInfo.name,
             lessonTopic: quizInfo.lessonData.topic,
             year: quizInfo.lessonData.year,
-            courseName: quizInfo.lessonData?.course?.name || cursoSelected.value?.name || "Varios",
-            questions: {}
+            courseName:
+              quizInfo.lessonData?.course?.name ||
+              cursoSelected.value?.name ||
+              "Varios",
+            questions: {},
           };
         }
         globalSelectedQuestions.value[quizId].questions[pregunta.id] = pregunta;
       } else {
         if (globalSelectedQuestions.value[quizId]) {
           delete globalSelectedQuestions.value[quizId].questions[pregunta.id];
-          if (Object.keys(globalSelectedQuestions.value[quizId].questions).length === 0) {
+          if (
+            Object.keys(globalSelectedQuestions.value[quizId].questions)
+              .length === 0
+          ) {
             delete globalSelectedQuestions.value[quizId];
           }
         }
@@ -407,8 +455,9 @@ export default {
     const toggleSeleccionTodas = (quizId, checked) => {
       if (questionsByQuiz.value[quizId]) {
         const questions = questionsByQuiz.value[quizId].questions;
-        const areAllCurrentlySelected = questions.length > 0 && questions.every(q => q.selected);
-        
+        const areAllCurrentlySelected =
+          questions.length > 0 && questions.every((q) => q.selected);
+
         // Solo aplicar si el estado deseado es distinto al estado actual de todas las preguntas
         // Esto evita el efecto cascada al deseleccionar una sola pregunta
         if (areAllCurrentlySelected !== checked) {
@@ -426,7 +475,9 @@ export default {
       delete globalSelectedQuestions.value[quizId];
       // Sync UI if the quiz is currently visible
       if (questionsByQuiz.value[quizId]) {
-        questionsByQuiz.value[quizId].questions.forEach(q => q.selected = false);
+        questionsByQuiz.value[quizId].questions.forEach(
+          (q) => (q.selected = false),
+        );
       }
     };
 
@@ -437,7 +488,8 @@ export default {
       });
 
       if (seleccionadas.length === 0) {
-        errorMessage.value = "No has seleccionado ninguna pregunta para importar.";
+        errorMessage.value =
+          "No has seleccionado ninguna pregunta para importar.";
         setErrorToastOpen(true);
         return;
       }
@@ -450,24 +502,37 @@ export default {
       }
 
       try {
+        tokenHeader();
         // Fetch existing questions to determine the starting index
         const existingQuestionsRes = await axios.get(
-          `/quizzes/${idCuestionario}/questions`
+          `/quizzes/${idCuestionario.value}/questions`,
         );
-        const baseIndex = existingQuestionsRes.data.length;
+        const existingQuestions = existingQuestionsRes.data || [];
+        const baseIndex = getNextQuestionIndex(existingQuestions);
 
         seleccionadas = seleccionadas.map((p, index) => ({
           id: p.id,
-          title:
-            numerosOrdinales[baseIndex + index] ||
-            `Pregunta ${baseIndex + index + 1}`,
+          title: getOrdinalTitle(baseIndex + index),
         }));
 
-        await axios.post(`/quizzes/${idCuestionario}/import-questions-mix`, {
-          toQuizId: parseInt(idCuestionario),
-          questions: seleccionadas,
-        });
+        await axios.post(
+          `/quizzes/${idCuestionario.value}/import-questions-mix`,
+          {
+            toQuizId: parseInt(idCuestionario.value),
+            questions: seleccionadas,
+          },
+        );
         setSuccessToastOpen(true);
+
+        // Reset global selection after import
+        globalSelectedQuestions.value = {};
+        Object.values(questionsByQuiz.value).forEach((quizGroup) => {
+          if (quizGroup?.questions) {
+            quizGroup.questions.forEach((q) => {
+              q.selected = false;
+            });
+          }
+        });
       } catch (e) {
         errorMessage.value = e.response?.data?.message || "Error al importar";
         setErrorToastOpen(true);
@@ -475,19 +540,25 @@ export default {
     };
 
     onIonViewWillEnter(async () => {
+      tokenHeader();
+      globalSelectedQuestions.value = {};
+      Object.values(questionsByQuiz.value).forEach((quizGroup) => {
+        if (quizGroup?.questions) {
+          quizGroup.questions.forEach((q) => {
+            q.selected = false;
+          });
+        }
+      });
+
       userLoged.value.institute.id = parseInt(userLoged.value.institute.id);
       cursos.value = (
         await axios.get(
-          `/courses?instituteId=${userLoged.value.institute.id}&exist=true`
+          `/courses?instituteId=${userLoged.value.institute.id}&exist=true`,
         )
       ).data;
       const curServerYear = currentServerYear();
-      years.value = Array.from(
-        { length: 10 },
-        (_, i) => curServerYear - i
-      );
-      yearSelected.value =
-        localStorage.getItem("year") || curServerYear;
+      years.value = Array.from({ length: 10 }, (_, i) => curServerYear - i);
+      yearSelected.value = localStorage.getItem("year") || curServerYear;
     });
 
     return {

@@ -264,7 +264,7 @@ export default {
   setup() {
     const mroute = useRoute();
     const { pregunta } = mroute.params;
-    const id = parseInt(mroute.params.id) || 0;
+    const id = computed(() => parseInt(mroute.params.id) || 0);
     const mezclarPreguntas = ref(true);
     const mezclarOpciones = ref(true);
     const points = ref(10);
@@ -449,6 +449,8 @@ export default {
           return;
         }
 
+        tokenHeader();
+
         const { questions, uploaded } = await resolveQuestionPhotos(
           objetosValidos.value,
           selectedImages.value,
@@ -457,7 +459,7 @@ export default {
         await axios.post(
           "/questions/import/variable-option",
           {
-            quizId: id ? id : 0,
+            quizId: id.value ? id.value : 0,
             points: points.value,
             shuffleOptions: mezclarOpciones.value,
             questions: questions.map((objeto) => ({
@@ -469,9 +471,6 @@ export default {
               })),
             })),
           },
-          {
-            headers: tokenHeader(),
-          },
         );
 
         isSuccessToastOpen.value = true;
@@ -479,6 +478,10 @@ export default {
           uploaded > 0
             ? `Importación exitosa. ${uploaded} imagen(es) subida(s).`
             : "Importación exitosa";
+
+        textareaContent.value = "";
+        objetosValidos.value = [];
+        clearImages();
       } catch (err) {
         console.error("Error al importar preguntas:", err);
         toastErrorMessage.value = "Error al importar preguntas: " + err.message;

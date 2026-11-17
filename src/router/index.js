@@ -165,6 +165,14 @@ const routes = [
         },
       },
       {
+        path: "admin/herramientas",
+        component: () => import("@/views/AdminHerramientasPage.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
         path: "admin/gestionar/cursos",
         component: () => import("@/views/gestionUsuarios.vue"),
         beforeEnter: (to, from, next) => {

@@ -13,8 +13,6 @@
     <ion-content>
       <div :fullscreen="true">
         <ion-list>
-
-
           <!-- checkbox para mezclar objetos de array "Mezclar objetos" -->
           <ion-item>
             <ion-label>Mezclar preguntas</ion-label>
@@ -54,8 +52,8 @@ O también objetos separados:
             <ion-label position="stacked">
               Imágenes (opcional)
               <p v-if="selectedImages.length > 0">
-                {{ selectedImages.length }} imagen(es) seleccionada(s). En el JSON
-                referencie cada archivo por su nombre original en el campo
+                {{ selectedImages.length }} imagen(es) seleccionada(s). En el
+                JSON referencie cada archivo por su nombre original en el campo
                 "photo".
               </p>
             </ion-label>
@@ -226,11 +224,7 @@ import {
   IonThumbnail,
 } from "@ionic/vue";
 
-import {
-  arrowBackOutline,
-  trashOutline,
-  imagesOutline,
-} from "ionicons/icons";
+import { arrowBackOutline, trashOutline, imagesOutline } from "ionicons/icons";
 import axios from "axios";
 
 export default {
@@ -257,7 +251,7 @@ export default {
   setup() {
     const mroute = useRoute();
     const { pregunta } = mroute.params;
-    const id = parseInt(mroute.params.id) || 0;
+    const id = computed(() => parseInt(mroute.params.id) || 0);
     const mezclarPreguntas = ref(true);
     const points = ref(10);
 
@@ -316,7 +310,7 @@ export default {
         return objetosValidos.value;
       }
       return objetosValidos.value.filter(
-        (objeto) => !tiposIncorrectos.value.includes(objeto.type)
+        (objeto) => !tiposIncorrectos.value.includes(objeto.type),
       );
     });
 
@@ -331,7 +325,7 @@ export default {
         typeof objeto.photo !== "string"
       ) {
         throw new Error(
-          `El campo "photo" de ${etiqueta} debe ser el nombre original de la imagen.`
+          `El campo "photo" de ${etiqueta} debe ser el nombre original de la imagen.`,
         );
       }
     };
@@ -354,35 +348,35 @@ export default {
         try {
           const arrayObjetos = JSON.parse(contenido);
           if (Array.isArray(arrayObjetos)) {
-          arrayObjetos.forEach((objeto, index) => {
+            arrayObjetos.forEach((objeto, index) => {
+              if (
+                !Object.prototype.hasOwnProperty.call(objeto, "sentence") ||
+                !Object.prototype.hasOwnProperty.call(objeto, "type")
+              ) {
+                throw new Error(
+                  `Objeto en posición ${
+                    index + 1
+                  } no tiene las propiedades 'sentence' y 'type' requeridas`,
+                );
+              }
+              assertPhoto(objeto, `el objeto en posición ${index + 1}`);
+              objetosProcesados.push(objeto);
+              tipos.add(objeto.type);
+            });
+          } else {
+            // Si no es array, tratar como objeto único
             if (
-              !Object.prototype.hasOwnProperty.call(objeto, "sentence") ||
-              !Object.prototype.hasOwnProperty.call(objeto, "type")
+              !Object.prototype.hasOwnProperty.call(arrayObjetos, "sentence") ||
+              !Object.prototype.hasOwnProperty.call(arrayObjetos, "type")
             ) {
               throw new Error(
-                `Objeto en posición ${
-                  index + 1
-                } no tiene las propiedades 'sentence' y 'type' requeridas`
+                `El objeto no tiene las propiedades 'sentence' y 'type' requeridas`,
               );
             }
-            assertPhoto(objeto, `el objeto en posición ${index + 1}`);
-            objetosProcesados.push(objeto);
-            tipos.add(objeto.type);
-          });
-        } else {
-          // Si no es array, tratar como objeto único
-          if (
-            !Object.prototype.hasOwnProperty.call(arrayObjetos, "sentence") ||
-            !Object.prototype.hasOwnProperty.call(arrayObjetos, "type")
-          ) {
-            throw new Error(
-              `El objeto no tiene las propiedades 'sentence' y 'type' requeridas`
-            );
+            assertPhoto(arrayObjetos, "el objeto");
+            objetosProcesados.push(arrayObjetos);
+            tipos.add(arrayObjetos.type);
           }
-          assertPhoto(arrayObjetos, "el objeto");
-          objetosProcesados.push(arrayObjetos);
-          tipos.add(arrayObjetos.type);
-        }
         } catch (parseError) {
           // Si falla como JSON válido, intentar extraer objetos individuales
           const regex = /\{[^{}]*\}/g;
@@ -403,7 +397,7 @@ export default {
                 throw new Error(
                   `Objeto ${
                     index + 1
-                  } no tiene las propiedades 'sentence' y 'type' requeridas`
+                  } no tiene las propiedades 'sentence' y 'type' requeridas`,
                 );
               }
 
@@ -412,7 +406,7 @@ export default {
               tipos.add(objeto.type);
             } catch (objError) {
               throw new Error(
-                `Error en objeto ${index + 1}: ${objError.message}`
+                `Error en objeto ${index + 1}: ${objError.message}`,
               );
             }
           });
@@ -463,12 +457,12 @@ export default {
 
       // Filtrar objetosValidos para eliminar permanentemente los tipos incorrectos
       objetosValidos.value = objetosValidos.value.filter(
-        (objeto) => !tiposAEliminar.includes(objeto.type)
+        (objeto) => !tiposAEliminar.includes(objeto.type),
       );
 
       // Actualizar tiposDetectados para eliminar los tipos removidos
       tiposDetectados.value = tiposDetectados.value.filter(
-        (tipo) => !tiposAEliminar.includes(tipo)
+        (tipo) => !tiposAEliminar.includes(tipo),
       );
 
       // Limpiar la lista de tipos incorrectos
@@ -506,33 +500,35 @@ export default {
           return;
         }
 
+        tokenHeader();
+
         const { questions, uploaded } = await resolveQuestionPhotos(
           preguntasFiltradas.value,
           selectedImages.value,
         );
 
-        await axios.post(
-          "/questions/import/types",
-          {
-            quizId: id ? id : 0,
-            points: points.value,
-            questions: questions.map((objeto) => ({
-              type: objeto.type,
-              sentence: objeto.sentence,
-              photo: objeto.photo,
-            })),
-            types: tiposDetectados.value,
-          },
-          {
-            headers: tokenHeader(),
-          },
-        );
+        await axios.post("/questions/import/types", {
+          quizId: id.value ? id.value : 0,
+          points: points.value,
+          questions: questions.map((objeto) => ({
+            type: objeto.type,
+            sentence: objeto.sentence,
+            photo: objeto.photo,
+          })),
+          types: tiposDetectados.value,
+        });
 
         isSuccessToastOpen.value = true;
         toastSuccessMessage.value =
           uploaded > 0
             ? `Importación exitosa. ${uploaded} imagen(es) subida(s).`
             : "Importación exitosa";
+
+        textareaContent.value = "";
+        objetosValidos.value = [];
+        tiposDetectados.value = [];
+        tiposIncorrectos.value = [];
+        clearImages();
       } catch (err) {
         console.error("Error al importar preguntas:", err);
         toastErrorMessage.value = "Error al importar preguntas: " + err.message;

@@ -45,7 +45,9 @@
           </ion-button>
 
           <ion-button @click="abrirMarcarDisponibleModal">
-            <ion-icon :icon="allVisible ? lockClosedOutline : lockOpenOutline"></ion-icon>
+            <ion-icon
+              :icon="allVisible ? lockClosedOutline : lockOpenOutline"
+            ></ion-icon>
           </ion-button>
           <ion-button @click="openGeneratorModal()">
             <ion-icon :icon="downloadOutline"></ion-icon>
@@ -304,62 +306,60 @@ export default {
 
     onIonViewDidEnter(async () => {
       periodoSelected.value = JSON.parse(
-        localStorage.getItem("periodoSelected")
+        localStorage.getItem("periodoSelected"),
       );
 
       tokenHeader();
 
-      if (cuestionario.value.id !== id) {
-        await axios
-          .get(`/quizzes/${id}`)
-          .then((response) => {
-            cuestionario.value = {
-              ...response.data,
+      await axios
+        .get(`/quizzes/${id}`)
+        .then((response) => {
+          cuestionario.value = {
+            ...response.data,
 
-              id: response.data.id,
-              topic: response.data.title,
-              //order by title with ordinal number
-              questions: response.data.questions
-                .slice() // Create a shallow copy before sorting
-                .sort((a, b) => a.id - b.id) // o a.number - b.number
-                .map((question, index) => ({
-                  ...question,
-                  title:
-                    numeroOrdinal(index, question.title) + ". " + question.title,
-                }))
-                //only exist
-                .filter((question) => question.exist),
+            id: response.data.id,
+            topic: response.data.title,
+            //order by title with ordinal number
+            questions: (response.data.questions || [])
+              .slice() // Create a shallow copy before sorting
+              .sort((a, b) => a.id - b.id) // o a.number - b.number
+              .map((question, index) => ({
+                ...question,
+                title:
+                  numeroOrdinal(index, question.title) + ". " + question.title,
+              }))
+              //only exist
+              .filter((question) => question.exist),
 
-              course: response.data.course,
-              institute: response.data.institute,
-            };
+            course: response.data.course,
+            institute: response.data.institute,
+          };
 
-            if (!admin) {
-              cuestionario.value.questions = cuestionario.value.questions.filter(
-                (question) => question.visible
-              );
-            }
-            localStorage.setItem(
-              "quizSelected",
-              JSON.stringify(cuestionario.value)
+          if (!admin) {
+            cuestionario.value.questions = cuestionario.value.questions.filter(
+              (question) => question.visible,
             );
+          }
+          localStorage.setItem(
+            "quizSelected",
+            JSON.stringify(cuestionario.value),
+          );
 
-            allVisible.value = cuestionario.value.questions.every(
-              (question) => question.visible
+          allVisible.value = cuestionario.value.questions.every(
+            (question) => question.visible,
+          );
+
+          year.value = cuestionario.value.year;
+        })
+        .catch((fallo) => {
+          if (fallo?.response?.status === 403) {
+            notifyCourseAccessDenied(
+              fallo?.response?.data?.message ||
+                "No tienes acceso a este cuestionario.",
             );
-
-            year.value = cuestionario.value.year;
-          })
-          .catch((fallo) => {
-            if (fallo?.response?.status === 403) {
-              notifyCourseAccessDenied(
-                fallo?.response?.data?.message ||
-                  "No tienes acceso a este cuestionario."
-              );
-              router.push("/inicio");
-            }
-          });
-      }
+            router.push("/inicio");
+          }
+        });
     });
 
     const cancel = () => {
@@ -419,7 +419,7 @@ export default {
               try {
                 const response = await axios.get(
                   `/invitations?code=${authCode}&valid=true&exist=true`,
-                  tokenHeader()
+                  tokenHeader(),
                 );
 
                 if (response.data && response.data.length > 0) {
@@ -430,7 +430,7 @@ export default {
                   };
                   localStorage.setItem(
                     "ordenOpcionesKey",
-                    JSON.stringify(dataToStore)
+                    JSON.stringify(dataToStore),
                   );
 
                   // Mostrar mensaje de éxito
@@ -493,7 +493,7 @@ export default {
         return axios.patch(
           `/questions/${pregunta.id}`,
           preguntaUpdate,
-          tokenHeader()
+          tokenHeader(),
         );
       });
 
@@ -506,7 +506,8 @@ export default {
     };
 
     const onConfirmarMarcar = async (selectedIds) => {
-      if (!cuestionario.value.questions.length || !cuestionario.value.institute) return;
+      if (!cuestionario.value.questions.length || !cuestionario.value.institute)
+        return;
 
       const promises = cuestionario.value.questions.map((pregunta) => {
         const visible = selectedIds.includes(pregunta.id);
@@ -518,7 +519,7 @@ export default {
             available: visible,
             instituteId: cuestionario.value.institute.id,
           },
-          tokenHeader()
+          tokenHeader(),
         );
       });
 

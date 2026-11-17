@@ -59,13 +59,13 @@ export async function fetchServerTime() {
     apiState.serverTime = response.data;
 
     const serverDateOptions = new Date(
-        apiState.serverTime.year,
-        apiState.serverTime.month - 1,
-        apiState.serverTime.day,
-        apiState.serverTime.hour,
-        apiState.serverTime.min,
-        apiState.serverTime.second,
-        apiState.serverTime.miliseconds
+      apiState.serverTime.year,
+      apiState.serverTime.month - 1,
+      apiState.serverTime.day,
+      apiState.serverTime.hour,
+      apiState.serverTime.min,
+      apiState.serverTime.second,
+      apiState.serverTime.miliseconds,
     );
     apiState.timeOffset = serverDateOptions.getTime() - Date.now();
 
@@ -105,7 +105,16 @@ export function sortPeriods(periods) {
     4: ["cuarto", "cuarta", "cuatro", "4º", "4ta", "fourth"],
     5: ["quinto", "quinta", "cinco", "5º", "5ta", "fifth"],
     6: ["sexto", "sexta", "seis", "6º", "6ta", "sixth"],
-    7: ["septimo", "septima", "setimo", "setima", "siete", "7º", "7ma", "seventh"],
+    7: [
+      "septimo",
+      "septima",
+      "setimo",
+      "setima",
+      "siete",
+      "7º",
+      "7ma",
+      "seventh",
+    ],
     8: ["octavo", "octava", "ocho", "8º", "8va", "eighth"],
     9: ["noveno", "novena", "nueve", "9º", "9na", "ninth"],
     10: ["decimo", "decima", "diez", "10º", "10ma", "tenth"],
@@ -115,8 +124,11 @@ export function sortPeriods(periods) {
 
   const getPeriodValue = (name) => {
     if (!name) return Infinity;
-    const lowerName = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    
+    const lowerName = name
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
     // 1. Prioritize digit extraction
     const digitMatch = lowerName.match(/\d+/);
     if (digitMatch) {
@@ -125,24 +137,29 @@ export function sortPeriods(periods) {
 
     // 2. Check written words (1 to 12)
     for (let i = 1; i <= 12; i++) {
-        const keywords = periodKeywords[i];
-        for (const keyword of keywords) {
-            const normalizedKeyword = keyword.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            // Use regex for word boundaries or non-alphanumeric surrounds
-            const regex = new RegExp(`(^|[^a-z0-9])${normalizedKeyword}([^a-z0-9]|$)`, 'i');
-            if (regex.test(lowerName)) {
-                return i;
-            }
+      const keywords = periodKeywords[i];
+      for (const keyword of keywords) {
+        const normalizedKeyword = keyword
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "");
+        // Use regex for word boundaries or non-alphanumeric surrounds
+        const regex = new RegExp(
+          `(^|[^a-z0-9])${normalizedKeyword}([^a-z0-9]|$)`,
+          "i",
+        );
+        if (regex.test(lowerName)) {
+          return i;
         }
+      }
     }
-    
-    return Infinity; 
+
+    return Infinity;
   };
 
   return [...periods].sort((a, b) => {
     const valA = getPeriodValue(a.name);
     const valB = getPeriodValue(b.name);
-    
+
     if (valA !== valB) {
       return valA - valB;
     }
@@ -302,6 +319,44 @@ export function numeroOrdinal(index, ordinal) {
   } else {
     return index + 1;
   }
+}
+
+export function getOrdinalTitle(index) {
+  if (index >= 0 && index < numerosOrdinales.length) {
+    return numerosOrdinales[index];
+  }
+  return `Pregunta ${index + 1}`;
+}
+
+export function getNextQuestionIndex(existingQuestions = []) {
+  if (!existingQuestions || existingQuestions.length === 0) return 0;
+  const activeQuestions = existingQuestions.filter((q) => q.exist !== false);
+  if (activeQuestions.length === 0) return 0;
+
+  let maxIndex = activeQuestions.length - 1;
+
+  activeQuestions.forEach((q) => {
+    if (!q.title) return;
+    const cleanTitle = q.title.toLowerCase().trim();
+    const ordIdx = numerosOrdinales.findIndex(
+      (ord) => ord.toLowerCase().trim() === cleanTitle,
+    );
+    if (ordIdx > maxIndex) {
+      maxIndex = ordIdx;
+    }
+    const match = cleanTitle.match(/^pregunta\s+(\d+)$/i);
+    if (match) {
+      const num = parseInt(match[1], 10) - 1;
+      if (num > maxIndex) maxIndex = num;
+    }
+    const prefixMatch = cleanTitle.match(/^(\d+)\./);
+    if (prefixMatch) {
+      const num = parseInt(prefixMatch[1], 10) - 1;
+      if (num > maxIndex) maxIndex = num;
+    }
+  });
+
+  return maxIndex + 1;
 }
 
 export function booltoInt(data) {

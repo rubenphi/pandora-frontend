@@ -616,6 +616,8 @@
       :is-open="mostrarModalGeneradorPlanilla"
       :curso-id="cursoId"
       :area-id="areaId"
+      :curso="cursoSelected"
+      :area="areaSelected"
       :periodo-selected="periodoSelected"
       :year="year"
       :usuario="usuario"

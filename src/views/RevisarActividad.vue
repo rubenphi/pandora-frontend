@@ -376,7 +376,7 @@ export default {
 
     const getExportFileName = () => {
       const a = activityInfo.value;
-      return `calificar "${a.topic} - ${a.lessonTopic} - ${a.grade}"`;
+      return `calificar ${a.topic} - ${a.lessonTopic} - ${a.grade}`;
     };
 
     const buildWorkbook = () => {

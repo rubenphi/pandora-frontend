@@ -41,6 +41,8 @@ import {
 import { ref } from "vue";
 import * as XLSX from "xlsx-js-style";
 import { cloudUploadOutline } from "ionicons/icons";
+import axios from "axios";
+import { tokenHeader, periodosGet, selectedYear } from "../globalService";
 import ExcelUploadModal from "./ExcelUploadModal.vue";
 
 export default {
@@ -51,10 +53,14 @@ export default {
       type: Boolean,
       required: true,
     },
-    cursoId: String,
-    areaId: String,
-    periodoSelected: Number,
-    year: String,
+    cursoId: [String, Number],
+    areaId: [String, Number],
+    curso: Object,
+    area: Object,
+    cursoSelected: Object,
+    areaSelected: Object,
+    periodoSelected: [Number, String, Object],
+    year: [String, Number],
     usuario: Object,
     usuariosEstudiantes: Array, // Pass the student data
   },
@@ -82,6 +88,129 @@ export default {
 
     const abrirModalCargaExcel = () => {
       mostrarModalCargaExcel.value = true;
+    };
+
+    const getCursoName = async () => {
+      if (props.curso?.name) return props.curso.name;
+      if (props.cursoSelected?.name) return props.cursoSelected.name;
+      if (props.cursoId) {
+        try {
+          const res = await axios.get(
+            `/courses/${props.cursoId}`,
+            tokenHeader()
+          );
+          if (res?.data?.name) return res.data.name;
+        } catch (e) {
+          console.warn("No se pudo obtener el nombre del curso por API:", e);
+        }
+        return props.cursoId;
+      }
+      return "Curso";
+    };
+
+    const getAsignaturaName = async () => {
+      if (props.area?.name) return props.area.name;
+      if (props.areaSelected?.name) return props.areaSelected.name;
+      if (props.areaId) {
+        try {
+          const res = await axios.get(
+            `/areas/${props.areaId}`,
+            tokenHeader()
+          );
+          if (res?.data?.name) return res.data.name;
+        } catch (e) {
+          console.warn("No se pudo obtener el nombre del área por API:", e);
+        }
+        return props.areaId;
+      }
+      return "Asignatura";
+    };
+
+    const getPeriodoName = () => {
+      if (
+        props.periodoSelected &&
+        typeof props.periodoSelected === "object" &&
+        props.periodoSelected.name
+      ) {
+        return props.periodoSelected.name;
+      }
+
+      const periodId =
+        props.periodoSelected && typeof props.periodoSelected === "object"
+          ? props.periodoSelected.id
+          : props.periodoSelected;
+
+      const periodos = periodosGet();
+      if (Array.isArray(periodos)) {
+        const found = periodos.find(
+          (p) => String(p.id) === String(periodId)
+        );
+        if (found?.name) return found.name;
+      }
+
+      if (periodId) {
+        return String(periodId).toLowerCase().includes("periodo")
+          ? String(periodId)
+          : `Periodo ${periodId}`;
+      }
+
+      return "Periodo";
+    };
+
+    const getYearName = () => {
+      return props.year || selectedYear() || new Date().getFullYear();
+    };
+
+    const sanitizeFileNamePart = (str) => {
+      if (!str) return "";
+      return String(str)
+        .replace(/[<>:"/\\|?*]/g, "-")
+        .replace(/\s+/g, " ")
+        .trim();
+    };
+
+    const parseGradeNumber = (val) => {
+      if (val === "" || val === null || val === undefined) return "";
+      const cleaned = typeof val === "string" ? val.replace(",", ".") : val;
+      const num = parseFloat(cleaned);
+      return isNaN(num) ? "" : parseFloat(num.toFixed(1));
+    };
+
+    const applyGradeNumberFormat = (ws) => {
+      if (!ws || !ws["!ref"]) return;
+      const range = XLSX.utils.decode_range(ws["!ref"]);
+      for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+        // Col D is DEF (index 3), Col E is NIV (index 4)
+        const defCell = ws[XLSX.utils.encode_cell({ r: R, c: 3 })];
+        if (defCell && defCell.t === "n") {
+          defCell.z = "0.0";
+        }
+        const nivCell = ws[XLSX.utils.encode_cell({ r: R, c: 4 })];
+        if (nivCell && nivCell.t === "n") {
+          nivCell.z = "0.0";
+        }
+      }
+    };
+
+    const generarNombrePlanilla = async (tipo) => {
+      const [curso, asignatura] = await Promise.all([
+        getCursoName(),
+        getAsignaturaName(),
+      ]);
+      const periodo = getPeriodoName();
+      const year = getYearName();
+
+      const c = sanitizeFileNamePart(curso);
+      const a = sanitizeFileNamePart(asignatura);
+      const p = sanitizeFileNamePart(periodo);
+      const y = sanitizeFileNamePart(year);
+
+      const parts = [c, a, p, y].filter(Boolean);
+      if (tipo) {
+        parts.push(sanitizeFileNamePart(tipo));
+      }
+
+      return `${parts.join(" - ")}.xlsx`;
     };
 
     const calculateL1Value = (estudiante) => {
@@ -164,14 +293,15 @@ export default {
           NUM: index + 1,
           NOMBRE: `${estudiante.lastName} ${estudiante.name}`,
           FALLAS: "",
-          DEF: def,
-          NIV: niv,
+          DEF: parseGradeNumber(def),
+          NIV: parseGradeNumber(niv),
           L1: l1,
           L2: "",
         };
       });
 
       const ws = XLSX.utils.json_to_sheet(data);
+      applyGradeNumberFormat(ws);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Planilla de Notas");
 
@@ -219,7 +349,8 @@ export default {
       const wsConventions = XLSX.utils.json_to_sheet(conventions);
       XLSX.utils.book_append_sheet(wb, wsConventions, "Convenciones");
 
-      XLSX.writeFile(wb, "planilla_notas_alfabetico.xlsx");
+      const nombreArchivo = await generarNombrePlanilla("alfabetico");
+      XLSX.writeFile(wb, nombreArchivo);
       onClose();
     };
 
@@ -399,13 +530,14 @@ export default {
         NUM: index + 1,
         NOMBRE: estudiante.NOMBRE,
         FALLAS: estudiante.FALLAS,
-        DEF: estudiante.DEF,
-        NIV: estudiante.NIV,
+        DEF: parseGradeNumber(estudiante.DEF),
+        NIV: parseGradeNumber(estudiante.NIV),
         L1: estudiante.L1,
         L2: estudiante.L2,
       }));
 
       const ws = XLSX.utils.json_to_sheet(data);
+      applyGradeNumberFormat(ws);
 
       // 6. Apply styling
       const pinkStyle = { fill: { fgColor: { rgb: "FFFFC0CB" } } }; // Pink
@@ -478,7 +610,8 @@ export default {
       const wsConventions = XLSX.utils.json_to_sheet(conventions);
       XLSX.utils.book_append_sheet(wb, wsConventions, "Convenciones");
 
-      XLSX.writeFile(wb, "planilla_notas_plataforma.xlsx");
+      const nombreArchivo = await generarNombrePlanilla("plataforma");
+      XLSX.writeFile(wb, nombreArchivo);
       mostrarModalCargaExcel.value = false;
       onClose();
     };
