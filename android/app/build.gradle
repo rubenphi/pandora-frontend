@@ -3,6 +3,7 @@ apply plugin: 'com.android.application'
 android {
     namespace "io.ionic.starter"
     compileSdk rootProject.ext.compileSdkVersion
+    ndkVersion rootProject.ext.ndkVersion
     defaultConfig {
         applicationId "io.ionic.starter"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -20,6 +21,14 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'x86_64', 'arm64-v8a'
+            universalApk true
         }
     }
 }
@@ -51,4 +60,24 @@ try {
     }
 } catch(Exception e) {
     logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}
+
+tasks.register('copyDebugApkForCapacitor') {
+    doLast {
+        def apkDir = file("$buildDir/outputs/apk/debug")
+        def x86Apk = file("$apkDir/app-x86_64-debug.apk")
+        def universalApk = file("$apkDir/app-universal-debug.apk")
+        def armApk = file("$apkDir/app-arm64-v8a-debug.apk")
+        def source = x86Apk.exists() ? x86Apk : (universalApk.exists() ? universalApk : armApk)
+        if (source && source.exists()) {
+            copy {
+                from source
+                into apkDir
+                rename { 'app-debug.apk' }
+            }
+        }
+    }
+}
+tasks.matching { it.name == 'assembleDebug' }.all { task ->
+    task.finalizedBy('copyDebugApkForCapacitor')
 }

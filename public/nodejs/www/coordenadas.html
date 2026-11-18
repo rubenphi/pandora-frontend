@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Coordenadas estables al lado del puntero</title>
+    <style>
+      #imageWrapper {
+        position: relative;
+        display: inline-block;
+      }
+      #baseImage {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+      #coordTooltip {
+        position: fixed; /* siempre relativo a la ventana */
+        background: rgba(0, 0, 0, 0.75);
+        color: white;
+        font-family: monospace;
+        font-size: 12px;
+        padding: 3px 6px;
+        border-radius: 4px;
+        pointer-events: none;
+        z-index: 9999;
+        transform: translate(12px, 12px); /* margen respecto al puntero */
+      }
+    </style>
+  </head>
+  <body>
+    <h3>Mueve el ratón sobre la imagen</h3>
+
+    <div id="imageWrapper">
+      <img src="hoja50.jpg" id="baseImage" alt="Hoja OMR" />
+    </div>
+
+    <div id="coordTooltip" style="display: none">x: --, y: --</div>
+
+    <script>
+      const img = document.getElementById("baseImage");
+      const tooltip = document.getElementById("coordTooltip");
+
+      img.addEventListener("mousemove", (e) => {
+        const rect = img.getBoundingClientRect();
+
+        // coordenadas relativas a lo mostrado en pantalla
+        const x_visual = e.clientX - rect.left;
+        const y_visual = e.clientY - rect.top;
+
+        // convertir a coordenadas reales del archivo
+        const x_real = Math.round((x_visual / rect.width) * img.naturalWidth);
+        const y_real = Math.round((y_visual / rect.height) * img.naturalHeight);
+
+        // posicionar tooltip al lado del puntero (clientX/Y son estables con scroll/zoom)
+        tooltip.style.display = "block";
+        tooltip.style.left = e.clientX + "px";
+        tooltip.style.top = e.clientY + "px";
+
+        tooltip.textContent = `x:${x_real}, y:${y_real}`;
+      });
+
+      img.addEventListener("mouseleave", () => {
+        tooltip.style.display = "none";
+      });
+    </script>
+  </body>
+</html>

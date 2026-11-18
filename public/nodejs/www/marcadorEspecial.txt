@@ -1,0 +1,23 @@
+<svg
+   width="7.165mm"
+   height="7.165mm"
+   viewBox="0 0 7.165 7.165"
+   version="1.1"
+   id="svg1"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <g
+     id="layer1"
+     transform="translate(-127.79375,-239.7125)">
+    <rect
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.839136;stroke-dasharray:none;stroke-opacity:1"
+       id="rect1-8-1-2"
+       width="2.1608648"
+       height="2.1608641"
+       x="130.29582"
+       y="242.21457"
+       ry="0" />
+  </g>
+</svg>

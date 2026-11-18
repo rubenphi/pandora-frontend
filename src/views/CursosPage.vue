@@ -517,7 +517,7 @@ export default {
           id: curso.id,
           name: curso.name,
           areas: (curso.courseAreas || [])
-            .filter((a) => a.active === true)
+            .filter((a) => a.active == 1 || a.active === true || a.active)
             .map((a) => a.area),
         }));
       } else {
@@ -531,7 +531,7 @@ export default {
           .get(`/courses/teacher-assignments/${usuario.value.id}`)
           .then((response) => {
             return response.data.filter(
-              (assignment) => assignment.active === true
+              (assignment) => assignment.active == 1 || assignment.active === true || assignment.active
             );
           });
 
@@ -540,7 +540,7 @@ export default {
           name: curso.course.name,
           areas: isAdminView
             ? (curso.course.courseAreas || [])
-                .filter((a) => a.active == true)
+                .filter((a) => a.active == 1 || a.active === true || a.active)
                 .map((a) => a.area)
             : areAAssignments
                 .filter((assignment) => assignment.course.id == curso.course.id)

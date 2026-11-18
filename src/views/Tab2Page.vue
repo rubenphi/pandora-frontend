@@ -17,15 +17,18 @@
           Construí esta aplicación para trabajar en grupo de una manera más
           dinámica, espero que la clase de hoy vaya genial 😃.
         </p>
-        <div v-if="serverIp && !isNative">
+        <div v-if="serverIp">
           <p>
-            Para acceder desde otro dispositivo en la red, use la siguiente
-            dirección:
-            <strong>{{ serverIp }}:{{ frontendPort }}</strong> o escanee el
-            siguiente código QR
+            Para acceder desde otro dispositivo (estudiantes, tablets, PC),
+            conéctese a la misma red Wi-Fi o Zona Wi-Fi e ingrese a:
+            <br />
+            <strong style="font-size: 1.1em; color: #3880ff;">http://{{ serverIp }}:3000</strong>
+            <br />
+            o escanee el código QR desde el navegador o la app:
           </p>
-          <canvas id="qr-code-canvas" style="width: 90%"></canvas>
-          
+          <div style="display: flex; justify-content: center; margin: 15px 0;">
+            <canvas id="qr-code-canvas"></canvas>
+          </div>
         </div>
         <ion-button href="/herramientas" align-self-center>
             <ion-icon slot="start" :icon="constructOutline"></ion-icon>
@@ -83,39 +86,45 @@ export default {
       }
     };
 
-    const generateQrCode = (ip, port) => {
+    const generateQrCode = (ip) => {
       const canvas = document.getElementById("qr-code-canvas");
-      if (!isNative.value) {
-        if (canvas) {
-          QRCode.toCanvas(
-            canvas,
-            `http://${ip}:${port}`,
-            { width: 300 },
-            function (error) {
-              if (error) console.error(error);
-            }
-          );
-        } else {
-          console.warn("Canvas element not found for QR code generation.");
-        }
+      if (canvas && ip && ip !== "Error al obtener IP") {
+        QRCode.toCanvas(
+          canvas,
+          `http://${ip}:3000`,
+          { width: 250, margin: 2 },
+          function (error) {
+            if (error) console.error("Error generating QR:", error);
+          }
+        );
       }
     };
 
     onIonViewWillEnter(async () => {
       tokenHeader();
       isNative.value = Capacitor.isNativePlatform();
+      await fetchServerIp();
+      if (serverIp.value) {
+        setTimeout(() => {
+          generateQrCode(serverIp.value);
+        }, 200);
+      }
     });
 
     onMounted(async () => {
       await fetchServerIp();
+      if (serverIp.value) {
+        setTimeout(() => {
+          generateQrCode(serverIp.value);
+        }, 200);
+      }
     });
 
     watch(serverIp, (newIp) => {
       if (newIp && newIp !== "Error al obtener IP") {
-        // Ensure the DOM has updated before trying to get the canvas
         setTimeout(() => {
-          generateQrCode(newIp, frontendPort.value);
-        }, 0);
+          generateQrCode(newIp);
+        }, 100);
       }
     });
 

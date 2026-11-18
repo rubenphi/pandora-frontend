@@ -652,7 +652,7 @@ export default {
           // only rol student
 
           groupSelectedMembers.value = response.data
-            .filter((miembro) => miembro.active === true)
+            .filter((miembro) => miembro.active == 1 || miembro.active === true || miembro.active)
             .map((miembro) => ({
               ...miembro.user,
             }))
@@ -687,7 +687,7 @@ export default {
           { headers: tokenHeader() },
         );
         const students = response.data
-          .filter((u) => u.rol === "student" && u.active === true)
+          .filter((u) => u.rol === "student" && (u.active == 1 || u.active === true || u.active))
           .map((u) => u.user);
 
         // Sort students alphabetically
@@ -1030,7 +1030,7 @@ export default {
       const gruposFiltrados = llamado.filter(
         (grupo) =>
           grupo.year === parseInt(selectedYear, 10) &&
-          grupo.active === true &&
+          (grupo.active == 1 || grupo.active === true || grupo.active) &&
           grupo.exist !== false,
       );
 

@@ -193,7 +193,7 @@ export default {
           localStorage.setItem("year", JSON.stringify(yearSelected.value));
         }
 
-        const courseSelected = sortedCourses.find(c => c.year == yearSelected.value && c.active == true) || sortedCourses[0];
+        const courseSelected = sortedCourses.find(c => c.year == yearSelected.value && (c.active == 1 || c.active === true || c.active)) || sortedCourses[0];
         localStorage.setItem("courseSelected", JSON.stringify(courseSelected));
       }
 
@@ -213,7 +213,7 @@ export default {
         areas.value = allCourseAreas.filter((area) => {
           return courseAssignments.some((assignment) => {
             return (
-              assignment.active &&
+              (assignment.active == 1 || assignment.active === true || assignment.active) &&
               Number(assignment.area.id) === Number(area.id) &&
               Number(assignment.teacher?.id) === Number(usuario.value.id)
             );
@@ -224,7 +224,7 @@ export default {
         areas.value = allCourseAreas.filter((area) => {
           return courseAssignments.some((assignment) => {
             return (
-              assignment.active &&
+              (assignment.active == 1 || assignment.active === true || assignment.active) &&
               Number(assignment.area.id) === Number(area.id) &&
               assignment.teacher // Must have a teacher assigned
             );

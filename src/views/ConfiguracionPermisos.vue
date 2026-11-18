@@ -274,7 +274,7 @@ export default {
           (group) =>
             group.usersToGroup &&
             group.usersToGroup.some(
-              (userToGroup) => userToGroup.active === true
+              (userToGroup) => userToGroup.active == 1 || userToGroup.active === true || userToGroup.active
             )
         );
         groups.value.forEach((group) => {

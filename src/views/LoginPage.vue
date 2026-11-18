@@ -97,7 +97,7 @@
                 >
                 <ion-input
                   v-model="login.code"
-                  placeholder="Código de estudiante"
+                  placeholder="Código (ej. ADM001) o correo"
                 ></ion-input>
               </ion-item>
               <ion-item>
@@ -107,7 +107,7 @@
                 <ion-input
                   v-model="login.password"
                   type="password"
-                  placeholder="Documento de identidad"
+                  placeholder="Contraseña"
                 ></ion-input>
               </ion-item>
               <ion-buttons
@@ -158,8 +158,7 @@
 <script>
 import { ref } from "vue";
 import axios from "axios";
-import { basedeURL, tokenHeader, usuarioGet, fetchServerTime, currentServerDate } from "../globalService";
-import { Device } from "@capacitor/device"; // Import Device
+import { basedeURL, tokenHeader, usuarioGet, fetchServerTime, currentServerDate, initializeBaseUrl } from "../globalService";
 import {
   alertController,
   IonPage,
@@ -212,19 +211,8 @@ export default {
     });
 
     onIonViewWillEnter(async () => {
-      const info = await Device.getInfo();
-      if (info.platform !== "web") {
-        axios
-          .get("/auth/server-ip", { timeout: 3000 })
-          .then((response) => {
-            if (response.status != 200) {
-              router.push("/onboarding-qr");
-            }
-          })
-          .catch(() => {
-            router.push("/onboarding-qr");
-          });
-      }
+      // En modo standalone local asegurar que apunte a localhost:3000
+      initializeBaseUrl();
     });
 
     return {
@@ -327,17 +315,13 @@ export default {
                   message: `No se pudo conectar con el servidor en ${url}. Por favor, verifique la configuración de la aplicación o contacte al administrador.`,
                   buttons: [
                     { text: "OK", role: "cancel" },
-                    {
-                      text: "Escanear QR",
-                      handler: () => {
-                        router.push("/onboarding-qr");
-                      },
-                    },
                   ],
                 });
                 await alert.present();
               } else if (err.response) {
-                error.value.data = `Error: ${err.response.status} - Credenciales incorrectas o error del servidor.`;
+                const msg = err.response.data?.message;
+                const detalle = msg ? (Array.isArray(msg) ? msg.join(', ') : msg) : 'Credenciales incorrectas o error del servidor';
+                error.value.data = `Error ${err.response.status}: ${detalle}`;
               } else {
                 error.value.data =
                   "Ocurrió un error inesperado durante el login.";

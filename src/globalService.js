@@ -20,20 +20,21 @@ export function initializeBaseUrl(ip) {
     localStorage.setItem("appLinked", "true");
   }
   let url = null;
-  const storedIp = localStorage.getItem("backend_ip");
 
   if (Capacitor.isNativePlatform()) {
-    url = storedIp ? `http://${storedIp}` : "http://127.0.0.1:3000/";
+    // La app nativa en Android SIEMPRE se conecta directamente a su propio backend en localhost:3000
+    url = "http://127.0.0.1:3000/";
+    localStorage.setItem("backend_ip", "127.0.0.1:3000");
+    localStorage.setItem("appLinked", "true");
   } else {
-    // Implementación para web
-    const puerto = "3000";
-    url =
-      window.location.protocol +
-      "//" +
-      window.location.host.split(":")[0] +
-      ":" +
-      puerto +
-      "/";
+    // Cuando otros dispositivos (estudiantes, PCs) ingresan a través del navegador web
+    const host = window.location.hostname || "127.0.0.1";
+    // Si se ejecuta en desarrollo web (ej. vue-cli en 8080/8100), el backend apunta al puerto 3000
+    const port =
+      window.location.port === "8080" || window.location.port === "8100"
+        ? "3000"
+        : window.location.port || "3000";
+    url = `${window.location.protocol}//${host}:${port}/`;
   }
 
   if (url) {
@@ -59,13 +60,13 @@ export async function fetchServerTime() {
     apiState.serverTime = response.data;
 
     const serverDateOptions = new Date(
-        apiState.serverTime.year,
-        apiState.serverTime.month - 1,
-        apiState.serverTime.day,
-        apiState.serverTime.hour,
-        apiState.serverTime.min,
-        apiState.serverTime.second,
-        apiState.serverTime.miliseconds
+      apiState.serverTime.year,
+      apiState.serverTime.month - 1,
+      apiState.serverTime.day,
+      apiState.serverTime.hour,
+      apiState.serverTime.min,
+      apiState.serverTime.second,
+      apiState.serverTime.miliseconds,
     );
     apiState.timeOffset = serverDateOptions.getTime() - Date.now();
 
@@ -83,8 +84,16 @@ export async function fetchServerTime() {
 // --- Se mantienen las otras funciones existentes ---
 
 export function tokenHeader() {
-  axios.defaults.headers.common["Authorization"] =
-    localStorage.getItem("token");
+  const token = localStorage.getItem("token");
+  if (token) {
+    axios.defaults.headers.common["Authorization"] = token;
+  }
+  return {
+    Authorization: token,
+    headers: {
+      Authorization: token,
+    },
+  };
 }
 
 export function usuarioGet() {
@@ -105,7 +114,16 @@ export function sortPeriods(periods) {
     4: ["cuarto", "cuarta", "cuatro", "4º", "4ta", "fourth"],
     5: ["quinto", "quinta", "cinco", "5º", "5ta", "fifth"],
     6: ["sexto", "sexta", "seis", "6º", "6ta", "sixth"],
-    7: ["septimo", "septima", "setimo", "setima", "siete", "7º", "7ma", "seventh"],
+    7: [
+      "septimo",
+      "septima",
+      "setimo",
+      "setima",
+      "siete",
+      "7º",
+      "7ma",
+      "seventh",
+    ],
     8: ["octavo", "octava", "ocho", "8º", "8va", "eighth"],
     9: ["noveno", "novena", "nueve", "9º", "9na", "ninth"],
     10: ["decimo", "decima", "diez", "10º", "10ma", "tenth"],
@@ -115,8 +133,11 @@ export function sortPeriods(periods) {
 
   const getPeriodValue = (name) => {
     if (!name) return Infinity;
-    const lowerName = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    
+    const lowerName = name
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
     // 1. Prioritize digit extraction
     const digitMatch = lowerName.match(/\d+/);
     if (digitMatch) {
@@ -125,24 +146,29 @@ export function sortPeriods(periods) {
 
     // 2. Check written words (1 to 12)
     for (let i = 1; i <= 12; i++) {
-        const keywords = periodKeywords[i];
-        for (const keyword of keywords) {
-            const normalizedKeyword = keyword.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            // Use regex for word boundaries or non-alphanumeric surrounds
-            const regex = new RegExp(`(^|[^a-z0-9])${normalizedKeyword}([^a-z0-9]|$)`, 'i');
-            if (regex.test(lowerName)) {
-                return i;
-            }
+      const keywords = periodKeywords[i];
+      for (const keyword of keywords) {
+        const normalizedKeyword = keyword
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "");
+        // Use regex for word boundaries or non-alphanumeric surrounds
+        const regex = new RegExp(
+          `(^|[^a-z0-9])${normalizedKeyword}([^a-z0-9]|$)`,
+          "i",
+        );
+        if (regex.test(lowerName)) {
+          return i;
         }
+      }
     }
-    
-    return Infinity; 
+
+    return Infinity;
   };
 
   return [...periods].sort((a, b) => {
     const valA = getPeriodValue(a.name);
     const valB = getPeriodValue(b.name);
-    
+
     if (valA !== valB) {
       return valA - valB;
     }
