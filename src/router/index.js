@@ -41,11 +41,11 @@ const routes = [
       },
       {
         path: "grupo",
-        component: () => import("@/views/Tab1Page.vue"),
+        component: () => import("@/views/PerfilGrupoPage.vue"),
       },
       {
         path: "inicio",
-        component: () => import("@/views/Tab2Page.vue"),
+        component: () => import("@/views/InicioPage.vue"),
       },
       {
         path: "omr-read",
@@ -85,7 +85,7 @@ const routes = [
       },
       {
         path: "lecciones/:curso/:area/:periodo/:year/:lessonType?",
-        component: () => import("@/views/Tab3Page.vue"),
+        component: () => import("@/views/LeccionesAreaPage.vue"),
       },
       {
         path: "special-lessons/:lessonType/:curso/:area/:periodo/:year",

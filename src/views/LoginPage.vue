@@ -1,156 +1,109 @@
 <template>
-  <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Inicio de sesión</ion-title>
+  <ion-page class="qz-login-page">
+    <ion-header class="ion-no-border">
+      <ion-toolbar class="qz-toolbar">
+        <!-- Barra superior limpia con safe-area -->
       </ion-toolbar>
     </ion-header>
-    <ion-content class="ion-padding-start ion-padding-end">
-      <ion-grid>
-        <ion-row class="ion-align-items-center">
-          <ion-col size-s="1" size-xs="1" size-md="4" size-lg="5" size-xl="5">
-          </ion-col>
-          <ion-col
-            size-s="10"
-            size-xs="10"
-            size-md="4"
-            size-lg="2"
-            size-xl="2"
-            class="ion-align-items-center"
-          >
-            <ion-card class="ion-padding">
-              <ion-grid>
-                <ion-row>
-                  <ion-col
-                    size-xs="5"
-                    size-s="5"
-                    size-md="5"
-                    size-lg="5"
-                    size-xl="5"
-                  >
-                  </ion-col>
-                  <ion-col
-                    size-xs="2"
-                    size-s="2"
-                    size-md="2"
-                    size-lg="2"
-                    size-xl="2"
-                  >
-                    <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-                    <svg
-                      fill="#989aa2"
-                      class="color"
-                      version="1.1"
-                      id="Capa_1"
-                      xmlns="http://www.w3.org/2000/svg"
-                      xmlns:xlink="http://www.w3.org/1999/xlink"
-                      x="0px"
-                      y="0px"
-                      viewBox="0 0 612 612"
-                      style="enable-background: new 0 0 612 612"
-                      xml:space="preserve"
-                    >
-                      <g>
-                        <path
-                          d="M612,167.008c0-0.252-1.479-0.49-1.509-0.735c-0.044-0.394-0.765-0.788-0.869-1.167c-0.082-0.297-0.579-0.565-0.698-0.847
-		c-0.134-0.312-0.409-0.632-0.58-0.921c-0.163-0.29-0.49-0.535-0.698-0.795c-0.186-0.245-0.408-0.498-0.624-0.721
-		c-0.253-0.245-0.572-0.438-0.854-0.646c-0.201-0.156-0.394-0.334-0.617-0.468c-0.044-0.022-0.097-0.029-0.134-0.059
-		c-0.066-0.03-0.118-0.089-0.178-0.119L431.233,68.96l-20.412-11.035c-0.595-0.319-1.233-0.542-1.873-0.691L304.986,2.529
-		c-2.185-1.159-4.8-1.144-6.97,0.03L3.805,160.551c-0.045,0.022-0.082,0.06-0.126,0.089c-0.037,0.015-0.074,0.022-0.111,0.044
-		c-0.23,0.141-0.424,0.334-0.639,0.498c-0.282,0.208-0.58,0.394-0.825,0.639c-0.208,0.208-0.372,0.461-0.55,0.691
-		c-0.216,0.275-0.461,0.528-0.639,0.833c-0.149,0.268-0.245,0.557-0.364,0.839c-0.134,0.312-0.297,0.609-0.394,0.937
-		c-0.089,0.342,1.293,0.698,1.248,1.055c-0.037,0.282,1.278,0.55,1.278,0.84c0,0.015,0,0.03,0,0.052c0,0.015,0,0.03,0,0.044v264.213
-		H0c0.007,7.431,1.241,7.742,3.641,9.103l294.226,168.275c1.144,0.646,2.407,1.628,3.671,1.628c1.248,0,2.489,0.021,3.611-0.603
-		l300.229-169.435c2.438-1.36,3.708-1.538,3.716-8.969H612V167.104c0-0.015,0-0.03,0-0.044S612,167.03,612,167.008z M17.544,179.863
-		l89.168,52.684v97.089l25.22-6.97l20.65,34.367l33.55-8.36l31.833,44.124l1.152-96.458l73.363,42.08v252.369L17.544,432.262
-		V179.863z M307.341,338.434l289.798-158.697v252.487L307.341,590.922V338.434z M301.575,325.542l-73.363-41.634l281.69-156.758
-		l76.269,40.125L301.575,325.542z M301.56,17.517l89.726,47.215L111.275,217.544l-88.589-50.269L301.56,17.517z"
-                        />
-                      </g>
-                    </svg>
-                  </ion-col>
-                  <ion-col
-                    size-xs="5"
-                    size-s="5"
-                    size-md="5"
-                    size-lg="5"
-                    size-xl="5"
-                  >
-                  </ion-col>
-                </ion-row>
-                <ion-row>
-                  <ion-col>
-                    <div class="ion-text-center">
-                      <ion-text color="medium"><h3>PANDORA</h3></ion-text>
-                      <ion-text v-if="error.estatus === 1" color="danger">
-                        <br />
-                        {{ error.data }}
-                      </ion-text>
-                    </div>
-                  </ion-col>
-                </ion-row>
-              </ion-grid>
 
-              <ion-item>
-                <ion-label color="medium" position="floating"
-                  >Usuario</ion-label
-                >
-                <ion-input
+    <ion-content :fullscreen="true" class="qz-login-content">
+      <div class="qz-auth-wrapper">
+        <div class="qz-auth-card">
+          <!-- 1. IDENTIDAD Y LOGO (Centralizado en AppLogo.vue) -->
+          <div class="qz-auth-header">
+            <AppLogo size="lg" :show-text="true" tagline="Plataforma de Aprendizaje & Quiz" />
+            <div class="qz-welcome-text">
+              <h2 class="qz-welcome-title">¡Bienvenido de nuevo!</h2>
+              <p class="qz-welcome-subtitle">Inicia sesión con tu código o correo para continuar</p>
+            </div>
+          </div>
+
+          <!-- 2. ALERTA DE ERROR ESTILIZADA QUEEZY -->
+          <transition name="qz-fade">
+            <div v-if="error.estatus === 1" class="qz-error-badge">
+              <ion-icon :icon="alertCircleOutline" class="qz-error-icon"></ion-icon>
+              <span class="qz-error-msg">{{ error.data }}</span>
+            </div>
+          </transition>
+
+          <!-- 3. FORMULARIO DE ACCESO -->
+          <form class="qz-form" @submit.prevent="mostrar">
+            <!-- Campo Usuario / Código -->
+            <div class="qz-field-group">
+              <label class="qz-field-label">Usuario o Código</label>
+              <div class="qz-input-box" :class="{ 'qz-input-box--focused': focusedField === 'code' }">
+                <ion-icon :icon="personOutline" class="qz-input-icon"></ion-icon>
+                <input
                   v-model="login.code"
+                  type="text"
+                  autocomplete="username"
                   placeholder="Código (ej. ADM001) o correo"
-                ></ion-input>
-              </ion-item>
-              <ion-item>
-                <ion-label color="medium" position="floating"
-                  >Contraseña
-                </ion-label>
-                <ion-input
-                  v-model="login.password"
-                  type="password"
-                  placeholder="Contraseña"
-                ></ion-input>
-              </ion-item>
-              <ion-buttons
-                class="ion-justify-content-center ion-padding-top ion-padding-bottom"
-              >
-                <ion-button
-                  type="submit"
-                  expand="full"
-                  fill="outline"
-                  shape="round"
-                  color="primary"
-                  class="ion-align-self-center"
-                  @click="mostrar"
-                >
-                  <ion-label class="ion-text-center ion-padding">
-                    Entrar
-                  </ion-label>
-                </ion-button>
-              </ion-buttons>
+                  class="qz-native-input"
+                  @focus="focusedField = 'code'"
+                  @blur="focusedField = null"
+                />
+              </div>
+            </div>
 
-              <ion-buttons
-                class="ion-justify-content-center ion-padding-top ion-padding-bottom"
-              >
-                <ion-button
-                  type="submit"
-                  expand="full"
-                  fill="outline"
-                  shape="round"
-                  color="medium"
-                  class="ion-align-self-center"
-                  @click="register"
+            <!-- Campo Contraseña -->
+            <div class="qz-field-group">
+              <label class="qz-field-label">Contraseña</label>
+              <div class="qz-input-box" :class="{ 'qz-input-box--focused': focusedField === 'password' }">
+                <ion-icon :icon="lockClosedOutline" class="qz-input-icon"></ion-icon>
+                <input
+                  v-model="login.password"
+                  :type="showPassword ? 'text' : 'password'"
+                  autocomplete="current-password"
+                  placeholder="Tu contraseña secreta"
+                  class="qz-native-input"
+                  @focus="focusedField = 'password'"
+                  @blur="focusedField = null"
+                />
+                <button
+                  type="button"
+                  class="qz-eye-btn"
+                  @click="showPassword = !showPassword"
+                  :aria-label="showPassword ? 'Ocultar contraseña' : 'Ver contraseña'"
                 >
-                  <ion-label class="ion-text-center ion-padding">
-                    Registrarse
-                  </ion-label>
-                </ion-button>
-              </ion-buttons>
-            </ion-card>
-          </ion-col>
-          <ion-col size-s="1" size-xs="1" size-md="4" size-lg="5" size-xl="5">
-          </ion-col>
-        </ion-row>
-      </ion-grid>
+                  <ion-icon :icon="showPassword ? eyeOffOutline : eyeOutline"></ion-icon>
+                </button>
+              </div>
+            </div>
+
+            <!-- Botón Principal: Entrar -->
+            <div class="qz-actions-group">
+              <QueezyButton
+                type="submit"
+                variant="primary"
+                size="lg"
+                :loading="isLoading"
+                :block="true"
+              >
+                Entrar
+              </QueezyButton>
+            </div>
+          </form>
+
+          <!-- 4. SEPARADOR Y ACCIÓN SECUNDARIA -->
+          <div class="qz-auth-footer">
+            <div class="qz-divider">
+              <span class="qz-divider-line"></span>
+              <span class="qz-divider-text">¿Eres nuevo aquí?</span>
+              <span class="qz-divider-line"></span>
+            </div>
+
+            <QueezyButton
+              type="button"
+              variant="ghost"
+              size="md"
+              :block="true"
+              @click="register"
+            >
+              Crear una cuenta
+            </QueezyButton>
+          </div>
+        </div>
+      </div>
     </ion-content>
   </ion-page>
 </template>
@@ -158,203 +111,436 @@
 <script>
 import { ref } from "vue";
 import axios from "axios";
-import { basedeURL, tokenHeader, usuarioGet, fetchServerTime, currentServerDate, initializeBaseUrl } from "../globalService";
+import {
+  basedeURL,
+  tokenHeader,
+  usuarioGet,
+  fetchServerTime,
+  currentServerDate,
+  initializeBaseUrl,
+} from "../globalService";
 import {
   alertController,
   IonPage,
   IonHeader,
   IonToolbar,
-  IonTitle,
   IonContent,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonCard,
-  IonItem,
-  IonLabel,
-  IonInput,
-  IonButton,
-  IonButtons,
-  IonText,
-  onIonViewWillEnter, // Import onIonViewWillEnter
+  IonIcon,
+  onIonViewWillEnter,
 } from "@ionic/vue";
+import {
+  personOutline,
+  lockClosedOutline,
+  eyeOutline,
+  eyeOffOutline,
+  alertCircleOutline,
+} from "ionicons/icons";
 import { useRouter } from "vue-router";
+import AppLogo from "@/components/common/AppLogo.vue";
+import QueezyButton from "@/components/common/QueezyButton.vue";
 
 export default {
+  name: "LoginPage",
   components: {
+    IonPage,
     IonHeader,
     IonToolbar,
-    IonTitle,
     IonContent,
-    IonPage,
-    IonGrid,
-    IonRow,
-    IonCol,
-    IonCard,
-    IonItem,
-    IonLabel,
-    IonInput,
-    IonButton,
-    IonButtons,
-    IonText,
+    IonIcon,
+    AppLogo,
+    QueezyButton,
   },
   setup() {
-    const router = useRouter(); // Initialize router
+    const router = useRouter();
 
     const login = ref({
       code: "",
       password: "",
     });
+
     const error = ref({
       estatus: 0,
       data: "",
     });
+
+    const isLoading = ref(false);
+    const showPassword = ref(false);
+    const focusedField = ref(null);
 
     onIonViewWillEnter(async () => {
       // En modo standalone local asegurar que apunte a localhost:3000
       initializeBaseUrl();
     });
 
-    return {
-      error,
-      axios,
-      login,
-      async mostrar() {
-        if (login.value.code == "" || login.value.password == "") {
+    const mostrar = async () => {
+      if (login.value.code === "" || login.value.password === "") {
+        error.value.estatus = 1;
+        error.value.data = "Debe ingresar usuario y contraseña";
+        return;
+      }
+
+      // Limpiar errores previos y activar loading
+      error.value.estatus = 0;
+      error.value.data = "";
+      isLoading.value = true;
+
+      try {
+        const response = await axios.post("/auth/login", login.value, {
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
+
+        if (!response.data?.userLoged?.accessToken) {
           error.value.estatus = 1;
-          error.value.data = "Debe ingresar usuario y contraseña";
-        } else {
-          // Limpiar errores previos
-          error.value.estatus = 0;
-          error.value.data = "";
-          await axios
-            .post("/auth/login", login.value, {
-              headers: {
-                "Access-Control-Allow-Origin": "*",
-              },
-            })
-            .then(async (response) => {
-              if (response.data.userLoged.accessToken == undefined) {
-                error.value.estatus = 1;
-                error.value.data = "Error al iniciar sesión";
-              } else {
-                localStorage.setItem(
-                  "token",
-                  "Bearer " + response.data.userLoged.accessToken
-                );
-                localStorage.setItem(
-                  "usuario",
-                  JSON.stringify(response.data.userLoged)
-                );
-
-                error.value.estatus = 0;
-
-                tokenHeader();
-
-                // Check if the logged-in user is a teacher
-                const userRole = usuarioGet().rol;
-                if (userRole === "teacher" || userRole === "admin") {
-                  try {
-                    const teacherAssignmentsResponse = await axios.get(
-                      `/courses/teacher-assignments/${usuarioGet().id}`
-                    );
-                    localStorage.setItem(
-                      "teacherAssignments",
-                      JSON.stringify(teacherAssignmentsResponse.data)
-                    );
-                  } catch (assignmentError) {
-                    console.error(
-                      "Error fetching teacher assignments:",
-                      assignmentError
-                    );
-                    // Handle error, but don't block login
-                  }
-                }
-              }
-            })
-            .then(async () => {
-              const coursesResponse = await axios.get(
-                `/users/${usuarioGet().id}/courses`
-              );
-              const cursosUsuario = coursesResponse.data.map((assignacion) => ({
-                name: assignacion.course.name,
-                id: assignacion.course.id,
-                year: assignacion.year,
-                active: assignacion.active,
-                rol: assignacion.rol,
-              }));
-              localStorage.setItem(
-                "cursosUsuario",
-                JSON.stringify(cursosUsuario)
-              );
-
-              const serverTime = await fetchServerTime();
-              const currentYear = serverTime
-                ? serverTime.year
-                : currentServerDate().getFullYear();
-
-              localStorage.setItem("year", JSON.stringify(currentYear));
-
-              const periodsResponse = await axios.get(
-                `/periods?instituteId=${usuarioGet().institute.id}`
-              );
-              const periodos = periodsResponse.data.map((periodo) => ({
-                name: periodo.name,
-                id: periodo.id,
-              }));
-              localStorage.setItem("periodos", JSON.stringify(periodos));
-
-              router.push("/inicio");
-            })
-            .catch(async (err) => {
-              error.value.estatus = 1;
-              if (err.message === "Network Error") {
-                const url = basedeURL();
-                const alert = await alertController.create({
-                  header: "Error de conexión",
-                  message: `No se pudo conectar con el servidor en ${url}. Por favor, verifique la configuración de la aplicación o contacte al administrador.`,
-                  buttons: [
-                    { text: "OK", role: "cancel" },
-                  ],
-                });
-                await alert.present();
-              } else if (err.response) {
-                const msg = err.response.data?.message;
-                const detalle = msg ? (Array.isArray(msg) ? msg.join(', ') : msg) : 'Credenciales incorrectas o error del servidor';
-                error.value.data = `Error ${err.response.status}: ${detalle}`;
-              } else {
-                error.value.data =
-                  "Ocurrió un error inesperado durante el login.";
-              }
-            });
+          error.value.data = "Error al iniciar sesión: Respuesta no válida";
+          return;
         }
-      },
-      register() {
-        router.push("/register");
-      },
+
+        localStorage.setItem(
+          "token",
+          "Bearer " + response.data.userLoged.accessToken
+        );
+        localStorage.setItem(
+          "usuario",
+          JSON.stringify(response.data.userLoged)
+        );
+
+        error.value.estatus = 0;
+        tokenHeader();
+
+        // Verificar si es profesor o administrador para cargar asignaciones
+        const userRole = usuarioGet().rol;
+        if (userRole === "teacher" || userRole === "admin") {
+          try {
+            const teacherAssignmentsResponse = await axios.get(
+              `/courses/teacher-assignments/${usuarioGet().id}`
+            );
+            localStorage.setItem(
+              "teacherAssignments",
+              JSON.stringify(teacherAssignmentsResponse.data)
+            );
+          } catch (assignmentError) {
+            console.error(
+              "Error fetching teacher assignments:",
+              assignmentError
+            );
+            // No bloqueamos el login si esto falla
+          }
+        }
+
+        // Cargar cursos del usuario
+        const coursesResponse = await axios.get(
+          `/users/${usuarioGet().id}/courses`
+        );
+        const cursosUsuario = coursesResponse.data.map((asignacion) => ({
+          name: asignacion.course.name,
+          id: asignacion.course.id,
+          year: asignacion.year,
+          active: asignacion.active,
+          rol: asignacion.rol,
+        }));
+        localStorage.setItem("cursosUsuario", JSON.stringify(cursosUsuario));
+
+        // Obtener año / tiempo del servidor
+        const serverTime = await fetchServerTime();
+        const currentYear = serverTime
+          ? serverTime.year
+          : currentServerDate().getFullYear();
+        localStorage.setItem("year", JSON.stringify(currentYear));
+
+        // Obtener periodos
+        const periodsResponse = await axios.get(
+          `/periods?instituteId=${usuarioGet().institute.id}`
+        );
+        const periodos = periodsResponse.data.map((periodo) => ({
+          name: periodo.name,
+          id: periodo.id,
+        }));
+        localStorage.setItem("periodos", JSON.stringify(periodos));
+
+        router.push("/inicio");
+      } catch (err) {
+        error.value.estatus = 1;
+        if (err.message === "Network Error") {
+          const url = basedeURL();
+          const alert = await alertController.create({
+            header: "Error de conexión",
+            message: `No se pudo conectar con el servidor en ${url}. Por favor, verifique la configuración de la aplicación o contacte al administrador.`,
+            buttons: [{ text: "OK", role: "cancel" }],
+          });
+          await alert.present();
+        } else if (err.response) {
+          const msg = err.response.data?.message;
+          const detalle = msg
+            ? Array.isArray(msg)
+              ? msg.join(", ")
+              : msg
+            : "Credenciales incorrectas o error del servidor";
+          error.value.data = `Error ${err.response.status}: ${detalle}`;
+        } else {
+          error.value.data = "Ocurrió un error inesperado durante el login.";
+        }
+      } finally {
+        isLoading.value = false;
+      }
+    };
+
+    const register = () => {
+      router.push("/register");
+    };
+
+    return {
+      login,
+      error,
+      isLoading,
+      showPassword,
+      focusedField,
+      mostrar,
+      register,
+      // Iconos
+      personOutline,
+      lockClosedOutline,
+      eyeOutline,
+      eyeOffOutline,
+      alertCircleOutline,
     };
   },
 };
 </script>
+
 <style scoped>
-#container {
+/* Contenedor y Fondo Queezy */
+.qz-login-page {
+  background-color: var(--qz-color-purple-bg, #EFEEFC);
+}
+
+.qz-toolbar {
+  --background: transparent;
+  --min-height: 20px;
+}
+
+.qz-login-content {
+  --background: var(--qz-color-purple-bg, #EFEEFC);
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+}
+
+.qz-auth-wrapper {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+  box-sizing: border-box;
+}
+
+/* Tarjeta principal con bordes Queezy y sombra difusa tintada */
+.qz-auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: #FFFFFF;
+  border-radius: var(--qz-radius-2xl, 32px);
+  padding: 36px 28px;
+  box-shadow: 0 16px 40px -8px rgba(106, 90, 224, 0.12), 0 2px 8px rgba(12, 9, 42, 0.04);
+  box-sizing: border-box;
+}
+
+/* Encabezado */
+.qz-auth-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  position: absolute;
-  left: 10%;
-  right: 10%;
-  top: 50%;
-  transform: translateY(-50%);
+  margin-bottom: 24px;
 }
 
-#container strong {
-  font-size: 20px;
-  line-height: 26px;
+.qz-welcome-text {
+  margin-top: 16px;
 }
 
-#container p {
-  font-size: 16px;
-  line-height: 22px;
-  color: #8c8c8c;
+.qz-welcome-title {
   margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--qz-color-text-main, #0C092A);
+  letter-spacing: -0.2px;
+}
+
+.qz-welcome-subtitle {
+  margin: 6px 0 0;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--qz-color-text-muted, #858494);
+  line-height: 1.4;
+}
+
+/* Badge de Error */
+.qz-error-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: var(--qz-color-red-bg, #FEECEC);
+  border: 1px solid var(--qz-color-red-wrong, #FF5656);
+  border-radius: var(--qz-radius-md, 16px);
+  padding: 12px 16px;
+  margin-bottom: 20px;
+}
+
+.qz-error-icon {
+  font-size: 20px;
+  color: var(--qz-color-red-wrong, #FF5656);
+  flex-shrink: 0;
+}
+
+.qz-error-msg {
+  font-size: 13px;
+  font-weight: 600;
+  color: #D32F2F;
+  line-height: 1.3;
+}
+
+/* Campos de Formulario */
+.qz-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.qz-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.qz-field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--qz-color-text-main, #0C092A);
+  letter-spacing: 0.2px;
+  margin-left: 4px;
+}
+
+/* Input Box: Pill redondeado con sombras Queezy */
+.qz-input-box {
+  display: flex;
+  align-items: center;
+  background: #FFFFFF;
+  border: 1.5px solid var(--qz-color-border, #E6E6E6);
+  border-radius: var(--qz-radius-lg, 20px);
+  padding: 0 16px;
+  height: 54px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(12, 9, 42, 0.02);
+}
+
+.qz-input-box--focused {
+  border-color: var(--qz-color-purple-primary, #6A5AE0);
+  box-shadow: 0 0 0 4px rgba(106, 90, 224, 0.15);
+}
+
+.qz-input-icon {
+  font-size: 20px;
+  color: var(--qz-color-text-muted, #858494);
+  margin-right: 12px;
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+
+.qz-input-box--focused .qz-input-icon {
+  color: var(--qz-color-purple-primary, #6A5AE0);
+}
+
+.qz-native-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--qz-color-text-main, #0C092A);
+}
+
+.qz-native-input::placeholder {
+  color: #A3A2AF;
+  font-weight: 400;
+}
+
+.qz-eye-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--qz-color-text-muted, #858494);
+  font-size: 20px;
+  outline: none;
+  transition: color 0.2s ease;
+}
+
+.qz-eye-btn:hover {
+  color: var(--qz-color-purple-primary, #6A5AE0);
+}
+
+/* Grupo de botones y footer */
+.qz-actions-group {
+  margin-top: 10px;
+}
+
+.qz-auth-footer {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.qz-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.qz-divider-line {
+  flex: 1;
+  height: 1px;
+  background-color: var(--qz-color-border, #E6E6E6);
+}
+
+.qz-divider-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--qz-color-text-muted, #858494);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Animaciones */
+.qz-fade-enter-active,
+.qz-fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.qz-fade-enter-from,
+.qz-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+/* Responsividad en pantallas móviles pequeñas */
+@media (max-width: 480px) {
+  .qz-auth-wrapper {
+    padding: 16px 12px;
+  }
+
+  .qz-auth-card {
+    padding: 28px 18px;
+    border-radius: var(--qz-radius-xl, 24px);
+  }
+
+  .qz-welcome-title {
+    font-size: 18px;
+  }
 }
 </style>

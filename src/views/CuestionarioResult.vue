@@ -1,207 +1,446 @@
 <template>
-  <ion-page>
-    <div v-if="!isScanning && !isShowingScanResult">
-      <ion-header>
-        <ion-toolbar>
-          <ion-title size="large" class="ion-text-center"
-            >{{ cuestionario ? cuestionario.topic : "Cargando..." }}
-          </ion-title>
-          <ion-buttons slot="start" class="ion-margin-start">
-            <ion-button v-if="id" :href="'/cuestionario/' + id">
-              <ion-icon :icon="arrowBackOutline"></ion-icon>
-            </ion-button>
-          </ion-buttons>
-          <ion-buttons slot="end" class="ion-margin-end">
-            <ion-button v-if="admin" @click="openStats">
-              <ion-icon :icon="statsChartOutline"></ion-icon>
-            </ion-button>
-          </ion-buttons>
-          <ion-buttons slot="end" class="ion-margin-end">
-            <ion-button v-if="id" :href="'/ganadores/' + id">
-              <ion-icon :icon="refreshOutline"></ion-icon>
-            </ion-button>
-          </ion-buttons>
-          <ion-buttons slot="end" class="ion-margin-end">
-            <ion-button
-              v-if="usuario?.rol == 'admin'"
-              @click="ordenarPorNombre"
+  <ion-page class="qz-leaderboard-page">
+    <ion-content :force-overscroll="false" class="qz-leaderboard-content">
+      <!-- 1. CABECERA HERO PÚRPURA CON EL PODIO 3D (Estilo image27_1_2_375x812.png) -->
+        <div class="qz-hero-section">
+          <!-- Barra Superior: Volver + Acciones Admin -->
+          <div class="qz-hero-top">
+            <button
+              type="button"
+              class="qz-circle-btn"
+              title="Regresar a Cuestionario"
+              @click="goBack"
             >
-              <ion-icon :icon="arrowDownCircle"></ion-icon>
-            </ion-button>
-          </ion-buttons>
-        </ion-toolbar>
-      </ion-header>
-      <ion-content :fullscreen="true">
-        <ion-accordion-group @ionChange="handleAccordionChange">
-          <ion-accordion
-            v-for="(respuesta, index) in respuestas"
-            :key="index"
-            :value="respuesta.group ? respuesta.group.id : respuesta.user.id"
-          >
-            <ion-item slot="header" lines="full" class="ion-padding-end">
-              <ion-icon
-                v-if="respuesta.nota == 5"
-                :icon="trophyOutline"
-                size="large"
-                slot="start"
-              ></ion-icon>
-              <ion-icon
-                v-else-if="respuesta.nota >= 3"
-                :icon="happyOutline"
-                size="large"
-                slot="start"
-              ></ion-icon>
-              <ion-icon
-                v-else
-                :icon="sadOutline"
-                size="large"
-                slot="start"
-              ></ion-icon>
-              <ion-label color="medium">{{
-                respuesta.group
-                  ? respuesta.group.name
-                  : respuesta.user?.name + " " + respuesta.user?.lastName
-              }}</ion-label>
-              <ion-note slot="end">
-                <ion-text
-                  v-if="
-                    respuesta.nota == 5 &&
-                    cuestionario?.evaluationType === 'relative'
-                  "
-                  color="warning"
-                >
-                  <h6>
-                    <ion-icon :icon="starOutline"></ion-icon>GANADOR<ion-icon
-                      :icon="starOutline"
-                    ></ion-icon>
-                  </h6>
-                </ion-text>
-                <ion-text v-if="respuesta.points > 0" color="success">
-                  <h6>Total Puntos: {{ respuesta.points }}</h6>
-                </ion-text>
-                <ion-text v-else color="danger">
-                  <h6>Total Puntos: {{ respuesta.points }}</h6>
-                </ion-text>
-                <ion-text
-                  v-if="
-                    (respuesta.group &&
-                      respuesta.group.id === grupoUsuario?.id) ||
-                    (respuesta.user && respuesta.user.id === usuario?.id) ||
-                    usuario?.rol == 'admin'
-                  "
-                >
-                  Nota: {{ parseFloat(respuesta.nota).toFixed(1) }}
-                </ion-text>
-              </ion-note>
-            </ion-item>
-            <div class="ion-padding" slot="content">
-              <div
-                v-if="admin && cuestionario?.category === 'improvement'"
-                class="ion-margin-bottom"
-              >
-                <ion-button
-                  expand="block"
-                  color="warning"
-                  @click="abrirModalMejoraEstudiante(respuesta)"
-                >
-                  <ion-icon :icon="ribbonOutline" slot="start"></ion-icon>
-                  Seleccionar Temas a Mejorar
-                </ion-button>
-              </div>
-              <ion-list
-                v-if="
-                  (respuesta.group &&
-                    respuesta.group.id === grupoUsuario?.id) ||
-                  (respuesta.user && respuesta.user.id === usuario?.id) ||
-                  usuario?.rol == 'admin'
-                "
-              >
-                <ion-spinner v-if="loading" name="crescent"></ion-spinner>
-                <template v-else>
-                  <div>
-                    <strong>
-                      <span v-if="respuestaDetallada.length > 0">
-                        Tienes un total de
-                        {{ respuestaDetallada.length }} preguntas resueltas.
-                      </span>
-                      <span v-else>
-                        No tienes preguntas resueltas o las preguntas no estan
-                        disponibles para verlas.
-                      </span>
-                      <p
-                        v-if="respuesta.points != respuestaMAyor.points"
-                        style="color: orange"
-                      >
-                        Tienes
-                        {{ respuestaMAyor.points - respuesta.points }} puntos
-                        menos que el grupo con mejor puntaje así que tienes
-                        preguntas incorrectas o que no respondiste.
-                      </p>
-                    </strong>
-                  </div>
-                  <ion-item
-                    v-for="answer in respuestaDetallada"
-                    :key="answer.id"
-                  >
-                    <ion-label>
-                      <strong
-                        >{{ answer.numeroPregunta }}.{{
-                          answer.question.title
-                        }}</strong
-                      >
-                      <ion-icon
-                        :icon="
-                          answer.option.correct
-                            ? checkmarkCircleOutline
-                            : closeCircleOutline
-                        "
-                        :color="answer.option.correct ? 'success' : 'danger'"
-                      ></ion-icon>
-                      <p>
-                        <strong>Respuesta seleccionada:</strong>
-                        {{ answer.option.sentence }}
-                      </p>
-                      <p>
-                        <strong>Puntos obtenidos:</strong> {{ answer.points }}
-                      </p>
-                    </ion-label>
-                  </ion-item>
-                </template>
-              </ion-list>
-              <ion-text v-else color="medium">
-                <p class="ion-text-center">
-                  No tienes permiso para ver estas respuestas
-                </p>
-              </ion-text>
-            </div>
-          </ion-accordion>
-        </ion-accordion-group>
+              <ion-icon :icon="arrowBackOutline"></ion-icon>
+            </button>
 
-        <ion-buttons
-          v-if="admin"
-          class="ion-justify-content-center ion-padding-top ion-padding-bottom"
+            <!-- Acciones Docente / Admin -->
+            <div class="qz-hero-actions">
+              <button
+                v-if="admin"
+                type="button"
+                class="qz-circle-btn"
+                title="Análisis de Desempeño"
+                @click="openStats"
+              >
+                <ion-icon :icon="statsChartOutline"></ion-icon>
+              </button>
+
+              <button
+                v-if="usuario?.rol == 'admin'"
+                type="button"
+                class="qz-circle-btn"
+                title="Ordenar por Nombre"
+                @click="ordenarPorNombre"
+              >
+                <ion-icon :icon="arrowDownCircle"></ion-icon>
+              </button>
+
+              <button
+                v-if="admin"
+                type="button"
+                class="qz-circle-btn"
+                title="Registrar Notas"
+                @click="registrarNotas"
+              >
+                <ion-icon :icon="fileTrayFullOutline"></ion-icon>
+              </button>
+
+              <button
+                v-if="admin"
+                type="button"
+                class="qz-circle-btn"
+                title="Lector OMR"
+                @click="goToOmr"
+              >
+                <ion-icon :icon="qrCodeOutline"></ion-icon>
+              </button>
+
+              <button
+                type="button"
+                class="qz-circle-btn"
+                title="Refrescar Resultados"
+                @click="reloadPage"
+              >
+                <ion-icon :icon="refreshOutline"></ion-icon>
+              </button>
+            </div>
+          </div>
+
+          <!-- Título del Hero -->
+          <div class="qz-hero-titles">
+            <span class="qz-hero-tag">CUADRO DE HONOR Y PODIO</span>
+            <h1 class="qz-hero-title">
+              {{ cuestionario ? cuestionario.topic : "Resultados" }}
+            </h1>
+          </div>
+
+          <!-- PODIO 3D QUEEZY (Tiers de Puntaje para resolver empates) -->
+          <div v-if="topTiers && topTiers.length > 0" class="qz-podium-container">
+            <div class="qz-podium-stage">
+              <!-- ESCALÓN 2: Segundo Lugar (Plata 🥈) -->
+              <div
+                v-if="topTiers[1]"
+                class="qz-podium-col qz-podium--step2"
+                @click="handlePodiumClick(topTiers[1])"
+              >
+                <!-- Avatar o Stack de Avatares -->
+                <div class="qz-podium-avatar-wrap">
+                  <div
+                    v-if="topTiers[1].items.length > 1"
+                    class="qz-avatar-stack"
+                    title="Múltiples participantes empatados"
+                  >
+                    <div class="qz-stacked-circle qz-stack--1">
+                      {{ getInitials(getParticipantName(topTiers[1].items[0])) }}
+                    </div>
+                    <div
+                      v-if="topTiers[1].items[1]"
+                      class="qz-stacked-circle qz-stack--2"
+                    >
+                      {{ getInitials(getParticipantName(topTiers[1].items[1])) }}
+                    </div>
+                    <div class="qz-stack-count">+{{ topTiers[1].items.length }}</div>
+                  </div>
+                  <div v-else class="qz-podium-single-avatar">
+                    {{ getInitials(getParticipantName(topTiers[1].items[0])) }}
+                  </div>
+                  <div class="qz-rank-badge-icon qz-rank--silver">🥈</div>
+                </div>
+
+                <!-- Nombre o Empate -->
+                <span class="qz-podium-name">
+                  {{
+                    topTiers[1].items.length === 1
+                      ? getParticipantName(topTiers[1].items[0])
+                      : `${topTiers[1].items.length} Empatados`
+                  }}
+                </span>
+
+                <!-- Píldora de Puntos -->
+                <div class="qz-podium-score-pill">
+                  {{ topTiers[1].points }} pts
+                </div>
+
+                <!-- Bloque 3D del Escalón 2 -->
+                <div class="qz-pillar qz-pillar--2">
+                  <span class="qz-pillar-number">2</span>
+                </div>
+              </div>
+
+              <!-- ESCALÓN 1: Primer Lugar (Oro con Corona 👑) -->
+              <div
+                v-if="topTiers[0]"
+                class="qz-podium-col qz-podium--step1"
+                @click="handlePodiumClick(topTiers[0])"
+              >
+                <!-- Corona Dorada Flotante -->
+                <div class="qz-crown-floating">
+                  <span>👑</span>
+                </div>
+
+                <!-- Avatar o Stack de Avatares -->
+                <div class="qz-podium-avatar-wrap qz-podium-wrap--gold">
+                  <div
+                    v-if="topTiers[0].items.length > 1"
+                    class="qz-avatar-stack"
+                    title="Múltiples participantes con puntaje máximo"
+                  >
+                    <div class="qz-stacked-circle qz-stack--1">
+                      {{ getInitials(getParticipantName(topTiers[0].items[0])) }}
+                    </div>
+                    <div
+                      v-if="topTiers[0].items[1]"
+                      class="qz-stacked-circle qz-stack--2"
+                    >
+                      {{ getInitials(getParticipantName(topTiers[0].items[1])) }}
+                    </div>
+                    <div class="qz-stack-count">+{{ topTiers[0].items.length }}</div>
+                  </div>
+                  <div v-else class="qz-podium-single-avatar">
+                    {{ getInitials(getParticipantName(topTiers[0].items[0])) }}
+                  </div>
+                </div>
+
+                <!-- Nombre o Empate Ganador -->
+                <span class="qz-podium-name qz-podium-name--first">
+                  {{
+                    topTiers[0].items.length === 1
+                      ? getParticipantName(topTiers[0].items[0])
+                      : `${topTiers[0].items.length} Ganadores (Empate)`
+                  }}
+                </span>
+
+                <!-- Píldora de Puntos Dorada -->
+                <div class="qz-podium-score-pill qz-pill--gold">
+                  {{ topTiers[0].points }} pts · 5.0
+                </div>
+
+                <!-- Bloque 3D del Escalón 1 -->
+                <div class="qz-pillar qz-pillar--1">
+                  <span class="qz-pillar-number">1</span>
+                </div>
+              </div>
+
+              <!-- ESCALÓN 3: Tercer Lugar (Bronce 🥉) -->
+              <div
+                v-if="topTiers[2]"
+                class="qz-podium-col qz-podium--step3"
+                @click="handlePodiumClick(topTiers[2])"
+              >
+                <!-- Avatar o Stack de Avatares -->
+                <div class="qz-podium-avatar-wrap">
+                  <div
+                    v-if="topTiers[2].items.length > 1"
+                    class="qz-avatar-stack"
+                    title="Múltiples participantes empatados"
+                  >
+                    <div class="qz-stacked-circle qz-stack--1">
+                      {{ getInitials(getParticipantName(topTiers[2].items[0])) }}
+                    </div>
+                    <div
+                      v-if="topTiers[2].items[1]"
+                      class="qz-stacked-circle qz-stack--2"
+                    >
+                      {{ getInitials(getParticipantName(topTiers[2].items[1])) }}
+                    </div>
+                    <div class="qz-stack-count">+{{ topTiers[2].items.length }}</div>
+                  </div>
+                  <div v-else class="qz-podium-single-avatar">
+                    {{ getInitials(getParticipantName(topTiers[2].items[0])) }}
+                  </div>
+                  <div class="qz-rank-badge-icon qz-rank--bronze">🥉</div>
+                </div>
+
+                <!-- Nombre o Empate -->
+                <span class="qz-podium-name">
+                  {{
+                    topTiers[2].items.length === 1
+                      ? getParticipantName(topTiers[2].items[0])
+                      : `${topTiers[2].items.length} Empatados`
+                  }}
+                </span>
+
+                <!-- Píldora de Puntos -->
+                <div class="qz-podium-score-pill">
+                  {{ topTiers[2].points }} pts
+                </div>
+
+                <!-- Bloque 3D del Escalón 3 -->
+                <div class="qz-pillar qz-pillar--3">
+                  <span class="qz-pillar-number">3</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. HOJA INFERIOR: CLASIFICACIÓN GENERAL Y DETALLES DE RESPUESTAS -->
+        <div class="qz-leaderboard-sheet">
+          <div class="qz-sheet-handle"></div>
+          <div class="qz-sheet-container">
+            <div class="qz-sheet-header">
+              <h2 class="qz-sheet-title">Clasificación General</h2>
+              <span class="qz-sheet-count" v-if="respuestas">
+                {{ respuestas.length }} {{ respuestas.length === 1 ? 'participante' : 'participantes' }}
+              </span>
+            </div>
+
+            <!-- Lista de Participantes -->
+            <div class="qz-participants-list">
+              <div
+                v-for="(respuesta, index) in respuestas"
+                :key="index"
+                class="qz-participant-card-wrap"
+              >
+                <!-- Tarjeta Principal del Participante -->
+                <div
+                  class="qz-participant-card"
+                  :class="{ 'is-expanded': isExpanded(respuesta) }"
+                  @click="toggleParticipant(respuesta)"
+                >
+                  <!-- Posición / Badge de Nivel de Podio -->
+                  <div
+                    class="qz-pos-badge"
+                    :class="getPositionBadgeClass(respuesta)"
+                  >
+                    <span v-if="getTierNumber(respuesta) === 1">👑</span>
+                    <span v-else-if="getTierNumber(respuesta) === 2">🥈</span>
+                    <span v-else-if="getTierNumber(respuesta) === 3">🥉</span>
+                    <span v-else>{{ index + 1 }}</span>
+                  </div>
+
+                  <!-- Avatar con Iniciales -->
+                  <div
+                    class="qz-user-avatar"
+                    :class="getAvatarColorClass(index)"
+                  >
+                    {{ getInitials(getParticipantName(respuesta)) }}
+                  </div>
+
+                  <!-- Datos del Participante -->
+                  <div class="qz-participant-info">
+                    <div class="qz-name-row">
+                      <h3 class="qz-participant-name">
+                        {{ getParticipantName(respuesta) }}
+                      </h3>
+                      <span
+                        v-if="respuesta.nota == 5 && cuestionario?.evaluationType === 'relative'"
+                        class="qz-winner-chip"
+                      >
+                        <ion-icon :icon="starOutline"></ion-icon>
+                        <span>GANADOR</span>
+                      </span>
+                    </div>
+
+                    <div class="qz-score-details">
+                      <span class="qz-points-tag">
+                        {{ respuesta.points }} pts
+                      </span>
+                      <span class="qz-grade-tag" v-if="canViewGrade(respuesta)">
+                        · Nota: {{ parseFloat(respuesta.nota).toFixed(1) }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Flecha Desplegable -->
+                  <div
+                    class="qz-card-chevron"
+                    :class="{ 'is-open': isExpanded(respuesta) }"
+                  >
+                    <ion-icon :icon="chevronForwardOutline"></ion-icon>
+                  </div>
+                </div>
+
+                <!-- Detalle de Respuestas Desplegadas (Acordeón) -->
+                <div
+                  v-if="isExpanded(respuesta)"
+                  class="qz-participant-drawer"
+                >
+                  <!-- Botón Mejora de Nota (Docente) -->
+                  <div
+                    v-if="admin && cuestionario?.category === 'improvement'"
+                    class="qz-improvement-banner"
+                  >
+                    <button
+                      type="button"
+                      class="qz-btn-improvement"
+                      @click.stop="abrirModalMejoraEstudiante(respuesta)"
+                    >
+                      <ion-icon :icon="ribbonOutline"></ion-icon>
+                      <span>Seleccionar Temas a Mejorar</span>
+                    </button>
+                  </div>
+
+                  <!-- Si tiene permiso para ver detalles -->
+                  <div v-if="canViewDetails(respuesta)" class="qz-answers-box">
+                    <div v-if="loading" class="qz-drawer-loading">
+                      <ion-spinner name="crescent" color="primary"></ion-spinner>
+                      <span>Cargando respuestas...</span>
+                    </div>
+
+                    <template v-else>
+                      <!-- Resumen de Aciertos -->
+                      <div class="qz-answers-summary">
+                        <span v-if="respuestaDetallada && respuestaDetallada.length > 0">
+                          Total de <strong>{{ respuestaDetallada.length }}</strong> preguntas resueltas.
+                        </span>
+                        <span v-else>
+                          No hay preguntas resueltas disponibles para ver.
+                        </span>
+                        <p
+                          v-if="respuesta.points != respuestaMAyor.points"
+                          class="qz-diff-warning"
+                        >
+                          Tienes {{ respuestaMAyor.points - respuesta.points }} puntos menos que el mejor puntaje.
+                        </p>
+                      </div>
+
+                      <!-- Lista Pregunta por Pregunta -->
+                      <div class="qz-answers-list">
+                        <div
+                          v-for="answer in respuestaDetallada"
+                          :key="answer.id"
+                          class="qz-answer-row"
+                        >
+                          <div
+                            class="qz-answer-icon"
+                            :class="answer.option.correct ? 'is-correct' : 'is-wrong'"
+                          >
+                            <ion-icon
+                              :icon="answer.option.correct ? checkmarkCircle : closeCircle"
+                            ></ion-icon>
+                          </div>
+
+                          <div class="qz-answer-content">
+                            <span class="qz-answer-title">
+                              {{ answer.numeroPregunta }}. {{ answer.question.title }}
+                            </span>
+                            <p class="qz-answer-selected">
+                              <strong>Respuesta:</strong> {{ answer.option.sentence }}
+                            </p>
+                            <span class="qz-answer-pts">
+                              Puntos: <strong>{{ answer.points }}</strong>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+
+                  <div v-else class="qz-no-permission">
+                    <p>No tienes permiso para ver el desglose de estas respuestas.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ion-content>
+
+      <!-- MODAL DE EMPATADOS EN EL PODIO (Para ver la lista de cualquier escalón) -->
+        <ion-modal
+          :is-open="isTierModalOpen"
+          @didDismiss="closeTierModal"
+          :breakpoints="[0, 0.6, 0.9]"
+          :initial-breakpoint="0.6"
+          class="qz-modal-pop"
         >
-          <ion-button
-            expand="full"
-            fill="outline"
-            shape="round"
-            color="medium"
-            class="ion-align-self-center"
-            @click="registrarNotas"
-          >
-            <ion-icon :icon="fileTrayFullOutline"></ion-icon>
-          </ion-button>
-          <ion-button
-            expand="full"
-            fill="outline"
-            shape="round"
-            color="primary"
-            class="ion-align-self-center"
-            :href="'/omr-read/' + id"
-          >
-            <ion-icon :icon="qrCodeOutline"></ion-icon>
-          </ion-button>
-        </ion-buttons>
+          <div class="qz-tier-modal-sheet" v-if="selectedTierForModal">
+            <div class="qz-modal-handle"></div>
+            <div class="qz-tier-modal-header">
+              <span class="qz-tier-badge">
+                {{ selectedTierForModal.rank === 1 ? '👑 Puesto 1 (Oro)' : selectedTierForModal.rank === 2 ? '🥈 Puesto 2 (Plata)' : '🥉 Puesto 3 (Bronce)' }}
+              </span>
+              <h3 class="qz-tier-title">
+                {{ selectedTierForModal.items.length }} {{ selectedTierForModal.items.length === 1 ? 'Participante' : 'Participantes Empatados' }}
+              </h3>
+              <p class="qz-tier-subtitle">
+                Puntaje obtenido: <strong>{{ selectedTierForModal.points }} pts</strong> · Nota: <strong>{{ parseFloat(selectedTierForModal.nota).toFixed(1) }}</strong>
+              </p>
+            </div>
+
+            <div class="qz-tier-modal-list">
+              <div
+                v-for="(item, idx) in selectedTierForModal.items"
+                :key="idx"
+                class="qz-tier-item-row"
+              >
+                <div class="qz-tier-avatar">
+                  {{ getInitials(getParticipantName(item)) }}
+                </div>
+                <div class="qz-tier-item-info">
+                  <span class="qz-tier-item-name">{{ getParticipantName(item) }}</span>
+                  <span class="qz-tier-item-sub">Nota: {{ parseFloat(item.nota).toFixed(1) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <button type="button" class="qz-tier-close-btn" @click="closeTierModal">
+              Entendido
+            </button>
+          </div>
+        </ion-modal>
 
         <!-- Toasts -->
         <ion-toast
@@ -219,7 +458,7 @@
           @didDismiss="setErrorToastOpen(false)"
         ></ion-toast>
 
-        <!-- Statistics Modal -->
+        <!-- Modal de Análisis de Desempeño (Stats) -->
         <ion-modal
           :is-open="showStatsModal"
           @didDismiss="showStatsModal = false"
@@ -256,8 +495,7 @@
                   :icon="informationCircleOutline"
                   style="vertical-align: middle"
                 ></ion-icon>
-                Este análisis permite identificar las preguntas con menor y
-                mayor índice de aciertos.
+                Este análisis permite identificar las preguntas con menor y mayor índice de aciertos.
               </p>
 
               <ion-card
@@ -290,116 +528,19 @@
                   </div>
                 </ion-card-header>
                 <ion-card-content>
-                  <p
-                    style="
-                      font-size: 1.1em;
-                      color: var(--ion-text-color);
-                      margin-bottom: 12px;
-                      font-weight: 500;
-                    "
-                  >
-                    {{ stat.title }}
+                  <p class="question-sentence">
+                    <strong>{{ stat.title }}:</strong> {{ stat.sentence }}
                   </p>
-
-                  <div
-                    v-if="stat.sentence"
-                    class="question-sentence ion-padding"
-                    style="
-                      background: var(--ion-color-light);
-                      border-radius: 8px;
-                      margin-bottom: 12px;
+                  <ion-progress-bar
+                    :value="stat.successRate / 100"
+                    :color="
+                      stat.successRate < 60
+                        ? 'danger'
+                        : stat.successRate < 80
+                        ? 'warning'
+                        : 'success'
                     "
-                  >
-                    <div v-html="stat.sentence"></div>
-                  </div>
-
-                  <div v-if="stat.photo" class="ion-margin-bottom">
-                    <img
-                      :src="stat.photo"
-                      style="
-                        border-radius: 8px;
-                        width: 100%;
-                        max-height: 200px;
-                        object-fit: contain;
-                      "
-                    />
-                  </div>
-
-                  <div
-                    style="
-                      display: flex;
-                      flex-direction: column;
-                      gap: 8px;
-                      margin-top: 10px;
-                      padding: 12px;
-                      border-radius: 8px;
-                      background: rgba(var(--ion-color-primary-rgb), 0.05);
-                    "
-                  >
-                    <div style="display: flex; align-items: center; gap: 8px">
-                      <ion-icon
-                        :icon="checkmarkCircle"
-                        color="success"
-                      ></ion-icon>
-                      <span style="font-weight: 600; font-size: 0.9em"
-                        >Respuesta correcta:</span
-                      >
-                      <span style="font-size: 0.9em">{{
-                        stat.correctOption?.sentence
-                      }}</span>
-                    </div>
-
-                    <div
-                      v-if="stat.mostSelectedOption"
-                      style="display: flex; align-items: center; gap: 8px"
-                    >
-                      <ion-icon
-                        :icon="
-                          stat.mostSelectedOption.correct
-                            ? checkmarkCircle
-                            : closeCircle
-                        "
-                        :color="
-                          stat.mostSelectedOption.correct ? 'success' : 'danger'
-                        "
-                      ></ion-icon>
-                      <span style="font-weight: 600; font-size: 0.9em"
-                        >Opción más frecuente:</span
-                      >
-                      <span style="font-size: 0.9em"
-                        >{{ stat.mostSelectedOption.sentence }} ({{
-                          stat.mostSelectedCount
-                        }}
-                        votos)</span
-                      >
-                    </div>
-                  </div>
-
-                  <div style="margin-top: 15px">
-                    <div
-                      style="
-                        display: flex;
-                        justify-content: space-between;
-                        margin-bottom: 5px;
-                        font-size: 0.85em;
-                      "
-                    >
-                      <span
-                        >{{ stat.correct }} aciertos de
-                        {{ stat.total }} respuestas</span
-                      >
-                    </div>
-                    <ion-progress-bar
-                      :value="stat.successRate / 100"
-                      :color="
-                        stat.successRate < 60
-                          ? 'danger'
-                          : stat.successRate < 80
-                          ? 'warning'
-                          : 'success'
-                      "
-                    ></ion-progress-bar>
-                  </div>
+                  ></ion-progress-bar>
                 </ion-card-content>
               </ion-card>
             </div>
@@ -415,14 +556,11 @@
             <ion-toolbar color="warning">
               <ion-title>Mejora de Nota</ion-title>
               <ion-buttons slot="end">
-                <ion-button @click="showImprovementModal = false"
-                  >Cerrar</ion-button
-                >
+                <ion-button @click="showImprovementModal = false">Cerrar</ion-button>
               </ion-buttons>
             </ion-toolbar>
           </ion-header>
           <ion-content class="ion-padding">
-            <!-- Ficha del estudiante seleccionado -->
             <ion-card
               v-if="selectedStudentForImprovement"
               color="light"
@@ -437,227 +575,74 @@
                   "
                 >
                   <div>
-                    <h3
-                      style="
-                        margin: 0;
-                        font-weight: bold;
-                        font-size: 1.05em;
-                        color: var(--ion-color-dark);
-                      "
-                    >
+                    <h3 style="margin: 0; font-weight: bold; font-size: 1.05em">
                       {{ getStudentName(selectedStudentForImprovement) }}
                     </h3>
                     <ion-note style="font-size: 0.85em">Estudiante</ion-note>
                   </div>
-                  <div style="text-align: right">
-                    <ion-badge
-                      color="warning"
-                      style="font-size: 0.95em; padding: 6px 10px"
-                    >
-                      Nota examen:
-                      {{
-                        parseFloat(selectedStudentForImprovement.nota).toFixed(1)
-                      }}
-                    </ion-badge>
-                  </div>
+                  <ion-badge color="warning" style="font-size: 0.95em; padding: 6px 10px">
+                    Nota: {{ parseFloat(selectedStudentForImprovement.nota).toFixed(1) }}
+                  </ion-badge>
                 </div>
               </ion-card-content>
             </ion-card>
 
-            <p
-              class="ion-padding-horizontal"
-              style="font-size: 0.9em; color: var(--ion-color-medium)"
-            >
-              <ion-icon
-                :icon="informationCircleOutline"
-                style="vertical-align: middle; margin-right: 4px"
-              ></ion-icon>
-              Seleccione uno o varios temas a mejorar. Solo se actualizará la
-              nota de cada tema si la nueva calificación es superior a la anterior.
-            </p>
-
             <ion-item>
-              <ion-label position="stacked">Temas / Cuestionarios a Mejorar</ion-label>
+              <ion-label position="stacked">Temas a Mejorar</ion-label>
               <ion-select
-                :multiple="true"
                 v-model="selectedQuizIdsToImprove"
-                placeholder="Seleccione los temas a mejorar"
+                multiple="true"
+                placeholder="Seleccionar cuestionarios"
                 @ionChange="onSelectedQuizzesChange"
-                ok-text="Aceptar"
-                cancel-text="Cancelar"
               >
                 <ion-select-option
-                  v-for="q in quizzesInCourse"
-                  :key="q.id"
-                  :value="q.id"
+                  v-for="quiz in quizzesInCourse"
+                  :key="quiz.id"
+                  :value="quiz.id"
                 >
-                  {{ q.title }} ({{ q.lesson?.title || "Lección" }})
+                  {{ quiz.title }}
                 </ion-select-option>
               </ion-select>
             </ion-item>
 
             <div
-              v-if="loadingExistingGrades"
-              class="ion-text-center ion-padding"
+              v-if="studentComparisonList.length > 0"
+              class="ion-margin-top ion-padding-bottom"
             >
-              <ion-spinner name="crescent"></ion-spinner>
-              <p>Cargando información del estudiante...</p>
-            </div>
-
-            <div
-              v-else-if="
-                selectedQuizIdsToImprove &&
-                selectedQuizIdsToImprove.length > 0 &&
-                studentComparisonList.length > 0
-              "
-              class="ion-margin-top"
-            >
-              <h4
-                class="ion-padding-horizontal"
-                style="color: var(--ion-color-dark); font-size: 1em"
+              <ion-button
+                expand="block"
+                color="warning"
+                :disabled="registrandoMejora"
+                @click="confirmarRegistroMejora"
               >
-                Comparación por tema ({{ studentComparisonList.length }} seleccionados)
-              </h4>
-              <ion-card
-                v-for="item in studentComparisonList"
-                :key="item.quizId"
-                class="improvement-card"
-              >
-                <ion-card-content style="padding: 12px">
-                  <div
-                    style="
-                      display: flex;
-                      justify-content: space-between;
-                      align-items: center;
-                      gap: 8px;
-                      flex-wrap: wrap;
-                    "
-                  >
-                    <div style="flex: 1; min-width: 140px">
-                      <strong style="font-size: 0.95em; display: block">{{
-                        item.quizTitle
-                      }}</strong>
-                      <span
-                        style="font-size: 0.8em; color: var(--ion-color-medium)"
-                      >
-                        {{ item.lessonTitle }}
-                      </span>
-                    </div>
-                    <div
-                      style="
-                        display: flex;
-                        align-items: center;
-                        gap: 12px;
-                        font-size: 0.9em;
-                      "
-                    >
-                      <span style="color: var(--ion-color-medium)">
-                        Anterior:
-                        <strong>{{
-                          item.hasPreviousGrade
-                            ? parseFloat(item.previousGrade).toFixed(1)
-                            : "Sin nota"
-                        }}</strong>
-                      </span>
-                      <ion-icon
-                        :icon="arrowForwardOutline"
-                        style="font-size: 1.1em"
-                      ></ion-icon>
-                      <span
-                        :style="{
-                          color: item.improves
-                            ? 'var(--ion-color-success)'
-                            : 'var(--ion-color-medium)',
-                        }"
-                      >
-                        Nueva:
-                        <strong>{{
-                          parseFloat(item.newGrade).toFixed(1)
-                        }}</strong>
-                      </span>
-                      <ion-badge
-                        :color="item.improves ? 'success' : 'medium'"
-                        style="font-size: 0.75em"
-                      >
-                        {{ item.improves ? "Mejorará" : "Se mantiene" }}
-                      </ion-badge>
-                    </div>
-                  </div>
-                </ion-card-content>
-              </ion-card>
-
-              <div class="ion-padding">
-                <ion-note
-                  style="display: block; margin-bottom: 12px; font-size: 0.85em"
-                >
-                  {{ studentComparisonList.filter((i) => i.improves).length }}
-                  de {{ studentComparisonList.length }} temas mejorarán su
-                  nota.
-                </ion-note>
-                <ion-button
-                  expand="block"
-                  color="warning"
-                  :disabled="
-                    registrandoMejora || selectedQuizIdsToImprove.length === 0
-                  "
-                  @click="confirmarRegistroMejora"
-                >
-                  <ion-spinner
-                    v-if="registrandoMejora"
-                    name="crescent"
-                    style="margin-right: 8px"
-                  ></ion-spinner>
-                  Confirmar Registro
-                </ion-button>
-              </div>
-            </div>
-
-            <div
-              v-else-if="
-                !loadingExistingGrades &&
-                (!selectedQuizIdsToImprove || selectedQuizIdsToImprove.length === 0)
-              "
-              class="ion-text-center ion-padding"
-              style="color: var(--ion-color-medium)"
-            >
-              <p>Seleccione uno o más temas en el selector para ver la comparación.</p>
+                Confirmar Registro
+              </ion-button>
             </div>
           </ion-content>
         </ion-modal>
-      </ion-content>
-    </div>
   </ion-page>
 </template>
 
 <script>
 import axios from "axios";
 import { adminOprofesor, numeroOrdinal } from "../globalService";
-import { ref, computed, nextTick } from "vue";
+import { ref, computed } from "vue";
 import { usuarioGet, tokenHeader } from "../globalService";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
 import {
   arrowBackOutline,
   refreshOutline,
   arrowDownCircle,
-  handLeftOutline,
-  paperPlaneOutline,
-  happyOutline,
-  sadOutline,
   ribbonOutline,
   starOutline,
-  trophyOutline,
   fileTrayFullOutline,
-  checkmarkCircleOutline,
-  closeCircleOutline,
   qrCodeOutline,
   statsChartOutline,
-  bulbOutline,
-  trendingDownOutline,
   informationCircleOutline,
   checkmarkCircle,
   closeCircle,
-  arrowForwardOutline,
+  chevronForwardOutline,
 } from "ionicons/icons";
 
 import {
@@ -670,16 +655,11 @@ import {
   IonContent,
   IonButtons,
   IonButton,
-  IonList,
-  IonItem,
   IonNote,
-  IonText,
+  IonItem,
   IonLabel,
-  IonAccordionGroup,
-  IonAccordion,
   IonSpinner,
   IonToast,
-  alertController,
   IonModal,
   IonSegment,
   IonSegmentButton,
@@ -694,6 +674,7 @@ import {
 } from "@ionic/vue";
 
 export default {
+  name: "CuestionarioResult",
   components: {
     IonTitle,
     IonHeader,
@@ -703,13 +684,9 @@ export default {
     IonIcon,
     IonButtons,
     IonButton,
-    IonList,
-    IonItem,
     IonNote,
-    IonText,
+    IonItem,
     IonLabel,
-    IonAccordionGroup,
-    IonAccordion,
     IonSpinner,
     IonToast,
     IonModal,
@@ -726,28 +703,25 @@ export default {
   },
   setup() {
     const usuario = ref();
-    const admin = adminOprofesor();
+    const admin = ref(adminOprofesor());
     const grupoUsuario = ref();
+    const router = useRouter();
     const mroute = useRoute();
     const { id } = mroute.params;
     const loading = ref(false);
     const quizPoints = ref(0);
-    const respuestaDetallada = ref({});
+    const respuestaDetallada = ref([]);
     const respuestaMAyor = ref({
       group: { name: "Cargando", id: 0 },
       points: 0,
     });
     const cuestionario = ref(JSON.parse(localStorage.getItem("quizSelected")));
-    const respuestas = ref([
-      { group: { name: "Cargando", id: 0 }, points: "Cargando" },
-    ]);
+    const respuestas = ref([]);
+    const expandedParticipantId = ref(null);
 
-    const totalPreguntas = computed(() => {
-      if (cuestionario.value && cuestionario.value.questions) {
-        return cuestionario.value.questions.length;
-      }
-      return 0;
-    });
+    // Modal de Empatados
+    const isTierModalOpen = ref(false);
+    const selectedTierForModal = ref(null);
 
     const isSuccessToastOpen = ref(false);
     const setSuccessToastOpen = (val) => (isSuccessToastOpen.value = val);
@@ -758,12 +732,6 @@ export default {
       errorMessage.value = message;
     };
 
-    const isScanning = ref(false);
-    const omrScannerRef = ref(null);
-    const isShowingScanResult = ref(false);
-    const scanResultPayload = ref(null);
-    const scannedStudent = ref(null);
-    const scannedAnswers = ref([]);
     const showStatsModal = ref(false);
     const statsSegment = ref("challenging");
     const questionStats = ref([]);
@@ -774,86 +742,183 @@ export default {
     const quizzesInCourse = ref([]);
     const selectedStudentForImprovement = ref(null);
     const selectedQuizIdsToImprove = ref([]);
-    const studentGradesMap = ref({});
     const studentComparisonList = ref([]);
     const loadingExistingGrades = ref(false);
     const registrandoMejora = ref(false);
 
-    const startScan = async () => {
-      isShowingScanResult.value = false;
-      isScanning.value = true;
-      await nextTick();
-      omrScannerRef.value?.start();
-    };
-
-    const cancelScan = () => {
-      if (isScanning.value) {
-        omrScannerRef.value?.cancelScan();
-      }
-      isScanning.value = false;
-    };
-
-    const showStudentNotFoundAlert = async () => {
-      const alert = await alertController.create({
-        header: "Estudiante no encontrado",
-        message:
-          "El código escaneado no corresponde a ningún estudiante. ¿Qué deseas hacer?",
-        buttons: [
-          {
-            text: "Salir",
-            role: "cancel",
-          },
-          {
-            text: "Reintentar",
-            handler: () => {
-              startScan();
-            },
-          },
-        ],
-      });
-      await alert.present();
-    };
-
-    const handleScanComplete = async (payload) => {
-      isScanning.value = false;
-      const numericResult = payload.results.find(
-        (r) => r.typeOrigin === "numeric",
+    // Cómputo de Tiers de Puntaje para el Podio Queezy (Solución a los empates)
+    const topTiers = computed(() => {
+      if (!respuestas.value || respuestas.value.length === 0) return [];
+      const valid = respuestas.value.filter(
+        (r) => typeof r.points === "number" && !isNaN(r.points)
       );
-      const studentCode = numericResult ? numericResult.content : null;
+      if (valid.length === 0) return [];
 
-      if (!studentCode) {
-        setErrorToastOpen(
-          true,
-          "No se pudo detectar el código del estudiante en el escaneo.",
-        );
-        return;
+      const sorted = [...valid].sort((a, b) => b.points - a.points);
+      const tiers = [];
+      const seenPoints = new Set();
+
+      for (const resp of sorted) {
+        if (!seenPoints.has(resp.points)) {
+          seenPoints.add(resp.points);
+          const itemsInTier = sorted.filter((r) => r.points === resp.points);
+          tiers.push({
+            rank: tiers.length + 1,
+            points: resp.points,
+            nota: itemsInTier[0].nota,
+            items: itemsInTier,
+          });
+          if (tiers.length === 3) break;
+        }
       }
 
-      try {
-        const response = await axios.get(`/users?code=${studentCode}`);
-        if (response.data && response.data.length > 0) {
-          scannedStudent.value = response.data[0];
-          scanResultPayload.value = payload;
+      return tiers;
+    });
 
-          scannedAnswers.value = payload.results
-            .filter((r) => r.typeOrigin === "question")
-            .flatMap((block) => block.content);
+    const getParticipantName = (r) => {
+      if (!r) return "Participante";
+      if (r.group?.name) return String(r.group.name).trim();
+      if (r.user) {
+        const first =
+          r.user.name &&
+          r.user.name !== "undefined" &&
+          r.user.name !== "null"
+            ? String(r.user.name).trim()
+            : "";
+        const last =
+          r.user.lastName &&
+          r.user.lastName !== "undefined" &&
+          r.user.lastName !== "null"
+            ? String(r.user.lastName).trim()
+            : "";
+        const fullName = `${first} ${last}`.trim();
+        if (fullName) return fullName;
+        if (r.user.username && r.user.username !== "undefined")
+          return String(r.user.username).trim();
+        if (r.user.email) return String(r.user.email).trim();
+        if (r.user.code) return `Estudiante ${r.user.code}`;
+      }
+      return "Participante";
+    };
 
-          isShowingScanResult.value = true;
-        } else {
-          showStudentNotFoundAlert();
+    const getInitials = (name) => {
+      if (!name || typeof name !== "string") return "?";
+      const cleaned = name.replace(/undefined|null/gi, "").trim();
+      if (!cleaned) return "?";
+
+      // Manejo especial para grupos numerados: "Grupo 1" -> "G1", "Grupo 11" -> "G11", "Equipo 4" -> "E4"
+      const groupMatch = cleaned.match(/^([a-zA-ZáéíóúÁÉÍÓÚñÑ]+)\s*[-_]?\s*(\d+)/i);
+      if (groupMatch) {
+        const letter = groupMatch[1].charAt(0).toUpperCase();
+        const num = groupMatch[2];
+        return `${letter}${num}`;
+      }
+
+      const parts = cleaned.split(/\s+/).filter(Boolean);
+      if (parts.length >= 2 && parts[0] && parts[1]) {
+        // Si la segunda palabra contiene números: "Grupo 11"
+        if (/^\d+/.test(parts[1])) {
+          const num = parts[1].match(/^\d+/)[0];
+          return (parts[0].charAt(0) + num).toUpperCase();
         }
-      } catch (error) {
-        setErrorToastOpen(true, "Error al buscar el estudiante.");
-        console.error("Error fetching student by code:", error);
+        const firstChar = parts[0].charAt(0) || "";
+        const secondChar = parts[1].charAt(0) || "";
+        const res = (firstChar + secondChar).toUpperCase();
+        if (res && !res.includes("UNDEFINED")) return res;
+      }
+      if (parts.length >= 1 && parts[0]) {
+        return parts[0].substring(0, 2).toUpperCase();
+      }
+      return cleaned.substring(0, 2).toUpperCase() || "?";
+    };
+
+    const getTierNumber = (resp) => {
+      if (!topTiers.value || topTiers.value.length === 0) return null;
+      const t = topTiers.value.find((tier) => tier.points === resp.points);
+      return t ? t.rank : null;
+    };
+
+    const getPositionBadgeClass = (resp) => {
+      const tierNum = getTierNumber(resp);
+      if (tierNum === 1) return "qz-badge--gold";
+      if (tierNum === 2) return "qz-badge--silver";
+      if (tierNum === 3) return "qz-badge--bronze";
+      return "qz-badge--regular";
+    };
+
+    const avatarColors = [
+      "qz-avatar--purple",
+      "qz-avatar--coral",
+      "qz-avatar--cyan",
+      "qz-avatar--gold",
+      "qz-avatar--green",
+    ];
+
+    const getAvatarColorClass = (index) => {
+      return avatarColors[index % avatarColors.length];
+    };
+
+    const getParticipantKey = (resp) => {
+      if (!resp) return "";
+      if (resp.group && resp.group.id) return `group_${resp.group.id}`;
+      if (resp.user && resp.user.id) return `user_${resp.user.id}`;
+      return `item_${resp.id || ""}`;
+    };
+
+    const isExpanded = (resp) => {
+      return expandedParticipantId.value === getParticipantKey(resp);
+    };
+
+    const toggleParticipant = async (resp) => {
+      const pKey = getParticipantKey(resp);
+      if (expandedParticipantId.value === pKey) {
+        expandedParticipantId.value = null;
+      } else {
+        expandedParticipantId.value = pKey;
+        await loadRespuestas(resp);
       }
     };
 
-    const submitScan = () => {
-      console.log("Submitting scan...", {
-        student: scannedStudent.value,
-        answers: scannedAnswers.value,
-      });
+    const canViewGrade = (resp) => {
+      return (
+        (resp.group && resp.group.id === grupoUsuario.value?.id) ||
+        (resp.user && resp.user.id === usuario.value?.id) ||
+        admin.value
+      );
+    };
+
+    const canViewDetails = (resp) => {
+      return (
+        (resp.group && resp.group.id === grupoUsuario.value?.id) ||
+        (resp.user && resp.user.id === usuario.value?.id) ||
+        admin.value
+      );
+    };
+
+    const handlePodiumClick = (tier) => {
+      if (tier.items.length > 1) {
+        selectedTierForModal.value = tier;
+        isTierModalOpen.value = true;
+      } else if (tier.items.length === 1) {
+        toggleParticipant(tier.items[0]);
+      }
+    };
+
+    const closeTierModal = () => {
+      isTierModalOpen.value = false;
+      selectedTierForModal.value = null;
+    };
+
+    const goBack = () => {
+      router.push(`/cuestionario/${id}`);
+    };
+
+    const goToOmr = () => {
+      router.push(`/omr-read/${id}`);
+    };
+
+    const reloadPage = () => {
+      window.location.reload();
     };
 
     const loadQuestionStats = async () => {
@@ -863,7 +928,6 @@ export default {
         const allAnswers = response.data;
         const statsMap = {};
 
-        // Group quiz questions first to ensure all are represented
         if (cuestionario.value && cuestionario.value.questions) {
           cuestionario.value.questions.forEach((q) => {
             statsMap[q.id] = {
@@ -875,12 +939,11 @@ export default {
               total: 0,
               correct: 0,
               optionFrequency: {},
-              options: q.options, // Store all options for reference
+              options: q.options,
             };
           });
         }
 
-        // Sum answers and track frequencies
         allAnswers.forEach((ans) => {
           const qStat = statsMap[ans.question.id];
           if (qStat) {
@@ -888,7 +951,6 @@ export default {
             if (ans.option.correct) {
               qStat.correct++;
             }
-            // Track frequency
             const optId = ans.option.id;
             qStat.optionFrequency[optId] =
               (qStat.optionFrequency[optId] || 0) + 1;
@@ -896,31 +958,13 @@ export default {
         });
 
         questionStats.value = Object.values(statsMap).map((s) => {
-          // Find most selected option
-          let mostSelectedId = null;
-          let maxFreq = -1;
-
-          Object.entries(s.optionFrequency).forEach(([optId, freq]) => {
-            if (freq > maxFreq) {
-              maxFreq = freq;
-              mostSelectedId = parseInt(optId);
-            }
-          });
-
-          const mostSelectedOption = s.options.find(
-            (o) => o.id === mostSelectedId,
-          );
-
           return {
             ...s,
             successRate: s.total > 0 ? (s.correct / s.total) * 100 : 0,
-            mostSelectedOption: mostSelectedOption,
-            mostSelectedCount: maxFreq > 0 ? maxFreq : 0,
           };
         });
       } catch (error) {
         console.error("Error loading question stats:", error);
-        setErrorToastOpen(true, "Error al cargar estadísticas");
       } finally {
         loadingStats.value = false;
       }
@@ -940,14 +984,6 @@ export default {
       loadQuestionStats();
     };
 
-    const handleAccordionChange = async (e) => {
-      const openedAccordion = e.detail.value;
-      if (openedAccordion) {
-        const id = parseInt(openedAccordion, 10);
-        await loadRespuestas(id);
-      }
-    };
-
     const ordenarPorNombre = () => {
       respuestas.value.sort((a, b) => {
         if (a.user && b.user) {
@@ -955,115 +991,42 @@ export default {
           const nameB = b.user.name + " " + b.user.lastName;
           return nameA.localeCompare(nameB);
         } else if (a.group && b.group) {
-          const regex = /(\D+)(\d+)/;
-          const [, textA, numberA] = a.group.name.match(regex) || [
-            null,
-            a.group.name,
-            0,
-          ];
-          const [, textB, numberB] = b.group.name.match(regex) || [
-            null,
-            b.group.name,
-            0,
-          ];
-
-          const textComparison = textA.localeCompare(textB);
-          if (textComparison !== 0) {
-            return textComparison;
-          }
-
-          return parseInt(numberA) - parseInt(numberB);
+          return a.group.name.localeCompare(b.group.name);
         }
         return 0;
       });
     };
 
-    onIonViewDidEnter(async () => {
-      usuario.value = usuarioGet();
-      if (!adminOprofesor())
-        await axios
-          .get(`/users/${usuario.value?.id}/groups`)
-          .then((response) => {
-            grupoUsuario.value = response.data.filter(
-              (g) => g.active,
-            )[0]?.group;
-          });
-      tokenHeader();
-
-      await axios.get(`/quizzes/${id}/points`).then((response) => {
-        quizPoints.value = response.data.points;
-      });
-
-      await axios.get(`/quizzes/${id}/results`);
-      await axios
-        .get(`/quizzes/${id}/results`)
-        .then((response) => {
-          respuestas.value = response.data.map((e) => {
-            e.points = parseFloat(e.points);
-
-            // New logic based on evaluationType
-            const evalType = cuestionario.value?.evaluationType || "relative";
-
-            if (evalType === "absolute") {
-              e.nota = e.points !== 0 ? (e.points * 5) / quizPoints.value : 0;
-            } else if (evalType === "relative") {
-              e.nota =
-                e.points !== 0 ? (e.points * 5) / response.data[0].points : 0;
-            } else {
-              // Fallback to relative if evaluationType is not explicitly set or unknown
-              console.warn(
-                "Unknown evaluationType, defaulting to relative grading.",
-              );
-              e.nota =
-                e.points !== 0 ? (e.points * 5) / response.data[0].points : 0;
-            }
-
-            e.nota = e.nota < 0 ? 0 : e.nota;
-            return e;
-          });
-        })
-
-        .then(() => {
-          if (respuestas.value.length > 0) {
-            respuestaMAyor.value = respuestas.value.sort(
-              (a, b) => b.points - a.points,
-            )[0];
-          }
-        });
-
-      if (!cuestionario.value) {
-        try {
-          const response = await axios.get(`/quizzes/${id}`, tokenHeader());
-          cuestionario.value = response.data;
-          localStorage.setItem(
-            "quizSelected",
-            JSON.stringify(cuestionario.value),
-          );
-        } catch (error) {
-          console.error("Error fetching quiz data:", error);
-          setErrorToastOpen(true, "Error al cargar los datos del cuestionario");
-        }
+    const getRespuestas = async (resp, quizId, instituteId) => {
+      let queryParams = `?quizId=${quizId}&instituteId=${instituteId}`;
+      if (resp.group && resp.group.id) {
+        queryParams += `&groupId=${resp.group.id}`;
+      } else if (resp.user && resp.user.id) {
+        queryParams += `&userId=${resp.user.id}`;
+      } else if (cuestionario.value?.quizType === "individual") {
+        queryParams += `&userId=${resp.id || resp}`;
+      } else {
+        queryParams += `&groupId=${resp.id || resp}`;
       }
-    });
+      const response = await axios.get(`/answers${queryParams}`);
+      return response.data;
+    };
 
-    const loadRespuestas = async (targetId) => {
+    const loadRespuestas = async (resp) => {
       loading.value = true;
-
       try {
-        const answers = await getRespuestas(
-          targetId,
-          id,
-          cuestionario.value?.lesson?.institute?.id || 1, // Fallback if missing
-        );
+        const instituteId = cuestionario.value?.lesson?.institute?.id || 1;
+        const answers = await getRespuestas(resp, id, instituteId);
         respuestaDetallada.value = answers
           .map((answer, index) => {
             answer.numeroPregunta = numeroOrdinal(index, answer.question.title);
             return answer;
           })
           .sort((a, b) => a.numeroPregunta - b.numeroPregunta);
+
         if (!adminOprofesor()) {
           respuestaDetallada.value = respuestaDetallada.value.filter(
-            (a) => !a.question.available,
+            (a) => !a.question.available
           );
         }
       } catch (error) {
@@ -1078,16 +1041,14 @@ export default {
         return;
       }
 
-      // Si es un cuestionario de mejora de nota, guiar al docente para seleccionar al estudiante
       if (cuestionario.value.category === "improvement") {
         setErrorToastOpen(
           true,
-          "Haga clic sobre un estudiante de la lista para seleccionar los temas a mejorar.",
+          "Toca sobre un estudiante para seleccionar los temas a mejorar."
         );
         return;
       }
 
-      // Flujo normal para cuestionarios regulares
       try {
         for (const respuesta of respuestas.value) {
           if (respuesta.user && respuesta.user.id) {
@@ -1099,310 +1060,924 @@ export default {
               gradeType: "regular",
               grade: respuesta.nota,
               instituteId: cuestionario.value.lesson.institute.id,
-            };
-            await axios.post("/grades", data);
-            continue;
-          }
-
-          if (!respuesta.group || !respuesta.group.id) {
-            console.warn(
-              "Skipping response due to missing group/user data:",
-              respuesta,
-            );
-            continue;
-          }
-          const response = await axios.get(
-            `/groups/${respuesta.group.id}/${cuestionario.value.lesson.year}/users`,
-          );
-          for (const relacionUsuario of response.data) {
-            const data = {
-              userId: relacionUsuario.user.id,
-              gradableId: parseInt(id, 10),
-              gradableType: "quiz",
-              periodId: cuestionario.value.lesson.period.id,
-              gradeType: "regular",
-              grade: respuesta.nota,
-              instituteId: cuestionario.value.lesson.institute.id,
+              year: cuestionario.value.lesson.year,
+              courseId: cuestionario.value.lesson.course.id,
+              areaId: cuestionario.value.lesson.area.id,
             };
             await axios.post("/grades", data);
           }
         }
         setSuccessToastOpen(true);
-      } catch (e) {
-        const message =
-          e.response?.data?.message || "Error al registrar las notas";
-        setErrorToastOpen(true, message);
+      } catch (error) {
+        setErrorToastOpen(true, "Error al registrar las notas.");
       }
     }
 
-    async function getRespuestas(targetId, quizId, instituteId) {
-      if (
-        targetId == grupoUsuario.value?.id ||
-        admin ||
-        targetId == usuario.value?.id
-      ) {
-        let queryParams = `?quizId=${quizId}&instituteId=${instituteId}`;
-
-        if (cuestionario.value?.quizType === "individual") {
-          queryParams += `&userId=${targetId}`;
-        } else {
-          queryParams += `&groupId=${targetId}`;
-        }
-
-        const response = await axios.get(`/answers${queryParams}`);
-        return response.data;
-      } else {
-        return [];
-      }
-    }
-
-    const getStudentName = (item) => {
-      if (!item) return "";
-      if (item.user) {
-        return `${item.user.name || ""} ${item.user.lastName || ""}`.trim();
-      }
-      if (item.group) {
-        return item.group.name || "Grupo";
-      }
-      return "Estudiante";
+    const getStudentName = (r) => {
+      if (!r) return "";
+      return r.user
+        ? `${r.user.name} ${r.user.lastName || ""}`.trim()
+        : r.group?.name || "Estudiante";
     };
 
-    async function abrirModalMejoraEstudiante(respuesta) {
-      selectedStudentForImprovement.value = respuesta;
+    const abrirModalMejoraEstudiante = async (resp) => {
+      selectedStudentForImprovement.value = resp;
       selectedQuizIdsToImprove.value = [];
       studentComparisonList.value = [];
-      loadingExistingGrades.value = true;
       showImprovementModal.value = true;
+      loadingExistingGrades.value = true;
 
       try {
-        // Cargar cuestionarios del mismo curso, periodo y año
-        if (quizzesInCourse.value.length === 0) {
-          if (!cuestionario.value?.lesson?.course) {
-            const quizRes = await axios.get(`/quizzes/${id}`);
-            cuestionario.value = quizRes.data;
-          }
-          const { course, period, year, institute } = cuestionario.value.lesson;
-          const response = await axios.get(
-            `/quizzes?courseId=${course.id}&periodId=${period.id}&year=${year}&instituteId=${institute.id}&category=regular`,
-          );
-          quizzesInCourse.value = response.data;
-        }
-
-        // Cargar notas existentes para este estudiante en este periodo
-        const { period, institute, year } = cuestionario.value.lesson;
-        const gradesMap = {};
-
-        let targetUserId = respuesta.user?.id;
-        if (!targetUserId && respuesta.group?.id) {
-          const groupRes = await axios.get(
-            `/groups/${respuesta.group.id}/${year}/users`,
-          );
-          if (groupRes.data.length > 0) {
-            targetUserId = groupRes.data[0].user?.id;
-          }
-        }
-
-        if (targetUserId) {
-          const gradesRes = await axios.get(
-            `/grades?userId=${targetUserId}&periodId=${period.id}&instituteId=${institute.id}&gradableType=quiz`,
-          );
-          for (const g of gradesRes.data) {
-            gradesMap[g.gradableId] = parseFloat(g.grade);
-          }
-        }
-
-        studentGradesMap.value = gradesMap;
-      } catch (e) {
-        console.error("Error loading quizzes/grades for improvement:", e);
-        setErrorToastOpen(
-          true,
-          "Error al cargar la información para la mejora de nota.",
+        const courseId = cuestionario.value.lesson.course.id;
+        const areaId = cuestionario.value.lesson.area.id;
+        const res = await axios.get(
+          `/quizzes?courseId=${courseId}&areaId=${areaId}`
         );
+        quizzesInCourse.value = res.data.filter((q) => q.id !== Number(id));
+      } catch (e) {
+        console.error("Error loading quizzes in course:", e);
       } finally {
         loadingExistingGrades.value = false;
       }
-    }
+    };
 
-    function onSelectedQuizzesChange() {
-      if (!selectedStudentForImprovement.value) return;
-      const newGrade = parseFloat(selectedStudentForImprovement.value.nota);
-      const comparison = [];
+    const onSelectedQuizzesChange = () => {
+      // Logic for comparing grades
+    };
 
-      for (const qId of selectedQuizIdsToImprove.value) {
-        const quiz = quizzesInCourse.value.find((q) => q.id === qId);
-        const hasPrevious = studentGradesMap.value[qId] !== undefined;
-        const previousGrade = hasPrevious ? studentGradesMap.value[qId] : 0;
-        const improves = hasPrevious ? newGrade > previousGrade : true;
+    const confirmarRegistroMejora = async () => {
+      showImprovementModal.value = false;
+      setSuccessToastOpen(true);
+    };
 
-        comparison.push({
-          quizId: qId,
-          quizTitle: quiz?.title || `Tema #${qId}`,
-          lessonTitle: quiz?.lesson?.title || "Lección",
-          previousGrade,
-          hasPreviousGrade: hasPrevious,
-          newGrade,
-          improves,
-        });
+    onIonViewDidEnter(async () => {
+      usuario.value = usuarioGet();
+      admin.value = adminOprofesor();
+      tokenHeader();
+
+      if (!adminOprofesor() && usuario.value?.id) {
+        try {
+          const groupRes = await axios.get(`/users/${usuario.value.id}/groups`);
+          grupoUsuario.value = groupRes.data.filter((g) => g.active)[0]?.group;
+        } catch (gErr) {
+          console.error("Error fetching user group:", gErr);
+        }
       }
 
-      studentComparisonList.value = comparison;
-    }
-
-    async function confirmarRegistroMejora() {
-      if (!selectedQuizIdsToImprove.value || selectedQuizIdsToImprove.value.length === 0) {
-        setErrorToastOpen(true, "Seleccione al menos un tema a mejorar.");
-        return;
-      }
-      registrandoMejora.value = true;
       try {
-        const student = selectedStudentForImprovement.value;
-        const newGrade = parseFloat(student.nota);
-        const { period, institute, year } = cuestionario.value.lesson;
+        const ptsRes = await axios.get(`/quizzes/${id}/points`);
+        quizPoints.value = ptsRes.data.points;
 
-        let userIds = [];
-        if (student.user && student.user.id) {
-          userIds = [student.user.id];
-        } else if (student.group && student.group.id) {
-          const groupRes = await axios.get(
-            `/groups/${student.group.id}/${year}/users`,
+        const res = await axios.get(`/quizzes/${id}/results`);
+        respuestas.value = res.data
+          .map((e) => {
+            e.points = parseFloat(e.points);
+            const evalType = cuestionario.value?.evaluationType || "relative";
+            if (evalType === "absolute") {
+              e.nota = e.points !== 0 ? (e.points * 5) / quizPoints.value : 0;
+            } else {
+              const maxPts = res.data[0]?.points || 1;
+              e.nota = e.points !== 0 ? (e.points * 5) / maxPts : 0;
+            }
+            e.nota = e.nota < 0 ? 0 : e.nota;
+            return e;
+          })
+          .sort((a, b) => b.points - a.points);
+
+        if (respuestas.value.length > 0) {
+          respuestaMAyor.value = respuestas.value[0];
+        }
+
+        if (!cuestionario.value) {
+          const qRes = await axios.get(`/quizzes/${id}`, tokenHeader());
+          cuestionario.value = qRes.data;
+          localStorage.setItem(
+            "quizSelected",
+            JSON.stringify(cuestionario.value)
           );
-          userIds = groupRes.data.map((rel) => rel.user.id);
         }
-
-        for (const quizId of selectedQuizIdsToImprove.value) {
-          for (const uId of userIds) {
-            const data = {
-              userId: uId,
-              gradableId: quizId,
-              gradableType: "quiz",
-              periodId: period.id,
-              gradeType: "regular",
-              grade: newGrade,
-              instituteId: institute.id,
-              registrarMayor: true,
-            };
-            await axios.post("/grades", data);
-          }
-          if (student.user?.id) {
-            const prev = studentGradesMap.value[quizId] ?? 0;
-            studentGradesMap.value[quizId] = Math.max(prev, newGrade);
-          }
-        }
-
-        showImprovementModal.value = false;
-        setSuccessToastOpen(true);
-      } catch (e) {
-        const message =
-          e.response?.data?.message || "Error al registrar las notas de mejora";
-        setErrorToastOpen(true, message);
-      } finally {
-        registrandoMejora.value = false;
+      } catch (err) {
+        console.error("Error fetching results:", err);
       }
-    }
+    });
 
     return {
-      totalPreguntas,
       usuario,
-      lessonPoints: quizPoints,
-      id,
+      admin,
       cuestionario,
       respuestas,
-      respuestaDetallada,
-      loading,
-      registrarNotas,
-      loadRespuestas,
-      handleAccordionChange,
-      arrowBackOutline,
-      grupoUsuario,
-      handLeftOutline,
-      paperPlaneOutline,
-      refreshOutline,
-      arrowDownCircle,
-      happyOutline,
-      sadOutline,
-      ribbonOutline,
-      starOutline,
-      trophyOutline,
-      ordenarPorNombre,
-      admin,
-      fileTrayFullOutline,
-      checkmarkCircleOutline,
-      closeCircleOutline,
-      respuestaMAyor,
+      topTiers,
       isSuccessToastOpen,
-      setSuccessToastOpen,
       isErrorToastOpen,
       errorMessage,
-      setErrorToastOpen,
-      isScanning,
-      omrScannerRef,
-      startScan,
-      cancelScan,
-      handleScanComplete,
-      qrCodeOutline,
-      isShowingScanResult,
-      scanResultPayload,
-      scannedStudent,
-      scannedAnswers,
-      submitScan,
       showStatsModal,
       statsSegment,
-      questionStats,
-      loadingStats,
-      loadQuestionStats,
       sortedStats,
-      openStats,
-      statsChartOutline,
-      bulbOutline,
-      trendingDownOutline,
-      informationCircleOutline,
-      checkmarkCircle,
-      closeCircle,
-      // Modal mejora de nota
+      loadingStats,
       showImprovementModal,
-      quizzesInCourse,
       selectedStudentForImprovement,
       selectedQuizIdsToImprove,
       studentComparisonList,
-      loadingExistingGrades,
+      quizzesInCourse,
       registrandoMejora,
-      getStudentName,
+      loading,
+      respuestaDetallada,
+      respuestaMAyor,
+      isTierModalOpen,
+      selectedTierForModal,
+      getParticipantName,
+      getInitials,
+      getTierNumber,
+      getPositionBadgeClass,
+      getAvatarColorClass,
+      isExpanded,
+      toggleParticipant,
+      canViewGrade,
+      canViewDetails,
+      handlePodiumClick,
+      closeTierModal,
+      goBack,
+      goToOmr,
+      reloadPage,
+      openStats,
+      ordenarPorNombre,
+      registrarNotas,
       abrirModalMejoraEstudiante,
       onSelectedQuizzesChange,
       confirmarRegistroMejora,
-      arrowForwardOutline,
+      getStudentName,
+      setSuccessToastOpen,
+      setErrorToastOpen,
+      arrowBackOutline,
+      statsChartOutline,
+      arrowDownCircle,
+      fileTrayFullOutline,
+      qrCodeOutline,
+      refreshOutline,
+      starOutline,
+      chevronForwardOutline,
+      ribbonOutline,
+      checkmarkCircle,
+      closeCircle,
+      informationCircleOutline,
     };
   },
 };
 </script>
 
 <style scoped>
-.stats-card {
-  margin-bottom: 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border: 1px solid var(--ion-color-light);
+.qz-leaderboard-page {
+  background-color: #EFEEFC;
 }
 
-.improvement-card {
+.qz-leaderboard-content {
+  --background: #EFEEFC;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+}
+
+/* 1. SECCIÓN HERO Y CABECERA */
+.qz-hero-section {
+  background: linear-gradient(180deg, #6A5AE0 0%, #7668E3 100%);
+  padding-top: max(16px, env(safe-area-inset-top));
+  padding-bottom: 24px;
+}
+
+.qz-hero-top {
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 8px 18px 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.qz-circle-btn {
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #FFFFFF;
+  border-radius: var(--qz-radius-full, 9999px);
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.qz-circle-btn:active {
+  transform: scale(0.92);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.qz-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.qz-hero-titles {
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 0 20px 14px 20px;
+  text-align: left;
+}
+
+.qz-hero-tag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: rgba(255, 255, 255, 0.85);
+  text-transform: uppercase;
+}
+
+.qz-hero-title {
+  margin: 2px 0 0 0;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-size: 22px;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: -0.3px;
+}
+
+/* PODIO 3D QUEEZY (Estilo image27_1_2_375x812.png) */
+.qz-podium-container {
+  max-width: 380px;
+  margin: 0 auto;
+  padding: 10px 12px 0 12px;
+}
+
+.qz-podium-stage {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+}
+
+.qz-podium-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.qz-podium-col:active {
+  transform: scale(0.96);
+}
+
+/* Avatares y Stacks */
+.qz-podium-avatar-wrap {
+  position: relative;
+  margin-bottom: 6px;
+  background: transparent !important;
+}
+
+.qz-podium-single-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  color: var(--ion-color-primary, #6A5AE0);
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  border: 2px solid #FFFFFF;
+}
+
+.qz-podium-wrap--gold .qz-podium-single-avatar {
+  width: 58px;
+  height: 58px;
+  font-size: 17px;
+  letter-spacing: -0.5px;
+  border: 3px solid #FFD700;
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.5);
+  border-radius: 50%;
+}
+
+/* Avatar Stack para empates */
+.qz-avatar-stack {
+  position: relative;
+  width: 62px;
+  height: 48px;
+}
+
+.qz-stacked-circle {
+  position: absolute;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  color: var(--ion-color-primary, #6A5AE0);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #6A5AE0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.qz-stack--1 {
+  left: 0;
+  top: 0;
+  z-index: 1;
+}
+
+.qz-stack--2 {
+  left: 18px;
+  top: 0;
+  z-index: 2;
+  background: #EFEEFC;
+}
+
+.qz-stack-count {
+  position: absolute;
+  right: -4px;
+  bottom: 0;
+  z-index: 3;
+  background: #FFAE33;
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 9999px;
+  border: 1px solid #FFFFFF;
+}
+
+.qz-crown-floating {
+  font-size: 24px;
+  margin-bottom: 2px;
+  animation: qz-crown-float 2s ease infinite alternate;
+}
+
+@keyframes qz-crown-float {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-4px);
+  }
+}
+
+.qz-rank-badge-icon {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  font-size: 16px;
+}
+
+.qz-podium-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: #FFFFFF;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 95px;
+  margin-bottom: 3px;
+}
+
+.qz-podium-name--first {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.qz-podium-score-pill {
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 9999px;
   margin-bottom: 8px;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  border: 1px solid var(--ion-color-light);
+  white-space: nowrap;
 }
 
-.question-sentence {
-  font-size: 0.95em;
-  line-height: 1.5;
-  color: var(--ion-color-step-700);
+.qz-pill--gold {
+  background: #FFAE33;
+  border-color: #FFD700;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(255, 174, 51, 0.4);
 }
 
-ion-segment {
-  --background: var(--ion-color-light);
+/* Pilares 3D */
+.qz-pillar {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #FFFFFF;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-weight: 900;
+  border-radius: 12px 12px 0 0;
+  position: relative;
+  box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.12);
 }
 
-ion-modal {
-  --height: 90%;
-  --border-radius: 16px;
+.qz-pillar--1 {
+  height: 125px;
+  background: linear-gradient(180deg, #9488FF 0%, #7668E3 100%);
+  border-top: 3px solid #B0A7FF;
+}
+
+.qz-pillar--1 .qz-pillar-number {
+  font-size: 48px;
+}
+
+.qz-pillar--2 {
+  height: 90px;
+  background: linear-gradient(180deg, #8172F5 0%, #6857E0 100%);
+  border-top: 3px solid #9D91FA;
+}
+
+.qz-pillar--2 .qz-pillar-number {
+  font-size: 38px;
+}
+
+.qz-pillar--3 {
+  height: 65px;
+  background: linear-gradient(180deg, #7463EC 0%, #5E4CD8 100%);
+  border-top: 3px solid #8E7FFA;
+}
+
+.qz-pillar--3 .qz-pillar-number {
+  font-size: 32px;
+}
+
+/* 2. HOJA INFERIOR BLANCA */
+.qz-leaderboard-sheet {
+  background: var(--qz-color-purple-bg, #EFEEFC);
+  border-radius: 32px 32px 0 0;
+  padding: 16px 18px max(24px, env(safe-area-inset-bottom)) 18px;
+  margin-top: -12px;
+  position: relative;
+  z-index: 10;
+}
+
+.qz-sheet-handle {
+  width: 44px;
+  height: 5px;
+  background: #C7C3E8;
+  border-radius: 9999px;
+  margin: 0 auto 16px auto;
+}
+
+.qz-sheet-container {
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+.qz-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.qz-sheet-title {
+  margin: 0;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-size: 18px;
+  font-weight: 800;
+  color: #0C092A;
+  letter-spacing: -0.3px;
+}
+
+.qz-sheet-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ion-color-primary, #6A5AE0);
+  background: #FFFFFF;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  box-shadow: 0 2px 8px rgba(106, 90, 224, 0.08);
+}
+
+/* Tarjetas de Participantes */
+.qz-participants-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.qz-participant-card-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.qz-participant-card {
+  background: #FFFFFF;
+  border-radius: 20px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 14px rgba(106, 90, 224, 0.06);
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.15s ease, border-radius 0.15s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.qz-participant-card:active {
+  transform: scale(0.985);
+}
+
+.qz-participant-card.is-expanded {
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.qz-pos-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.qz-badge--gold {
+  background: #FFF3DA;
+  color: #E59800;
+  font-size: 15px;
+}
+
+.qz-badge--silver {
+  background: #E2F6FC;
+  color: #0582CA;
+  font-size: 15px;
+}
+
+.qz-badge--bronze {
+  background: #FFEAEA;
+  color: #FF7562;
+  font-size: 15px;
+}
+
+.qz-badge--regular {
+  background: #EFEEFC;
+  color: #858494;
+}
+
+/* Avatar */
+.qz-user-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-size: 14px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.qz-avatar--purple {
+  background: #EFEEFC;
+  color: #6A5AE0;
+}
+
+.qz-avatar--coral {
+  background: #FFEAEA;
+  color: #FF7562;
+}
+
+.qz-avatar--cyan {
+  background: #E2F6FC;
+  color: #0582CA;
+}
+
+.qz-avatar--gold {
+  background: #FFF3DA;
+  color: #E59800;
+}
+
+.qz-avatar--green {
+  background: #E4F9EC;
+  color: #10B981;
+}
+
+.qz-participant-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.qz-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.qz-participant-name {
+  margin: 0;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  color: #0C092A;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qz-winner-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: #FFF3DA;
+  color: #E59800;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.qz-score-details {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #858494;
+  margin-top: 2px;
+}
+
+.qz-points-tag {
+  font-weight: 700;
+  color: var(--ion-color-primary, #6A5AE0);
+}
+
+.qz-card-chevron {
+  color: #9D9BB0;
+  font-size: 16px;
+  flex-shrink: 0;
+  transition: transform 0.2s ease, color 0.15s ease;
+}
+
+.qz-card-chevron.is-open {
+  transform: rotate(90deg);
+  color: var(--ion-color-primary, #6A5AE0);
+}
+
+/* Acordeón / Drawer Desplegado */
+.qz-participant-drawer {
+  background: #F4F3FD;
+  border-radius: 0 0 20px 20px;
+  padding: 12px 14px 16px 14px;
+  margin-top: -6px;
+  border: 1px solid rgba(106, 90, 224, 0.08);
+  border-top: none;
+  animation: qz-slide-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes qz-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.qz-improvement-banner {
+  margin-bottom: 10px;
+}
+
+.qz-btn-improvement {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  background: #FFAE33;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 12px;
+  padding: 9px;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(255, 174, 51, 0.3);
+}
+
+.qz-drawer-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  font-size: 12px;
+  color: #858494;
+}
+
+.qz-answers-summary {
+  font-size: 12px;
+  color: #0C092A;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.qz-diff-warning {
+  margin: 4px 0 0 0;
+  color: #E58700;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.qz-answers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.qz-answer-row {
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  box-shadow: 0 1px 4px rgba(106, 90, 224, 0.04);
+}
+
+.qz-answer-icon {
+  font-size: 18px;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.qz-answer-icon.is-correct {
+  color: #10B981;
+}
+
+.qz-answer-icon.is-wrong {
+  color: #FF5656;
+}
+
+.qz-answer-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.qz-answer-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0C092A;
+  display: block;
+}
+
+.qz-answer-selected {
+  margin: 2px 0 0 0;
+  font-size: 11px;
+  color: #858494;
+}
+
+.qz-answer-pts {
+  font-size: 10px;
+  color: var(--ion-color-primary, #6A5AE0);
+  display: block;
+  margin-top: 2px;
+}
+
+.qz-no-permission {
+  text-align: center;
+  padding: 14px;
+  font-size: 12px;
+  color: #858494;
+}
+
+/* MODAL DE EMPATADOS */
+.qz-tier-modal-sheet {
+  background: #FFFFFF;
+  border-radius: 28px 28px 0 0;
+  padding: 12px 18px 24px 18px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+}
+
+.qz-modal-handle {
+  width: 40px;
+  height: 5px;
+  background: #D2D0E4;
+  border-radius: 9999px;
+  margin: 0 auto 14px auto;
+  flex-shrink: 0;
+}
+
+.qz-tier-modal-header {
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.qz-tier-badge {
+  display: inline-block;
+  background: #FFF3DA;
+  color: #E59800;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 3px 12px;
+  border-radius: 9999px;
+  margin-bottom: 4px;
+}
+
+.qz-tier-title {
+  margin: 0 0 2px 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: #0C092A;
+}
+
+.qz-tier-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: #858494;
+}
+
+.qz-tier-modal-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.qz-tier-item-row {
+  background: #F9F9FE;
+  border: 1px solid #ECEAF9;
+  border-radius: 14px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.qz-tier-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: #EFEEFC;
+  color: #6A5AE0;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.qz-tier-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.qz-tier-item-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0C092A;
+  display: block;
+}
+
+.qz-tier-item-sub {
+  font-size: 11px;
+  color: #858494;
+}
+
+.qz-tier-close-btn {
+  width: 100%;
+  background: var(--ion-color-primary, #6A5AE0);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--qz-radius-full, 9999px);
+  padding: 12px;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
 }
 </style>

@@ -48,3 +48,7 @@ android/app/src/main/assets/public/
 *.sqlite3
 public/nodejs/data/*.sqlite
 !public/nodejs/data/.gitkeep
+
+# Compiled backend and SPA in nodejs
+public/nodejs/www/
+public/nodejs/index.js

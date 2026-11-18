@@ -1,100 +1,249 @@
 <template>
-  <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Areas</ion-title>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content :fullscreen="true">
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">Areas</ion-title>
-        </ion-toolbar>
-      </ion-header>
-      <ion-item lines="none">
-   
+  <ion-page class="qz-areas-page">
+    <ion-content :fullscreen="true" class="qz-areas-content">
+      <div class="qz-page-wrapper">
+        <!-- 1. CABECERA HERO QUEEZY PÚRPURA -->
+        <div class="qz-hero-header">
+          <!-- Barra superior: Botón volver + Insignia del curso -->
+          <div class="qz-hero-top">
+            <button
+              type="button"
+              class="qz-back-btn"
+              title="Regresar a Cursos"
+              @click="goBack"
+            >
+              <ion-icon :icon="arrowBackOutline"></ion-icon>
+            </button>
 
-        <ion-select
-          slot="start"
-          v-model="yearSelected"
-          @ionChange="changeYear($event)"
-          placeholder="Selecciona un año"
-        >
-          <ion-select-option v-for="year in years" :key="year" :value="year">
-            <strong>Año: </strong> {{ year }}
-          </ion-select-option>
-        </ion-select>
-
-        <ion-select
-          slot="end"
-          v-model="periodoSelected"
-          placeholder="Selecciona un periodo"
-          @ionChange="changePeriodo($event)"
-        >
-          <ion-select-option
-            v-for="periodo in periodos"
-            :key="periodo.id"
-            :value="periodo.id"
-          >
-           <strong>Periodo: </strong> {{ periodo.name }}
-          </ion-select-option>
-        </ion-select>
-      </ion-item>
-      <ion-accordion-group>
-        <ion-accordion v-for="area in areas" :key="area.id" :value="area.id">
-          <ion-item
-            slot="header"
-            color="light"
-            @click="handleHeaderClick($event)"
-          >
-            <ion-icon slot="start" :icon="libraryOutline"></ion-icon>
-            <ion-label>{{ area.name }}</ion-label>
-          </ion-item>
-          <div slot="content">
-            <ion-list>
-              <ion-item
-                button
-                @click="navigateToTab3(area.id, LessonType.STANDARD)"
-              >
-                <ion-label>Lecciones</ion-label>
-              </ion-item>
-              <ion-item
-                v-if="adminOProfesor || hasReinforcement(area.id)"
-                button
-                @click="navigateToTab3(area.id, LessonType.REINFORCEMENT)"
-              >
-                <ion-label>Refuerzos</ion-label>
-              </ion-item>
-              <ion-item
-                v-if="adminOProfesor || hasRemedial(area.id)"
-                button
-                @click="navigateToTab3(area.id, LessonType.REMEDIAL)"
-              >
-                <ion-label>Nivelaciones</ion-label>
-              </ion-item>
-            </ion-list>
+            <div class="qz-course-badge" v-if="courseName">
+              <ion-icon :icon="schoolOutline" class="qz-course-badge-icon"></ion-icon>
+              <span>{{ courseName }}</span>
+            </div>
           </div>
-        </ion-accordion>
-      </ion-accordion-group>
-      <ion-toast
-        :is-open="isOpen"
-        position="middle"
-        message="Por favor, seleccione un periodo antes de continuar."
-        :duration="3000"
-        @didDismiss="setOpen(false)"
-      >
-        <ion-icon slot="start" :icon="alertCircleOutline"></ion-icon>
-      </ion-toast>
+
+          <!-- Títulos del Hero -->
+          <div class="qz-hero-titles">
+            <span class="qz-hero-tag">GESTIÓN ACADÉMICA</span>
+            <h1 class="qz-hero-title">{{ courseName ? courseName : 'Áreas y Materias' }}</h1>
+            <p class="qz-hero-subtitle">
+              Selecciona un área para ingresar a sus lecciones y actividades
+            </p>
+          </div>
+
+          <!-- Filtros de Año y Periodo en Píldoras Queezy -->
+          <div class="qz-filters-row">
+            <!-- Filtro de Año -->
+            <div class="qz-filter-pill">
+              <ion-icon :icon="calendarOutline" class="qz-filter-icon"></ion-icon>
+              <span class="qz-filter-label">Año:</span>
+              <ion-select
+                v-model="yearSelected"
+                interface="popover"
+                class="qz-filter-select"
+                :interface-options="{ cssClass: 'qz-popover-filter' }"
+                @ionChange="changeYear($event)"
+              >
+                <ion-select-option
+                  v-for="year in years"
+                  :key="year"
+                  :value="year"
+                >
+                  {{ year }}
+                </ion-select-option>
+              </ion-select>
+            </div>
+
+            <!-- Filtro de Periodo (Resaltado con pulso si no hay selección) -->
+            <div
+              class="qz-filter-pill"
+              :class="{
+                'qz-filter-pill--alert': !periodoSelected,
+                'qz-filter-pill--pulse': shouldHighlightPeriod
+              }"
+            >
+              <ion-icon :icon="timeOutline" class="qz-filter-icon"></ion-icon>
+              <span class="qz-filter-label">Periodo:</span>
+              <ion-select
+                v-model="periodoSelected"
+                placeholder="Elegir..."
+                interface="popover"
+                class="qz-filter-select"
+                :interface-options="{ cssClass: 'qz-popover-filter' }"
+                @ionChange="changePeriodo($event)"
+              >
+                <ion-select-option
+                  v-for="periodo in periodos"
+                  :key="periodo.id"
+                  :value="periodo.id"
+                >
+                  {{ periodo.name }}
+                </ion-select-option>
+              </ion-select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. CUERPO: SECCIÓN DE ÁREAS (Estilo image7) Y ACORDEÓN (Estilo image13) -->
+        <div class="qz-main-body">
+          <div class="qz-container">
+            <!-- Encabezado de la Sección (Estilo image7) -->
+            <div class="qz-section-header">
+              <div class="qz-section-title-wrap">
+                <h2 class="qz-section-title">Áreas</h2>
+                <span class="qz-section-count" v-if="areas && areas.length > 0">
+                  {{ areas.length }}
+                </span>
+              </div>
+              <span class="qz-period-indicator" v-if="periodoSelectedName">
+                {{ periodoSelectedName }}
+              </span>
+            </div>
+
+            <!-- Lista de Áreas -->
+            <div v-if="areas && areas.length > 0" class="qz-areas-list">
+              <div
+                v-for="(area, index) in areas"
+                :key="area.id"
+                class="qz-area-item"
+              >
+                <!-- Tarjeta Principal del Área (Estilo image7_1_2_375x812.png) -->
+                <div
+                  class="qz-area-card"
+                  :class="{ 'qz-area-card--active': expandedAreaId === area.id }"
+                  @click="toggleArea(area.id)"
+                >
+                  <!-- Squircle Pastel con icono de Materia -->
+                  <div class="qz-area-squircle" :class="getSquircleColor(index)">
+                    <ion-icon :icon="bookOutline"></ion-icon>
+                  </div>
+
+                  <!-- Textos del Área -->
+                  <div class="qz-area-info">
+                    <h3 class="qz-area-name">{{ area.name }}</h3>
+                    <p class="qz-area-sub">
+                      {{ expandedAreaId === area.id ? 'Selecciona una actividad:' : 'Lecciones, refuerzos y nivelaciones' }}
+                    </p>
+                  </div>
+
+                  <!-- Chevron indicador de apertura -->
+                  <div
+                    class="qz-area-chevron"
+                    :class="{ 'qz-chevron--open': expandedAreaId === area.id }"
+                  >
+                    <ion-icon :icon="chevronForwardOutline"></ion-icon>
+                  </div>
+                </div>
+
+                <!-- Acordeón / Sub-tarjeta con opciones (Estilo image13_1_2_375x1211.png) -->
+                <div
+                  v-if="expandedAreaId === area.id"
+                  class="qz-options-card"
+                >
+                  <!-- 1. Lecciones Estándar -->
+                  <div
+                    class="qz-option-row"
+                    @click.stop="navigateToTab3(area.id, LessonType.STANDARD)"
+                  >
+                    <div class="qz-option-badge qz-badge--purple">
+                      <ion-icon :icon="documentTextOutline"></ion-icon>
+                    </div>
+                    <div class="qz-option-info">
+                      <h4 class="qz-option-title">Lecciones</h4>
+                      <p class="qz-option-desc">Cuestionarios y contenido temático</p>
+                    </div>
+                    <div class="qz-option-arrow">
+                      <ion-icon :icon="chevronForwardOutline"></ion-icon>
+                    </div>
+                  </div>
+
+                  <!-- 2. Refuerzos -->
+                  <div
+                    v-if="adminOProfesor || hasReinforcement(area.id)"
+                    class="qz-option-row"
+                    @click.stop="navigateToTab3(area.id, LessonType.REINFORCEMENT)"
+                  >
+                    <div class="qz-option-badge qz-badge--coral">
+                      <ion-icon :icon="trendingUpOutline"></ion-icon>
+                    </div>
+                    <div class="qz-option-info">
+                      <div class="qz-option-title-row">
+                        <h4 class="qz-option-title">Refuerzos</h4>
+                        <span
+                          v-if="assignmentsCount[area.id]?.reinforcement"
+                          class="qz-count-chip qz-chip--coral"
+                        >
+                          {{ assignmentsCount[area.id].reinforcement }}
+                        </span>
+                      </div>
+                      <p class="qz-option-desc">Actividades de apoyo asignadas</p>
+                    </div>
+                    <div class="qz-option-arrow">
+                      <ion-icon :icon="chevronForwardOutline"></ion-icon>
+                    </div>
+                  </div>
+
+                  <!-- 3. Nivelaciones -->
+                  <div
+                    v-if="adminOProfesor || hasRemedial(area.id)"
+                    class="qz-option-row"
+                    @click.stop="navigateToTab3(area.id, LessonType.REMEDIAL)"
+                  >
+                    <div class="qz-option-badge qz-badge--cyan">
+                      <ion-icon :icon="helpBuoyOutline"></ion-icon>
+                    </div>
+                    <div class="qz-option-info">
+                      <div class="qz-option-title-row">
+                        <h4 class="qz-option-title">Nivelaciones</h4>
+                        <span
+                          v-if="assignmentsCount[area.id]?.remedial"
+                          class="qz-count-chip qz-chip--cyan"
+                        >
+                          {{ assignmentsCount[area.id].remedial }}
+                        </span>
+                      </div>
+                      <p class="qz-option-desc">Plan de mejora y recuperación</p>
+                    </div>
+                    <div class="qz-option-arrow">
+                      <ion-icon :icon="chevronForwardOutline"></ion-icon>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Estado Vacío -->
+            <div v-else class="qz-empty-card">
+              <div class="qz-empty-icon-box">
+                <ion-icon :icon="libraryOutline"></ion-icon>
+              </div>
+              <h3 class="qz-empty-title">Sin áreas asignadas</h3>
+              <p class="qz-empty-desc">
+                No se encontraron áreas activas para este curso en el año lectivo {{ yearSelected }}.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alerta Toast de Periodo Faltante -->
+        <ion-toast
+          :is-open="isOpen"
+          position="bottom"
+          message="Por favor, selecciona un periodo antes de continuar."
+          :duration="3000"
+          color="warning"
+          @didDismiss="setOpen(false)"
+        >
+          <ion-icon slot="start" :icon="alertCircleOutline"></ion-icon>
+        </ion-toast>
+      </div>
     </ion-content>
   </ion-page>
 </template>
-<script>
-import { libraryOutline, alertCircleOutline } from "ionicons/icons";
-import axios from "axios";
-import router from "../router";
-import { ref, watch, computed } from "vue";
-import { useRoute } from "vue-router";
 
+<script>
+import { ref, watch, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import axios from "axios";
 import {
   tokenHeader,
   usuarioGet,
@@ -103,149 +252,113 @@ import {
   LessonType,
   currentServerYear,
 } from "../globalService";
+
+import {
+  bookOutline,
+  libraryOutline,
+  schoolOutline,
+  arrowBackOutline,
+  chevronForwardOutline,
+  calendarOutline,
+  timeOutline,
+  documentTextOutline,
+  trendingUpOutline,
+  helpBuoyOutline,
+  alertCircleOutline,
+} from "ionicons/icons";
+
 import {
   onIonViewWillEnter,
-  IonLabel,
-  IonItem,
-  IonIcon,
-  IonList,
   IonPage,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
   IonContent,
+  IonIcon,
   IonSelect,
   IonSelectOption,
   IonToast,
-  IonAccordion,
-  IonAccordionGroup,
 } from "@ionic/vue";
+
 export default {
+  name: "AreasPage",
   components: {
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonContent,
     IonPage,
-    IonList,
-    IonItem,
-    IonLabel,
+    IonContent,
     IonIcon,
     IonSelect,
     IonSelectOption,
     IonToast,
-    IonAccordion,
-    IonAccordionGroup,
   },
   setup() {
     const mroute = useRoute();
-    const presentToast = async () => {
-      isOpen.value = true;
-    };
-    const setOpen = (state) => {
-      isOpen.value = state;
-    };
+    const router = useRouter();
+    const { id } = mroute.params;
+
+    const usuario = ref();
+    const areas = ref([]);
+    const courseName = ref("");
+    const isOpen = ref(false);
+    const shouldHighlightPeriod = ref(false);
+    const expandedAreaId = ref(null);
+    const assignmentsCount = ref({}); // { areaId: { reinforcement: 0, remedial: 0 } }
+
     const adminOProfesor = ref(false);
+    const periodos = ref([]);
+    const periodoSelected = ref();
+    const years = ref([]);
+    const yearSelected = ref();
+
     const isStudent = computed(() => {
       return usuario.value?.rol === "student" || usuario.value?.rol === "user";
     });
-    const { id } = mroute.params;
-    const usuario = ref();
-    const areas = ref([]);
-    const isOpen = ref(false);
-    const assignmentsCount = ref({}); // { areaId: { reinforcement: 0, remedial: 0 } }
 
-    const periodos = ref();
-
-    const periodoSelected = ref();
-
-    const years = ref([]);
-    const yearSelected = ref();
- 
-    onIonViewWillEnter(async () => {
-      adminOProfesor.value = adminOprofesor();
-      periodos.value = periodosGet();
-      periodoSelected.value = JSON.parse(
-        localStorage.getItem("periodoSelected")
-      );
-      const curServerYear = currentServerYear();
-      years.value = new Array(10)
-        .fill(0)
-        .map((_, i) => curServerYear - i);
-      const storedYear = localStorage.getItem("year");
-      yearSelected.value = storedYear ? JSON.parse(storedYear) : curServerYear;
-
-      usuario.value = usuarioGet();
-      tokenHeader();
-
-      if (usuario.value.rol === "student" || usuario.value.rol === "user") {
-        const cursosUsuario = JSON.parse(localStorage.getItem("cursosUsuario")) || [];
-        const sortedCourses = cursosUsuario.sort((a, b) => b.year - a.year);
-        
-        // Use stored year if valid for student, otherwise use most recent course year
-        const storedYearValue = storedYear ? JSON.parse(storedYear) : null;
-        const isValidStoredYear = sortedCourses.some(c => c.year == storedYearValue);
-
-        if (isValidStoredYear) {
-          yearSelected.value = storedYearValue;
-        } else if (sortedCourses.length > 0) {
-          yearSelected.value = sortedCourses[0].year;
-          localStorage.setItem("year", JSON.stringify(yearSelected.value));
-        }
-
-        const courseSelected = sortedCourses.find(c => c.year == yearSelected.value && (c.active == 1 || c.active === true || c.active)) || sortedCourses[0];
-        localStorage.setItem("courseSelected", JSON.stringify(courseSelected));
-      }
-
-      // Fetch all areas for the course
-      const allCourseAreas = await axios.get(`/courses/${id}/areas`).then(res => res.data);
-      
-      // Fetch all teacher assignments for this course
-      const courseAssignments = await axios.get(`/courses/${id}/areas-teachers`).then(res => res.data);
-
-      const isAdminView = localStorage.getItem("adminView") === "true";
-
-      if (usuario.value.rol === "admin" && isAdminView) {
-        // System admin with admin view ON: sees everything active
-        areas.value = allCourseAreas;
-      } else if (usuario.value.rol === "teacher" || usuario.value.rol === "director" || usuario.value.rol === "coordinator" || (usuario.value.rol === "admin" && !isAdminView)) {
-        // Teachers / Course directors / Admins with admin view OFF: only see their assigned areas
-        areas.value = allCourseAreas.filter((area) => {
-          return courseAssignments.some((assignment) => {
-            return (
-              (assignment.active == 1 || assignment.active === true || assignment.active) &&
-              Number(assignment.area.id) === Number(area.id) &&
-              Number(assignment.teacher?.id) === Number(usuario.value.id)
-            );
-          });
-        });
-      } else if (isStudent.value) {
-        // Students only see areas that have at least one active teacher assignment
-        areas.value = allCourseAreas.filter((area) => {
-          return courseAssignments.some((assignment) => {
-            return (
-              (assignment.active == 1 || assignment.active === true || assignment.active) &&
-              Number(assignment.area.id) === Number(area.id) &&
-              assignment.teacher // Must have a teacher assigned
-            );
-          });
-        });
-      } else {
-        areas.value = allCourseAreas;
-      }
+    const periodoSelectedName = computed(() => {
+      if (!periodos.value || !periodoSelected.value) return "";
+      const p = periodos.value.find((item) => item.id == periodoSelected.value);
+      return p ? p.name : "";
     });
 
-    watch([areas, periodoSelected], () => {
-      if (isStudent.value && areas.value.length > 0 && periodoSelected.value) {
-        fetchStudentAssignments();
-      }
-    });
+    // Paleta pastel para squircles
+    const colorClasses = [
+      "qz-squircle--purple",
+      "qz-squircle--coral",
+      "qz-squircle--cyan",
+      "qz-squircle--gold",
+      "qz-squircle--green",
+    ];
 
-    const handleHeaderClick = (event) => {
+    const getSquircleColor = (index) => {
+      return colorClasses[index % colorClasses.length];
+    };
+
+    const presentToast = () => {
+      isOpen.value = true;
+    };
+
+    const setOpen = (state) => {
+      isOpen.value = state;
+    };
+
+    const toggleArea = (areaId) => {
       if (!periodoSelected.value) {
-        event.stopPropagation();
-        event.preventDefault();
+        shouldHighlightPeriod.value = true;
+        setTimeout(() => {
+          shouldHighlightPeriod.value = false;
+        }, 2200);
         presentToast();
+        return;
+      }
+
+      if (expandedAreaId.value === areaId) {
+        expandedAreaId.value = null;
+      } else {
+        expandedAreaId.value = areaId;
+      }
+    };
+
+    const goBack = () => {
+      if (window.history.length > 1) {
+        router.back();
+      } else {
+        router.push("/admin/cuestionarios");
       }
     };
 
@@ -287,66 +400,725 @@ export default {
         console.error("Error fetching assignments:", error);
       }
     };
-    return {
-      changePeriodo: (event) => {
-        localStorage.setItem(
-          "periodoSelected",
-          JSON.stringify(event.detail.value)
+
+    onIonViewWillEnter(async () => {
+      adminOProfesor.value = adminOprofesor();
+      periodos.value = periodosGet();
+      periodoSelected.value = JSON.parse(
+        localStorage.getItem("periodoSelected")
+      );
+      const curServerYear = currentServerYear();
+      years.value = new Array(10).fill(0).map((_, i) => curServerYear - i);
+
+      const storedYear = localStorage.getItem("year");
+      yearSelected.value = storedYear ? JSON.parse(storedYear) : curServerYear;
+
+      usuario.value = usuarioGet();
+      tokenHeader();
+
+      // Leer nombre del curso
+      const storedCourse = localStorage.getItem("courseSelected");
+      if (storedCourse) {
+        try {
+          const parsed = JSON.parse(storedCourse);
+          courseName.value = parsed.name || "";
+        } catch (e) {
+          console.error("Error reading course name:", e);
+        }
+      }
+
+      if (usuario.value.rol === "student" || usuario.value.rol === "user") {
+        const cursosUsuario =
+          JSON.parse(localStorage.getItem("cursosUsuario")) || [];
+        const sortedCourses = cursosUsuario.sort((a, b) => b.year - a.year);
+
+        const storedYearValue = storedYear ? JSON.parse(storedYear) : null;
+        const isValidStoredYear = sortedCourses.some(
+          (c) => c.year == storedYearValue
         );
-        periodoSelected.value = event.detail.value;
-      },
 
-      changeYear: (event) => {
-        const selectedYearValue = event.detail.value;
-        localStorage.setItem("year", JSON.stringify(selectedYearValue));
-        yearSelected.value = selectedYearValue;
+        if (isValidStoredYear) {
+          yearSelected.value = storedYearValue;
+        } else if (sortedCourses.length > 0) {
+          yearSelected.value = sortedCourses[0].year;
+          localStorage.setItem("year", JSON.stringify(yearSelected.value));
+        }
 
-        if (usuario.value.rol === "student" || usuario.value.rol === "user") {
-          const cursosUsuario = JSON.parse(localStorage.getItem("cursosUsuario")) || [];
-          const courseForYear = cursosUsuario.find(c => c.year == selectedYearValue);
-          if (courseForYear) {
-            localStorage.setItem("courseSelected", JSON.stringify(courseForYear));
-            // Trigger a potential reload or redirect if the route depends on courseId
-            if (id != courseForYear.id) {
-              router.push(`/areas/${courseForYear.id}`);
-            }
+        const courseSelected =
+          sortedCourses.find(
+            (c) =>
+              c.year == yearSelected.value &&
+              (c.active == 1 || c.active === true || c.active)
+          ) || sortedCourses[0];
+
+        if (courseSelected) {
+          localStorage.setItem("courseSelected", JSON.stringify(courseSelected));
+          if (courseSelected.name) {
+            courseName.value = courseSelected.name;
           }
         }
-      },
+      }
 
-      navigateToTab3: (areaId, type) => {
-        if (!periodoSelected.value) {
-          presentToast();
-          return;
+      // Cargar áreas del curso
+      try {
+        const allCourseAreas = await axios
+          .get(`/courses/${id}/areas`)
+          .then((res) => res.data);
+
+        const courseAssignments = await axios
+          .get(`/courses/${id}/areas-teachers`)
+          .then((res) => res.data);
+
+        const isAdminView = localStorage.getItem("adminView") === "true";
+
+        if (usuario.value.rol === "admin" && isAdminView) {
+          areas.value = allCourseAreas;
+        } else if (
+          usuario.value.rol === "teacher" ||
+          usuario.value.rol === "director" ||
+          usuario.value.rol === "coordinator" ||
+          (usuario.value.rol === "admin" && !isAdminView)
+        ) {
+          areas.value = allCourseAreas.filter((area) => {
+            return courseAssignments.some((assignment) => {
+              return (
+                (assignment.active == 1 ||
+                  assignment.active === true ||
+                  assignment.active) &&
+                Number(assignment.area.id) === Number(area.id) &&
+                Number(assignment.teacher?.id) === Number(usuario.value.id)
+              );
+            });
+          });
+        } else if (isStudent.value) {
+          areas.value = allCourseAreas.filter((area) => {
+            return courseAssignments.some((assignment) => {
+              return (
+                (assignment.active == 1 ||
+                  assignment.active === true ||
+                  assignment.active) &&
+                Number(assignment.area.id) === Number(area.id) &&
+                assignment.teacher
+              );
+            });
+          });
+        } else {
+          areas.value = allCourseAreas;
         }
-      
-        
-        router.push(
-          `/lecciones/${id}/${areaId}/${periodoSelected.value}/${yearSelected.value}/${type}`
+      } catch (err) {
+        console.error("Error loading areas:", err);
+        areas.value = [];
+      }
+    });
+
+    watch([areas, periodoSelected], () => {
+      if (isStudent.value && areas.value.length > 0 && periodoSelected.value) {
+        fetchStudentAssignments();
+      }
+    });
+
+    const changePeriodo = (event) => {
+      const pVal = event.detail.value;
+      localStorage.setItem("periodoSelected", JSON.stringify(pVal));
+      periodoSelected.value = pVal;
+    };
+
+    const changeYear = (event) => {
+      const selectedYearValue = event.detail.value;
+      localStorage.setItem("year", JSON.stringify(selectedYearValue));
+      yearSelected.value = selectedYearValue;
+
+      if (usuario.value?.rol === "student" || usuario.value?.rol === "user") {
+        const cursosUsuario =
+          JSON.parse(localStorage.getItem("cursosUsuario")) || [];
+        const courseForYear = cursosUsuario.find(
+          (c) => c.year == selectedYearValue
         );
-      },
-      hasReinforcement: (areaId) => {
-        return assignmentsCount.value[areaId]?.reinforcement > 0;
-      },
-      hasRemedial: (areaId) => {
-        return assignmentsCount.value[areaId]?.remedial > 0;
-      },
-      LessonType,
+        if (courseForYear) {
+          localStorage.setItem("courseSelected", JSON.stringify(courseForYear));
+          if (id != courseForYear.id) {
+            router.push(`/areas/${courseForYear.id}`);
+          }
+        }
+      }
+    };
+
+    const navigateToTab3 = (areaId, type) => {
+      if (!periodoSelected.value) {
+        presentToast();
+        return;
+      }
+
+      router.push(
+        `/lecciones/${id}/${areaId}/${periodoSelected.value}/${yearSelected.value}/${type}`
+      );
+    };
+
+    const hasReinforcement = (areaId) => {
+      return assignmentsCount.value[areaId]?.reinforcement > 0;
+    };
+
+    const hasRemedial = (areaId) => {
+      return assignmentsCount.value[areaId]?.remedial > 0;
+    };
+
+    return {
       usuario,
-      adminOProfesor,
-      libraryOutline,
       areas,
-      id,
+      courseName,
       periodos,
       periodoSelected,
-      alertCircleOutline,
-      isOpen,
-      setOpen,
-      presentToast,
+      periodoSelectedName,
       years,
       yearSelected,
-      handleHeaderClick,
+      adminOProfesor,
+      isStudent,
+      isOpen,
+      shouldHighlightPeriod,
+      expandedAreaId,
+      assignmentsCount,
+      LessonType,
+      toggleArea,
+      changePeriodo,
+      changeYear,
+      navigateToTab3,
+      hasReinforcement,
+      hasRemedial,
+      presentToast,
+      setOpen,
+      goBack,
+      getSquircleColor,
+      bookOutline,
+      libraryOutline,
+      schoolOutline,
+      arrowBackOutline,
+      chevronForwardOutline,
+      calendarOutline,
+      timeOutline,
+      documentTextOutline,
+      trendingUpOutline,
+      helpBuoyOutline,
+      alertCircleOutline,
     };
   },
 };
 </script>
+
+<style scoped>
+.qz-areas-page {
+  background-color: var(--qz-color-purple-bg, #EFEEFC);
+}
+
+.qz-areas-content {
+  --background: var(--qz-color-purple-bg, #EFEEFC);
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+}
+
+.qz-page-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
+/* 1. CABECERA HERO QUEEZY PÚRPURA */
+.qz-hero-header {
+  background: linear-gradient(180deg, #6A5AE0 0%, #7668E3 85%, #EFEEFC 100%);
+  padding-top: max(16px, env(safe-area-inset-top));
+  padding-bottom: 20px;
+  flex-shrink: 0;
+}
+
+.qz-hero-top {
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 8px 18px 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.qz-back-btn {
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #FFFFFF;
+  border-radius: var(--qz-radius-full, 9999px);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.qz-back-btn:active {
+  transform: scale(0.92);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.qz-course-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: var(--qz-radius-full, 9999px);
+  padding: 5px 14px;
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.qz-course-badge-icon {
+  font-size: 16px;
+}
+
+/* Títulos del Hero */
+.qz-hero-titles {
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 0 20px 14px 20px;
+  text-align: left;
+}
+
+.qz-hero-tag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: rgba(255, 255, 255, 0.85);
+  text-transform: uppercase;
+}
+
+.qz-hero-title {
+  margin: 3px 0 4px 0;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-size: 24px;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: -0.4px;
+}
+
+.qz-hero-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 400;
+}
+
+/* Fila de Filtros en Píldoras */
+.qz-filters-row {
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 0 18px;
+  display: flex;
+  gap: 10px;
+}
+
+.qz-filter-pill {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: var(--qz-radius-full, 9999px);
+  padding: 3px 12px;
+  color: #FFFFFF;
+  transition: all 0.2s ease;
+}
+
+.qz-filter-pill--alert {
+  background: rgba(255, 117, 98, 0.35);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.qz-filter-pill--pulse {
+  animation: qz-pulse-glow 0.6s ease infinite alternate;
+}
+
+@keyframes qz-pulse-glow {
+  from {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+  }
+  to {
+    transform: scale(1.03);
+    box-shadow: 0 0 12px 2px rgba(255, 255, 255, 0.6);
+  }
+}
+
+.qz-filter-icon {
+  font-size: 16px;
+  margin-right: 5px;
+  color: #FFFFFF;
+  flex-shrink: 0;
+}
+
+.qz-filter-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+
+.qz-filter-select {
+  --color: #FFFFFF;
+  --placeholder-color: rgba(255, 255, 255, 0.85);
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-size: 13px;
+  font-weight: 700;
+  padding-left: 0;
+  width: 100%;
+}
+
+/* 2. CUERPO PRINCIPAL */
+.qz-main-body {
+  flex: 1;
+  padding: 10px 18px 28px 18px;
+}
+
+.qz-container {
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+/* Encabezado de Sección estilo image7 */
+.qz-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding: 0 4px;
+}
+
+.qz-section-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.qz-section-title {
+  margin: 0;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-size: 20px;
+  font-weight: 800;
+  color: #0C092A;
+  letter-spacing: -0.3px;
+}
+
+.qz-section-count {
+  background: var(--ion-color-primary, #6A5AE0);
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: var(--qz-radius-full, 9999px);
+  padding: 2px 8px;
+  min-width: 22px;
+  text-align: center;
+}
+
+.qz-period-indicator {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ion-color-primary, #6A5AE0);
+  background: #FFFFFF;
+  padding: 3px 10px;
+  border-radius: var(--qz-radius-full, 9999px);
+  box-shadow: 0 2px 8px rgba(106, 90, 224, 0.08);
+}
+
+/* Lista de Áreas */
+.qz-areas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.qz-area-item {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tarjeta de Área estilo image7_1_2_375x812.png */
+.qz-area-card {
+  background: #FFFFFF;
+  border-radius: var(--qz-radius-xl, 22px);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 6px 20px -4px rgba(106, 90, 224, 0.08);
+  border: 1px solid rgba(106, 90, 224, 0.04);
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-radius 0.15s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.qz-area-card:active {
+  transform: scale(0.98);
+}
+
+.qz-area-card--active {
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  box-shadow: 0 8px 24px -2px rgba(106, 90, 224, 0.12);
+}
+
+/* Squircle de Materia */
+.qz-area-squircle {
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.qz-area-card:active .qz-area-squircle {
+  transform: scale(0.94);
+}
+
+/* Paleta Pastel Queezy */
+.qz-squircle--purple {
+  background-color: #EFEEFC;
+  color: #6A5AE0;
+}
+
+.qz-squircle--coral {
+  background-color: #FFEAEA;
+  color: #FF7562;
+}
+
+.qz-squircle--cyan {
+  background-color: #E2F6FC;
+  color: #0582CA;
+}
+
+.qz-squircle--gold {
+  background-color: #FFF3DA;
+  color: #E59800;
+}
+
+.qz-squircle--green {
+  background-color: #E4F9EC;
+  color: #10B981;
+}
+
+/* Info del Área */
+.qz-area-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.qz-area-name {
+  margin: 0 0 3px 0;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-size: 16px;
+  font-weight: 700;
+  color: #0C092A;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qz-area-sub {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: #858494;
+}
+
+/* Chevron */
+.qz-area-chevron {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--qz-radius-full, 9999px);
+  background: var(--qz-color-purple-bg, #EFEEFC);
+  color: var(--ion-color-primary, #6A5AE0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  transition: transform 0.25s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.qz-chevron--open {
+  transform: rotate(90deg);
+  background: var(--ion-color-primary, #6A5AE0);
+  color: #FFFFFF;
+}
+
+/* Sub-tarjeta de Opciones estilo image13_1_2_375x1211.png */
+.qz-options-card {
+  background: #F4F3FD;
+  border-radius: 0 0 var(--qz-radius-xl, 22px) var(--qz-radius-xl, 22px);
+  padding: 14px 12px 14px 12px;
+  margin-top: -8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid rgba(106, 90, 224, 0.08);
+  border-top: none;
+  animation: qz-slide-down 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes qz-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fila de opción estilo Questions en image13 */
+.qz-option-row {
+  background: #FFFFFF;
+  border-radius: var(--qz-radius-lg, 16px);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  box-shadow: 0 3px 10px -2px rgba(106, 90, 224, 0.05);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.qz-option-row:active {
+  transform: scale(0.97);
+  box-shadow: 0 1px 4px rgba(106, 90, 224, 0.08);
+}
+
+.qz-option-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.qz-badge--purple {
+  background: #EFEEFC;
+  color: #6A5AE0;
+}
+
+.qz-badge--coral {
+  background: #FFEAEA;
+  color: #FF7562;
+}
+
+.qz-badge--cyan {
+  background: #E2F6FC;
+  color: #0582CA;
+}
+
+.qz-option-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.qz-option-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.qz-option-title {
+  margin: 0;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  color: #0C092A;
+}
+
+.qz-count-chip {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 9999px;
+}
+
+.qz-chip--coral {
+  background: #FFEAEA;
+  color: #FF7562;
+}
+
+.qz-chip--cyan {
+  background: #E2F6FC;
+  color: #0582CA;
+}
+
+.qz-option-desc {
+  margin: 2px 0 0 0;
+  font-size: 11px;
+  color: #858494;
+  font-weight: 500;
+}
+
+.qz-option-arrow {
+  color: #9D9BB0;
+  font-size: 16px;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.qz-option-row:active .qz-option-arrow {
+  transform: translateX(2px);
+  color: #6A5AE0;
+}
+
+/* Estado Vacío */
+.qz-empty-card {
+  background: #FFFFFF;
+  border-radius: var(--qz-radius-2xl, 28px);
+  padding: 36px 24px;
+  text-align: center;
+  box-shadow: 0 8px 24px -4px rgba(106, 90, 224, 0.08);
+  margin-top: 10px;
+}
+
+.qz-empty-icon-box {
+  width: 68px;
+  height: 68px;
+  border-radius: 22px;
+  background: var(--qz-color-purple-bg, #EFEEFC);
+  color: var(--ion-color-primary, #6A5AE0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  margin: 0 auto 16px auto;
+}
+
+.qz-empty-title {
+  margin: 0 0 8px 0;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-size: 18px;
+  font-weight: 700;
+  color: #0C092A;
+}
+
+.qz-empty-desc {
+  margin: 0;
+  font-size: 14px;
+  color: #858494;
+  line-height: 1.5;
+}
+</style>

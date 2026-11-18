@@ -1,77 +1,110 @@
 <template>
-  <ion-modal :is-open="isOpen" @didDismiss="emit('close')">
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Generar Cuestionario</ion-title>
-        <ion-buttons slot="end">
-          <ion-button @click="emit('close')">Cerrar</ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content class="ion-padding">
-      <ion-item>
-        <ion-label>Tipo de Cuestionario</ion-label>
-        <ion-select
-          v-model="questionnaireType"
-          @ionChange="generateQuestionnaire"
+  <ion-modal :is-open="isOpen" @didDismiss="emit('close')" class="qz-modal-pop">
+    <div class="qz-gen-modal-wrapper">
+      <!-- 1. Cabecera Queezy -->
+      <div class="qz-gen-header">
+        <div class="qz-gen-titles">
+          <span class="qz-gen-tag">IMPRESIÓN Y EXPORTACIÓN</span>
+          <h2 class="qz-gen-title">Generar Cuestionario</h2>
+        </div>
+        <button
+          type="button"
+          class="qz-gen-close-btn"
+          @click="emit('close')"
+          title="Cerrar modal"
         >
-          <ion-select-option value="fixed">Opciones Fijas</ion-select-option>
-          <ion-select-option value="variable"
-            >Opciones Variables</ion-select-option
-          >
-          <ion-select-option value="answers"
-            >Solo Respuestas Correctas</ion-select-option
-          >
-          <ion-select-option value="csv">CSV (Claves)</ion-select-option>
-        </ion-select>
-      </ion-item>
-
-      <ion-item>
-        <ion-label position="stacked">Pregunta Inicial</ion-label>
-        <ion-input
-          type="number"
-          v-model="questionStart"
-          @ionChange="onRangeChange"
-          :min="1"
-          :max="localQuestions.length"
-        ></ion-input>
-      </ion-item>
-
-      <ion-item>
-        <ion-label position="stacked"
-          >Pregunta Final (Máx: {{ localQuestions.length }})</ion-label
-        >
-        <ion-input
-          type="number"
-          v-model="questionEnd"
-          @ionChange="onRangeChange"
-          :min="1"
-          :max="localQuestions.length"
-        ></ion-input>
-      </ion-item>
-
-      <ion-button expand="block" @click="exportData" class="ion-margin-top">
-        <ion-icon slot="start" :icon="downloadOutline"></ion-icon>
-        Exportar PDF
-      </ion-button>
-      <ion-button
-        expand="block"
-        @click="printData"
-        fill="outline"
-        v-if="!isNative"
-      >
-        <ion-icon slot="start" :icon="printOutline"></ion-icon>
-        Imprimir
-      </ion-button>
-
-      <div
-        id="printable-content"
-        class="ion-padding-top"
-        v-if="questionnaireType !== 'csv'"
-      >
-        <div v-html="generatedHtml"></div>
+          <ion-icon :icon="closeOutline"></ion-icon>
+        </button>
       </div>
-    </ion-content>
+
+      <!-- 2. Contenido con Scroll -->
+      <div class="qz-gen-body">
+        <!-- Tarjeta de Configuración -->
+        <div class="qz-config-card">
+          <!-- Campo 1: Tipo de Formato -->
+          <div class="qz-config-field">
+            <label class="qz-config-label">Formato del Cuestionario</label>
+            <div class="qz-select-container">
+              <ion-select
+                v-model="questionnaireType"
+                interface="popover"
+                class="qz-gen-select"
+                @ionChange="generateQuestionnaire"
+              >
+                <ion-select-option value="fixed">Opciones Fijas (A, B, C, D)</ion-select-option>
+                <ion-select-option value="variable">Opciones Variables</ion-select-option>
+                <ion-select-option value="answers">Solo Respuestas Correctas</ion-select-option>
+                <ion-select-option value="csv">CSV (Claves OMR)</ion-select-option>
+              </ion-select>
+            </div>
+          </div>
+
+          <!-- Campo 2: Rango de Preguntas (2 Columnas) -->
+          <div class="qz-range-grid">
+            <div class="qz-config-field">
+              <label class="qz-config-label">Pregunta Inicial</label>
+              <div class="qz-input-wrap">
+                <input
+                  type="number"
+                  v-model.number="questionStart"
+                  @input="onRangeChange"
+                  :min="1"
+                  :max="localQuestions.length"
+                  class="qz-native-input"
+                />
+              </div>
+            </div>
+
+            <div class="qz-config-field">
+              <label class="qz-config-label">
+                Pregunta Final
+                <span class="qz-max-badge">Máx: {{ localQuestions.length }}</span>
+              </label>
+              <div class="qz-input-wrap">
+                <input
+                  type="number"
+                  v-model.number="questionEnd"
+                  @input="onRangeChange"
+                  :min="1"
+                  :max="localQuestions.length"
+                  class="qz-native-input"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Botones de Acción -->
+          <div class="qz-buttons-row">
+            <button type="button" class="qz-btn-primary" @click="exportData">
+              <ion-icon :icon="downloadOutline"></ion-icon>
+              <span>Exportar PDF</span>
+            </button>
+            <button
+              type="button"
+              class="qz-btn-secondary"
+              @click="printData"
+              v-if="!isNative"
+            >
+              <ion-icon :icon="printOutline"></ion-icon>
+              <span>Imprimir</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Vista previa del cuestionario -->
+        <div
+          v-if="questionnaireType !== 'csv'"
+          class="qz-preview-wrapper"
+        >
+          <div class="qz-preview-header">
+            <span class="qz-preview-tag">VISTA PREVIA DEL EXAMEN</span>
+          </div>
+          <div id="printable-content" class="qz-printable-area">
+            <div v-html="generatedHtml"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </ion-modal>
 </template>
 
@@ -80,22 +113,13 @@ import { ref, watch } from "vue";
 import { defineComponent } from "vue";
 import {
   IonModal,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonButtons,
-  IonButton,
-  IonContent,
-  IonItem,
-  IonLabel,
   IonSelect,
   IonSelectOption,
   IonIcon,
-  IonInput,
   actionSheetController,
   alertController,
 } from "@ionic/vue";
-import { downloadOutline, printOutline } from "ionicons/icons";
+import { downloadOutline, printOutline, closeOutline } from "ionicons/icons";
 import html2canvas from "html2canvas";
 import { FileSharer } from "@byteowls/capacitor-filesharer";
 import { Capacitor } from "@capacitor/core";
@@ -105,18 +129,9 @@ export default defineComponent({
   name: "CuestionarioGeneratorModal",
   components: {
     IonModal,
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonButtons,
-    IonButton,
-    IonContent,
-    IonItem,
-    IonLabel,
     IonSelect,
     IonSelectOption,
     IonIcon,
-    IonInput,
   },
   props: {
     isOpen: Boolean,
@@ -1427,6 +1442,7 @@ export default defineComponent({
       printData,
       downloadOutline,
       printOutline,
+      closeOutline,
       emit,
     };
   },
@@ -1434,6 +1450,224 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.qz-gen-modal-wrapper {
+  background: #EFEEFC;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+}
+
+/* 1. Cabecera */
+.qz-gen-header {
+  background: linear-gradient(180deg, #6A5AE0 0%, #7668E3 100%);
+  padding: 16px 20px 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(106, 90, 224, 0.15);
+}
+
+.qz-gen-tag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: rgba(255, 255, 255, 0.85);
+  text-transform: uppercase;
+}
+
+.qz-gen-title {
+  margin: 2px 0 0 0;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-size: 20px;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: -0.3px;
+}
+
+.qz-gen-close-btn {
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #FFFFFF;
+  border-radius: var(--qz-radius-full, 9999px);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.15s ease;
+}
+
+.qz-gen-close-btn:active {
+  transform: scale(0.92);
+}
+
+/* 2. Cuerpo con Scroll */
+.qz-gen-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Tarjeta de Configuración */
+.qz-config-card {
+  background: #FFFFFF;
+  border-radius: var(--qz-radius-xl, 22px);
+  padding: 18px;
+  box-shadow: 0 6px 20px -4px rgba(106, 90, 224, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.qz-config-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.qz-config-label {
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-size: 12px;
+  font-weight: 700;
+  color: #0C092A;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.qz-max-badge {
+  font-size: 11px;
+  color: #858494;
+  font-weight: 500;
+}
+
+.qz-select-container {
+  background: #F4F3FD;
+  border: 1px solid #E0DCFA;
+  border-radius: 14px;
+  padding: 4px 12px;
+}
+
+.qz-gen-select {
+  --color: #0C092A;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Grid de Rango */
+.qz-range-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.qz-input-wrap {
+  background: #F4F3FD;
+  border: 1px solid #E0DCFA;
+  border-radius: 14px;
+  padding: 8px 12px;
+}
+
+.qz-native-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  color: #0C092A;
+  outline: none;
+}
+
+/* Botones */
+.qz-buttons-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.qz-btn-primary {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--ion-color-primary, #6A5AE0);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--qz-radius-full, 9999px);
+  padding: 12px;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(106, 90, 224, 0.28);
+  transition: transform 0.15s ease;
+}
+
+.qz-btn-primary:active {
+  transform: scale(0.98);
+}
+
+.qz-btn-secondary {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #FFFFFF;
+  color: var(--ion-color-primary, #6A5AE0);
+  border: 1px solid #D6D1F9;
+  border-radius: var(--qz-radius-full, 9999px);
+  padding: 12px;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.qz-btn-secondary:active {
+  transform: scale(0.98);
+  background: #F9F9FE;
+}
+
+/* Vista Previa */
+.qz-preview-wrapper {
+  background: #FFFFFF;
+  border-radius: var(--qz-radius-xl, 22px);
+  padding: 18px;
+  box-shadow: 0 6px 20px -4px rgba(106, 90, 224, 0.08);
+}
+
+.qz-preview-header {
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ECEAF9;
+}
+
+.qz-preview-tag {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: var(--ion-color-primary, #6A5AE0);
+  text-transform: uppercase;
+}
+
+.qz-printable-area {
+  padding: 4px;
+}
+
 #printable-content {
   column-count: 2;
   column-gap: 20px;

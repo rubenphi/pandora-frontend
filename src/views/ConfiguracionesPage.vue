@@ -14,6 +14,21 @@
       <ion-list>
         <ion-item>
           <ion-label>
+            <h2>Autorizaciones</h2>
+            <p>Gestionar permisos temporales y accesos especiales</p>
+          </ion-label>
+          <ion-button
+            slot="end"
+            fill="outline"
+            color="primary"
+            href="/admin/autorizaciones"
+          >
+            <ion-icon :icon="lockOpenOutline" slot="start"></ion-icon>
+            Gestionar
+          </ion-button>
+        </ion-item>
+        <ion-item>
+          <ion-label>
             <h2>Vista Administrador</h2>
             <p>Ver todos los cursos y áreas del instituto</p>
           </ion-label>
@@ -98,6 +113,7 @@ import {
   documentTextOutline,
   fileTrayStackedOutline,
   fileTrayStackOutline,
+  lockOpenOutline,
 } from "ionicons/icons";
 import axios from "axios";
 import { basedeURL } from "../globalService";
@@ -290,6 +306,7 @@ export default {
       documentTextOutline,
       fileTrayStackedOutline,
       fileTrayStackOutline,
+      lockOpenOutline,
     };
   },
 };

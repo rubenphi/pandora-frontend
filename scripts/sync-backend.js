@@ -3,14 +3,40 @@ const path = require('path');
 
 const withData = process.argv.includes('--with-data');
 const bundleSrc = path.resolve(__dirname, '../../pandora-nest/dist/bundle/index.js');
-const dbSrc = path.resolve(__dirname, '../../pandora-nest/data/pandora.sqlite');
 const distDir = path.resolve(__dirname, '../dist');
+
+function isValidSqlite(filePath) {
+  try {
+    if (!fs.existsSync(filePath) || fs.statSync(filePath).size < 1000) return false;
+    const fd = fs.openSync(filePath, 'r');
+    const buf = Buffer.alloc(16);
+    fs.readSync(fd, buf, 0, 16, 0);
+    fs.closeSync(fd);
+    return buf.toString('utf8') === 'SQLite format 3\0';
+  } catch (_) {
+    return false;
+  }
+}
+
+const dbCandidates = [
+  path.resolve(__dirname, '../../pandora-nest/data/pandora.sqlite'),
+  path.resolve(__dirname, '../../pandora-nest/pandora_storage/data/pandora.sqlite'),
+  path.resolve(__dirname, '../../pandora_storage/data/pandora.sqlite'),
+];
+
+let dbSrc = dbCandidates.find((c) => isValidSqlite(c));
+if (dbSrc) {
+  console.log(`[Sync Backend] Base de datos SQLite sana encontrada en: ${dbSrc}`);
+} else {
+  console.warn(`[Sync Backend] AVISO: No se encontro una base de datos SQLite con formato valido.`);
+}
 
 const targets = [
   path.resolve(__dirname, '../public/nodejs'),
   path.resolve(__dirname, '../dist/nodejs'),
   path.resolve(__dirname, '../android/app/src/main/assets/public/nodejs'),
   path.resolve(__dirname, '../../pandora-nest/dist/bundle'),
+  path.resolve(__dirname, '../../pandora-nest'),
 ];
 
 console.log(`[Sync Backend] Sincronizando (modo: ${withData ? 'CON DATA COMPLETA Y WEB WWW' : 'LIMPIO'})...`);
