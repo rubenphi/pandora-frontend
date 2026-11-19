@@ -504,7 +504,10 @@ export default {
           pregunta.value = {
             ...data,
             quizId: data.quiz?.id || data.quizId,
-            instituteId: usuarioGet().institute?.id,
+            instituteId:
+              data.institute?.id ||
+              data.instituteId ||
+              usuarioGet()?.institute?.id,
             options: data.options || [],
           };
           quizIdForRedirect.value = data.quiz?.id;
@@ -740,21 +743,45 @@ export default {
         return;
       }
 
-      // Copia limpia sin el id para la llamada principal si es creación
-      if (cuestionario !== undefined) {
-        delete pregunta.value.id;
-      }
-
       const tryCrearPregunta = async () => {
         try {
           const formData = new FormData();
-          for (const key in pregunta.value) {
+          const allowedQuestionFields = [
+            "title",
+            "sentence",
+            "points",
+            "visible",
+            "available",
+            "exist",
+            "quizId",
+            "instituteId",
+          ];
+
+          allowedQuestionFields.forEach((field) => {
             if (
-              pregunta.value[key] !== null &&
-              pregunta.value[key] !== undefined
+              pregunta.value[field] !== null &&
+              pregunta.value[field] !== undefined
             ) {
-              formData.append(key, pregunta.value[key]);
+              formData.append(field, pregunta.value[field]);
             }
+          });
+
+          // Manejo seguro del campo photo para no enviar objetos o rutas no deseadas
+          if (
+            pregunta.value.photo instanceof File ||
+            pregunta.value.photo instanceof Blob
+          ) {
+            formData.append("photo", pregunta.value.photo);
+          } else if (
+            pregunta.value.photo === null ||
+            pregunta.value.photo === "null"
+          ) {
+            formData.append("photo", "null");
+          } else if (
+            typeof pregunta.value.photo === "string" &&
+            pregunta.value.photo.trim() !== ""
+          ) {
+            formData.append("photo", pregunta.value.photo);
           }
 
           let questionId = id;
@@ -781,20 +808,35 @@ export default {
             );
           }
 
-          // Procesar las opciones
+          // Procesar las opciones con payload limpio
           if (questionId) {
-            for (const option of currentOptions) {
-              option.questionId = questionId;
+            // CRÍTICO: Primero procesamos las opciones que quedan en 'false'
+            // para que en la BD se desmarque la opción correcta anterior.
+            // Al final se actualiza la opción que quedó en 'true', evitando que el backend
+            // lance la excepción "Cannot mark two answer options as correct".
+            const sortedOptions = [...currentOptions].sort((a, b) => {
+              if (Boolean(a.correct) === Boolean(b.correct)) return 0;
+              return a.correct ? 1 : -1;
+            });
+
+            for (const option of sortedOptions) {
+              const cleanOption = {
+                sentence: option.sentence,
+                correct: Boolean(option.correct),
+                identifier: option.identifier,
+                questionId: Number(questionId),
+                instituteId: Number(
+                  option.instituteId ||
+                    usuarioGet()?.institute?.id ||
+                    pregunta.value.instituteId,
+                ),
+                exist: option.exist !== undefined ? Boolean(option.exist) : true,
+              };
+
               if (option.id) {
-                const optionToUpdate = { ...option };
-                delete optionToUpdate.createdAt;
-                delete optionToUpdate.updatedAt;
-                delete optionToUpdate.id;
-                await axios.patch(`/options/${option.id}`, optionToUpdate);
+                await axios.patch(`/options/${option.id}`, cleanOption);
               } else {
-                const optionToCreate = { ...option };
-                delete optionToCreate.id;
-                await axios.post("/options", [optionToCreate]);
+                await axios.post("/options", [cleanOption]);
               }
             }
           }
@@ -805,6 +847,7 @@ export default {
             router.push("/pregunta/" + id);
           }
         } catch (err) {
+          pregunta.value.options = currentOptions;
           if (
             err.response?.status === 409 &&
             err.response?.data?.message === "Este registro ya existe."
@@ -1291,11 +1334,7 @@ export default {
 
 /* EDITOR TIPTAP */
 .qz-editor-container {
-  margin-bottom: 16px;
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1px solid #e1def5;
-  background: #fafafc;
+  margin-bottom: 20px;
 }
 
 /* IMAGEN DE LA PREGUNTA */
