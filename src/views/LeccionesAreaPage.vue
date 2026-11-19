@@ -1,5 +1,5 @@
 <template>
-  <ion-page class="qz-lecciones-page">
+  <ion-page class="ion-page qz-lecciones-page">
     <ion-content :fullscreen="true" class="qz-lecciones-content">
       <div class="qz-page-wrapper">
         <!-- 1. CABECERA HERO QUEEZY PÚRPURA -->
@@ -30,11 +30,9 @@
           <!-- Títulos del Hero -->
           <div class="qz-hero-titles">
             <span class="qz-hero-tag" v-if="cursoActual?.name">
-              {{ cursoActual.name }} · {{ year ? year : '' }}
+              {{ cursoActual.name }} · {{ year ? year : "" }}
             </span>
-            <span class="qz-hero-tag" v-else>
-              CURSO Y LECCIONES
-            </span>
+            <span class="qz-hero-tag" v-else> CURSO Y LECCIONES </span>
             <h1 class="qz-hero-title">{{ pageTitle }}</h1>
             <p class="qz-hero-subtitle">
               Consulta materiales, cuestionarios y actividades asignadas
@@ -45,284 +43,446 @@
         <!-- 2. CUERPO: LISTA DE TARJETAS DE LECCIONES ESCALABLES -->
         <div class="qz-main-body">
           <div class="qz-container">
-            <!-- Indicador de total de lecciones -->
-            <div class="qz-section-header" v-if="lecciones && lecciones.length > 0">
-              <h2 class="qz-section-title">Contenido del periodo</h2>
-              <span class="qz-section-badge">
-                {{ lecciones.length }} {{ lecciones.length === 1 ? 'lección' : 'lecciones' }}
-              </span>
+            <!-- Indicador de total de lecciones y botón contraer/desplegar todas -->
+            <div
+              class="qz-section-header"
+              v-if="lecciones && lecciones.length > 0"
+            >
+              <div class="qz-section-header-left">
+                <h2 class="qz-section-title">Contenido del periodo</h2>
+                <span class="qz-section-badge">
+                  {{ lecciones.length }}
+                  {{ lecciones.length === 1 ? "lección" : "lecciones" }}
+                </span>
+              </div>
+
+              <!-- Botón Desplegar / Contraer Todo -->
+              <button
+                type="button"
+                class="qz-toggle-all-btn"
+                @click="toggleAllLessons"
+                :title="
+                  allExpanded
+                    ? 'Contraer todas las lecciones'
+                    : 'Desplegar todas las lecciones'
+                "
+              >
+                <ion-icon
+                  :icon="allExpanded ? chevronUpOutline : chevronDownOutline"
+                ></ion-icon>
+                <span>{{
+                  allExpanded ? "Contraer todo" : "Desplegar todo"
+                }}</span>
+              </button>
             </div>
 
             <!-- Lista de Lecciones -->
-            <div v-if="lecciones && lecciones.length > 0" class="qz-lessons-list">
+            <div
+              v-if="lecciones && lecciones.length > 0"
+              class="qz-lessons-list"
+            >
               <div
                 v-for="leccion in lecciones"
                 :key="leccion.id"
                 class="qz-lesson-card"
+                :class="{ 'is-collapsed': !isLessonExpanded(leccion.id) }"
               >
-                <!-- A. Encabezado de la Tarjeta de Lección -->
-                <div class="qz-lesson-card-header">
-                  <div class="qz-lesson-squircle">
-                    <ion-icon :icon="calendarOutline"></ion-icon>
-                  </div>
-
-                  <div class="qz-lesson-meta">
-                    <div class="qz-lesson-top-row">
-                      <span class="qz-lesson-date">{{ formatFecha(leccion.date) }}</span>
+                <!-- A. Encabezado de la Tarjeta de Lección (Interactivo para desplegar) -->
+                <div
+                  class="qz-lesson-card-header"
+                  :class="{ 'is-collapsed': !isLessonExpanded(leccion.id) }"
+                  @click="toggleLessonCard(leccion.id)"
+                >
+                  <!-- Fila Superior: Fecha y Alerta alineados horizontalmente con los Botones de Acción -->
+                  <div class="qz-lesson-top-row">
+                    <div class="qz-lesson-date-group">
+                      <span class="qz-lesson-date">
+                        <ion-icon :icon="calendarOutline"></ion-icon>
+                        {{ formatFecha(leccion.date) }}
+                      </span>
+                      <span
+                        v-if="
+                          leccionesConCuestionariosPendientes.includes(
+                            leccion.id,
+                          ) ||
+                          leccionesConActividadesPendientes.includes(leccion.id)
+                        "
+                        class="qz-alert-pill"
+                      >
+                        Por calificar
+                      </span>
                     </div>
-                    <h3 class="qz-lesson-topic">{{ leccion.topic }}</h3>
+
+                    <div class="qz-lesson-header-actions">
+                      <!-- Botón Editar Lección (Docentes) -->
+                      <button
+                        v-if="adminOProfesor"
+                        type="button"
+                        class="qz-edit-lesson-btn"
+                        title="Editar lección"
+                        @click.stop="goToEdit(leccion)"
+                      >
+                        <ion-icon :icon="createOutline"></ion-icon>
+                      </button>
+
+                      <!-- Chevron Desplegable -->
+                      <div
+                        class="qz-card-chevron"
+                        :class="{ 'is-open': isLessonExpanded(leccion.id) }"
+                        title="Desplegar o contraer subsecciones"
+                      >
+                        <ion-icon :icon="chevronDownOutline"></ion-icon>
+                      </div>
+                    </div>
                   </div>
 
-                  <!-- Botón Editar Lección (Docentes) -->
-                  <button
-                    v-if="adminOProfesor"
-                    type="button"
-                    class="qz-edit-lesson-btn"
-                    title="Editar lección"
-                    @click="goToEdit(leccion)"
-                  >
-                    <ion-icon :icon="createOutline"></ion-icon>
-                  </button>
+                  <!-- Título / Tema de la Lección a ancho completo -->
+                  <h3 class="qz-lesson-topic">{{ leccion.topic }}</h3>
                 </div>
 
                 <!-- B. Módulos de la Lección en Renglones Apilados Escalables (Opción 2) -->
-                <div class="qz-modules-container">
-                  <!-- MÓDULO 1: Material de Apoyo -->
-                  <div class="qz-module-block">
-                    <div
-                      class="qz-module-row"
-                      :class="{ 'is-expanded': openedLessonId === leccion.id && openedSection === 'materiales' }"
-                      @click="toggleSection(leccion.id, 'materiales')"
-                    >
-                      <div class="qz-module-icon qz-icon--purple">
-                        <ion-icon :icon="folderOpenOutline"></ion-icon>
-                      </div>
-                      <div class="qz-module-info">
-                        <span class="qz-module-title">Material de apoyo</span>
-                        <span class="qz-module-desc">Guías, lecturas y recursos descargables</span>
-                      </div>
+                <transition name="qz-expand">
+                  <div
+                    v-show="isLessonExpanded(leccion.id)"
+                    class="qz-modules-container"
+                  >
+                    <!-- MÓDULO 1: Material de Apoyo -->
+                    <div class="qz-module-block">
                       <div
-                        class="qz-module-chevron"
-                        :class="{ 'is-open': openedLessonId === leccion.id && openedSection === 'materiales' }"
+                        class="qz-module-row"
+                        :class="{
+                          'is-expanded':
+                            openedLessonId === leccion.id &&
+                            openedSection === 'materiales',
+                        }"
+                        @click="toggleSection(leccion.id, 'materiales')"
                       >
-                        <ion-icon :icon="chevronForwardOutline"></ion-icon>
-                      </div>
-                    </div>
-
-                    <!-- Despliegue de Materiales -->
-                    <div
-                      v-if="openedLessonId === leccion.id && openedSection === 'materiales'"
-                      class="qz-expanded-drawer"
-                    >
-                      <div v-if="isLoadingMaterials" class="qz-loading-box">
-                        <ion-spinner name="crescent" color="primary"></ion-spinner>
-                        <span>Cargando materiales...</span>
-                      </div>
-                      <div v-else-if="materialsList.length === 0" class="qz-empty-module-box">
-                        <ion-icon :icon="documentTextOutline" class="qz-empty-module-icon"></ion-icon>
-                        <p>No hay material de apoyo registrado</p>
-                      </div>
-                      <div v-else class="qz-items-group">
+                        <div class="qz-module-icon qz-icon--purple">
+                          <ion-icon :icon="folderOpenOutline"></ion-icon>
+                        </div>
+                        <div class="qz-module-info">
+                          <span class="qz-module-title">Material de apoyo</span>
+                          <span class="qz-module-desc"
+                            >Guías, lecturas y recursos descargables</span
+                          >
+                        </div>
                         <div
-                          v-for="material in materialsList"
-                          :key="material.id"
-                          class="qz-item-card"
+                          class="qz-module-chevron"
+                          :class="{
+                            'is-open':
+                              openedLessonId === leccion.id &&
+                              openedSection === 'materiales',
+                          }"
                         >
-                          <div class="qz-item-clickable" @click="openMaterial(material)">
-                            <div class="qz-item-bullet qz-bullet--purple">
-                              <ion-icon :icon="documentTextOutline"></ion-icon>
+                          <ion-icon :icon="chevronForwardOutline"></ion-icon>
+                        </div>
+                      </div>
+
+                      <!-- Despliegue de Materiales -->
+                      <div
+                        v-if="
+                          openedLessonId === leccion.id &&
+                          openedSection === 'materiales'
+                        "
+                        class="qz-expanded-drawer"
+                      >
+                        <div v-if="isLoadingMaterials" class="qz-loading-box">
+                          <ion-spinner
+                            name="crescent"
+                            color="primary"
+                          ></ion-spinner>
+                          <span>Cargando materiales...</span>
+                        </div>
+                        <div
+                          v-else-if="materialsList.length === 0"
+                          class="qz-empty-module-box"
+                        >
+                          <ion-icon
+                            :icon="documentTextOutline"
+                            class="qz-empty-module-icon"
+                          ></ion-icon>
+                          <p>No hay material de apoyo registrado</p>
+                        </div>
+                        <div v-else class="qz-items-group">
+                          <div
+                            v-for="material in materialsList"
+                            :key="material.id"
+                            class="qz-item-card"
+                          >
+                            <div
+                              class="qz-item-clickable"
+                              @click="openMaterial(material)"
+                            >
+                              <div class="qz-item-bullet qz-bullet--purple">
+                                <ion-icon
+                                  :icon="documentTextOutline"
+                                ></ion-icon>
+                              </div>
+                              <span class="qz-item-label">{{
+                                material.name
+                              }}</span>
                             </div>
-                            <span class="qz-item-label">{{ material.name }}</span>
-                          </div>
-                          <button
-                            v-if="adminOProfesor"
-                            type="button"
-                            class="qz-item-action-btn"
-                            title="Editar material"
-                            @click.stop="goToEditMaterial(leccion.id, material.id)"
-                          >
-                            <ion-icon :icon="createOutline"></ion-icon>
-                          </button>
-                        </div>
-                      </div>
-
-                      <!-- Botón Añadir Material para Profesores -->
-                      <button
-                        v-if="adminOProfesor"
-                        type="button"
-                        class="qz-add-item-btn"
-                        @click="presentMaterialCreationOptions(leccion.id)"
-                      >
-                        <ion-icon :icon="addCircleOutline"></ion-icon>
-                        <span>Agregar Material</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <!-- MÓDULO 2: Cuestionarios -->
-                  <div class="qz-module-block">
-                    <div
-                      class="qz-module-row"
-                      :class="{ 'is-expanded': openedLessonId === leccion.id && openedSection === 'cuestionarios' }"
-                      @click="toggleSection(leccion.id, 'cuestionarios')"
-                    >
-                      <div class="qz-module-icon qz-icon--coral">
-                        <ion-icon :icon="helpCircleOutline"></ion-icon>
-                      </div>
-                      <div class="qz-module-info">
-                        <div class="qz-module-title-wrap">
-                          <span class="qz-module-title">Cuestionarios</span>
-                          <span
-                            v-if="leccionesConCuestionariosPendientes.includes(leccion.id)"
-                            class="qz-alert-pill"
-                          >
-                            Por calificar
-                          </span>
-                        </div>
-                        <span class="qz-module-desc">Pruebas evaluativas y cuestionarios</span>
-                      </div>
-                      <div
-                        class="qz-module-chevron"
-                        :class="{ 'is-open': openedLessonId === leccion.id && openedSection === 'cuestionarios' }"
-                      >
-                        <ion-icon :icon="chevronForwardOutline"></ion-icon>
-                      </div>
-                    </div>
-
-                    <!-- Despliegue de Cuestionarios -->
-                    <div
-                      v-if="openedLessonId === leccion.id && openedSection === 'cuestionarios'"
-                      class="qz-expanded-drawer"
-                    >
-                      <div v-if="isLoadingCuestionarios" class="qz-loading-box">
-                        <ion-spinner name="crescent" color="primary"></ion-spinner>
-                        <span>Cargando cuestionarios...</span>
-                      </div>
-                      <div v-else-if="cuestionariosList.length === 0" class="qz-empty-module-box">
-                        <ion-icon :icon="helpCircleOutline" class="qz-empty-module-icon"></ion-icon>
-                        <p>No hay cuestionarios asignados</p>
-                      </div>
-                      <div v-else class="qz-items-group">
-                        <div
-                          v-for="cuestionario in cuestionariosList"
-                          :key="cuestionario.id"
-                          class="qz-item-card"
-                          @click="navigateToQuiz(cuestionario)"
-                        >
-                          <div class="qz-item-clickable">
-                            <div class="qz-item-bullet qz-bullet--coral">
-                              <ion-icon :icon="checkboxOutline"></ion-icon>
-                            </div>
-                            <span class="qz-item-label">{{ cuestionario.name }}</span>
-                          </div>
-                          <span
-                            v-if="cuestionariosPendientes.includes(cuestionario.id)"
-                            class="qz-warning-chip"
-                          >
-                            <ion-icon :icon="alertCircleOutline"></ion-icon>
-                            <span>Pendiente</span>
-                          </span>
-                          <div class="qz-item-arrow">
-                            <ion-icon :icon="chevronForwardOutline"></ion-icon>
-                          </div>
-                        </div>
-                      </div>
-
-                      <!-- Botón Crear Cuestionario para Profesores -->
-                      <button
-                        v-if="adminOProfesor"
-                        type="button"
-                        class="qz-add-item-btn"
-                        @click="goToCreateQuiz(leccion.id)"
-                      >
-                        <ion-icon :icon="addCircleOutline"></ion-icon>
-                        <span>Crear Cuestionario</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <!-- MÓDULO 3: Actividades -->
-                  <div class="qz-module-block">
-                    <div
-                      class="qz-module-row"
-                      :class="{ 'is-expanded': openedLessonId === leccion.id && openedSection === 'actividades' }"
-                      @click="toggleSection(leccion.id, 'actividades')"
-                    >
-                      <div class="qz-module-icon qz-icon--cyan">
-                        <ion-icon :icon="flashOutline"></ion-icon>
-                      </div>
-                      <div class="qz-module-info">
-                        <div class="qz-module-title-wrap">
-                          <span class="qz-module-title">Actividades</span>
-                          <span
-                            v-if="leccionesConActividadesPendientes.includes(leccion.id)"
-                            class="qz-alert-pill"
-                          >
-                            Por calificar
-                          </span>
-                        </div>
-                        <span class="qz-module-desc">Talleres prácticos y tareas</span>
-                      </div>
-                      <div
-                        class="qz-module-chevron"
-                        :class="{ 'is-open': openedLessonId === leccion.id && openedSection === 'actividades' }"
-                      >
-                        <ion-icon :icon="chevronForwardOutline"></ion-icon>
-                      </div>
-                    </div>
-
-                    <!-- Despliegue de Actividades -->
-                    <div
-                      v-if="openedLessonId === leccion.id && openedSection === 'actividades'"
-                      class="qz-expanded-drawer"
-                    >
-                      <div v-if="isLoadingActivities" class="qz-loading-box">
-                        <ion-spinner name="crescent" color="primary"></ion-spinner>
-                        <span>Cargando actividades...</span>
-                      </div>
-                      <div v-else-if="actvitiesList.length === 0" class="qz-empty-module-box">
-                        <ion-icon :icon="flashOutline" class="qz-empty-module-icon"></ion-icon>
-                        <p>No hay actividades asignadas</p>
-                      </div>
-                      <div v-else class="qz-items-group">
-                        <div
-                          v-for="actividad in actvitiesList"
-                          :key="actividad.id"
-                          class="qz-item-card"
-                          @click="navigateToActivity(actividad)"
-                        >
-                          <div class="qz-item-clickable">
-                            <div class="qz-item-bullet qz-bullet--cyan">
+                            <button
+                              v-if="adminOProfesor"
+                              type="button"
+                              class="qz-item-action-btn"
+                              title="Editar material"
+                              @click.stop="
+                                goToEditMaterial(leccion.id, material.id)
+                              "
+                            >
                               <ion-icon :icon="createOutline"></ion-icon>
-                            </div>
-                            <span class="qz-item-label">{{ actividad.name }}</span>
+                            </button>
                           </div>
-                          <span
-                            v-if="actividadesPendientes.includes(actividad.id)"
-                            class="qz-warning-chip"
+                        </div>
+
+                        <!-- Botón Añadir Material para Profesores -->
+                        <button
+                          v-if="adminOProfesor"
+                          type="button"
+                          class="qz-add-item-btn"
+                          @click="presentMaterialCreationOptions(leccion.id)"
+                        >
+                          <ion-icon :icon="addCircleOutline"></ion-icon>
+                          <span>Agregar Material</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- MÓDULO 2: Cuestionarios -->
+                    <div class="qz-module-block">
+                      <div
+                        class="qz-module-row"
+                        :class="{
+                          'is-expanded':
+                            openedLessonId === leccion.id &&
+                            openedSection === 'cuestionarios',
+                        }"
+                        @click="toggleSection(leccion.id, 'cuestionarios')"
+                      >
+                        <div class="qz-module-icon qz-icon--coral">
+                          <ion-icon :icon="helpCircleOutline"></ion-icon>
+                        </div>
+                        <div class="qz-module-info">
+                          <div class="qz-module-title-wrap">
+                            <span class="qz-module-title">Cuestionarios</span>
+                            <span
+                              v-if="
+                                leccionesConCuestionariosPendientes.includes(
+                                  leccion.id,
+                                )
+                              "
+                              class="qz-alert-pill"
+                            >
+                              Por calificar
+                            </span>
+                          </div>
+                          <span class="qz-module-desc"
+                            >Pruebas evaluativas y cuestionarios</span
                           >
-                            <ion-icon :icon="alertCircleOutline"></ion-icon>
-                            <span>Pendiente</span>
-                          </span>
-                          <div class="qz-item-arrow">
-                            <ion-icon :icon="chevronForwardOutline"></ion-icon>
-                          </div>
+                        </div>
+                        <div
+                          class="qz-module-chevron"
+                          :class="{
+                            'is-open':
+                              openedLessonId === leccion.id &&
+                              openedSection === 'cuestionarios',
+                          }"
+                        >
+                          <ion-icon :icon="chevronForwardOutline"></ion-icon>
                         </div>
                       </div>
 
-                      <!-- Botón Opciones de Actividad para Profesores -->
-                      <button
-                        v-if="adminOProfesor"
-                        type="button"
-                        class="qz-add-item-btn"
-                        @click="presentActivityCreationOptions(leccion.id)"
+                      <!-- Despliegue de Cuestionarios -->
+                      <div
+                        v-if="
+                          openedLessonId === leccion.id &&
+                          openedSection === 'cuestionarios'
+                        "
+                        class="qz-expanded-drawer"
                       >
-                        <ion-icon :icon="addCircleOutline"></ion-icon>
-                        <span>Opciones de Actividad</span>
-                      </button>
+                        <div
+                          v-if="isLoadingCuestionarios"
+                          class="qz-loading-box"
+                        >
+                          <ion-spinner
+                            name="crescent"
+                            color="primary"
+                          ></ion-spinner>
+                          <span>Cargando cuestionarios...</span>
+                        </div>
+                        <div
+                          v-else-if="cuestionariosList.length === 0"
+                          class="qz-empty-module-box"
+                        >
+                          <ion-icon
+                            :icon="helpCircleOutline"
+                            class="qz-empty-module-icon"
+                          ></ion-icon>
+                          <p>No hay cuestionarios asignados</p>
+                        </div>
+                        <div v-else class="qz-items-group">
+                          <div
+                            v-for="cuestionario in cuestionariosList"
+                            :key="cuestionario.id"
+                            class="qz-item-card"
+                            @click="navigateToQuiz(cuestionario)"
+                          >
+                            <div class="qz-item-clickable">
+                              <div class="qz-item-bullet qz-bullet--coral">
+                                <ion-icon :icon="checkboxOutline"></ion-icon>
+                              </div>
+                              <span class="qz-item-label">{{
+                                cuestionario.name
+                              }}</span>
+                            </div>
+                            <span
+                              v-if="
+                                cuestionariosPendientes.includes(
+                                  cuestionario.id,
+                                )
+                              "
+                              class="qz-warning-chip"
+                            >
+                              <ion-icon :icon="alertCircleOutline"></ion-icon>
+                              <span>Pendiente</span>
+                            </span>
+                            <div class="qz-item-arrow">
+                              <ion-icon
+                                :icon="chevronForwardOutline"
+                              ></ion-icon>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Botón Crear Cuestionario para Profesores -->
+                        <button
+                          v-if="adminOProfesor"
+                          type="button"
+                          class="qz-add-item-btn"
+                          @click="goToCreateQuiz(leccion.id)"
+                        >
+                          <ion-icon :icon="addCircleOutline"></ion-icon>
+                          <span>Crear Cuestionario</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- MÓDULO 3: Actividades -->
+                    <div class="qz-module-block">
+                      <div
+                        class="qz-module-row"
+                        :class="{
+                          'is-expanded':
+                            openedLessonId === leccion.id &&
+                            openedSection === 'actividades',
+                        }"
+                        @click="toggleSection(leccion.id, 'actividades')"
+                      >
+                        <div class="qz-module-icon qz-icon--cyan">
+                          <ion-icon :icon="flashOutline"></ion-icon>
+                        </div>
+                        <div class="qz-module-info">
+                          <div class="qz-module-title-wrap">
+                            <span class="qz-module-title">Actividades</span>
+                            <span
+                              v-if="
+                                leccionesConActividadesPendientes.includes(
+                                  leccion.id,
+                                )
+                              "
+                              class="qz-alert-pill"
+                            >
+                              Por calificar
+                            </span>
+                          </div>
+                          <span class="qz-module-desc"
+                            >Talleres prácticos y tareas</span
+                          >
+                        </div>
+                        <div
+                          class="qz-module-chevron"
+                          :class="{
+                            'is-open':
+                              openedLessonId === leccion.id &&
+                              openedSection === 'actividades',
+                          }"
+                        >
+                          <ion-icon :icon="chevronForwardOutline"></ion-icon>
+                        </div>
+                      </div>
+
+                      <!-- Despliegue de Actividades -->
+                      <div
+                        v-if="
+                          openedLessonId === leccion.id &&
+                          openedSection === 'actividades'
+                        "
+                        class="qz-expanded-drawer"
+                      >
+                        <div v-if="isLoadingActivities" class="qz-loading-box">
+                          <ion-spinner
+                            name="crescent"
+                            color="primary"
+                          ></ion-spinner>
+                          <span>Cargando actividades...</span>
+                        </div>
+                        <div
+                          v-else-if="actvitiesList.length === 0"
+                          class="qz-empty-module-box"
+                        >
+                          <ion-icon
+                            :icon="flashOutline"
+                            class="qz-empty-module-icon"
+                          ></ion-icon>
+                          <p>No hay actividades asignadas</p>
+                        </div>
+                        <div v-else class="qz-items-group">
+                          <div
+                            v-for="actividad in actvitiesList"
+                            :key="actividad.id"
+                            class="qz-item-card"
+                            @click="navigateToActivity(actividad)"
+                          >
+                            <div class="qz-item-clickable">
+                              <div class="qz-item-bullet qz-bullet--cyan">
+                                <ion-icon :icon="createOutline"></ion-icon>
+                              </div>
+                              <span class="qz-item-label">{{
+                                actividad.name
+                              }}</span>
+                            </div>
+                            <span
+                              v-if="
+                                actividadesPendientes.includes(actividad.id)
+                              "
+                              class="qz-warning-chip"
+                            >
+                              <ion-icon :icon="alertCircleOutline"></ion-icon>
+                              <span>Pendiente</span>
+                            </span>
+                            <div class="qz-item-arrow">
+                              <ion-icon
+                                :icon="chevronForwardOutline"
+                              ></ion-icon>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Botón Opciones de Actividad para Profesores -->
+                        <button
+                          v-if="adminOProfesor"
+                          type="button"
+                          class="qz-add-item-btn"
+                          @click="presentActivityCreationOptions(leccion.id)"
+                        >
+                          <ion-icon :icon="addCircleOutline"></ion-icon>
+                          <span>Opciones de Actividad</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </transition>
               </div>
             </div>
 
@@ -333,7 +493,8 @@
               </div>
               <h3 class="qz-empty-title">Sin lecciones disponibles</h3>
               <p class="qz-empty-desc">
-                No se han registrado lecciones o actividades para esta área en el periodo seleccionado.
+                No se han registrado lecciones o actividades para esta área en
+                el periodo seleccionado.
               </p>
               <button
                 v-if="adminOProfesor && curso && area"
@@ -377,6 +538,8 @@ import {
   checkboxOutline,
   flashOutline,
   chevronForwardOutline,
+  chevronDownOutline,
+  chevronUpOutline,
   alertCircleOutline,
   bookOutline,
 } from "ionicons/icons";
@@ -411,7 +574,7 @@ export default {
 
     const backendUrl = basedeURL();
     const cursosUsuario = ref(
-      JSON.parse(localStorage.getItem("cursosUsuario"))
+      JSON.parse(localStorage.getItem("cursosUsuario")),
     );
     const usuario = ref();
     const adminOProfesor = ref(false);
@@ -430,6 +593,35 @@ export default {
 
     const openedLessonId = ref(null);
     const openedSection = ref(null);
+    const expandedLessonIds = ref([]);
+
+    const isLessonExpanded = (lessonId) => {
+      return expandedLessonIds.value.includes(lessonId);
+    };
+
+    const toggleLessonCard = (lessonId) => {
+      const index = expandedLessonIds.value.indexOf(lessonId);
+      if (index > -1) {
+        expandedLessonIds.value.splice(index, 1);
+      } else {
+        expandedLessonIds.value.push(lessonId);
+      }
+    };
+
+    const allExpanded = computed(() => {
+      return (
+        lecciones.value.length > 0 &&
+        expandedLessonIds.value.length === lecciones.value.length
+      );
+    });
+
+    const toggleAllLessons = () => {
+      if (allExpanded.value) {
+        expandedLessonIds.value = [];
+      } else {
+        expandedLessonIds.value = lecciones.value.map((l) => l.id);
+      }
+    };
 
     const formatFecha = (dateStr) => {
       if (!dateStr) return "";
@@ -535,6 +727,9 @@ export default {
     };
 
     const toggleSection = (leccionId, section) => {
+      if (!expandedLessonIds.value.includes(leccionId)) {
+        expandedLessonIds.value.push(leccionId);
+      }
       if (
         openedLessonId.value === leccionId &&
         openedSection.value === section
@@ -656,7 +851,7 @@ export default {
               if (selectedMaterial) {
                 sessionStorage.setItem(
                   "copiedMaterial",
-                  JSON.stringify(selectedMaterial)
+                  JSON.stringify(selectedMaterial),
                 );
                 router.push(`/crear/material/${lessonId}`);
               }
@@ -707,8 +902,10 @@ export default {
                   `/lessons?courseId=${curso}&areaId=${area}&periodId=${
                     periodo || storedPeriodoVal
                   }${
-                    year || storedYearVal ? "&year=" + (year || storedYearVal) : ""
-                  }&exist=true&type=${lessonType}`
+                    year || storedYearVal
+                      ? "&year=" + (year || storedYearVal)
+                      : ""
+                  }&exist=true&type=${lessonType}`,
                 );
                 lecciones.value = res.data
                   .map((l) => ({
@@ -720,7 +917,17 @@ export default {
                     year: l.year,
                     type: l.type,
                   }))
-                  .sort((a, b) => new Date(a.date) - new Date(b.date));
+                  .sort(
+                    (a, b) =>
+                      new Date(b.date) - new Date(a.date) || b.id - a.id,
+                  );
+
+                if (
+                  lecciones.value.length > 0 &&
+                  expandedLessonIds.value.length === 0
+                ) {
+                  expandedLessonIds.value = [lecciones.value[0].id];
+                }
               }
             },
           },
@@ -787,7 +994,7 @@ export default {
           });
 
           leccionesConCuestionariosPendientes.value = response.data.map(
-            (quiz) => quiz.lesson.id
+            (quiz) => quiz.lesson.id,
           );
           cuestionariosPendientes.value = response.data.map((quiz) => quiz.id);
         } catch (error) {
@@ -804,10 +1011,10 @@ export default {
             },
           });
           leccionesConActividadesPendientes.value = response.data.map(
-            (activity) => activity.lesson.id
+            (activity) => activity.lesson.id,
           );
           actividadesPendientes.value = response.data.map(
-            (activity) => activity.id
+            (activity) => activity.id,
           );
         } catch (error) {
           console.error("Error fetching pending activities:", error);
@@ -821,12 +1028,12 @@ export default {
 
       if (!adminOprofesor()) {
         const currentCourseFromUrl = cursosUsuario.value.find(
-          (c) => c.id == curso
+          (c) => c.id == curso,
         );
 
         if (!currentCourseFromUrl || !currentCourseFromUrl.active) {
           let targetCourse = cursosUsuario.value.find(
-            (c) => c.year == (year || storedYearVal) && c.active
+            (c) => c.year == (year || storedYearVal) && c.active,
           );
 
           if (!targetCourse) {
@@ -837,7 +1044,7 @@ export default {
             router.push(
               `/lecciones/${targetCourse.id}/${area}/${
                 periodo || storedPeriodoVal
-              }/${year || storedYearVal}/${lessonType}`
+              }/${year || storedYearVal}/${lessonType}`,
             );
           }
         }
@@ -849,7 +1056,7 @@ export default {
             periodo || storedPeriodoVal
           }${
             year || storedYearVal ? "&year=" + (year || storedYearVal) : ""
-          }&exist=true&type=${lessonType}`
+          }&exist=true&type=${lessonType}`,
         )
         .then((response) => {
           lecciones.value = response.data
@@ -862,8 +1069,22 @@ export default {
               year: leccion.year,
               type: leccion.type,
             }))
-            .sort((a, b) => new Date(a.date) - new Date(b.date));
+            .sort((a, b) => new Date(b.date) - new Date(a.date) || b.id - a.id);
+
+          if (
+            lecciones.value.length > 0 &&
+            expandedLessonIds.value.length === 0
+          ) {
+            expandedLessonIds.value = [lecciones.value[0].id];
+          }
         });
+
+      if (
+        openedLessonId.value &&
+        !expandedLessonIds.value.includes(openedLessonId.value)
+      ) {
+        expandedLessonIds.value.push(openedLessonId.value);
+      }
 
       if (openedLessonId.value && openedSection.value === "materiales") {
         await materialesConsulta(openedLessonId.value);
@@ -900,6 +1121,11 @@ export default {
       goBack,
       openMaterial,
       toggleSection,
+      expandedLessonIds,
+      isLessonExpanded,
+      toggleLessonCard,
+      allExpanded,
+      toggleAllLessons,
       presentMaterialCreationOptions,
       presentCreateLessonOptions,
       presentActivityCreationOptions,
@@ -914,6 +1140,8 @@ export default {
       checkboxOutline,
       flashOutline,
       chevronForwardOutline,
+      chevronDownOutline,
+      chevronUpOutline,
       alertCircleOutline,
       bookOutline,
       year,
@@ -924,12 +1152,21 @@ export default {
 
 <style scoped>
 .qz-lecciones-page {
-  background-color: var(--qz-color-purple-bg, #EFEEFC);
+  background-color: var(--qz-color-purple-bg, #efeefc);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
 }
 
 .qz-lecciones-content {
-  --background: var(--qz-color-purple-bg, #EFEEFC);
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  --background: var(--qz-color-purple-bg, #efeefc);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
 }
 
 .qz-page-wrapper {
@@ -941,7 +1178,7 @@ export default {
 
 /* 1. CABECERA HERO QUEEZY PÚRPURA */
 .qz-hero-header {
-  background: linear-gradient(180deg, #6A5AE0 0%, #7668E3 85%, #EFEEFC 100%);
+  background: linear-gradient(180deg, #6a5ae0 0%, #7668e3 85%, #efeefc 100%);
   padding-top: max(16px, env(safe-area-inset-top));
   padding-bottom: 22px;
   flex-shrink: 0;
@@ -959,7 +1196,7 @@ export default {
 .qz-back-btn {
   background: rgba(255, 255, 255, 0.22);
   border: 1px solid rgba(255, 255, 255, 0.35);
-  color: #FFFFFF;
+  color: #ffffff;
   border-radius: var(--qz-radius-full, 9999px);
   width: 40px;
   height: 40px;
@@ -981,12 +1218,12 @@ export default {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #FFFFFF;
-  color: var(--ion-color-primary, #6A5AE0);
+  background: #ffffff;
+  color: var(--ion-color-primary, #6a5ae0);
   border: none;
   border-radius: var(--qz-radius-full, 9999px);
   padding: 8px 16px;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -1015,10 +1252,10 @@ export default {
 
 .qz-hero-title {
   margin: 3px 0 4px 0;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-size: 24px;
   font-weight: 800;
-  color: #FFFFFF;
+  color: #ffffff;
   letter-spacing: -0.4px;
 }
 
@@ -1046,20 +1283,52 @@ export default {
   justify-content: space-between;
   margin-bottom: 14px;
   padding: 0 4px;
+  gap: 12px;
+}
+
+.qz-section-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.qz-toggle-all-btn {
+  background: #ffffff;
+  border: 1px solid rgba(106, 90, 224, 0.16);
+  color: var(--ion-color-primary, #6a5ae0);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: var(--qz-radius-full, 9999px);
+  padding: 5px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(106, 90, 224, 0.06);
+  flex-shrink: 0;
+}
+
+.qz-toggle-all-btn:active {
+  transform: scale(0.95);
+  background: #efeefc;
 }
 
 .qz-section-title {
   margin: 0;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-size: 19px;
   font-weight: 800;
-  color: #0C092A;
+  color: #0c092a;
   letter-spacing: -0.3px;
 }
 
 .qz-section-badge {
-  background: #FFFFFF;
-  color: var(--ion-color-primary, #6A5AE0);
+  background: #ffffff;
+  color: var(--ion-color-primary, #6a5ae0);
   font-size: 12px;
   font-weight: 700;
   border-radius: var(--qz-radius-full, 9999px);
@@ -1075,75 +1344,100 @@ export default {
 }
 
 .qz-lesson-card {
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: var(--qz-radius-xl, 24px);
   padding: 16px;
   box-shadow: 0 6px 20px -4px rgba(106, 90, 224, 0.08);
   border: 1px solid rgba(106, 90, 224, 0.04);
+  transition: padding 0.2s ease, box-shadow 0.2s ease;
+}
+
+.qz-lesson-card.is-collapsed {
+  padding: 12px 16px;
+}
+
+.qz-lesson-card.is-collapsed:hover {
+  box-shadow: 0 8px 24px -4px rgba(106, 90, 224, 0.14);
 }
 
 /* Encabezado de la Tarjeta */
 .qz-lesson-card-header {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
   padding-bottom: 14px;
-  border-bottom: 1px solid #F0EEFC;
+  border-bottom: 1px solid #f0eefc;
+  cursor: pointer;
+  user-select: none;
+  transition: padding 0.2s ease, border-color 0.2s ease;
 }
 
-.qz-lesson-squircle {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background-color: #EFEEFC;
-  color: var(--ion-color-primary, #6A5AE0);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  flex-shrink: 0;
+.qz-lesson-card-header.is-collapsed {
+  padding-bottom: 0;
+  border-bottom: 1px solid transparent;
 }
 
-.qz-lesson-meta {
-  flex: 1;
-  min-width: 0;
-}
-
+/* Fila Superior: Fecha a la izquierda y Botones de acción a la derecha */
 .qz-lesson-top-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.qz-lesson-date-group {
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
-  margin-bottom: 3px;
+  min-width: 0;
+  flex-wrap: nowrap;
 }
 
 .qz-lesson-date {
-  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
   font-weight: 600;
   color: #858494;
   text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.qz-lesson-date ion-icon {
+  font-size: 15px;
+  color: var(--ion-color-primary, #6a5ae0);
 }
 
 .qz-lesson-topic {
   margin: 0;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-size: 17px;
   font-weight: 800;
-  color: #0C092A;
+  color: #0c092a;
   letter-spacing: -0.2px;
-  line-height: 1.3;
+  line-height: 1.35;
+}
+
+.qz-lesson-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .qz-edit-lesson-btn {
-  background: #EFEEFC;
-  color: var(--ion-color-primary, #6A5AE0);
+  background: #efeefc;
+  color: var(--ion-color-primary, #6a5ae0);
   border: none;
   border-radius: var(--qz-radius-full, 9999px);
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 17px;
+  font-size: 16px;
   cursor: pointer;
   flex-shrink: 0;
   transition: transform 0.15s ease, background 0.15s ease;
@@ -1151,7 +1445,48 @@ export default {
 
 .qz-edit-lesson-btn:active {
   transform: scale(0.92);
-  background: #E0DCFA;
+  background: #e0dcfa;
+}
+
+.qz-card-chevron {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--qz-radius-full, 9999px);
+  background: #f4f3fd;
+  color: var(--ion-color-primary, #6a5ae0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.15s ease;
+  flex-shrink: 0;
+}
+
+.qz-card-chevron.is-open {
+  transform: rotate(180deg);
+  background: #efeefc;
+}
+
+/* Animación de apertura y cierre de subsecciones */
+.qz-expand-enter-active,
+.qz-expand-leave-active {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.qz-expand-enter-from,
+.qz-expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+  transform: translateY(-8px);
+}
+
+.qz-expand-enter-to,
+.qz-expand-leave-from {
+  opacity: 1;
+  max-height: 1200px;
+  transform: translateY(0);
 }
 
 /* Contenedor de Módulos Apilados (Opción 2) */
@@ -1169,8 +1504,8 @@ export default {
 
 /* Fila interactiva del Módulo */
 .qz-module-row {
-  background: #F9F9FE;
-  border: 1px solid #ECEAF9;
+  background: #f9f9fe;
+  border: 1px solid #eceaf9;
   border-radius: var(--qz-radius-lg, 16px);
   padding: 10px 12px;
   display: flex;
@@ -1178,7 +1513,8 @@ export default {
   gap: 12px;
   cursor: pointer;
   user-select: none;
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease,
+    transform 0.15s ease;
 }
 
 .qz-module-row:active {
@@ -1186,8 +1522,8 @@ export default {
 }
 
 .qz-module-row.is-expanded {
-  background: #EFEEFC;
-  border-color: #D6D1F9;
+  background: #efeefc;
+  border-color: #d6d1f9;
   border-bottom-left-radius: 8px;
   border-bottom-right-radius: 8px;
 }
@@ -1205,18 +1541,18 @@ export default {
 }
 
 .qz-icon--purple {
-  background: #EFEEFC;
-  color: #6A5AE0;
+  background: #efeefc;
+  color: #6a5ae0;
 }
 
 .qz-icon--coral {
-  background: #FFEAEA;
-  color: #FF7562;
+  background: #ffeaea;
+  color: #ff7562;
 }
 
 .qz-icon--cyan {
-  background: #E2F6FC;
-  color: #0582CA;
+  background: #e2f6fc;
+  color: #0582ca;
 }
 
 .qz-module-info {
@@ -1231,20 +1567,20 @@ export default {
 }
 
 .qz-module-title {
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-size: 14px;
   font-weight: 700;
-  color: #0C092A;
+  color: #0c092a;
 }
 
 .qz-alert-pill {
-  background: #FFF1DF;
-  color: #E58700;
+  background: #fff1df;
+  color: #e58700;
   font-size: 10px;
   font-weight: 700;
   padding: 1px 7px;
   border-radius: 9999px;
-  border: 1px solid #FFE2BE;
+  border: 1px solid #ffe2be;
 }
 
 .qz-module-desc {
@@ -1264,7 +1600,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #9D9BB0;
+  color: #9d9bb0;
   font-size: 15px;
   transition: transform 0.2s ease, color 0.15s ease;
   flex-shrink: 0;
@@ -1272,13 +1608,13 @@ export default {
 
 .qz-module-chevron.is-open {
   transform: rotate(90deg);
-  color: var(--ion-color-primary, #6A5AE0);
+  color: var(--ion-color-primary, #6a5ae0);
 }
 
 /* Cajón Desplegable del Módulo */
 .qz-expanded-drawer {
-  background: #F4F3FD;
-  border: 1px solid #D6D1F9;
+  background: #f4f3fd;
+  border: 1px solid #d6d1f9;
   border-top: none;
   border-radius: 0 0 var(--qz-radius-lg, 16px) var(--qz-radius-lg, 16px);
   padding: 10px 10px 12px 10px;
@@ -1317,7 +1653,7 @@ export default {
 
 .qz-empty-module-icon {
   font-size: 26px;
-  color: #AFAAC8;
+  color: #afaac8;
   margin-bottom: 4px;
 }
 
@@ -1334,7 +1670,7 @@ export default {
 }
 
 .qz-item-card {
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: 12px;
   padding: 10px 12px;
   display: flex;
@@ -1370,24 +1706,24 @@ export default {
 }
 
 .qz-bullet--purple {
-  background: #EFEEFC;
-  color: #6A5AE0;
+  background: #efeefc;
+  color: #6a5ae0;
 }
 
 .qz-bullet--coral {
-  background: #FFEAEA;
-  color: #FF7562;
+  background: #ffeaea;
+  color: #ff7562;
 }
 
 .qz-bullet--cyan {
-  background: #E2F6FC;
-  color: #0582CA;
+  background: #e2f6fc;
+  color: #0582ca;
 }
 
 .qz-item-label {
   font-size: 13px;
   font-weight: 600;
-  color: #0C092A;
+  color: #0c092a;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1397,8 +1733,8 @@ export default {
   display: flex;
   align-items: center;
   gap: 3px;
-  background: #FFF1DF;
-  color: #E58700;
+  background: #fff1df;
+  color: #e58700;
   font-size: 11px;
   font-weight: 700;
   padding: 2px 7px;
@@ -1407,14 +1743,14 @@ export default {
 }
 
 .qz-item-arrow {
-  color: #9D9BB0;
+  color: #9d9bb0;
   font-size: 15px;
   flex-shrink: 0;
 }
 
 .qz-item-action-btn {
-  background: #EFEEFC;
-  color: #6A5AE0;
+  background: #efeefc;
+  color: #6a5ae0;
   border: none;
   border-radius: 50%;
   width: 28px;
@@ -1433,12 +1769,12 @@ export default {
   justify-content: center;
   gap: 6px;
   width: 100%;
-  background: #FFFFFF;
-  border: 1px dashed #6A5AE0;
+  background: #ffffff;
+  border: 1px dashed #6a5ae0;
   border-radius: 12px;
   padding: 9px;
-  color: var(--ion-color-primary, #6A5AE0);
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  color: var(--ion-color-primary, #6a5ae0);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -1447,13 +1783,13 @@ export default {
 }
 
 .qz-add-item-btn:active {
-  background: #EFEEFC;
+  background: #efeefc;
   transform: scale(0.98);
 }
 
 /* Estado Vacío de Lecciones */
 .qz-empty-card {
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: var(--qz-radius-2xl, 28px);
   padding: 36px 24px;
   text-align: center;
@@ -1465,8 +1801,8 @@ export default {
   width: 68px;
   height: 68px;
   border-radius: 22px;
-  background: var(--qz-color-purple-bg, #EFEEFC);
-  color: var(--ion-color-primary, #6A5AE0);
+  background: var(--qz-color-purple-bg, #efeefc);
+  color: var(--ion-color-primary, #6a5ae0);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1476,10 +1812,10 @@ export default {
 
 .qz-empty-title {
   margin: 0 0 8px 0;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-size: 18px;
   font-weight: 700;
-  color: #0C092A;
+  color: #0c092a;
 }
 
 .qz-empty-desc {
@@ -1493,12 +1829,12 @@ export default {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: var(--ion-color-primary, #6A5AE0);
-  color: #FFFFFF;
+  background: var(--ion-color-primary, #6a5ae0);
+  color: #ffffff;
   border: none;
   border-radius: var(--qz-radius-full, 9999px);
   padding: 10px 22px;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
