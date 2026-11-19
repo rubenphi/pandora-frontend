@@ -1,6 +1,6 @@
 <template>
-  <ion-page class="qz-leaderboard-page">
-    <ion-content :force-overscroll="false" class="qz-leaderboard-content">
+  <ion-page class="ion-page qz-leaderboard-page">
+    <ion-content :fullscreen="true" class="qz-leaderboard-content">
       <!-- 1. CABECERA HERO PÚRPURA CON EL PODIO 3D (Estilo image27_1_2_375x812.png) -->
         <div class="qz-hero-section">
           <!-- Barra Superior: Volver + Acciones Admin -->
@@ -1228,6 +1228,15 @@ export default {
 <style scoped>
 .qz-leaderboard-page {
   background-color: #EFEEFC;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
 }
 
 .qz-leaderboard-content {

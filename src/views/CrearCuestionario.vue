@@ -1,6 +1,6 @@
 <template>
-  <ion-page class="qz-create-quiz-page">
-    <ion-content :force-overscroll="false" class="qz-create-quiz-content">
+  <ion-page class="ion-page qz-create-quiz-page">
+    <ion-content :fullscreen="true" class="qz-create-quiz-content">
       <div class="qz-page-container">
         <!-- 1. Barra Superior de Navegación -->
         <header class="qz-top-bar">
@@ -289,7 +289,7 @@
 
 <script>
 import axios from "axios";
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import router from "../router";
 import { usuarioGet, tokenHeader } from "../globalService";
@@ -383,7 +383,7 @@ export default {
       router.push(backUrl.value);
     };
 
-    onIonViewWillEnter(async () => {
+    const loadData = async () => {
       usuario.value = usuarioGet();
       tokenHeader();
 
@@ -439,6 +439,14 @@ export default {
           category: "regular",
         };
       }
+    };
+
+    onIonViewWillEnter(async () => {
+      await loadData();
+    });
+
+    onMounted(async () => {
+      await loadData();
     });
 
     const borrarCuestionario = async () => {
@@ -550,6 +558,15 @@ export default {
 <style scoped>
 .qz-create-quiz-page {
   background-color: var(--qz-color-purple-bg, #EFEEFC);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
 }
 
 .qz-create-quiz-content {

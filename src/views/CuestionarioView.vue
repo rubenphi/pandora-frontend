@@ -1,6 +1,6 @@
 <template>
-  <ion-page class="qz-quiz-page">
-    <ion-content :force-overscroll="false" class="qz-quiz-content">
+  <ion-page class="ion-page qz-quiz-page">
+    <ion-content :fullscreen="true" class="qz-quiz-content">
       <div class="qz-page-wrapper">
         <!-- 1. CABECERA HERO PÚRPURA QUEEZY -->
         <div class="qz-hero-header">
@@ -782,6 +782,15 @@ export default {
 <style scoped>
 .qz-quiz-page {
   background-color: var(--qz-color-purple-bg, #efeefc);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
 }
 
 .qz-quiz-content {
