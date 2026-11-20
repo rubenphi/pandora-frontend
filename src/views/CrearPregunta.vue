@@ -130,7 +130,7 @@
               <div
                 class="qz-toggle-card"
                 :class="{ 'is-active': !!pregunta.visible }"
-                @click="pregunta.visible = pregunta.visible ? 0 : 1"
+                @click="pregunta.visible = !pregunta.visible"
               >
                 <div
                   class="qz-toggle-icon"
@@ -158,7 +158,7 @@
               <div
                 class="qz-toggle-card"
                 :class="{ 'is-active': !!pregunta.available }"
-                @click="pregunta.available = pregunta.available ? 0 : 1"
+                @click="pregunta.available = !pregunta.available"
               >
                 <div
                   class="qz-toggle-icon"
@@ -445,8 +445,8 @@ export default {
       title: "",
       sentence: "",
       points: "",
-      visible: 1,
-      available: 1,
+      visible: true,
+      available: true,
       exist: true,
       options: [],
     });
@@ -503,6 +503,16 @@ export default {
           const data = response.data;
           pregunta.value = {
             ...data,
+            visible:
+              data.visible === true ||
+              data.visible === 1 ||
+              data.visible === "true" ||
+              data.visible === "1",
+            available:
+              data.available === true ||
+              data.available === 1 ||
+              data.available === "true" ||
+              data.available === "1",
             quizId: data.quiz?.id || data.quizId,
             instituteId:
               data.institute?.id ||
@@ -544,8 +554,8 @@ export default {
           quizId: parseInt(cuestionario, 10),
           instituteId: usuarioGet().institute?.id,
           points: "",
-          visible: 1,
-          available: 1,
+          visible: true,
+          available: true,
           exist: true,
           options: [
             {
@@ -762,7 +772,18 @@ export default {
               pregunta.value[field] !== null &&
               pregunta.value[field] !== undefined
             ) {
-              formData.append(field, pregunta.value[field]);
+              if (
+                field === "visible" ||
+                field === "available" ||
+                field === "exist"
+              ) {
+                formData.append(
+                  field,
+                  pregunta.value[field] ? "true" : "false"
+                );
+              } else {
+                formData.append(field, pregunta.value[field]);
+              }
             }
           });
 

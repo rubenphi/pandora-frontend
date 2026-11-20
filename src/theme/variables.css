@@ -148,6 +148,15 @@ ion-modal.font-caligrafia ion-content * {
   --ion-text-color: #0C092A;
   --ion-border-color: #E6E6E6;
   --ion-card-background: #FFFFFF;
+  --ion-item-background: #FFFFFF;
+  --ion-toolbar-background: #FFFFFF;
+  --ion-tab-bar-background: #FFFFFF;
+}
+
+html,
+body {
+  background-color: var(--qz-color-purple-bg, #EFEEFC);
+  color: var(--qz-color-text-main, #0C092A);
 }
 
 /* ==========================================================================
@@ -271,161 +280,699 @@ ion-tab-button.tab-selected ion-icon {
   filter: drop-shadow(0 4px 8px rgba(106, 90, 224, 0.35));
 }
 
+/* ==========================================================================
+   QUEEZY DARK THEME (Soporte Centralizado Completo)
+   ========================================================================== */
+
 @media (prefers-color-scheme: dark) {
-  /*
-   * Dark Colors
-   * -------------------------------------------
-   */
+  :root {
+    color-scheme: dark;
 
+    /* Palette Queezy Dark */
+    --qz-color-purple-primary: #7C6EF2;
+    --qz-color-purple-dark: #5A33D6;
+    --qz-color-purple-soft: #A39BF0;
+    --qz-color-purple-light: #2A2350;
+    --qz-color-purple-bg: #120F24;
+
+    --qz-color-pink-coral: #FF8FA2;
+    --qz-color-pink-soft: #FFCCD7;
+    --qz-color-pink-bg: rgba(255, 143, 162, 0.14);
+
+    --qz-color-cyan: #70D6F5;
+    --qz-color-cyan-bg: rgba(112, 214, 245, 0.14);
+
+    --qz-color-gold: #FFAE33;
+    --qz-color-gold-bg: rgba(255, 174, 51, 0.16);
+
+    --qz-color-green-correct: #53DF83;
+    --qz-color-green-bg: rgba(83, 223, 131, 0.14);
+
+    --qz-color-red-wrong: #FF5656;
+    --qz-color-red-bg: rgba(255, 86, 86, 0.16);
+
+    --qz-color-text-main: #F7F7FD;
+    --qz-color-text-muted: #9E9BB8;
+    --qz-color-text-white: #FFFFFF;
+    --qz-color-border: rgba(255, 255, 255, 0.08);
+    --qz-color-card-bg: #1D1838;
+
+    /* Shadows Dark */
+    --qz-shadow-card: 0 8px 24px -4px rgba(0, 0, 0, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.35);
+    --qz-shadow-float: 0 16px 36px -4px rgba(0, 0, 0, 0.7);
+    --qz-shadow-button-primary: 0 10px 24px -2px rgba(124, 110, 242, 0.45);
+
+    /* Ionic App Defaults */
+    --ion-background-color: #120F24;
+    --ion-text-color: #F7F7FD;
+    --ion-border-color: rgba(255, 255, 255, 0.08);
+    --ion-card-background: #1D1838;
+    --ion-item-background: #1D1838;
+    --ion-toolbar-background: #120F24;
+    --ion-tab-bar-background: #1D1838;
+
+    --ion-color-step-50: #181430;
+    --ion-color-step-100: #1D1838;
+    --ion-color-step-150: #231E44;
+    --ion-color-step-200: #292450;
+    --ion-color-step-250: #302A5C;
+    --ion-color-step-300: #38316A;
+    --ion-color-step-350: #423A7A;
+    --ion-color-step-400: #4C438A;
+  }
+
+  html,
   body {
-    --ion-color-primary: #6a64ff;
-    --ion-color-primary-rgb: 106, 100, 255;
-    --ion-color-primary-contrast: #ffffff;
-    --ion-color-primary-contrast-rgb: 255, 255, 255;
-    --ion-color-primary-shade: #5d58e0;
-    --ion-color-primary-tint: #7974ff;
-
-    --ion-color-secondary: #50c8ff;
-    --ion-color-secondary-rgb: 80, 200, 255;
-    --ion-color-secondary-contrast: #ffffff;
-    --ion-color-secondary-contrast-rgb: 255, 255, 255;
-    --ion-color-secondary-shade: #46b0e0;
-    --ion-color-secondary-tint: #62ceff;
-
-    --ion-color-tertiary: #6a64ff;
-    --ion-color-tertiary-rgb: 106, 100, 255;
-    --ion-color-tertiary-contrast: #ffffff;
-    --ion-color-tertiary-contrast-rgb: 255, 255, 255;
-    --ion-color-tertiary-shade: #5d58e0;
-    --ion-color-tertiary-tint: #7974ff;
-
-    --ion-color-success: #2fdf75;
-    --ion-color-success-rgb: 47, 223, 117;
-    --ion-color-success-contrast: #000000;
-    --ion-color-success-contrast-rgb: 0, 0, 0;
-    --ion-color-success-shade: #29c467;
-    --ion-color-success-tint: #44e283;
-
-    --ion-color-warning: #ffd534;
-    --ion-color-warning-rgb: 255, 213, 52;
-    --ion-color-warning-contrast: #000000;
-    --ion-color-warning-contrast-rgb: 0, 0, 0;
-    --ion-color-warning-shade: #e0bb2e;
-    --ion-color-warning-tint: #ffd948;
-
-    --ion-color-danger: #ff4961;
-    --ion-color-danger-rgb: 255, 73, 97;
-    --ion-color-danger-contrast: #ffffff;
-    --ion-color-danger-contrast-rgb: 255, 255, 255;
-    --ion-color-danger-shade: #e04055;
-    --ion-color-danger-tint: #ff5b71;
-
-    --ion-color-dark: #f4f5f8;
-    --ion-color-dark-rgb: 244, 245, 248;
-    --ion-color-dark-contrast: #000000;
-    --ion-color-dark-contrast-rgb: 0, 0, 0;
-    --ion-color-dark-shade: #d7d8da;
-    --ion-color-dark-tint: #f5f6f9;
-
-    --ion-color-medium: #989aa2;
-    --ion-color-medium-rgb: 152, 154, 162;
-    --ion-color-medium-contrast: #000000;
-    --ion-color-medium-contrast-rgb: 0, 0, 0;
-    --ion-color-medium-shade: #86888f;
-    --ion-color-medium-tint: #a2a4ab;
-
-    --ion-color-light: #222428;
-    --ion-color-light-rgb: 34, 36, 40;
-    --ion-color-light-contrast: #ffffff;
-    --ion-color-light-contrast-rgb: 255, 255, 255;
-    --ion-color-light-shade: #1e2023;
-    --ion-color-light-tint: #383a3e;
+    color-scheme: dark;
+    background-color: var(--qz-color-purple-bg, #120F24);
+    color: var(--qz-color-text-main, #F7F7FD);
   }
 
-  /*
-   * iOS Dark Theme
-   * -------------------------------------------
-   */
-
-  .ios body {
-    --ion-background-color: #000000;
-    --ion-background-color-rgb: 0, 0, 0;
-
-    --ion-text-color: #ffffff;
-    --ion-text-color-rgb: 255, 255, 255;
-
-    --ion-color-step-50: #0d0d0d;
-    --ion-color-step-100: #1a1a1a;
-    --ion-color-step-150: #262626;
-    --ion-color-step-200: #333333;
-    --ion-color-step-250: #404040;
-    --ion-color-step-300: #4d4d4d;
-    --ion-color-step-350: #595959;
-    --ion-color-step-400: #666666;
-    --ion-color-step-450: #737373;
-    --ion-color-step-500: #808080;
-    --ion-color-step-550: #8c8c8c;
-    --ion-color-step-600: #999999;
-    --ion-color-step-650: #a6a6a6;
-    --ion-color-step-700: #b3b3b3;
-    --ion-color-step-750: #bfbfbf;
-    --ion-color-step-800: #cccccc;
-    --ion-color-step-850: #d9d9d9;
-    --ion-color-step-900: #e6e6e6;
-    --ion-color-step-950: #f2f2f2;
-
-    --ion-item-background: #000000;
-
-    --ion-card-background: #1c1c1d;
+  /* 1. Tarjetas y Superficies Principales */
+  ion-card,
+  .qz-card,
+  .qz-area-card,
+  .qz-course-card,
+  .qz-lesson-card,
+  .qz-summary-card,
+  .qz-statement-card,
+  .qz-response-card,
+  .qz-option-card,
+  .qz-form-card,
+  .qz-config-card,
+  .qz-empty-card,
+  .qz-waiting-card,
+  .qz-toggle-card,
+  .qz-import-card,
+  .qz-no-group-card,
+  .qz-question-select-card,
+  .qz-image-preview-card,
+  .qz-panel-card,
+  .qz-auth-card,
+  .qz-choice-card,
+  .qz-participant-card,
+  .qz-quiz-chip-card,
+  .qz-lesson-chip-card,
+  .qz-qr-card,
+  .qz-item-card,
+  .panel-card,
+  .report-header-card,
+  .course-section {
+    background: var(--qz-color-card-bg, #1D1838) !important;
+    color: var(--qz-color-text-main, #F7F7FD) !important;
+    border-color: var(--qz-color-border, rgba(255, 255, 255, 0.08)) !important;
+    box-shadow: var(--qz-shadow-card) !important;
   }
 
-  .ios ion-modal {
-    --ion-background-color: var(--ion-color-step-100);
-    --ion-toolbar-background: var(--ion-color-step-150);
-    --ion-toolbar-border-color: var(--ion-color-step-250);
+  /* 1.1 Cabeceras Hero (Evita la franja lila clara #EFEEFC sobre las listas) */
+  .qz-hero-header,
+  .qz-panel-hero {
+    background: linear-gradient(180deg, #5A4AD1 0%, #352B6A 80%, var(--qz-color-purple-bg, #120F24) 100%) !important;
   }
 
-  /*
-   * Material Design Dark Theme
-   * -------------------------------------------
-   */
+  /* 1.2 Sub-tarjetas, Opciones Desplegables y Bloques Internos */
+  .qz-options-card,
+  .qz-modules-container,
+  .qz-questions-card-box,
+  .qz-participant-drawer,
+  .qz-tier-item-row,
+  .qz-select-container,
+  .qz-input-wrap,
+  .qz-photo-wrapper,
+  .qz-ip-block,
+  .qz-ip-loading,
+  .qz-option-sentence-box,
+  .qz-info-item,
+  .qz-group-hero-badge,
+  .qz-member-chip,
+  .qz-individual-banner,
+  .qz-member-header-item,
+  .qz-member-content-wrap,
+  .qz-area-header-item,
+  .qz-area-details-body,
+  .qz-dimension-accordion,
+  .qz-dimension-header,
+  .qz-note-item,
+  .qz-period-selector-wrap,
+  .qz-modal-sheet,
+  .qz-modal-select,
+  .qz-modal-input,
+  .student-card {
+    background: #231D42 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #F7F7FD !important;
+  }
 
-  .md body {
-    --ion-background-color: #121212;
-    --ion-background-color-rgb: 18, 18, 18;
+  .qz-module-row,
+  .qz-choice-card,
+  .qz-upload-dropzone,
+  .qz-image-preview-card,
+  .qz-preview-frame,
+  .qz-toggle-card,
+  .qz-import-card,
+  .qz-question-select-card {
+    background: #17132E !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #F7F7FD !important;
+  }
 
-    --ion-text-color: #ffffff;
-    --ion-text-color-rgb: 255, 255, 255;
+  .qz-module-row.is-expanded,
+  .qz-choice-card.is-selected,
+  .qz-toggle-card.is-active,
+  .qz-import-card.is-selected,
+  .qz-question-select-card.is-active {
+    background: rgba(124, 110, 242, 0.22) !important;
+    border-color: #7C6EF2 !important;
+  }
 
-    --ion-border-color: #222222;
+  .qz-winners-btn {
+    background: linear-gradient(135deg, #2A2140 0%, #221A36 100%) !important;
+    border-color: rgba(255, 174, 51, 0.3) !important;
+  }
 
-    --ion-color-step-50: #1e1e1e;
-    --ion-color-step-100: #2a2a2a;
-    --ion-color-step-150: #363636;
-    --ion-color-step-200: #414141;
-    --ion-color-step-250: #4d4d4d;
-    --ion-color-step-300: #595959;
-    --ion-color-step-350: #656565;
-    --ion-color-step-400: #717171;
-    --ion-color-step-450: #7d7d7d;
-    --ion-color-step-500: #898989;
-    --ion-color-step-550: #949494;
-    --ion-color-step-600: #a0a0a0;
-    --ion-color-step-650: #acacac;
-    --ion-color-step-700: #b8b8b8;
-    --ion-color-step-750: #c4c4c4;
-    --ion-color-step-800: #d0d0d0;
-    --ion-color-step-850: #dbdbdb;
-    --ion-color-step-900: #e7e7e7;
-    --ion-color-step-950: #f3f3f3;
+  /* 2. Modales, Drawers y Hojas Emergentes */
+  .qz-modal-sheet,
+  .qz-sheet-container,
+  .qz-tier-modal-sheet,
+  .qz-modal-container,
+  .qz-expanded-drawer,
+  .qz-drawer-loading,
+  .qz-leaderboard-sheet,
+  .alert-wrapper.ion-overlay-wrapper,
+  ion-popover .popover-content,
+  .report-modal-content,
+  ion-modal ion-content {
+    background: #1D1838 !important;
+    color: #F7F7FD !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+  }
 
-    --ion-item-background: #1e1e1e;
+  /* 3. Botones Circulares, Píldoras y Contadores Secundarios */
+  .qz-circle-btn,
+  .qz-back-btn,
+  .qz-copy-btn,
+  .qz-btn-secondary,
+  .qz-btn--secondary,
+  .qz-secondary-btn,
+  .qz-add-item-btn,
+  .qz-toggle-all-btn,
+  .qz-create-btn,
+  .qz-sheet-count,
+  .qz-stacked-circle,
+  .qz-filter-pill:not(.active),
+  .qz-action-pill,
+  .qz-winner-chip,
+  .qz-waiting-pill,
+  .qz-category-pill,
+  .qz-question-num,
+  .qz-options-counter,
+  .qz-order-pill,
+  .qz-count-capsule,
+  .qz-bulk-btn,
+  .qz-bulk-btn--ghost,
+  .qz-auth-code-btn,
+  .qz-btn-change,
+  .qz-item-action-btn,
+  .qz-responses-count-pill,
+  .qz-add-option-btn,
+  .qz-option-letter,
+  .qz-no-group-icon-wrap {
+    background: #28214B !important;
+    color: #F7F7FD !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+  }
 
-    --ion-toolbar-background: #1f1f1f;
+  .qz-circle-btn:active,
+  .qz-back-btn:active,
+  .qz-copy-btn:active,
+  .qz-btn-secondary:active,
+  .qz-btn--secondary:active,
+  .qz-auth-code-btn:active,
+  .qz-bulk-btn--ghost:active,
+  .qz-add-option-btn:active,
+  .qz-add-item-btn:active {
+    background: #352C63 !important;
+  }
 
-    --ion-tab-bar-background: #1f1f1f;
+  .qz-btn--delete,
+  .qz-opt-delete-btn,
+  .qz-btn-remove {
+    background: rgba(255, 86, 86, 0.16) !important;
+    color: #FF5656 !important;
+    border-color: rgba(255, 86, 86, 0.25) !important;
+  }
 
-    --ion-card-background: #1e1e1e;
+  /* 4. Badges de Estado y Alertas */
+  .qz-lock-badge.is-locked,
+  .qz-badge--locked,
+  .qz-warning-chip,
+  .qz-alert-pill,
+  .new-students-warning {
+    background: rgba(255, 174, 51, 0.18) !important;
+    color: #FFAE33 !important;
+    border-color: rgba(255, 174, 51, 0.25) !important;
+  }
+
+  .qz-lock-badge.is-unlocked,
+  .qz-badge--open {
+    background: rgba(83, 223, 131, 0.18) !important;
+    color: #53DF83 !important;
+    border-color: rgba(83, 223, 131, 0.25) !important;
+  }
+
+  /* 5. Switch e Indicadores */
+  .qz-pill-switch:not(.is-checked) {
+    background: #38316A !important;
+  }
+
+  .qz-pill-thumb {
+    background: #FFFFFF !important;
+  }
+
+  /* 6. Inputs y Campos de Texto */
+  .qz-input-box,
+  .qz-opt-input,
+  .qz-text-input,
+  .qz-native-input,
+  .qz-gen-select,
+  ion-item.qz-input-item,
+  .canvas-toolbar,
+  .label-list-input,
+  .num-input-box {
+    background: #17132E !important;
+    color: #F7F7FD !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+  }
+
+  ion-input,
+  ion-textarea,
+  ion-select,
+  .qz-native-input,
+  .qz-text-input,
+  .qz-opt-input {
+    --color: #F7F7FD !important;
+    --placeholder-color: #9E9BB8 !important;
+    color: #F7F7FD !important;
+  }
+
+  /* 6. Títulos y Textos Principales */
+  .qz-section-title,
+  .qz-area-name,
+  .qz-option-title,
+  .qz-empty-title,
+  .qz-top-title,
+  .qz-lesson-title,
+  .qz-field-label,
+  .qz-choice-title,
+  .qz-quiz-name,
+  .qz-toggle-title,
+  .qz-dropzone-title,
+  .qz-meta-name,
+  .qz-sheet-title,
+  .qz-participant-name,
+  .qz-answers-summary,
+  .qz-answer-title,
+  .qz-tier-title,
+  .qz-tier-item-name,
+  .qz-course-name,
+  .qz-quiz-title,
+  .qz-questions-title,
+  .qz-question-text,
+  .qz-modal-title,
+  .qz-import-name,
+  .qz-lesson-topic,
+  .qz-module-title,
+  .qz-item-label,
+  .qz-config-label,
+  .qz-question-select-title,
+  .qz-card-title,
+  .qz-card-name,
+  .qz-ip-full,
+  .qz-welcome-title,
+  .qz-waiting-title,
+  .qz-question-sentence,
+  .qz-option-text,
+  .qz-no-group-title,
+  .qz-winners-title,
+  .app-logo__title,
+  .qz-cat-card__name,
+  .alert-title,
+  .qz-group-hero-name,
+  .qz-individual-title,
+  .qz-member-chip-name,
+  .qz-info-value,
+  .qz-note-title,
+  .qz-member-name-label h3,
+  .qz-area-title-label h4,
+  ion-header ion-toolbar {
+    color: #F7F7FD !important;
+  }
+
+  /* 7. Subtítulos y Textos Atenuados sobre Superficies Oscuras */
+  .alert-sub-title,
+  .alert-message,
+  .qz-card-subtitle,
+  .qz-card-sub,
+  .qz-empty-desc,
+  .qz-lesson-course,
+  .qz-lesson-pre,
+  .qz-lesson-date,
+  .qz-course-sub,
+  .qz-quiz-sub,
+  .qz-quiz-pre,
+  .qz-quiz-date-row,
+  .qz-tier-subtitle,
+  .qz-tier-item-sub,
+  .qz-modal-subtitle,
+  .qz-area-sub,
+  .qz-option-desc,
+  .qz-option-arrow,
+  .qz-choice-sub,
+  .qz-field-desc,
+  .qz-tg--muted,
+  .qz-toggle-hint,
+  .qz-dropzone-sub,
+  .qz-text-pending,
+  .qz-score-details,
+  .qz-card-chevron,
+  .qz-drawer-loading,
+  .qz-answer-selected,
+  .qz-no-permission,
+  .qz-questions-type-hint,
+  .qz-no-questions-box,
+  .qz-no-questions-box p,
+  .qz-no-q-icon,
+  .qz-import-desc,
+  .qz-ip-loading,
+  .qz-qr-hint,
+  .qz-module-desc,
+  .qz-module-chevron,
+  .qz-loading-box,
+  .qz-empty-module-box,
+  .qz-item-arrow,
+  .qz-welcome-subtitle,
+  .qz-input-icon,
+  .qz-eye-btn,
+  .qz-divider-text,
+  .qz-empty-text,
+  .qz-waiting-text,
+  .qz-options-title,
+  .qz-no-group-text,
+  .qz-max-badge,
+  .qz-question-select-num,
+  .qz-empty-questions,
+  .qz-waiting-meta,
+  .app-logo__subtitle,
+  .qz-cat-card__count,
+  .loading-state,
+  .report-subtitle,
+  .qz-question-chevron,
+  .qz-individual-text,
+  .qz-info-label,
+  .qz-members-label,
+  .qz-dimension-name,
+  .qz-area-idle-box,
+  .qz-notes-empty,
+  .qz-period-select,
+  .qz-winners-sub {
+    color: #9E9BB8 !important;
+  }
+
+  /* 7.1 Textos dentro de Cabeceras Hero y Tarjetas de Estadísticas (sobre fondo púrpura) */
+  .qz-hero-subtitle,
+  .qz-hero-tag,
+  .qz-filter-label,
+  .qz-stat-label {
+    color: rgba(255, 255, 255, 0.9) !important;
+  }
+
+  .qz-stat-value,
+  .qz-hero-title,
+  .qz-quiz-progress-pill {
+    color: #FFFFFF !important;
+  }
+
+  .qz-open-questions-notice,
+  .qz-diff-warning {
+    color: #FFAE33 !important;
+  }
+
+  /* 8. Íconos, Squircles y Badges Pastel Adaptados a Modo Oscuro */
+  .qz-waiting-icon-wrap,
+  .qz-empty-icon-wrap,
+  .qz-empty-icon-box,
+  .qz-empty-module-box,
+  .qz-dropzone-icon,
+  .qz-alert-pill,
+  .qz-area-chevron,
+  .qz-card-chevron,
+  .qz-period-indicator {
+    background: #28214B !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #A39BF0 !important;
+  }
+
+  .qz-area-chevron.qz-chevron--open,
+  .qz-card-chevron.is-open {
+    background: #7C6EF2 !important;
+    color: #FFFFFF !important;
+  }
+
+  /* Reemplazo de fondos pastel claros por tonos nocturnos translúcidos */
+  .qz-squircle--purple,
+  .qz-badge--purple,
+  .qz-bullet--purple,
+  .qz-icon--purple,
+  .qz-tg--purple,
+  .qz-choice--purple,
+  .qz-avatar--purple,
+  .qz-quiz-icon-box,
+  .qz-lesson-icon-box,
+  .qz-edit-lesson-btn {
+    background-color: rgba(124, 110, 242, 0.2) !important;
+    background: rgba(124, 110, 242, 0.2) !important;
+    color: #A39BF0 !important;
+  }
+
+  .qz-squircle--coral,
+  .qz-badge--coral,
+  .qz-chip--coral,
+  .qz-bullet--coral,
+  .qz-icon--coral,
+  .qz-choice--coral,
+  .qz-avatar--coral {
+    background-color: rgba(255, 117, 98, 0.2) !important;
+    background: rgba(255, 117, 98, 0.2) !important;
+    color: #FF8FA2 !important;
+  }
+
+  .qz-squircle--cyan,
+  .qz-badge--cyan,
+  .qz-chip--cyan,
+  .qz-bullet--cyan,
+  .qz-icon--cyan,
+  .qz-choice--cyan,
+  .qz-avatar--cyan {
+    background-color: rgba(112, 214, 245, 0.2) !important;
+    background: rgba(112, 214, 245, 0.2) !important;
+    color: #70D6F5 !important;
+  }
+
+  .qz-squircle--gold,
+  .qz-badge--gold,
+  .qz-pill--gold,
+  .qz-icon--gold,
+  .qz-icon--gold-soft,
+  .qz-choice--gold,
+  .qz-avatar--gold,
+  .qz-winners-icon {
+    background-color: rgba(255, 174, 51, 0.2) !important;
+    background: rgba(255, 174, 51, 0.2) !important;
+    color: #FFAE33 !important;
+  }
+
+  .qz-squircle--green,
+  .qz-badge--green,
+  .qz-badge--success,
+  .qz-tg--green,
+  .qz-avatar--green {
+    background-color: rgba(83, 223, 131, 0.2) !important;
+    background: rgba(83, 223, 131, 0.2) !important;
+    color: #53DF83 !important;
+  }
+
+  .qz-badge--danger,
+  .qz-badge--orange,
+  .qz-icon--orange,
+  .qz-choice--orange {
+    background-color: rgba(255, 86, 86, 0.2) !important;
+    background: rgba(255, 86, 86, 0.2) !important;
+    color: #FF5656 !important;
+  }
+
+  .qz-error-banner {
+    background: rgba(255, 86, 86, 0.16) !important;
+    border-color: #FF5656 !important;
+    color: #FFA3A3 !important;
+  }
+
+  .qz-error-msg {
+    color: #FFA3A3 !important;
+  }
+
+  /* 9. Filas de Preguntas, Respuestas, Opciones y Módulos */
+  .qz-question-row,
+  .qz-option-row,
+  .qz-answer-row,
+  .qz-module-row,
+  .qz-tier-item-row {
+    background: #1D1838 !important;
+    color: #F7F7FD !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 3px 10px -2px rgba(0, 0, 0, 0.35) !important;
+  }
+
+  .qz-question-row:hover,
+  .qz-option-row:hover,
+  .qz-answer-row:hover,
+  .qz-module-row:hover {
+    background: #28214B !important;
+  }
+
+  .qz-question-row:active,
+  .qz-option-row:active,
+  .qz-answer-row:active,
+  .qz-module-row:active {
+    background: #352C63 !important;
+  }
+
+  .qz-question-row.is-locked,
+  .qz-option-row.is-disabled {
+    background: #181430 !important;
+    opacity: 0.75;
+  }
+
+  .qz-question-chevron {
+    color: #9E9BB8 !important;
+  }
+
+  .qz-no-questions-box h4 {
+    color: #F7F7FD !important;
+  }
+
+  .qz-no-questions-box p {
+    color: #9E9BB8 !important;
+  }
+
+  .qz-no-q-icon {
+    color: #5B5480 !important;
+  }
+
+  .qz-option--selected,
+  .qz-option-row.is-selected {
+    background: rgba(124, 110, 242, 0.25) !important;
+    border-color: #7C6EF2 !important;
+  }
+
+  .qz-option--correct,
+  .qz-option-row.is-correct,
+  .qz-card--correct,
+  .qz-option-chip.is-correct {
+    background: rgba(83, 223, 131, 0.16) !important;
+    border-color: #53DF83 !important;
+  }
+
+  .qz-card--wrong,
+  .qz-option-row.is-wrong,
+  .qz-option--wrong,
+  .qz-option-chip.is-wrong {
+    background: rgba(255, 86, 86, 0.16) !important;
+    border-color: #FF5656 !important;
+  }
+
+  .qz-import-icon-box {
+    background: #28214B !important;
+    color: #A39BF0 !important;
+  }
+
+  .qz-import-radio {
+    border-color: rgba(255, 255, 255, 0.2) !important;
+  }
+
+  .qz-modal-handle {
+    background: #38316A !important;
+  }
+
+  /* 10. Frame del Código QR (Permanece blanco para que cámaras de móviles puedan escanear) */
+  .qz-qr-frame {
+    background: #FFFFFF !important;
+    border-color: #28214B !important;
+  }
+
+  /* 11. Popovers y Selects */
+  ion-popover ion-list {
+    background: transparent !important;
+  }
+
+  ion-popover ion-item {
+    --color: #F7F7FD !important;
+  }
+
+  ion-popover ion-item:hover,
+  ion-popover ion-item.item-radio-checked {
+    --background: #28214B !important;
+    --color: #A39BF0 !important;
+  }
+
+  /* 12. Alertas del Sistema */
+  .alert-button.alert-button-role-cancel,
+  .alert-button-role-cancel {
+    background: #28214B !important;
+    color: #A39BF0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  /* 13. Barras Inferiores Flotantes y de Navegación */
+  ion-tab-bar,
+  .qz-bottom-bar {
+    --background: #17132E !important;
+    background: rgba(18, 15, 36, 0.95) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.45) !important;
+  }
+
+  ion-tab-button {
+    --color: #9E9BB8 !important;
+    --color-selected: #A39BF0 !important;
+  }
+
+  /* 14. Editor de Texto Enriquecido (Tiptap) */
+  .tiptap-wrapper {
+    background: #17132E !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+  }
+
+  .tiptap-wrapper .ProseMirror {
+    color: #F7F7FD !important;
+    outline: #38316A solid 1px !important;
+  }
+
+  .tiptap-wrapper th {
+    background-color: #28214B !important;
+    color: #F7F7FD !important;
+  }
+
+  .tiptap-wrapper td,
+  .tiptap-wrapper th {
+    border-color: rgba(255, 255, 255, 0.15) !important;
+  }
+
+  .qz-tool-btn {
+    color: #F7F7FD !important;
+  }
+
+  .qz-tool-btn:hover {
+    background: #28214B !important;
   }
 }
 

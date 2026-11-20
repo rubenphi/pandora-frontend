@@ -173,6 +173,10 @@ export default {
     });
 
     const mostrar = async () => {
+      // Limpiar espacios accidentales al inicio o final (común en teclados móviles)
+      login.value.code = (login.value.code || "").trim();
+      login.value.password = (login.value.password || "").trim();
+
       if (login.value.code === "" || login.value.password === "") {
         error.value.estatus = 1;
         error.value.data = "Debe ingresar usuario y contraseña";
