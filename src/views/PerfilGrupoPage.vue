@@ -803,11 +803,7 @@
             </div>
             <div v-else class="qz-modal-empty-groups">
               <ion-icon :icon="informationCircleOutline"></ion-icon>
-              <span
-                >Actualmente no hay otros equipos disponibles en este curso.
-                Cuando el docente configure grupos, podrás seleccionarlos
-                aquí.</span
-              >
+              <span>Actualmente no hay otros equipos disponibles en este curso. Cuando el docente configure grupos, podrás seleccionarlos aquí.</span>
             </div>
 
             <div class="qz-modal-field">
