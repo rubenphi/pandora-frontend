@@ -207,7 +207,7 @@
           </div>
 
           <!-- CAMPO 4: Categoría (Regular vs Mejora de Nota) -->
-          <div class="qz-form-card">
+          <div v-if="!isReinforcementLesson" class="qz-form-card">
             <div class="qz-card-header">
               <div class="qz-field-icon qz-icon--orange">
                 <ion-icon :icon="ribbonOutline"></ion-icon>
@@ -292,7 +292,7 @@ import axios from "axios";
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import router from "../router";
-import { usuarioGet, tokenHeader } from "../globalService";
+import { usuarioGet, tokenHeader, LessonType } from "../globalService";
 
 import {
   arrowBackOutline,
@@ -355,6 +355,16 @@ export default {
 
     const isEditing = computed(() => !!quizId);
 
+    const isReinforcementLesson = computed(() => {
+      const t = lessonDetails.value?.type;
+      return (
+        t === "reinforcement" ||
+        t === LessonType.REINFORCEMENT ||
+        t === "remedial" ||
+        t === LessonType.REMEDIAL
+      );
+    });
+
     const backUrl = computed(() => {
       if (cuestionario.value.id) {
         return `/cuestionario/${cuestionario.value.id}`;
@@ -406,17 +416,18 @@ export default {
             instituteId: response.data.lesson.institute.id,
             exist: response.data.exist,
             evaluationType: response.data.evaluationType || "relative",
-            category: response.data.category ?? "regular",
+            category: isReinforcementLesson.value
+              ? "regular"
+              : (response.data.category ?? "regular"),
           };
         } catch (err) {
           console.error("Error fetching quiz details:", err);
           cuestionario.value = {
             id: null,
             title: "",
-            quizType:
-              lessonDetails.value?.type === "reinforcement"
-                ? "individual"
-                : "group",
+            quizType: isReinforcementLesson.value
+              ? "individual"
+              : "group",
             lessonId: parseInt(lessonId, 10),
             instituteId: usuario.value?.institute?.id || 1,
             exist: true,
@@ -428,10 +439,9 @@ export default {
         cuestionario.value = {
           id: null,
           title: "",
-          quizType:
-            lessonDetails.value?.type === "reinforcement"
-              ? "individual"
-              : "group",
+          quizType: isReinforcementLesson.value
+            ? "individual"
+            : "group",
           lessonId: parseInt(lessonId, 10),
           instituteId: usuario.value?.institute?.id || 1,
           exist: true,
@@ -499,7 +509,9 @@ export default {
         lessonId: cuestionario.value.lessonId,
         instituteId: cuestionario.value.instituteId,
         evaluationType: cuestionario.value.evaluationType,
-        category: cuestionario.value.category,
+        category: isReinforcementLesson.value
+          ? "regular"
+          : cuestionario.value.category,
       };
 
       try {
@@ -534,6 +546,7 @@ export default {
       isEditing,
       lessonId,
       lessonDetails,
+      isReinforcementLesson,
       handleBack,
       crearCuestionario,
       confirmarBorrado,

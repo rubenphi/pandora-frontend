@@ -23,18 +23,26 @@ export function performPerspectiveCorrectionWithCurvature(OMR_STATE, snapCanvas,
   const dstWScaled = Math.max(1, Math.round(dstW * scale));
   const dstHScaled = Math.max(1, Math.round(dstH * scale));
 
+  // Capturar también el área superior (encabezado con nombre de estudiante) igual a la mitad del área de escaneo
+  const headerHScaled = Math.round(dstHScaled * 0.5);
+  const totalHScaled = dstHScaled + headerHScaled;
+
+  // Espacio extra derecha e izquierda correspondiente a una cuarta parte del ancho del área de escaneo
+  const marginWScaled = Math.round(dstWScaled * 0.25);
+  const totalWScaled = dstWScaled + marginWScaled * 2;
+
   // Leer imagen fuente
   let srcMat = cv.imread(snapCanvas);
   
   // Crear matriz de destino
-  let dstMat = new cv.Mat(dstHScaled, dstWScaled, srcMat.type());
+  let dstMat = new cv.Mat(totalHScaled, totalWScaled, srcMat.type());
   
   // Usar malla de corrección si hay curvatura detectable
   const curvatureDetected = detectCurvature(labelMap, OMR_STATE);
   
   if (curvatureDetected) {
     // Corrección con malla adaptativa para curvatura
-    applyGridBasedCorrection(srcMat, dstMat, labelMap, dstWScaled, dstHScaled, OMR_STATE);
+    applyGridBasedCorrection(srcMat, dstMat, labelMap, totalWScaled, totalHScaled, OMR_STATE);
   } else {
     // Corrección de perspectiva estándar
     const srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
@@ -44,14 +52,14 @@ export function performPerspectiveCorrectionWithCurvature(OMR_STATE, snapCanvas,
       labelMap["BR"].x, labelMap["BR"].y,
     ]);
     const dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
-      0, 0,
-      dstWScaled, 0,
-      0, dstHScaled,
-      dstWScaled, dstHScaled,
+      marginWScaled, headerHScaled,
+      marginWScaled + dstWScaled, headerHScaled,
+      marginWScaled, totalHScaled,
+      marginWScaled + dstWScaled, totalHScaled,
     ]);
     
     let M = cv.getPerspectiveTransform(srcTri, dstTri);
-    let dsize = new cv.Size(dstWScaled, dstHScaled);
+    let dsize = new cv.Size(totalWScaled, totalHScaled);
     cv.warpPerspective(
       srcMat,
       dstMat,
@@ -59,7 +67,7 @@ export function performPerspectiveCorrectionWithCurvature(OMR_STATE, snapCanvas,
       dsize,
       cv.INTER_CUBIC,
       cv.BORDER_CONSTANT,
-      new cv.Scalar()
+      new cv.Scalar(255, 255, 255, 255)
     );
     
     srcTri.delete();
@@ -67,13 +75,13 @@ export function performPerspectiveCorrectionWithCurvature(OMR_STATE, snapCanvas,
     M.delete();
   }
 
-  const correctedCanvas = createCanvas(dstWScaled, dstHScaled);
+  const correctedCanvas = createCanvas(totalWScaled, totalHScaled);
   cv.imshow(correctedCanvas, dstMat);
 
   srcMat.delete();
 
   // Retornar matriz de transformación estimada para compatibilidad
-  const M = estimateTransformMatrix(labelMap, dstWScaled, dstHScaled);
+  const M = estimateTransformMatrix(labelMap, dstWScaled, dstHScaled, headerHScaled, marginWScaled);
   
   return { 
     correctedCanvas: correctedCanvas, 
@@ -274,7 +282,7 @@ function transformQuadrant(srcMat, dstMat, srcQuad, dstQuad) {
 /**
  * Estima una matriz de transformación para compatibilidad
  */
-function estimateTransformMatrix(labelMap, dstW, dstH) {
+function estimateTransformMatrix(labelMap, dstW, dstH, headerH = 0, marginW = 0) {
   const cv = getCv();
   
   const srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
@@ -284,10 +292,10 @@ function estimateTransformMatrix(labelMap, dstW, dstH) {
     labelMap["BR"].x, labelMap["BR"].y,
   ]);
   const dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
-    0, 0,
-    dstW, 0,
-    0, dstH,
-    dstW, dstH,
+    marginW, headerH,
+    marginW + dstW, headerH,
+    marginW, dstH + headerH,
+    marginW + dstW, dstH + headerH,
   ]);
   
   const M = cv.getPerspectiveTransform(srcTri, dstTri);

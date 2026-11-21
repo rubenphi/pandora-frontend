@@ -339,6 +339,14 @@
                     <span class="qz-grade-tag" v-if="canViewGrade(respuesta)">
                       · Nota: {{ parseFloat(respuesta.nota).toFixed(1) }}
                     </span>
+                    <span
+                      v-if="hasScan(respuesta)"
+                      class="qz-scan-pill-badge"
+                      title="Hoja OMR digitalizada disponible"
+                    >
+                      <ion-icon :icon="cameraOutline"></ion-icon>
+                      <span>OMR</span>
+                    </span>
                   </div>
                 </div>
 
@@ -353,6 +361,27 @@
 
               <!-- Detalle de Respuestas Desplegadas (Acordeón) -->
               <div v-if="isExpanded(respuesta)" class="qz-participant-drawer">
+                <!-- Botón Evidencia OMR Escaneada -->
+                <div
+                  v-if="hasScan(respuesta)"
+                  class="qz-scan-evidence-banner"
+                >
+                  <button
+                    type="button"
+                    class="qz-btn-view-scan"
+                    @click.stop="openScanModal(respuesta)"
+                  >
+                    <ion-icon :icon="cameraOutline"></ion-icon>
+                    <span>Ver Hoja OMR Escaneada</span>
+                    <span
+                      class="qz-scan-count-tag"
+                      v-if="getScansForParticipant(respuesta).length > 1"
+                    >
+                      {{ getScansForParticipant(respuesta).length }} hojas
+                    </span>
+                  </button>
+                </div>
+
                 <!-- Botón Mejora de Nota (Docente) -->
                 <div
                   v-if="admin && cuestionario?.category === 'improvement'"
@@ -551,7 +580,7 @@
     <!-- Toasts -->
     <ion-toast
       :is-open="isSuccessToastOpen"
-      message="Notas registradas correctamente"
+      :message="successMessage"
       :duration="3000"
       color="success"
       @didDismiss="setSuccessToastOpen(false)"
@@ -651,84 +680,300 @@
       </ion-content>
     </ion-modal>
 
-    <!-- Modal de Mejora de Nota -->
+    <!-- Modal de Mejora de Nota (Queezy UI) -->
     <ion-modal
       :is-open="showImprovementModal"
       @didDismiss="showImprovementModal = false"
+      class="qz-improvement-modal"
     >
-      <ion-header>
-        <ion-toolbar color="warning">
-          <ion-title>Mejora de Nota</ion-title>
-          <ion-buttons slot="end">
-            <ion-button @click="showImprovementModal = false"
-              >Cerrar</ion-button
-            >
-          </ion-buttons>
-        </ion-toolbar>
-      </ion-header>
-      <ion-content class="ion-padding">
-        <ion-card
-          v-if="selectedStudentForImprovement"
-          color="light"
-          class="ion-no-margin ion-margin-bottom"
-        >
-          <ion-card-content style="padding: 12px 16px">
-            <div
-              style="
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-              "
-            >
-              <div>
-                <h3 style="margin: 0; font-weight: bold; font-size: 1.05em">
-                  {{ getStudentName(selectedStudentForImprovement) }}
-                </h3>
-                <ion-note style="font-size: 0.85em">Estudiante</ion-note>
-              </div>
-              <ion-badge
-                color="warning"
-                style="font-size: 0.95em; padding: 6px 10px"
-              >
-                Nota:
-                {{ parseFloat(selectedStudentForImprovement.nota).toFixed(1) }}
-              </ion-badge>
-            </div>
-          </ion-card-content>
-        </ion-card>
-
-        <ion-item>
-          <ion-label position="stacked">Temas a Mejorar</ion-label>
-          <ion-select
-            v-model="selectedQuizIdsToImprove"
-            multiple="true"
-            placeholder="Seleccionar cuestionarios"
-            @ionChange="onSelectedQuizzesChange"
+      <div class="qz-modal-sheet">
+        <!-- Barra de Cabecera Modal -->
+        <div class="qz-modal-header-bar">
+          <div class="qz-modal-header-texts">
+            <span class="qz-modal-tag">
+              MEJORA DE NOTA ·
+              {{ cuestionario?.lesson?.course?.name || "CURSO" }} -
+              {{ cuestionario?.lesson?.area?.name || "ÁREA" }}
+            </span>
+            <h2 class="qz-modal-title">Asignar Mejora a Cuestionarios</h2>
+            <p class="qz-modal-subtitle">
+              Periodo {{ cuestionario?.lesson?.period?.name || cuestionario?.lesson?.period?.id || "" }} ·
+              Selecciona las evaluaciones anteriores a mejorar con esta nota
+            </p>
+          </div>
+          <button
+            type="button"
+            class="qz-modal-close-btn"
+            @click="showImprovementModal = false"
+            title="Cerrar modal"
           >
-            <ion-select-option
-              v-for="quiz in quizzesInCourse"
-              :key="quiz.id"
-              :value="quiz.id"
-            >
-              {{ quiz.title }}
-            </ion-select-option>
-          </ion-select>
-        </ion-item>
-
-        <div
-          v-if="studentComparisonList.length > 0"
-          class="ion-margin-top ion-padding-bottom"
-        >
-          <ion-button
-            expand="block"
-            color="warning"
-            :disabled="registrandoMejora"
-            @click="confirmarRegistroMejora"
-          >
-            Confirmar Registro
-          </ion-button>
+            <ion-icon :icon="closeOutline"></ion-icon>
+          </button>
         </div>
-      </ion-content>
+
+        <div class="qz-modal-body">
+          <!-- Tarjeta del Estudiante Seleccionado -->
+          <div v-if="selectedStudentForImprovement" class="qz-student-target-card">
+            <div class="qz-target-avatar">
+              {{ getInitials(selectedStudentForImprovement) }}
+            </div>
+            <div class="qz-target-info">
+              <span class="qz-target-name">
+                {{ getStudentName(selectedStudentForImprovement) }}
+              </span>
+              <span v-if="improvementTargetUsers.length > 1" class="qz-target-sub">
+                Equipo de {{ improvementTargetUsers.length }} estudiantes:
+                {{ improvementTargetUsers.map((u) => u.name || "").filter(Boolean).slice(0, 3).join(", ") }}{{ improvementTargetUsers.length > 3 ? "..." : "" }}
+              </span>
+              <span v-else class="qz-target-sub">
+                Evaluación: {{ cuestionario?.title || cuestionario?.topic || "Mejora de Nota" }}
+              </span>
+            </div>
+            <div class="qz-target-grade-pill">
+              <span class="qz-grade-pill-label">Nota Obtenida</span>
+              <span class="qz-grade-pill-value">
+                {{ parseFloat(selectedStudentForImprovement.nota || 0).toFixed(1) }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Información y Herramientas -->
+          <div v-if="studentComparisonList.length > 0" class="qz-modal-tools-row">
+            <span class="qz-tools-label">
+              {{ studentComparisonList.length }} cuestionarios en el periodo
+            </span>
+            <div class="qz-tools-btns" v-if="selectedQuizzesCount > 0">
+              <button
+                type="button"
+                class="qz-mini-tool-btn"
+                @click="deseleccionarTodos"
+                title="Desmarcar todos"
+              >
+                <span>Limpiar ({{ selectedQuizzesCount }})</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Estado de Carga -->
+          <div v-if="loadingExistingGrades" class="qz-modal-loading">
+            <ion-spinner name="crescent" class="qz-modal-spinner"></ion-spinner>
+            <p>Consultando cuestionarios y calificaciones del periodo...</p>
+          </div>
+
+          <!-- Estado Vacío -->
+          <div
+            v-else-if="studentComparisonList.length === 0"
+            class="qz-modal-empty"
+          >
+            <ion-icon :icon="informationCircleOutline" class="qz-modal-empty-icon"></ion-icon>
+            <h4>Sin cuestionarios regulares</h4>
+            <p>
+              No se encontraron otros cuestionarios regulares en este curso, área y periodo para mejorar.
+            </p>
+          </div>
+
+          <!-- Lista de Cuestionarios Comparativa -->
+          <div v-else class="qz-comparison-list">
+            <div
+              v-for="item in studentComparisonList"
+              :key="item.id"
+              class="qz-comparison-item"
+              :class="{
+                'is-selected': item.selected,
+                'has-improvement': item.isImprovement && item.previousGrade !== null
+              }"
+              @click="toggleQuizSelection(item)"
+            >
+              <div class="qz-comparison-left">
+                <div
+                  class="qz-select-indicator"
+                  :class="{ 'is-checked': item.selected }"
+                >
+                  <ion-icon :icon="checkmark" v-if="item.selected"></ion-icon>
+                </div>
+
+                <div class="qz-comparison-meta">
+                  <div class="qz-comparison-badge-row">
+                    <span class="qz-item-type-pill">
+                      <ion-icon :icon="documentTextOutline"></ion-icon>
+                      Cuestionario
+                    </span>
+                  </div>
+                  <h4 class="qz-comparison-title">{{ item.title }}</h4>
+                  <span v-if="item.lessonTitle" class="qz-comparison-sub">
+                    Lección: {{ item.lessonTitle }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="qz-comparison-right">
+                <!-- Comparación de notas -->
+                <div class="qz-grade-compare-box">
+                  <div class="qz-grade-pill qz-grade-pill--prev">
+                    <span class="qz-compare-label">{{ item.isGroupAverage ? "Promedio:" : "Actual:" }}</span>
+                    <span class="qz-compare-val">
+                      {{ item.previousGrade !== null ? item.previousGrade.toFixed(1) : "Sin nota" }}
+                    </span>
+                  </div>
+
+                  <ion-icon :icon="arrowForwardOutline" class="qz-compare-arrow"></ion-icon>
+
+                  <div class="qz-grade-pill qz-grade-pill--new">
+                    <span class="qz-compare-label">Nueva:</span>
+                    <span class="qz-compare-val">{{ item.newGrade.toFixed(1) }}</span>
+                  </div>
+                </div>
+
+                <!-- Badge de Estado de Mejora -->
+                <span
+                  v-if="item.previousGrade !== null && item.newGrade > item.previousGrade"
+                  class="qz-improvement-tag qz-tag--success"
+                >
+                  +{{ (item.newGrade - item.previousGrade).toFixed(1) }} Mejora
+                </span>
+                <span
+                  v-else-if="item.previousGrade === null"
+                  class="qz-improvement-tag qz-tag--new"
+                >
+                  Nueva nota
+                </span>
+                <span
+                  v-else
+                  class="qz-improvement-tag qz-tag--neutral"
+                >
+                  Menor o igual
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Botón de Confirmación Inferior -->
+          <div class="qz-modal-footer">
+            <button
+              type="button"
+              class="qz-modal-cancel-btn"
+              @click="showImprovementModal = false"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="qz-modal-confirm-btn"
+              :disabled="registrandoMejora || selectedQuizzesCount === 0"
+              @click="confirmarRegistroMejora"
+            >
+              <ion-spinner
+                v-if="registrandoMejora"
+                name="crescent"
+                class="qz-spinner-white"
+              ></ion-spinner>
+              <template v-else>
+                <ion-icon :icon="checkmarkCircle"></ion-icon>
+                <span>
+                  Confirmar Mejora ({{ selectedQuizzesCount }})
+                </span>
+              </template>
+            </button>
+          </div>
+        </div>
+      </div>
+    </ion-modal>
+
+    <!-- Modal para Ver Hoja OMR Escaneada (Queezy UI) -->
+    <ion-modal
+      :is-open="isScanModalOpen"
+      @didDismiss="closeScanModal"
+      class="qz-scan-modal"
+    >
+      <div class="qz-modal-sheet qz-scan-sheet">
+        <!-- Barra de Cabecera Modal -->
+        <div class="qz-modal-header-bar">
+          <div class="qz-modal-header-texts">
+            <span class="qz-modal-tag">
+              EVIDENCIA OMR DIGITALIZADA
+            </span>
+            <h2 class="qz-modal-title">
+              Hoja de Respuestas Calificada
+            </h2>
+            <p class="qz-modal-subtitle" v-if="selectedParticipantForScan">
+              {{ getParticipantName(selectedParticipantForScan) }} ·
+              Nota: {{ parseFloat(selectedParticipantForScan.nota || 0).toFixed(1) }} ({{ selectedParticipantForScan.points }} pts)
+            </p>
+          </div>
+          <button
+            type="button"
+            class="qz-modal-close-btn"
+            @click="closeScanModal"
+            title="Cerrar vista previa"
+          >
+            <ion-icon :icon="closeOutline"></ion-icon>
+          </button>
+        </div>
+
+        <div class="qz-scan-modal-body">
+          <!-- Segmento de pestañas si hay múltiples secciones / hojas -->
+          <div
+            v-if="currentParticipantScans.length > 1"
+            class="qz-scan-tabs-bar"
+          >
+            <button
+              v-for="(scanItem, sIdx) in currentParticipantScans"
+              :key="scanItem.id || sIdx"
+              type="button"
+              class="qz-scan-tab-btn"
+              :class="{ 'is-active': selectedScanSectionIndex === sIdx }"
+              @click="selectedScanSectionIndex = sIdx"
+            >
+              Hoja {{ scanItem.section || sIdx + 1 }}
+            </button>
+          </div>
+
+          <!-- Leyenda de Colores OMR -->
+          <div class="qz-omr-legend">
+            <div class="qz-legend-item">
+              <span class="qz-legend-dot qz-dot--correct"></span>
+              <span>Correcta</span>
+            </div>
+            <div class="qz-legend-item">
+              <span class="qz-legend-dot qz-dot--incorrect"></span>
+              <span>Incorrecta</span>
+            </div>
+            <div class="qz-legend-item">
+              <span class="qz-legend-ring qz-ring--key"></span>
+              <span>Clave</span>
+            </div>
+          </div>
+
+          <!-- Contenedor de la Imagen Escaneada -->
+          <div class="qz-scan-image-viewport">
+            <div v-if="currentActiveScan" class="qz-scan-img-wrapper">
+              <img
+                :src="getScanImageUrl(currentActiveScan)"
+                alt="Hoja OMR Escaneada"
+                class="qz-scan-img"
+              />
+            </div>
+            <div v-else class="qz-scan-empty">
+              <ion-icon :icon="cameraOutline" class="qz-scan-empty-icon"></ion-icon>
+              <p>No se encontró la imagen de la hoja escaneada.</p>
+            </div>
+          </div>
+
+          <!-- Pie del Modal -->
+          <div class="qz-modal-footer qz-scan-footer">
+            <span class="qz-scan-date-info" v-if="currentActiveScan?.createdAt">
+              Escaneado: {{ formatScanDate(currentActiveScan.createdAt) }}
+            </span>
+            <button
+              type="button"
+              class="qz-modal-cancel-btn"
+              @click="closeScanModal"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
     </ion-modal>
   </ion-page>
 </template>
@@ -755,6 +1000,11 @@ import {
   chevronForwardOutline,
   timeOutline,
   lockClosedOutline,
+  closeOutline,
+  arrowForwardOutline,
+  documentTextOutline,
+  checkmark,
+  cameraOutline,
 } from "ionicons/icons";
 
 import {
@@ -767,8 +1017,6 @@ import {
   IonContent,
   IonButtons,
   IonButton,
-  IonNote,
-  IonItem,
   IonLabel,
   IonSpinner,
   IonToast,
@@ -781,8 +1029,6 @@ import {
   IonCardContent,
   IonBadge,
   IonProgressBar,
-  IonSelect,
-  IonSelectOption,
 } from "@ionic/vue";
 
 export default {
@@ -796,8 +1042,6 @@ export default {
     IonIcon,
     IonButtons,
     IonButton,
-    IonNote,
-    IonItem,
     IonLabel,
     IonSpinner,
     IonToast,
@@ -810,8 +1054,6 @@ export default {
     IonCardContent,
     IonBadge,
     IonProgressBar,
-    IonSelect,
-    IonSelectOption,
   },
   setup() {
     const usuario = ref();
@@ -836,7 +1078,13 @@ export default {
     const selectedTierForModal = ref(null);
 
     const isSuccessToastOpen = ref(false);
-    const setSuccessToastOpen = (val) => (isSuccessToastOpen.value = val);
+    const successMessage = ref("Notas registradas correctamente");
+    const setSuccessToastOpen = (val, message = "") => {
+      isSuccessToastOpen.value = val;
+      if (message) {
+        successMessage.value = message;
+      }
+    };
     const isErrorToastOpen = ref(false);
     const errorMessage = ref("");
     const setErrorToastOpen = (val, message = "") => {
@@ -857,6 +1105,82 @@ export default {
     const studentComparisonList = ref([]);
     const loadingExistingGrades = ref(false);
     const registrandoMejora = ref(false);
+    const improvementTargetUsers = ref([]);
+
+    // OMR Scans (Evidencia de hojas escaneadas)
+    const quizScans = ref([]);
+    const isScanModalOpen = ref(false);
+    const selectedParticipantForScan = ref(null);
+    const selectedScanSectionIndex = ref(0);
+
+    const getParticipantUserId = (resp) => {
+      if (!resp) return null;
+      if (resp.user && resp.user.id) return Number(resp.user.id);
+      if (resp.userId) return Number(resp.userId);
+      if (typeof resp.id === "number") return resp.id;
+      return null;
+    };
+
+    const getScansForParticipant = (resp) => {
+      const uId = getParticipantUserId(resp);
+      if (!uId || !quizScans.value || quizScans.value.length === 0) return [];
+      return quizScans.value.filter((scan) => Number(scan.userId) === uId);
+    };
+
+    const hasScan = (resp) => {
+      return getScansForParticipant(resp).length > 0;
+    };
+
+    const currentParticipantScans = computed(() => {
+      if (!selectedParticipantForScan.value) return [];
+      return getScansForParticipant(selectedParticipantForScan.value);
+    });
+
+    const currentActiveScan = computed(() => {
+      const scans = currentParticipantScans.value;
+      if (scans.length === 0) return null;
+      return scans[selectedScanSectionIndex.value] || scans[0];
+    });
+
+    const openScanModal = (resp) => {
+      selectedParticipantForScan.value = resp;
+      selectedScanSectionIndex.value = 0;
+      isScanModalOpen.value = true;
+    };
+
+    const closeScanModal = () => {
+      isScanModalOpen.value = false;
+      selectedParticipantForScan.value = null;
+      selectedScanSectionIndex.value = 0;
+    };
+
+    const getScanImageUrl = (scan) => {
+      if (!scan) return "";
+      if (
+        scan.imageUrl?.startsWith("data:") ||
+        scan.imageUrl?.startsWith("http://") ||
+        scan.imageUrl?.startsWith("https://")
+      ) {
+        return scan.imageUrl;
+      }
+      const base = axios.defaults.baseURL || "";
+      const cleanPath = (scan.imageUrl || "").replace(/^\/+/, "");
+      if (base) {
+        const cleanBase = base.endsWith("/") ? base : `${base}/`;
+        return `${cleanBase}${cleanPath}`;
+      }
+      return `/${cleanPath}`;
+    };
+
+    const formatScanDate = (d) => {
+      if (!d) return "";
+      try {
+        const date = new Date(d);
+        return date.toLocaleString();
+      } catch (_) {
+        return String(d);
+      }
+    };
 
     // Cómputo de Tiers de Puntaje para el Podio Queezy (Solución a los empates)
     const topTiers = computed(() => {
@@ -1237,9 +1561,6 @@ export default {
               gradeType: "regular",
               grade: respuesta.nota,
               instituteId: cuestionario.value.lesson.institute.id,
-              year: cuestionario.value.lesson.year,
-              courseId: cuestionario.value.lesson.course.id,
-              areaId: cuestionario.value.lesson.area.id,
             };
             await axios.post("/grades", data);
           }
@@ -1254,6 +1575,26 @@ export default {
       return getParticipantName(r);
     };
 
+    const toggleQuizSelection = (item) => {
+      item.selected = !item.selected;
+    };
+
+    const seleccionarSoloMejoras = () => {
+      studentComparisonList.value.forEach((item) => {
+        item.selected = item.isImprovement;
+      });
+    };
+
+    const deseleccionarTodos = () => {
+      studentComparisonList.value.forEach((item) => {
+        item.selected = false;
+      });
+    };
+
+    const selectedQuizzesCount = computed(() => {
+      return studentComparisonList.value.filter((item) => item.selected).length;
+    });
+
     const abrirModalMejoraEstudiante = async (resp) => {
       selectedStudentForImprovement.value = resp;
       selectedQuizIdsToImprove.value = [];
@@ -1262,14 +1603,121 @@ export default {
       loadingExistingGrades.value = true;
 
       try {
-        const courseId = cuestionario.value.lesson.course.id;
-        const areaId = cuestionario.value.lesson.area.id;
+        const courseId = cuestionario.value?.lesson?.course?.id;
+        const areaId = cuestionario.value?.lesson?.area?.id;
+        const periodId = cuestionario.value?.lesson?.period?.id;
+
+        if (!courseId || !areaId || !periodId) {
+          setErrorToastOpen(
+            true,
+            "Falta información del curso, área o periodo de la lección.",
+          );
+          return;
+        }
+
+        const year = cuestionario.value?.lesson?.year;
         const res = await axios.get(
-          `/quizzes?courseId=${courseId}&areaId=${areaId}`,
+          `/quizzes?courseId=${courseId}&areaId=${areaId}&periodId=${periodId}${year ? `&year=${year}` : ""}`,
         );
-        quizzesInCourse.value = res.data.filter((q) => q.id !== Number(id));
+        const candidateQuizzes = (res.data || []).filter(
+          (q) =>
+            q.id !== Number(id) &&
+            q.category !== "improvement" &&
+            q.lesson?.type !== "reinforcement" &&
+            q.lesson?.type !== "remedial",
+        );
+        quizzesInCourse.value = candidateQuizzes;
+
+        let targetUsers = [];
+        if (resp?.user?.id) {
+          targetUsers = [resp.user];
+        } else if (resp?.group?.id) {
+          try {
+            const groupRes = await axios.get(
+              `/groups/${resp.group.id}/${cuestionario.value?.lesson?.year}/users`,
+            );
+            targetUsers = (groupRes.data || [])
+              .map((rel) => rel.user)
+              .filter(Boolean);
+          } catch (eGroup) {
+            console.error("Error fetching group users:", eGroup);
+          }
+        }
+        improvementTargetUsers.value = targetUsers;
+
+        const quizGradesMap = {};
+        const instituteId =
+          cuestionario.value?.lesson?.institute?.id ||
+          usuario.value?.institute?.id ||
+          1;
+
+        if (targetUsers.length > 0) {
+          try {
+            const gradesPromises = targetUsers.map((u) =>
+              axios
+                .get(
+                  `/grades?userId=${u.id}&courseId=${courseId}&areaId=${areaId}&periodId=${periodId}&gradableType=quiz&instituteId=${instituteId}`,
+                )
+                .then((r) => (Array.isArray(r.data) ? r.data : []))
+                .catch(() => []),
+            );
+            const allUsersGrades = await Promise.all(gradesPromises);
+
+            allUsersGrades.forEach((userGrades) => {
+              userGrades.forEach((g) => {
+                if (g.gradableId) {
+                  if (!quizGradesMap[g.gradableId]) {
+                    quizGradesMap[g.gradableId] = [];
+                  }
+                  quizGradesMap[g.gradableId].push(parseFloat(g.grade));
+                }
+              });
+            });
+          } catch (errGrades) {
+            console.error("Error al consultar notas existentes:", errGrades);
+          }
+        }
+
+        const newGradeVal = parseFloat(resp?.nota || 0);
+
+        studentComparisonList.value = candidateQuizzes.map((quiz) => {
+          const gradesList = quizGradesMap[quiz.id] || [];
+          let prev = null;
+          let isGroupAverage = false;
+
+          if (gradesList.length > 0) {
+            const allEqual = gradesList.every(
+              (g) => Math.abs(g - gradesList[0]) < 0.01,
+            );
+            if (allEqual) {
+              prev = gradesList[0];
+            } else {
+              prev =
+                gradesList.reduce((acc, curr) => acc + curr, 0) /
+                gradesList.length;
+              isGroupAverage = true;
+            }
+          }
+
+          const isImprovement = prev !== null ? newGradeVal > prev : true;
+
+          return {
+            id: quiz.id,
+            title: quiz.title,
+            lessonTitle: quiz.lesson?.topic || quiz.lesson?.title || "",
+            previousGrade: prev,
+            newGrade: newGradeVal,
+            isGroupAverage,
+            isImprovement,
+            selected: false,
+          };
+        });
       } catch (e) {
         console.error("Error loading quizzes in course:", e);
+        setErrorToastOpen(
+          true,
+          "Error al cargar los cuestionarios del curso y periodo.",
+        );
       } finally {
         loadingExistingGrades.value = false;
       }
@@ -1280,8 +1728,96 @@ export default {
     };
 
     const confirmarRegistroMejora = async () => {
-      showImprovementModal.value = false;
-      setSuccessToastOpen(true);
+      const selectedItems = studentComparisonList.value.filter(
+        (item) => item.selected,
+      );
+
+      if (selectedItems.length === 0) {
+        setErrorToastOpen(
+          true,
+          "Selecciona al menos un cuestionario para aplicar la mejora.",
+        );
+        return;
+      }
+
+      let targetUserIds = (improvementTargetUsers.value || [])
+        .map((u) => u.id)
+        .filter(Boolean);
+
+      if (targetUserIds.length === 0) {
+        if (selectedStudentForImprovement.value?.user?.id) {
+          targetUserIds = [selectedStudentForImprovement.value.user.id];
+        } else if (selectedStudentForImprovement.value?.group?.id) {
+          try {
+            const groupRes = await axios.get(
+              `/groups/${selectedStudentForImprovement.value.group.id}/${cuestionario.value?.lesson?.year}/users`,
+            );
+            targetUserIds = (groupRes.data || [])
+              .map((rel) => rel.user?.id)
+              .filter(Boolean);
+          } catch (eG) {
+            console.error("Error loading group users for improvement:", eG);
+          }
+        }
+      }
+
+      if (targetUserIds.length === 0) {
+        setErrorToastOpen(
+          true,
+          "No se encontraron integrantes para registrar la nota de mejora.",
+        );
+        return;
+      }
+
+      registrandoMejora.value = true;
+      try {
+        const newGradeVal = parseFloat(selectedStudentForImprovement.value.nota);
+        const lesson = cuestionario.value.lesson;
+        const instituteId =
+          lesson.institute?.id || usuario.value?.institute?.id;
+
+        for (const studentUserId of targetUserIds) {
+          for (const item of selectedItems) {
+            const payload = {
+              userId: studentUserId,
+              gradableId: item.id,
+              gradableType: "quiz",
+              periodId: lesson.period.id,
+              gradeType: "regular",
+              grade: newGradeVal,
+              instituteId,
+              registrarMayor: true,
+            };
+            await axios.post("/grades", payload);
+          }
+
+          // Registrar también la nota en el propio cuestionario de mejora
+          const payloadMejora = {
+            userId: studentUserId,
+            gradableId: parseInt(id, 10),
+            gradableType: "quiz",
+            periodId: lesson.period.id,
+            gradeType: "regular",
+            grade: newGradeVal,
+            instituteId,
+          };
+          await axios.post("/grades", payloadMejora);
+        }
+
+        showImprovementModal.value = false;
+        setSuccessToastOpen(
+          true,
+          `¡Notas mejoradas exitosamente para ${selectedItems.length} cuestionario(s)!`,
+        );
+      } catch (e) {
+        console.error("Error al registrar mejora:", e);
+        setErrorToastOpen(
+          true,
+          "Ocurrió un error al registrar las notas mejoradas.",
+        );
+      } finally {
+        registrandoMejora.value = false;
+      }
     };
 
     onIonViewDidEnter(async () => {
@@ -1333,6 +1869,15 @@ export default {
       } catch (err) {
         console.error("Error fetching results:", err);
       }
+
+      // Cargar escaneos OMR disponibles para este cuestionario
+      try {
+        const scansRes = await axios.get(`/quizzes/${id}/scans`);
+        quizScans.value = scansRes.data || [];
+      } catch (scanErr) {
+        console.error("Error fetching quiz scans:", scanErr);
+        quizScans.value = [];
+      }
     });
 
     return {
@@ -1350,15 +1895,30 @@ export default {
       loadingStats,
       showImprovementModal,
       selectedStudentForImprovement,
+      improvementTargetUsers,
       selectedQuizIdsToImprove,
       studentComparisonList,
       quizzesInCourse,
+      loadingExistingGrades,
       registrandoMejora,
       loading,
       respuestaDetallada,
       respuestaMAyor,
       isTierModalOpen,
       selectedTierForModal,
+      quizScans,
+      isScanModalOpen,
+      selectedParticipantForScan,
+      selectedScanSectionIndex,
+      currentParticipantScans,
+      currentActiveScan,
+      hasScan,
+      getScansForParticipant,
+      openScanModal,
+      closeScanModal,
+      getScanImageUrl,
+      formatScanDate,
+      cameraOutline,
       getParticipantName,
       getInitials,
       getTierNumber,
@@ -1379,10 +1939,19 @@ export default {
       abrirModalMejoraEstudiante,
       onSelectedQuizzesChange,
       confirmarRegistroMejora,
+      toggleQuizSelection,
+      seleccionarSoloMejoras,
+      deseleccionarTodos,
+      selectedQuizzesCount,
       getStudentName,
       setSuccessToastOpen,
+      successMessage,
       setErrorToastOpen,
       arrowBackOutline,
+      closeOutline,
+      arrowForwardOutline,
+      documentTextOutline,
+      checkmark,
       statsChartOutline,
       arrowDownCircle,
       fileTrayFullOutline,
@@ -2218,5 +2787,823 @@ export default {
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
+}
+
+/* ─── MODAL DE MEJORA DE NOTA (QUEEZY UI) ─────────────────────────────────── */
+.qz-improvement-modal {
+  --border-radius: 24px;
+}
+
+.qz-modal-sheet {
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+}
+
+.qz-modal-header-bar {
+  background: linear-gradient(135deg, #6a5ae0 0%, #7668e3 100%);
+  padding: 16px 20px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.qz-modal-header-texts {
+  flex: 1;
+}
+
+.qz-modal-tag {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  color: rgba(255, 255, 255, 0.85);
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.qz-modal-title {
+  margin: 0 0 2px 0;
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.3px;
+}
+
+.qz-modal-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.35;
+}
+
+.qz-modal-close-btn {
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  border-radius: 9999px;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.12s ease;
+}
+
+.qz-modal-close-btn:active {
+  transform: scale(0.92);
+}
+
+.qz-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #f7f6fd;
+}
+
+/* Tarjeta de información del alumno seleccionado */
+.qz-student-target-card {
+  background: #ffffff;
+  border: 1.5px solid #eceaf9;
+  border-radius: 16px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 3px 10px rgba(106, 90, 224, 0.05);
+  flex-shrink: 0;
+}
+
+.qz-target-avatar {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #e0dcfa 0%, #efeefc 100%);
+  color: #6a5ae0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.qz-target-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.qz-target-name {
+  display: block;
+  font-weight: 800;
+  font-size: 14px;
+  color: #0c092a;
+}
+
+.qz-target-sub {
+  font-size: 12px;
+  color: #858399;
+}
+
+.qz-target-grade-pill {
+  background: #fef3c7;
+  border: 1px solid rgba(217, 119, 6, 0.3);
+  border-radius: 12px;
+  padding: 4px 10px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.qz-grade-pill-label {
+  display: block;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #92400e;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.qz-grade-pill-value {
+  display: block;
+  font-size: 16px;
+  font-weight: 800;
+  color: #b45309;
+}
+
+/* Fila de Herramientas */
+.qz-modal-tools-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 0 2px;
+}
+
+.qz-tools-label {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #49465f;
+}
+
+.qz-tools-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.qz-mini-tool-btn {
+  background: #ffffff;
+  border: 1px solid #e2e0ed;
+  border-radius: 9999px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #635f7a;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.12s ease;
+}
+
+.qz-mini-tool-btn--accent {
+  background: #fef3c7;
+  border-color: rgba(217, 119, 6, 0.3);
+  color: #92400e;
+}
+
+.qz-mini-tool-btn:active {
+  transform: scale(0.95);
+}
+
+/* Lista de Comparación */
+.qz-comparison-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.qz-comparison-item {
+  background: #ffffff;
+  border: 1.5px solid #eceaf9;
+  border-radius: 14px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.qz-comparison-item:hover {
+  border-color: rgba(106, 90, 224, 0.4);
+}
+
+.qz-comparison-item.is-selected {
+  border-color: #6a5ae0;
+  background: #fdfcff;
+  box-shadow: 0 3px 12px rgba(106, 90, 224, 0.08);
+}
+
+.qz-comparison-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.qz-select-indicator {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1.8px solid #c8c5e2;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.qz-select-indicator.is-checked {
+  background: #6a5ae0;
+  border-color: #6a5ae0;
+  color: #ffffff;
+}
+
+.qz-select-indicator ion-icon {
+  font-size: 14px;
+  stroke-width: 36px;
+}
+
+body.dark .qz-select-indicator {
+  border-color: #4a4478;
+  background: #1e1a3a;
+}
+
+body.dark .qz-select-indicator.is-checked {
+  background: #8c7eff;
+  border-color: #8c7eff;
+  color: #ffffff;
+}
+
+.qz-round-checkbox {
+  --size: 18px;
+  --border-radius: 5px;
+  --checkbox-background-checked: #6a5ae0;
+  --border-color-checked: #6a5ae0;
+  --checkmark-color: #ffffff;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.qz-comparison-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.qz-comparison-badge-row {
+  margin-bottom: 3px;
+}
+
+.qz-item-type-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #6a5ae0;
+  background: #f0eeff;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  letter-spacing: 0.03em;
+}
+
+body.dark .qz-item-type-pill {
+  color: #a594fd;
+  background: rgba(106, 90, 224, 0.22);
+}
+
+.qz-comparison-title {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0c092a;
+  line-height: 1.25;
+}
+
+.qz-comparison-sub {
+  font-size: 11px;
+  color: #858399;
+}
+
+.qz-comparison-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.qz-grade-compare-box {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.qz-grade-pill {
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 11px;
+  display: inline-flex;
+  gap: 3px;
+  font-weight: 700;
+}
+
+.qz-grade-pill--prev {
+  background: #f1f0f7;
+  color: #635f7a;
+}
+
+.qz-compare-arrow {
+  font-size: 12px;
+  color: #858399;
+}
+
+.qz-grade-pill--new {
+  background: #e0dcfa;
+  color: #6a5ae0;
+  font-weight: 800;
+}
+
+.qz-compare-label {
+  opacity: 0.8;
+  font-size: 10px;
+}
+
+.qz-improvement-tag {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+
+.qz-tag--success {
+  background: #dcfce7;
+  color: #15803d;
+  border-color: rgba(22, 163, 74, 0.25);
+}
+
+.qz-tag--new {
+  background: #e0e7ff;
+  color: #4338ca;
+  border-color: rgba(67, 56, 202, 0.25);
+}
+
+.qz-tag--neutral {
+  background: #f3f4f6;
+  color: #6b7280;
+  border-color: #e5e7eb;
+}
+
+/* Footer Modal */
+.qz-modal-footer {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 10px;
+}
+
+.qz-modal-cancel-btn {
+  background: #ffffff;
+  border: 1.5px solid #eceaf9;
+  border-radius: 14px;
+  padding: 0 16px;
+  height: 44px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #635f7a;
+  cursor: pointer;
+}
+
+.qz-modal-confirm-btn {
+  background: #6a5ae0;
+  color: #ffffff;
+  border: none;
+  border-radius: 14px;
+  flex: 1;
+  height: 44px;
+  font-size: 13.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(106, 90, 224, 0.25);
+  transition: all 0.15s ease;
+}
+
+.qz-modal-confirm-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.qz-modal-confirm-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.qz-spinner-white {
+  width: 18px;
+  height: 18px;
+  --color: #ffffff;
+}
+
+.qz-modal-loading,
+.qz-modal-empty {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 28px 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid #eceaf9;
+}
+
+.qz-modal-spinner {
+  width: 28px;
+  height: 28px;
+  --color: #6a5ae0;
+  margin-bottom: 8px;
+}
+
+.qz-modal-empty-icon {
+  font-size: 32px;
+  color: #858399;
+  margin-bottom: 6px;
+}
+
+.qz-modal-empty h4 {
+  margin: 0 0 4px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0c092a;
+}
+
+.qz-modal-empty p {
+  margin: 0;
+  font-size: 12.5px;
+  color: #858399;
+}
+
+/* OMR Scan Evidence Badge & Button */
+.qz-scan-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(106, 90, 224, 0.12);
+  color: #6a5ae0;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  border: 1px solid rgba(106, 90, 224, 0.25);
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+body.dark .qz-scan-pill-badge,
+.dark .qz-scan-pill-badge {
+  background: rgba(106, 90, 224, 0.25);
+  color: #a594fd;
+  border-color: rgba(165, 148, 253, 0.35);
+}
+
+.qz-scan-evidence-banner {
+  margin-bottom: 10px;
+}
+
+.qz-btn-view-scan {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: linear-gradient(135deg, #6a5ae0 0%, #5846db 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(106, 90, 224, 0.35);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.qz-btn-view-scan:active {
+  transform: scale(0.98);
+}
+
+.qz-scan-count-tag {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 9999px;
+  padding: 2px 7px;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+/* Modal Ver Hoja OMR Escaneada */
+.qz-scan-modal {
+  --border-radius: 24px;
+}
+
+.qz-scan-modal-body {
+  padding: 14px 16px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #f8f7fc;
+}
+
+.qz-scan-tabs-bar {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.qz-scan-tab-btn {
+  background: #ffffff;
+  border: 1.5px solid #e2e0ed;
+  border-radius: 9999px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #49465f;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.qz-scan-tab-btn.is-active {
+  background: #6a5ae0;
+  color: #ffffff;
+  border-color: #6a5ae0;
+  box-shadow: 0 3px 8px rgba(106, 90, 224, 0.3);
+}
+
+.qz-omr-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 8px 12px;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #ebe8f5;
+  font-size: 11px;
+  font-weight: 600;
+  color: #49465f;
+  flex-shrink: 0;
+}
+
+.qz-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.qz-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.qz-dot--correct {
+  background-color: #2dd36f;
+  box-shadow: 0 0 4px rgba(45, 211, 111, 0.6);
+}
+
+.qz-dot--incorrect {
+  background-color: #eb445a;
+  box-shadow: 0 0 4px rgba(235, 68, 90, 0.6);
+}
+
+.qz-legend-ring {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #2dd36f;
+  background: transparent;
+}
+
+.qz-scan-image-viewport {
+  flex: 1;
+  min-height: 280px;
+  max-height: 65vh;
+  background: #0d0b1a;
+  border-radius: 14px;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.qz-scan-img-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+}
+
+.qz-scan-img {
+  max-width: 100%;
+  max-height: 62vh;
+  object-fit: contain;
+  border-radius: 8px;
+  display: block;
+}
+
+.qz-scan-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #858494;
+  padding: 40px 20px;
+}
+
+.qz-scan-empty-icon {
+  font-size: 40px;
+  opacity: 0.5;
+}
+
+.qz-scan-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.qz-scan-date-info {
+  font-size: 11px;
+  color: #858494;
+  font-weight: 500;
+}
+
+/* Dark Mode para Modal de Mejora y OMR */
+body.dark .qz-modal-sheet,
+.dark .qz-modal-sheet {
+  background: #1e1a3a;
+}
+body.dark .qz-modal-body,
+.dark .qz-modal-body {
+  background: #16132b;
+}
+body.dark .qz-student-target-card,
+body.dark .qz-comparison-item,
+body.dark .qz-modal-loading,
+body.dark .qz-modal-empty,
+.dark .qz-student-target-card,
+.dark .qz-comparison-item,
+.dark .qz-modal-loading,
+.dark .qz-modal-empty {
+  background: #1e1a3a;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+body.dark .qz-target-name,
+body.dark .qz-comparison-title,
+body.dark .qz-modal-empty h4,
+.dark .qz-target-name,
+.dark .qz-comparison-title,
+.dark .qz-modal-empty h4 {
+  color: #f3f2ff;
+}
+body.dark .qz-tools-label,
+.dark .qz-tools-label {
+  color: #c4beff;
+}
+body.dark .qz-comparison-item.is-selected,
+.dark .qz-comparison-item.is-selected {
+  background: #252048;
+  border-color: #8c7eff;
+}
+body.dark .qz-mini-tool-btn,
+body.dark .qz-modal-cancel-btn,
+.dark .qz-mini-tool-btn,
+.dark .qz-modal-cancel-btn {
+  background: #1e1a3a;
+  border-color: #2e2954;
+  color: #c4beff;
+}
+body.dark .qz-scan-modal-body,
+.dark .qz-scan-modal-body {
+  background: #18152e;
+}
+body.dark .qz-scan-tab-btn,
+.dark .qz-scan-tab-btn {
+  background: #252244;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #e2e0ed;
+}
+body.dark .qz-scan-tab-btn.is-active,
+.dark .qz-scan-tab-btn.is-active {
+  background: #6a5ae0;
+  color: #ffffff;
+  border-color: #6a5ae0;
+}
+body.dark .qz-omr-legend,
+.dark .qz-omr-legend {
+  background: #252244;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #e2e0ed;
+}
+body.dark .qz-scan-date-info,
+.dark .qz-scan-date-info {
+  color: #a09eb5;
+}
+
+@media (prefers-color-scheme: dark) {
+  .qz-modal-sheet {
+    background: #1e1a3a;
+  }
+  .qz-modal-body {
+    background: #16132b;
+  }
+  .qz-student-target-card,
+  .qz-comparison-item,
+  .qz-modal-loading,
+  .qz-modal-empty {
+    background: #1e1a3a;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-target-name,
+  .qz-comparison-title,
+  .qz-modal-empty h4 {
+    color: #f3f2ff;
+  }
+  .qz-tools-label {
+    color: #c4beff;
+  }
+  .qz-comparison-item.is-selected {
+    background: #252048;
+    border-color: #8c7eff;
+  }
+  .qz-mini-tool-btn,
+  .qz-modal-cancel-btn {
+    background: #1e1a3a;
+    border-color: #2e2954;
+    color: #c4beff;
+  }
+  .qz-scan-modal-body {
+    background: #18152e;
+  }
+  .qz-scan-tab-btn {
+    background: #252244;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #e2e0ed;
+  }
+  .qz-scan-tab-btn.is-active {
+    background: #6a5ae0;
+    color: #ffffff;
+    border-color: #6a5ae0;
+  }
+  .qz-omr-legend {
+    background: #252244;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #e2e0ed;
+  }
+  .qz-scan-date-info {
+    color: #a09eb5;
+  }
 }
 </style>

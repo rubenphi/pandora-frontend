@@ -1234,11 +1234,12 @@ ion-alert ion-backdrop {
   border-radius: 28px !important;
   box-shadow: 0 20px 50px -10px rgba(106, 90, 224, 0.3) !important;
   font-family: var(--qz-font-family, 'Rubik', sans-serif) !important;
-  background: #FFFFFF !important;
+  background: var(--qz-color-card-bg, #FFFFFF) !important;
+  color: var(--qz-color-text-main, #0C092A) !important;
   padding: 24px 20px 20px 20px !important;
   max-width: 330px !important;
   width: 88% !important;
-  border: 1px solid rgba(106, 90, 224, 0.08) !important;
+  border: 1px solid var(--qz-color-border, rgba(106, 90, 224, 0.08)) !important;
   text-align: center !important;
 }
 
@@ -1251,26 +1252,41 @@ ion-alert ion-backdrop {
   font-family: var(--qz-font-family, 'Rubik', sans-serif) !important;
   font-size: 20px !important;
   font-weight: 800 !important;
-  color: #0C092A !important;
+  color: var(--qz-color-text-main, #0C092A) !important;
   letter-spacing: -0.3px !important;
   margin-bottom: 4px !important;
 }
 
 .alert-sub-title {
   font-family: var(--qz-font-family, 'Rubik', sans-serif) !important;
-  color: #858494 !important;
+  color: var(--qz-color-text-muted, #858494) !important;
   font-size: 13px !important;
   font-weight: 500 !important;
 }
 
 .alert-message {
-  color: #858494 !important;
+  color: var(--qz-color-text-muted, #858494) !important;
   font-family: var(--qz-font-family, 'Rubik', sans-serif) !important;
   font-size: 14px !important;
   line-height: 1.5 !important;
   text-align: center !important;
   padding: 0 0 20px 0 !important;
   max-height: 240px !important;
+}
+
+.alert-input-group {
+  padding: 4px 0 12px 0 !important;
+}
+
+.alert-input {
+  background: var(--qz-color-purple-light, #F4F3FC) !important;
+  color: var(--qz-color-text-main, #0C092A) !important;
+  border: 1.5px solid var(--qz-color-border, rgba(106, 90, 224, 0.15)) !important;
+  border-radius: 14px !important;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif) !important;
+  font-size: 14px !important;
+  padding: 10px 14px !important;
+  margin-bottom: 8px !important;
 }
 
 .alert-button-group {
@@ -1348,6 +1364,98 @@ ion-alert ion-backdrop {
 }
 .alert-button:not(.alert-button-role-cancel):not(.alert-button-role-destructive):active {
   filter: brightness(0.92) !important;
+}
+
+/* ==========================================================================
+   QUEEZY ION-ALERT DARK MODE OVERRIDES
+   ========================================================================== */
+body.dark .alert-wrapper.ion-overlay-wrapper,
+html.dark .alert-wrapper.ion-overlay-wrapper,
+.dark .alert-wrapper.ion-overlay-wrapper,
+ion-alert.dark .alert-wrapper.ion-overlay-wrapper {
+  background: #1D1838 !important;
+  color: #F7F7FD !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6) !important;
+}
+
+body.dark .alert-title,
+html.dark .alert-title,
+.dark .alert-title {
+  color: #F7F7FD !important;
+}
+
+body.dark .alert-sub-title,
+html.dark .alert-sub-title,
+.dark .alert-sub-title,
+body.dark .alert-message,
+html.dark .alert-message,
+.dark .alert-message {
+  color: #9E9BB8 !important;
+}
+
+body.dark .alert-input,
+html.dark .alert-input,
+.dark .alert-input {
+  background: #231D42 !important;
+  color: #F7F7FD !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+body.dark .alert-button.alert-button-role-cancel,
+html.dark .alert-button.alert-button-role-cancel,
+.dark .alert-button.alert-button-role-cancel,
+body.dark .alert-button-role-cancel,
+html.dark .alert-button-role-cancel,
+.dark .alert-button-role-cancel {
+  background: #252048 !important;
+  color: #A39BF0 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark .alert-radio-label,
+html.dark .alert-radio-label,
+.dark .alert-radio-label,
+body.dark .alert-checkbox-label,
+html.dark .alert-checkbox-label,
+.dark .alert-checkbox-label {
+  color: #F7F7FD !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  body:not(.light) .alert-wrapper.ion-overlay-wrapper {
+    background: #1D1838 !important;
+    color: #F7F7FD !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6) !important;
+  }
+
+  body:not(.light) .alert-title {
+    color: #F7F7FD !important;
+  }
+
+  body:not(.light) .alert-sub-title,
+  body:not(.light) .alert-message {
+    color: #9E9BB8 !important;
+  }
+
+  body:not(.light) .alert-input {
+    background: #231D42 !important;
+    color: #F7F7FD !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+  }
+
+  body:not(.light) .alert-button.alert-button-role-cancel,
+  body:not(.light) .alert-button-role-cancel {
+    background: #252048 !important;
+    color: #A39BF0 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  body:not(.light) .alert-radio-label,
+  body:not(.light) .alert-checkbox-label {
+    color: #F7F7FD !important;
+  }
 }
 
 /* ==========================================================================

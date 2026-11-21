@@ -453,6 +453,14 @@ export function performPerspectiveCorrection(OMR_STATE, snapCanvas, labelMap) {
   const dstWScaled = Math.max(1, Math.round(dstW * scale));
   const dstHScaled = Math.max(1, Math.round(dstH * scale));
 
+  // Capturar también el área superior (encabezado con nombre de estudiante) igual a la mitad del área de escaneo
+  const headerHScaled = Math.round(dstHScaled * 0.5);
+  const totalHScaled = dstHScaled + headerHScaled;
+
+  // Espacio extra derecha e izquierda correspondiente a una cuarta parte del ancho del área de escaneo
+  const marginWScaled = Math.round(dstWScaled * 0.25);
+  const totalWScaled = dstWScaled + marginWScaled * 2;
+
   const srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
     labelMap["TL"].x,
     labelMap["TL"].y,
@@ -464,20 +472,20 @@ export function performPerspectiveCorrection(OMR_STATE, snapCanvas, labelMap) {
     labelMap["BR"].y,
   ]);
   const dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
-    0,
-    0,
-    dstWScaled,
-    0,
-    0,
-    dstHScaled,
-    dstWScaled,
-    dstHScaled,
+    marginWScaled,
+    headerHScaled,
+    marginWScaled + dstWScaled,
+    headerHScaled,
+    marginWScaled,
+    totalHScaled,
+    marginWScaled + dstWScaled,
+    totalHScaled,
   ]);
 
   let srcMat = cv.imread(snapCanvas);
   let M = cv.getPerspectiveTransform(srcTri, dstTri);
   let dstMat = new cv.Mat();
-  let dsize = new cv.Size(dstWScaled, dstHScaled);
+  let dsize = new cv.Size(totalWScaled, totalHScaled);
   cv.warpPerspective(
     srcMat,
     dstMat,
@@ -485,10 +493,10 @@ export function performPerspectiveCorrection(OMR_STATE, snapCanvas, labelMap) {
     dsize,
     cv.INTER_CUBIC,
     cv.BORDER_CONSTANT,
-    new cv.Scalar()
+    new cv.Scalar(255, 255, 255, 255)
   );
 
-  const correctedCanvas = createCanvas(dstWScaled, dstHScaled);
+  const correctedCanvas = createCanvas(totalWScaled, totalHScaled);
   cv.imshow(correctedCanvas, dstMat);
 
   srcTri.delete();
@@ -503,20 +511,32 @@ export function extractAndDrawResults(
   correctedCanvas,
   correctedMat,
   matrix,
-  labelMap
+  labelMap,
+  answerKeys = []
 ) {
   const { circleTemplate } = OMR_STATE;
   if (!Array.isArray(circleTemplate) || circleTemplate.length === 0) {
-    return { finalResults: [] };
+    return { finalResults: [], cleanDataUrl: null, bubbleCoords: [] };
   }
+
+  // Preserve clean image before drawing any overlays
+  const cleanCanvas = document.createElement("canvas");
+  cleanCanvas.width = correctedCanvas.width;
+  cleanCanvas.height = correctedCanvas.height;
+  const cleanCtx = cleanCanvas.getContext("2d");
+  cleanCtx.drawImage(correctedCanvas, 0, 0);
+  const cleanDataUrl = cleanCanvas.toDataURL("image/png");
 
   const cctx = correctedCanvas.getContext("2d");
   const finalResults = [];
+  const bubbleCoords = [];
   const cv = getCv();
 
   const gray = new cv.Mat();
   cv.cvtColor(correctedMat, gray, cv.COLOR_RGBA2GRAY);
   cv.GaussianBlur(gray, gray, new cv.Size(3, 3), 0);
+
+  let questionGlobalOffset = 0;
 
   for (const matrixDef of circleTemplate) {
     const { circles, rows, cols, type } = matrixDef;
@@ -568,7 +588,7 @@ export function extractAndDrawResults(
     cv.perspectiveTransform(srcPts, dstPts, matrix);
 
     const darkThresh = 100;
-    const requiredFraction = 0.5; //sensibilidad
+    const requiredFraction = 0.5; // sensibilidad
     const displayRadius = matrixDef.radius;
     const localRadius = matrixDef.radius;
 
@@ -613,6 +633,7 @@ export function extractAndDrawResults(
 
     // Identify "Winners" (Best candidate per group) AND Extract Data
     const winnerIndices = new Set();
+    const colLabels = matrixDef.labels;
 
     if (type === "numeric") {
       const codeDigits = [];
@@ -642,7 +663,6 @@ export function extractAndDrawResults(
       });
     } else if (type === "question") {
       const answers = [];
-      const colLabels = matrixDef.labels;
       for (let r = 0; r < rows; r++) {
         let bestCol = -1;
         let bestFrac = -1;
@@ -694,7 +714,9 @@ export function extractAndDrawResults(
       });
     }
 
-    // DRAWING LOOP
+    // DRAWING LOOP WITH SMART GRADE COLORING (GREEN = CORRECT, RED = INCORRECT)
+    const hasAnswerKeys = Array.isArray(answerKeys) && answerKeys.length > 0;
+
     for (let i = 0; i < dstData.length; i += 2) {
       const gx = Math.round(dstData[i]);
       const gy = Math.round(dstData[i + 1]);
@@ -708,23 +730,119 @@ export function extractAndDrawResults(
 
       const idx = i / 2;
       const isWinner = winnerIndices.has(idx);
+      const r = Math.floor(idx / cols);
+      const c = idx % cols;
+
+      const optLetter = colLabels && colLabels[c]
+        ? colLabels[c].toUpperCase()
+        : String.fromCharCode("A".charCodeAt(0) + c);
+
+      let isKey = false;
+      let isCorrect = false;
+
+      if (type === "question") {
+        const qIdx = questionGlobalOffset + r;
+        const expected = hasAnswerKeys ? answerKeys[qIdx] : null;
+        const expectedKey = expected?.correctOptionIdentifier
+          ? String(expected.correctOptionIdentifier).trim().toUpperCase()
+          : null;
+
+        if (expectedKey) {
+          isKey = optLetter === expectedKey;
+          if (isWinner) {
+            isCorrect = isKey;
+          }
+        }
+
+        bubbleCoords.push({
+          matrixType: type,
+          questionIdx: qIdx,
+          row: r,
+          col: c,
+          optLetter,
+          gx,
+          gy,
+          radius: displayRadius,
+          isWinner,
+          isKey,
+        });
+      } else {
+        bubbleCoords.push({
+          matrixType: type,
+          questionIdx: null,
+          row: r,
+          col: c,
+          optLetter,
+          gx,
+          gy,
+          radius: displayRadius,
+          isWinner,
+          isKey: false,
+        });
+      }
 
       cctx.beginPath();
       cctx.arc(gx, gy, displayRadius, 0, Math.PI * 2);
 
-      if (isWinner) {
-        // Winner: Filled Purple
-        cctx.fillStyle = "rgba(128, 0, 128, 0.8)"; // Purple fill
-        cctx.fill();
-        cctx.strokeStyle = "rgba(128, 0, 128, 1)"; // Purple border
-        cctx.lineWidth = 2;
-        cctx.stroke();
+      if (type === "question" && hasAnswerKeys) {
+        if (isWinner) {
+          if (isCorrect) {
+            // Correct answer -> Filled Green
+            cctx.fillStyle = "rgba(45, 211, 111, 0.88)";
+            cctx.fill();
+            cctx.strokeStyle = "#2dd36f";
+            cctx.lineWidth = 2.5;
+            cctx.stroke();
+          } else {
+            // Incorrect answer -> Filled Red
+            cctx.fillStyle = "rgba(235, 68, 90, 0.88)";
+            cctx.fill();
+            cctx.strokeStyle = "#eb445a";
+            cctx.lineWidth = 2.5;
+            cctx.stroke();
+          }
+        } else if (isKey) {
+          // Correct key answer outline (so teacher sees what the correct answer was)
+          cctx.strokeStyle = "#2dd36f";
+          cctx.lineWidth = 2.5;
+          cctx.stroke();
+        } else {
+          // Other unselected bubbles -> subtle outline
+          cctx.strokeStyle = "rgba(160, 160, 175, 0.4)";
+          cctx.lineWidth = 1;
+          cctx.stroke();
+        }
+      } else if (type === "numeric") {
+        if (isWinner) {
+          // Detected student code digit -> Filled Queezy purple
+          cctx.fillStyle = "rgba(106, 90, 224, 0.85)";
+          cctx.fill();
+          cctx.strokeStyle = "#6a5ae0";
+          cctx.lineWidth = 2;
+          cctx.stroke();
+        } else {
+          cctx.strokeStyle = "rgba(160, 160, 175, 0.35)";
+          cctx.lineWidth = 1;
+          cctx.stroke();
+        }
       } else {
-        // Others: Thin Purple Outline (Empty)
-        cctx.strokeStyle = "rgba(128, 0, 128, 0.6)"; // Lighter purple outline
-        cctx.lineWidth = 1;
-        cctx.stroke();
+        // Fallback for surveys or when no answerKeys
+        if (isWinner) {
+          cctx.fillStyle = "rgba(128, 0, 128, 0.8)";
+          cctx.fill();
+          cctx.strokeStyle = "rgba(128, 0, 128, 1)";
+          cctx.lineWidth = 2;
+          cctx.stroke();
+        } else {
+          cctx.strokeStyle = "rgba(128, 0, 128, 0.6)";
+          cctx.lineWidth = 1;
+          cctx.stroke();
+        }
       }
+    }
+
+    if (type === "question") {
+      questionGlobalOffset += rows;
     }
 
     srcPts.delete();
@@ -732,5 +850,5 @@ export function extractAndDrawResults(
   }
 
   gray.delete();
-  return { finalResults };
+  return { finalResults, cleanDataUrl, bubbleCoords };
 }

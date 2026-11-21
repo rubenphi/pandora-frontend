@@ -89,6 +89,10 @@ export default {
       type: String,
       default: null,
     },
+    answerKeys: {
+      type: Array,
+      default: () => [],
+    },
   },
   emits: ["scan-complete", "scan-cancelled"],
   setup(props, { emit, expose }) {
@@ -432,13 +436,15 @@ export default {
       const { correctedCanvas, correctedMat, matrix } =
         performPerspectiveCorrection(OMR_STATE, snapshotCanvas, labelMap);
 
-      const { finalResults } = extractAndDrawResults(
-        OMR_STATE,
-        correctedCanvas,
-        correctedMat,
-        matrix,
-        labelMap
-      );
+      const { finalResults, cleanDataUrl, bubbleCoords } =
+        extractAndDrawResults(
+          OMR_STATE,
+          correctedCanvas,
+          correctedMat,
+          matrix,
+          labelMap,
+          props.answerKeys
+        );
 
       cv.imshow(outputCanvas.value, correctedMat);
 
@@ -459,8 +465,13 @@ export default {
         console.error("Failed to turn off flash after capture", e);
       }
 
-      // Emit an object with both results and the image URL
-      emit("scan-complete", { results: finalResults, imageUrl: imageDataUrl });
+      // Emit an object with results, the image URL, clean image and bubble coordinates
+      emit("scan-complete", {
+        results: finalResults,
+        imageUrl: imageDataUrl,
+        cleanImageUrl: cleanDataUrl,
+        bubbleCoords: bubbleCoords,
+      });
     };
 
     const start = async () => {
