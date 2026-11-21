@@ -11,13 +11,15 @@
         <slot name="row-prefix" :student="student" />
         <span class="student-name">
           {{ student.lastName }} {{ student.name }}
-          <ion-icon
-            v-if="hasEvidence(student.id)"
-            :icon="attachOutline"
-            color="primary"
-            class="evidence-icon"
-            title="Tiene archivo anexo"
-          ></ion-icon>
+          <slot name="name-suffix" :student="student">
+            <ion-icon
+              v-if="hasEvidence(student.id)"
+              :icon="attachOutline"
+              color="primary"
+              class="evidence-icon"
+              title="Tiene archivo anexo"
+            ></ion-icon>
+          </slot>
         </span>
         <span class="student-grade">
           Nota: {{ computeGrade(student) }}
@@ -167,62 +169,76 @@ export default {
 .single-criterion-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 8px;
+  gap: 12px;
+  padding: 4px 0;
 }
 
 .student-row {
-  border: 2px solid transparent;
-  border-radius: 12px;
-  padding: 10px 14px;
-  background: var(--ion-item-background, var(--ion-background-color));
-  transition: border-color 0.2s, box-shadow 0.2s;
+  border: 1.5px solid var(--qz-color-border, #e6e6e6);
+  border-radius: var(--qz-radius-lg, 18px);
+  padding: 14px 16px;
+  background: var(--qz-color-card-bg, #ffffff);
+  box-shadow: 0 2px 8px rgba(12, 9, 42, 0.04);
+  transition: all 0.2s ease;
 }
 
 .student-row--focused {
-  border-color: var(--ion-color-primary);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--ion-color-primary) 15%, transparent);
+  border-color: var(--ion-color-primary, #6a5ae0);
+  box-shadow: 0 0 0 4px rgba(106, 90, 224, 0.15);
 }
 
 .row-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
 .student-name {
   flex: 1;
-  font-weight: 600;
-  font-size: 1em;
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--qz-color-text-main, #0c092a);
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .evidence-icon {
   font-size: 1.2em;
-  color: var(--ion-color-primary);
+  color: var(--ion-color-primary, #6a5ae0);
   vertical-align: middle;
 }
 
 .student-grade {
-  font-size: 0.85em;
-  color: var(--ion-color-medium);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ion-color-primary, #6a5ae0);
+  background: var(--qz-color-purple-bg, #efeefc);
+  padding: 3px 10px;
+  border-radius: 9999px;
+  white-space: nowrap;
 }
 
 .row-body {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(106, 90, 224, 0.12);
 }
 
 .criterion-label {
   flex: 1;
-  font-size: 0.9em;
-  color: var(--ion-color-medium-shade);
-  min-width: 100px;
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--qz-color-text-muted, #858494);
+  min-width: 120px;
 }
 
 .score-input-wrap {
@@ -232,25 +248,33 @@ export default {
 }
 
 .score-input {
-  width: 72px;
+  width: 76px;
   padding: 6px 10px;
-  font-size: 1.1em;
-  font-weight: bold;
-  border: 1.5px solid var(--ion-color-medium);
-  border-radius: 8px;
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+  font-size: 1.1rem;
+  font-weight: 800;
+  border: 1.5px solid rgba(106, 90, 224, 0.25);
+  border-radius: 12px;
   text-align: center;
-  background: var(--ion-background-color);
-  color: var(--ion-text-color);
-  transition: border-color 0.2s;
+  background: var(--qz-color-card-bg, #ffffff);
+  color: var(--qz-color-text-main, #0c092a);
+  transition: all 0.2s ease;
 }
 
 .score-input:focus {
   outline: none;
-  border-color: var(--ion-color-primary);
+  border-color: var(--ion-color-primary, #6a5ae0);
+  box-shadow: 0 0 0 3px rgba(106, 90, 224, 0.15);
 }
 
 .score-max {
-  font-size: 0.9em;
-  color: var(--ion-color-medium);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--qz-color-text-muted, #858494);
+}
+
+.row-suffix {
+  margin-top: 8px;
 }
 </style>

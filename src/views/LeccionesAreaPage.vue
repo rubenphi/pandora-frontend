@@ -1,6 +1,6 @@
 <template>
   <ion-page class="ion-page qz-lecciones-page">
-    <ion-content :fullscreen="true" class="qz-lecciones-content">
+    <ion-content ref="contentRef" :fullscreen="true" class="qz-lecciones-content">
       <div class="qz-page-wrapper">
         <!-- 1. CABECERA HERO QUEEZY PÚRPURA -->
         <div class="qz-hero-header">
@@ -83,6 +83,7 @@
             >
               <div
                 v-for="leccion in lecciones"
+                :id="'lesson-' + leccion.id"
                 :key="leccion.id"
                 class="qz-lesson-card"
                 :class="{ 'is-collapsed': !isLessonExpanded(leccion.id) }"
@@ -515,12 +516,11 @@
 
 <script>
 import axios from "axios";
-import { ref, computed } from "vue";
+import { ref, computed, nextTick } from "vue";
 import {
   tokenHeader,
   usuarioGet,
   adminOprofesor,
-  basedeURL,
   selectedPeriod,
   selectedYear,
   LessonType,
@@ -543,7 +543,6 @@ import {
   alertCircleOutline,
   bookOutline,
 } from "ionicons/icons";
-import MaterialModal from "../components/MaterialModal.vue";
 import MaterialSelectionModal from "../components/MaterialSelectionModal.vue";
 import ImportActivityModal from "../components/ImportActivityModal.vue";
 import DuplicateLessonModal from "../components/DuplicateLessonModal.vue";
@@ -572,7 +571,6 @@ export default {
     const { year, periodo, lessonType: lessonTypeParam } = mroute.params;
     const lessonType = lessonTypeParam || LessonType.STANDARD;
 
-    const backendUrl = basedeURL();
     const cursosUsuario = ref(
       JSON.parse(localStorage.getItem("cursosUsuario")),
     );
@@ -591,9 +589,41 @@ export default {
     const isLoadingCuestionarios = ref(false);
     const isLoadingActivities = ref(false);
 
+    const contentRef = ref(null);
     const openedLessonId = ref(null);
     const openedSection = ref(null);
     const expandedLessonIds = ref([]);
+
+    const scrollToLesson = (lessonId) => {
+      nextTick(() => {
+        setTimeout(async () => {
+          const el = document.getElementById(`lesson-${lessonId}`);
+          if (!el) return;
+          try {
+            const scrollEl = await contentRef.value?.$el?.getScrollElement?.();
+            if (scrollEl) {
+              const targetRect = el.getBoundingClientRect();
+              const containerRect = scrollEl.getBoundingClientRect();
+              const offset =
+                targetRect.top - containerRect.top + scrollEl.scrollTop - 24;
+              scrollEl.scrollTo({
+                top: Math.max(0, offset),
+                behavior: "smooth",
+              });
+            } else {
+              el.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+          } catch (e) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+
+          el.classList.add("qz-lesson--target");
+          setTimeout(() => {
+            el.classList.remove("qz-lesson--target");
+          }, 2400);
+        }, 250);
+      });
+    };
 
     const isLessonExpanded = (lessonId) => {
       return expandedLessonIds.value.includes(lessonId);
@@ -682,19 +712,33 @@ export default {
     };
 
     const goToEditMaterial = (leccionId, materialId) => {
+      sessionStorage.setItem("lastActiveLessonId", String(leccionId));
+      sessionStorage.setItem("lastActiveSection", "materiales");
       router.push(`/crear/material/${leccionId}/${materialId}`);
     };
 
     const goToCreateQuiz = (leccionId) => {
+      sessionStorage.setItem("lastActiveLessonId", String(leccionId));
+      sessionStorage.setItem("lastActiveSection", "cuestionarios");
       router.push(`/crear/cuestionario/${leccionId}`);
     };
 
     const navigateToQuiz = (cuestionario) => {
+      const lId = cuestionario.lesson?.id || openedLessonId.value;
+      if (lId) {
+        sessionStorage.setItem("lastActiveLessonId", String(lId));
+        sessionStorage.setItem("lastActiveSection", "cuestionarios");
+      }
       localStorage.setItem("quizSelected", JSON.stringify(cuestionario));
       router.push(cuestionario.url);
     };
 
     const navigateToActivity = (actividad) => {
+      const lId = actividad.lesson?.id || openedLessonId.value;
+      if (lId) {
+        sessionStorage.setItem("lastActiveLessonId", String(lId));
+        sessionStorage.setItem("lastActiveSection", "actividades");
+      }
       router.push(actividad.url);
     };
 
@@ -708,22 +752,13 @@ export default {
       }
     };
 
-    const openMaterial = async (material) => {
-      const modal = await modalController.create({
-        component: MaterialModal,
-        componentProps: {
-          material: {
-            id: material.id,
-            name: material.name,
-            type: material.type,
-            url: backendUrl + material.url,
-            lesson: material.lesson,
-            title: material.title,
-            content: material.content,
-          },
-        },
-      });
-      modal.present();
+    const openMaterial = (material) => {
+      const lId = material.lesson?.id || openedLessonId.value;
+      if (lId) {
+        sessionStorage.setItem("lastActiveLessonId", String(lId));
+        sessionStorage.setItem("lastActiveSection", "materiales");
+      }
+      router.push(`/material/${material.id}`);
     };
 
     const toggleSection = (leccionId, section) => {
@@ -832,6 +867,8 @@ export default {
           {
             text: "Crear Material Nuevo",
             handler: () => {
+              sessionStorage.setItem("lastActiveLessonId", String(lessonId));
+              sessionStorage.setItem("lastActiveSection", "materiales");
               router.push(`/crear/material/${lessonId}`);
             },
           },
@@ -849,6 +886,8 @@ export default {
               const { data: selectedMaterial } = await modal.onWillDismiss();
 
               if (selectedMaterial) {
+                sessionStorage.setItem("lastActiveLessonId", String(lessonId));
+                sessionStorage.setItem("lastActiveSection", "materiales");
                 sessionStorage.setItem(
                   "copiedMaterial",
                   JSON.stringify(selectedMaterial),
@@ -947,6 +986,8 @@ export default {
           {
             text: "Crear Actividad Nueva",
             handler: () => {
+              sessionStorage.setItem("lastActiveLessonId", String(lessonId));
+              sessionStorage.setItem("lastActiveSection", "actividades");
               router.push(`/crear/actividad/${lessonId}`);
             },
           },
@@ -1050,6 +1091,20 @@ export default {
         }
       }
 
+      const earlyLessonId = sessionStorage.getItem("lastActiveLessonId");
+      const earlySection = sessionStorage.getItem("lastActiveSection");
+      if (earlyLessonId && lecciones.value && lecciones.value.length > 0) {
+        const earlyTarget = Number(earlyLessonId);
+        if (!expandedLessonIds.value.includes(earlyTarget)) {
+          expandedLessonIds.value.push(earlyTarget);
+        }
+        openedLessonId.value = earlyTarget;
+        if (earlySection) {
+          openedSection.value = earlySection;
+        }
+        scrollToLesson(earlyTarget);
+      }
+
       await axios
         .get(
           `/lessons?courseId=${curso}&areaId=${area}&periodId=${
@@ -1058,7 +1113,7 @@ export default {
             year || storedYearVal ? "&year=" + (year || storedYearVal) : ""
           }&exist=true&type=${lessonType}`,
         )
-        .then((response) => {
+        .then(async (response) => {
           lecciones.value = response.data
             .map((leccion) => ({
               id: leccion.id,
@@ -1070,6 +1125,34 @@ export default {
               type: leccion.type,
             }))
             .sort((a, b) => new Date(b.date) - new Date(a.date) || b.id - a.id);
+
+          const savedLessonId = sessionStorage.getItem("lastActiveLessonId");
+          const savedSection = sessionStorage.getItem("lastActiveSection");
+
+          if (savedLessonId) {
+            const targetId = Number(savedLessonId);
+            const found = lecciones.value.find((l) => l.id === targetId);
+            if (found) {
+              if (!expandedLessonIds.value.includes(targetId)) {
+                expandedLessonIds.value.push(targetId);
+              }
+              openedLessonId.value = targetId;
+              if (savedSection) {
+                openedSection.value = savedSection;
+                if (savedSection === "materiales") {
+                  await materialesConsulta(targetId);
+                } else if (savedSection === "cuestionarios") {
+                  await cuestionarioConsulta(targetId);
+                } else if (savedSection === "actividades") {
+                  await actividadesConsulta(targetId);
+                }
+              }
+              scrollToLesson(targetId);
+              sessionStorage.removeItem("lastActiveLessonId");
+              sessionStorage.removeItem("lastActiveSection");
+              return;
+            }
+          }
 
           if (
             lecciones.value.length > 0 &&
@@ -1092,6 +1175,7 @@ export default {
     });
 
     return {
+      contentRef,
       adminOProfesor,
       area,
       curso,
@@ -1350,6 +1434,11 @@ export default {
   box-shadow: 0 6px 20px -4px rgba(106, 90, 224, 0.08);
   border: 1px solid rgba(106, 90, 224, 0.04);
   transition: padding 0.2s ease, box-shadow 0.2s ease;
+}
+
+.qz-lesson-card.qz-lesson--target {
+  box-shadow: 0 0 0 2.5px var(--ion-color-primary, #6a5ae0), 0 8px 24px rgba(106, 90, 224, 0.2) !important;
+  transition: box-shadow 0.3s ease;
 }
 
 .qz-lesson-card.is-collapsed {

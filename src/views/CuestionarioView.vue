@@ -456,11 +456,15 @@ export default {
     };
 
     const goBack = () => {
+      const l = cuestionario.value?.lesson;
+      if (l?.id) {
+        sessionStorage.setItem("lastActiveLessonId", String(l.id));
+        sessionStorage.setItem("lastActiveSection", "cuestionarios");
+      }
       if (
-        cuestionario.value?.lesson?.course?.id &&
-        cuestionario.value?.lesson?.area?.id
+        l?.course?.id &&
+        l?.area?.id
       ) {
-        const l = cuestionario.value.lesson;
         router.push(
           `/lecciones/${l.course.id}/${l.area.id}/${l.period?.id || ""}/${
             l.year || ""
@@ -701,6 +705,14 @@ export default {
               course: response.data.course,
               institute: response.data.institute,
             };
+
+            if (response.data.lesson?.id) {
+              sessionStorage.setItem(
+                "lastActiveLessonId",
+                String(response.data.lesson.id),
+              );
+              sessionStorage.setItem("lastActiveSection", "cuestionarios");
+            }
 
             if (!admin.value) {
               cuestionario.value.questions =

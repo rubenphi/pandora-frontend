@@ -7,12 +7,12 @@
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
-        <ion-buttons v-if="materialId" slot="end">
-          <ion-button @click="deleteMaterial()">
+        <ion-title>{{ pageTitle }}</ion-title>
+        <ion-buttons v-if="activityId" slot="end">
+          <ion-button @click="eliminarActividad">
             <ion-icon :icon="trashOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
-        <ion-title>{{ pageTitle }}</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -20,106 +20,47 @@
         <ion-item>
           <ion-label position="stacked">Título</ion-label>
           <ion-input
-            v-model="materialForm.title"
+            v-model="activityForm.title"
             type="text"
             required
           ></ion-input>
         </ion-item>
 
         <ion-item>
-          <ion-label>Tipo de Material</ion-label>
-
-          <ion-select
-            @ionChange="handleTypeChange($event.detail.value)"
-            interfaceOptions="{ cssClass: 'my-custom-interface' }"
-            placeholder="Selecciona un tipo de material"
-            :value="materialForm.type"
+          <ion-label position="stacked"
+            >Clasificaciones (Dimensiones)</ion-label
           >
+          <ion-select
+            v-model="activityForm.classifications"
+            multiple="true"
+            placeholder="Seleccione dimensiones"
+            ok-text="Aceptar"
+            cancel-text="Cancelar"
+          >
+            <ion-select-option value="knowledge"
+              >Saber (Conocimiento)</ion-select-option
             >
-            <ion-select-option value="VIDEO">Video</ion-select-option>
-            <ion-select-option value="PDF">PDF</ion-select-option>
-            <ion-select-option value="IMAGE">Imagen</ion-select-option>
-            <ion-select-option value="AUDIO">Audio</ion-select-option>
-            <ion-select-option value="DOC">Documento</ion-select-option>
-            <ion-select-option value="TEXT_RICH">Texto Largo</ion-select-option>
-            <ion-select-option value="TEXT_SHORT"
-              >Texto Corto</ion-select-option
+            <ion-select-option value="execution"
+              >Hacer (Ejecución)</ion-select-option
+            >
+            <ion-select-option value="behavior"
+              >Ser (Comportamiento)</ion-select-option
             >
           </ion-select>
         </ion-item>
 
-        <ion-item>
-          <ion-label position="stacked"
-            >Contenido o descripción del archivo</ion-label
-          >
+        <ion-item lines="none">
+          <ion-label position="stacked">Instrucciones (Opcional)</ion-label>
         </ion-item>
         <div class="ion-padding-start ion-padding-end ion-padding-bottom">
-          <tiptap-editor v-model="materialForm.content" />
+          <tiptap-editor v-model="activityForm.instructions" />
         </div>
 
-        <ion-item v-if="!isTextType">
-          <ion-label position="stacked">Archivo</ion-label>
-
-          <!-- Botón visible -->
-          <ion-button @click="triggerFileInput" expand="block" color="primary">
-            <ion-icon slot="start" name="cloud-upload-outline"></ion-icon>
-            Seleccionar archivo
-          </ion-button>
-
-          <!-- Input oculto -->
-          <input
-            type="file"
-            ref="hiddenFileInput"
-            @change="handleFileUpload"
-            style="display: none"
-          />
-        </ion-item>
-
-        <ion-item
-          v-if="uploadedFileUrl && !isTextType"
-          :key="materialForm.type + uploadedFileUrl"
-        >
-          <ion-label position="stacked">Vista Previa</ion-label>
-          <div class="preview-container">
-            <img
-              v-if="materialForm.type === 'IMAGE'"
-              :src="previewSource"
-              class="preview-image"
-            />
-            <video
-              v-else-if="materialForm.type === 'VIDEO'"
-              :src="previewSource"
-              controls
-              class="preview-video"
-            ></video>
-            <audio
-              v-else-if="materialForm.type === 'AUDIO'"
-              :src="previewSource"
-              controls
-              class="preview-audio"
-            ></audio>
-            <iframe
-              v-else-if="materialForm.type === 'PDF'"
-              :src="previewSource"
-              class="preview-iframe"
-            ></iframe>
-            <a
-              v-else-if="materialForm.type === 'DOC'"
-              :href="previewSource"
-              target="_blank"
-              class="preview-link"
-              >Ver Documento</a
-            >
-            <ion-text v-else
-              >No hay vista previa disponible para este tipo de
-              archivo.</ion-text
-            >
-          </div>
-        </ion-item>
+        <!-- instituteId will be handled by globalService.usuario.institute.id -->
       </ion-list>
       <div class="ion-padding">
-        <ion-button expand="block" @click="saveMaterial"
-          >Guardar Material</ion-button
+        <ion-button expand="block" @click="saveActivity"
+          >Guardar Actividad</ion-button
         >
       </div>
     </ion-content>
@@ -147,9 +88,8 @@ import {
   IonSelect,
   IonSelectOption,
   alertController,
-  IonText,
 } from "@ionic/vue";
-import { basedeURL, tokenHeader, usuarioGet } from "../globalService";
+import { tokenHeader, usuarioGet } from "../globalService";
 import { arrowBackOutline, trashOutline } from "ionicons/icons";
 import TiptapEditor from "../components/TiptapEditor.vue";
 
@@ -170,287 +110,132 @@ export default {
     IonSelect,
     IonSelectOption,
     TiptapEditor,
-    IonText,
   },
   setup() {
-    const urlBackend = basedeURL();
     const router = useRouter();
     const mroute = useRoute();
-    const lessonId = ref(null);
-    const materialId = ref(null);
-    const usuario = ref(null);
-    const lessonDetails = ref(null);
-    const uploadedFileUrl = ref(null);
-    const originalFileUrl = ref(null);
-    const materialSaved = ref(false);
+    const lessonId = parseInt(mroute.params.lessonId, 10);
+    const activityId = ref(
+      mroute.params.id ? parseInt(mroute.params.id, 10) : null,
+    );
 
-    const materialForm = ref({
-      id: null,
+    const activityForm = ref({
+      id: activityId.value,
       title: "",
-      type: "PDF",
-      content: "",
-      url: "",
-      lessonId: null,
+      instructions: "",
+      classifications: ["execution"],
+      lessonId: lessonId,
       instituteId: null,
     });
-
-    const previewSource = computed(() => {
-      return uploadedFileUrl.value ? urlBackend + uploadedFileUrl.value : null;
-    });
+    const usuario = ref(null);
+    const lessonDetails = ref(null);
 
     const backUrl = ref("");
 
     const pageTitle = computed(() => {
-      return materialId.value ? "Editar Material" : "Crear Material";
+      return activityId.value ? "Editar Actividad" : "Crear Actividad";
     });
-
-    const isTextType = computed(() => {
-      return (
-        materialForm.value.type === "TEXT_RICH" ||
-        materialForm.value.type === "TEXT_SHORT"
-      );
-    });
-
-    const handleTypeChange = (newType) => {
-      // Solo limpiar si realmente cambió el tipo
-      if (materialForm.value.type !== newType) {
-        uploadedFileUrl.value = null;
-        materialForm.value.url = null;
-
-        // Limpiar el input file
-        const fileInput = document.querySelector('input[type="file"]');
-        if (fileInput) {
-          fileInput.value = "";
-        }
-      }
-
-      materialForm.value.type = newType;
-    };
-
-    const hiddenFileInput = ref(null);
-
-    const triggerFileInput = () => {
-      hiddenFileInput.value?.click();
-    };
 
     onIonViewWillEnter(async () => {
-      // 1. Reset dynamic IDs from route
-      lessonId.value = parseInt(mroute.params.lessonId, 10);
-      materialId.value = mroute.params.id ? parseInt(mroute.params.id, 10) : null;
-
-      // 2. Reset form and states
-      materialForm.value = {
-        id: materialId.value,
-        title: "",
-        type: "PDF",
-        content: "",
-        url: "",
-        lessonId: lessonId.value,
-        instituteId: usuarioGet().institute.id,
-      };
-      uploadedFileUrl.value = null;
-      originalFileUrl.value = null;
-      materialSaved.value = false;
-
       usuario.value = usuarioGet();
+      activityForm.value.instituteId = usuario.value.institute.id;
 
       try {
-        const response = await axios.get(`/lessons/${lessonId.value}`, tokenHeader());
+        const response = await axios.get(`/lessons/${lessonId}`, tokenHeader());
         lessonDetails.value = response.data;
 
-        const { course, area, period, year } = lessonDetails.value;
-        backUrl.value = `/lecciones/${course.id}/${area.id}/${period.id}/${year}`;
+        const { course, area, period, year, type } = lessonDetails.value;
+        backUrl.value = `/lecciones/${course.id}/${area.id}/${
+          period.id
+        }/${year}${type ? "/" + type : ""}`;
 
-        // 3. Handle specific loading cases: Edit OR Copy
-        const copiedMaterialString = sessionStorage.getItem("copiedMaterial");
-
-        if (copiedMaterialString) {
-          // Case A: Copying an existing material
-          const copiedMaterial = JSON.parse(copiedMaterialString);
-          materialForm.value.title = copiedMaterial.title;
-          materialForm.value.type = copiedMaterial.type || "PDF";
-          materialForm.value.content = copiedMaterial.content || "";
-          materialForm.value.url = copiedMaterial.url || "";
-          materialForm.value.id = null;
-          materialId.value = null;
-          uploadedFileUrl.value = copiedMaterial.url || null;
-          sessionStorage.removeItem("copiedMaterial");
- 
-        } else if (materialId.value) {
-          // Case B: Editing an existing material
-          const materialResponse = await axios.get(
-            `/materials/${materialId.value}`,
-            tokenHeader()
+        if (activityId.value) {
+          const activityResponse = await axios.get(
+            `/activities/${activityId.value}`,
+            tokenHeader(),
           );
-
-          const { title, type, content, url } = materialResponse.data;
-
-          materialForm.value.title = title;
-          materialForm.value.type = type;
-          materialForm.value.content = content;
-          materialForm.value.url = url;
-
-          uploadedFileUrl.value = url;
-
-          // Set uploadedFileUrl for existing material
-          originalFileUrl.value = url; // Store original file URL
+          activityForm.value.title = activityResponse.data.title;
+          activityForm.value.instructions = activityResponse.data.instructions;
+          activityForm.value.classifications = activityResponse.data
+            .classifications?.length
+            ? activityResponse.data.classifications
+            : ["execution"];
+          activityForm.value.lessonId = activityResponse.data.lesson.id;
+          activityForm.value.instituteId = activityResponse.data.institute.id;
         }
       } catch (error) {
-        console.error("Error fetching lesson or material details:", error);
+        console.error("Error fetching lesson or activity details:", error);
+        return;
       }
     });
 
-    const handleFileUpload = async (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      // Guardar referencia al archivo anterior para eliminarlo después
-      const previousFileUrl = uploadedFileUrl.value;
-
-      uploadedFileUrl.value = null; // Clear previous preview
-
-      const materialType = materialForm.value.type;
-      const fileExtension = file.name.split(".").pop().toLowerCase();
-
-      const allowedExtensions = {
-        PDF: ["pdf"],
-        IMAGE: ["jpg", "jpeg", "png", "gif", "bmp", "webp", "svg"],
-        VIDEO: ["mp4", "webm", "ogg", "mov", "avi", "mkv"],
-        AUDIO: ["mp3", "wav", "ogg", "aac", "flac"],
-        DOC: ["doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "rtf"],
-      };
-
-      const currentAllowed = allowedExtensions[materialType];
-
-      if (currentAllowed && !currentAllowed.includes(fileExtension)) {
-        //cuando se presiona ok se debe refrescar la página
-
-        const alert = await alertController.create({
-          header: "Error de archivo",
-          message: `Para el tipo de material "${materialType}", solo se permiten archivos con las siguientes extensiones: ${currentAllowed.join(
-            ", "
-          )}.`,
-          buttons: ["OK"],
-          backdropDismiss: false,
-          cssClass: "my-custom-alert",
-        });
-
-        await alert.present();
-
-        // Espera a que el usuario cierre la alerta y luego recarga la página
-        await alert.onDidDismiss();
-        location.reload();
-
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append("file", file);
-
+    const saveActivity = async () => {
       try {
-        const response = await axios.post(
-          "/files/upload",
-          formData,
-          tokenHeader()
-        );
-
-        const newFileUrl = response.data.url;
-        uploadedFileUrl.value = newFileUrl;
-
-        // Eliminar el archivo anterior si existe y es diferente al nuevo archivo
-        // Y también diferente al archivo original (para no eliminar el archivo original antes de guardar)
-        if (
-          previousFileUrl &&
-          previousFileUrl !== newFileUrl &&
-          previousFileUrl !== originalFileUrl.value
-        ) {
-          try {
-            const filename = previousFileUrl.split("/").pop();
-            await axios.delete(`/files/uploads/${filename}`, tokenHeader());
-            console.log(`Archivo temporal anterior eliminado: ${filename}`);
-          } catch (error) {
-            console.error(
-              `Error eliminando archivo temporal anterior: ${previousFileUrl}`,
-              error
-            );
-          }
-        }
-      } catch (error) {
-        console.error("Error uploading file:", error);
-      }
-    };
-
-    const saveMaterial = async () => {
-      if (!materialForm.value.title) {
-        const alert = await alertController.create({
-          header: "Error",
-          message: "El título es obligatorio.",
-          buttons: ["OK"],
-        });
-        await alert.present();
-        return;
-      }
-
-      // If it's not a text type and a file was uploaded, set the URL
-      if (!isTextType.value && uploadedFileUrl.value) {
-        materialForm.value.url = uploadedFileUrl.value;
-      } else if (!isTextType.value && !uploadedFileUrl.value) {
-        materialForm.value.type = "TEXT_RICH";
-        materialForm.value.url = null;
-      }
-
-      // Prepare data as JSON
-      const materialData = {
-        title: materialForm.value.title,
-        type: materialForm.value.type,
-        lessonId: Number(materialForm.value.lessonId),
-        instituteId: Number(materialForm.value.instituteId),
-        exist: true,
-        content: materialForm.value.content,
-        url: materialForm.value.url, // This will be null for text types or if no file uploaded
-      };
-
-      try {
-        if (materialId.value) {
+        if (activityId.value) {
+          delete activityForm.value.id;
           await axios.patch(
-            `/materials/${materialId.value}`,
-            materialData,
-            tokenHeader()
+            `/activities/${activityId.value}`,
+            activityForm.value,
+            tokenHeader(),
           );
         } else {
-          await axios.post("/materials", materialData, tokenHeader());
+          delete activityForm.value.id;
+          await axios
+            .post("/activities", activityForm.value, tokenHeader())
+            .then((response) => {
+              activityId.value = response.data.id;
+            });
         }
-
-        materialSaved.value = true; // Mark as saved
-        router.push(backUrl.value);
+        router.push(`/actividades/${activityId.value}`);
       } catch (error) {
-        console.error("Error saving material:", error);
+        console.error("Error saving activity:", error);
+        alert("Error al guardar la actividad. Por favor, intente de nuevo.");
       }
     };
 
-    const deleteMaterial = async () => {
+    const goBack = () => {
+      if (lessonId) {
+        sessionStorage.setItem("lastActiveLessonId", String(lessonId));
+        sessionStorage.setItem("lastActiveSection", "actividades");
+      }
+      if (backUrl.value) {
+        router.push(backUrl.value);
+      } else {
+        router.back();
+      }
+    };
+
+    const eliminarActividad = async () => {
       const alert = await alertController.create({
-        header: "¿Estás seguro?",
-        message: "Esta acción eliminará el material permanentemente.",
+        header: "Confirmar eliminación",
+        message:
+          "¿Estás seguro de que quieres eliminar esta actividad permanentemente?",
         buttons: [
-          {
-            text: "Cancelar",
-            role: "cancel",
-          },
+          { text: "Cancelar", role: "cancel" },
           {
             text: "Eliminar",
+            role: "destructive",
             handler: async () => {
               try {
-                await axios.delete(`/materials/${materialId.value}`, tokenHeader());
-                router.push(backUrl.value);
-              } catch (error) {
-                console.error("Error deleting material:", error);
-                const errorAlert = await alertController.create({
-                  header: "Error",
-                  message: "No se pudo eliminar el material.",
-                  buttons: ["OK"],
-                });
-                await errorAlert.present();
+                const criteriaRes = await axios.get(
+                  `/criteria?activityId=${activityId.value}`,
+                  tokenHeader(),
+                );
+                const deleteCriteria = (criteriaRes.data || []).map((c) =>
+                  axios.delete(`/criteria/${c.id}`, tokenHeader()),
+                );
+                await Promise.all(deleteCriteria);
+                await axios.delete(
+                  `/activities/${activityId.value}`,
+                  tokenHeader(),
+                );
+                localStorage.setItem(
+                  "error",
+                  "Actividad eliminada exitosamente.",
+                );
+                router.push(backUrl.value || "/lecciones");
+              } catch (err) {
+                console.error("Error deleting activity:", err);
               }
             },
           },
@@ -459,37 +244,23 @@ export default {
       await alert.present();
     };
 
-    const goBack = () => {
-      if (backUrl.value) {
-        router.push(backUrl.value);
-      } else {
-        router.back();
-      }
-    };
-
     return {
-      triggerFileInput,
-      hiddenFileInput,
-      handleTypeChange,
-      materialForm,
-      urlBackend,
-      saveMaterial,
-      handleFileUpload,
-      isTextType,
+      activityId,
+      activityForm,
+      saveActivity,
       backUrl,
       arrowBackOutline,
+      trashOutline,
       pageTitle,
       goBack,
-      uploadedFileUrl, // Make uploadedFileUrl available in the template
-      previewSource,
-      materialId, // Make materialId available in the template for v-if
-      deleteMaterial,
-      trashOutline,
+      eliminarActividad,
     };
   },
 };
 </script>
+
 <style>
+/* Remove default Tiptap/ProseMirror styles that might conflict */
 .ProseMirror {
   outline: none !important;
   height: 100%; /* Ensure ProseMirror itself takes full height */
@@ -510,7 +281,7 @@ export default {
 }
 
 .editor-content {
-  min-height: 10vh; /* 25% de la altura del viewport */
+  min-height: 25vh; /* 25% de la altura del viewport */
   border: 1px solid var(--ion-color-step-150, #d7d8da); /* Borde para visualizar la altura */
   border-radius: 4px;
   padding: 8px;
@@ -527,38 +298,5 @@ export default {
   outline: none !important; /* Remove the outline on focus */
   text-align: left; /* Ensure text aligns to the left */
   overflow-y: auto; /* Add scrollbar if content overflows vertically */
-}
-
-.preview-container {
-  margin-top: 16px;
-  border: 1px solid #ccc;
-  padding: 10px;
-  border-radius: 8px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 150px; /* Adjust as needed */
-  background-color: #f9f9f9;
-}
-
-.preview-image,
-.preview-video,
-.preview-audio {
-  max-width: 100%;
-  max-height: 200px; /* Adjust as needed */
-  display: block;
-  margin: auto;
-}
-
-.preview-iframe {
-  width: 100%;
-  height: 200px; /* Adjust as needed */
-  border: none;
-}
-
-.preview-link {
-  font-size: 1.1em;
-  color: var(--ion-color-primary);
-  text-decoration: underline;
 }
 </style>

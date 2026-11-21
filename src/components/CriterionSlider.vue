@@ -1,32 +1,28 @@
 <template>
-  <ion-item>
-    <div style="width: 100%; padding: 10px 0">
-      <ion-label class="ion-text-wrap" style="margin-bottom: 8px; font-weight: 500">
-        {{ criterion.description }}
-      </ion-label>
-      <div class="score-input-row">
-        <input
-          class="score-input"
-          type="text"
-          inputmode="decimal"
-          v-model="localValue"
-          :placeholder="`0 – ${criterion.score}`"
-          @blur="handleBlur"
-          @keydown.tab="$emit('tab', $event)"
-        />
-        <span class="score-max">/ {{ criterion.score }}</span>
-      </div>
+  <div class="qz-criterion-row">
+    <span class="qz-criterion-desc" :title="criterion.description">
+      {{ criterion.description }}
+    </span>
+    <div class="score-input-row">
+      <input
+        class="score-input"
+        type="text"
+        inputmode="decimal"
+        v-model="localValue"
+        :placeholder="`0–${criterion.score}`"
+        @blur="handleBlur"
+        @keydown.tab="$emit('tab', $event)"
+      />
+      <span class="score-max">/ {{ criterion.score }}</span>
     </div>
-  </ion-item>
+  </div>
 </template>
 
 <script>
 import { ref, watch } from "vue";
-import { IonItem, IonLabel } from "@ionic/vue";
 
 export default {
   name: "CriterionSlider",
-  components: { IonItem, IonLabel },
   props: {
     criterion: { type: Object, required: true },
     modelValue: { type: Number, default: null },
@@ -67,33 +63,66 @@ export default {
 </script>
 
 <style scoped>
+.qz-criterion-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(106, 90, 224, 0.03);
+  border: 1px solid var(--qz-color-border, rgba(106, 90, 224, 0.1));
+  transition: all 0.15s ease;
+}
+
+.qz-criterion-row:hover {
+  background: rgba(106, 90, 224, 0.06);
+  border-color: rgba(106, 90, 224, 0.22);
+}
+
+.qz-criterion-desc {
+  flex: 1;
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--qz-color-text-main, #0c092a);
+  line-height: 1.3;
+  word-break: break-word;
+}
+
 .score-input-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
+  flex-shrink: 0;
 }
 
 .score-input {
-  width: 80px;
-  padding: 6px 10px;
-  font-size: 1.1em;
-  font-weight: bold;
-  border: 1.5px solid var(--ion-color-medium);
+  width: 58px;
+  height: 30px;
+  padding: 2px 6px;
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+  font-size: 0.95rem;
+  font-weight: 700;
+  border: 1.5px solid rgba(106, 90, 224, 0.25);
   border-radius: 8px;
   text-align: center;
-  background: var(--ion-background-color);
-  color: var(--ion-text-color);
-  transition: border-color 0.2s;
+  background: var(--qz-color-card-bg, #ffffff);
+  color: var(--qz-color-text-main, #0c092a);
+  transition: all 0.2s ease;
 }
 
 .score-input:focus {
   outline: none;
-  border-color: var(--ion-color-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ion-color-primary) 20%, transparent);
+  border-color: var(--ion-color-primary, #6a5ae0);
+  box-shadow: 0 0 0 3px rgba(106, 90, 224, 0.15);
 }
 
 .score-max {
-  font-size: 0.9em;
-  color: var(--ion-color-medium);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--qz-color-text-muted, #858494);
+  min-width: 32px;
 }
 </style>

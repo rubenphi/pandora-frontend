@@ -233,6 +233,14 @@ const routes = [
         path: "actividades/:id",
         component: () => import("@/views/ActividadView.vue"),
       },
+      {
+        path: "material/:id",
+        component: () => import("@/views/MaterialView.vue"),
+      },
+      {
+        path: "materiales/:id",
+        component: () => import("@/views/MaterialView.vue"),
+      },
 
       {
         path: "actividad/:id/evaluar-pares",

@@ -358,6 +358,10 @@ ion-tab-button.tab-selected ion-icon {
   .qz-statement-card,
   .qz-response-card,
   .qz-option-card,
+  .qz-activity-actions-card,
+  .qz-criteria-sheet,
+  .qz-criterion-editor-card,
+  .qz-import-panel-card,
   .qz-form-card,
   .qz-config-card,
   .qz-empty-card,
@@ -375,6 +379,14 @@ ion-tab-button.tab-selected ion-icon {
   .qz-lesson-chip-card,
   .qz-qr-card,
   .qz-item-card,
+  .qz-tools-card,
+  .qz-list-header-bar,
+  .qz-delivery-card,
+  .qz-team-modal-content,
+  .qz-custom-picker-section,
+  .qz-student-accordion-item,
+  .qz-accordion-body-wrap,
+  .student-row,
   .panel-card,
   .report-header-card,
   .course-section {
@@ -386,8 +398,28 @@ ion-tab-button.tab-selected ion-icon {
 
   /* 1.1 Cabeceras Hero (Evita la franja lila clara #EFEEFC sobre las listas) */
   .qz-hero-header,
+  .qz-hero-banner,
   .qz-panel-hero {
     background: linear-gradient(180deg, #5A4AD1 0%, #352B6A 80%, var(--qz-color-purple-bg, #120F24) 100%) !important;
+  }
+
+  .qz-sticky-header {
+    background: linear-gradient(
+      180deg,
+      #1D1838 0%,
+      #231D42 50%,
+      #28214B 75%,
+      rgba(40, 33, 75, 0.7) 88%,
+      rgba(29, 24, 56, 0) 100%
+    ) !important;
+    border-bottom: none !important;
+    box-shadow: none !important;
+    margin-bottom: -22px;
+  }
+
+  .qz-sticky-header::after {
+    display: none !important;
+    content: none !important;
   }
 
   /* 1.2 Sub-tarjetas, Opciones Desplegables y Bloques Internos */
@@ -417,6 +449,16 @@ ion-tab-button.tab-selected ion-icon {
   .qz-modal-sheet,
   .qz-modal-select,
   .qz-modal-input,
+  .qz-material-card,
+  .qz-zoom-toolbar,
+  .qz-media-toolbar,
+  .qz-zoom-hint,
+  .qz-audio-card,
+  .qz-file-card,
+  .qz-loading-card,
+  .qz-error-card,
+  .qz-instructions-box,
+  .qz-criterion-card,
   .student-card {
     background: #231D42 !important;
     border-color: rgba(255, 255, 255, 0.08) !important;
@@ -426,8 +468,26 @@ ion-tab-button.tab-selected ion-icon {
   .qz-module-row,
   .qz-choice-card,
   .qz-upload-dropzone,
+  .qz-type-chip,
+  .qz-editor-container,
+  .qz-preview-card,
   .qz-image-preview-card,
   .qz-preview-frame,
+  .qz-textarea-control,
+  .qz-row-textarea,
+  .qz-score-input-wrap,
+  .qz-row-score-wrap,
+  .qz-code-textarea,
+  .qz-import-btn,
+  .qz-modal-filters-box,
+  .qz-select-wrap,
+  .qz-lesson-accordion,
+  .qz-lesson-acc-header,
+  .qz-lesson-acc-content,
+  .qz-activity-accordion,
+  .qz-activity-acc-header,
+  .qz-activity-acc-content,
+  .qz-criterion-select-row,
   .qz-toggle-card,
   .qz-import-card,
   .qz-question-select-card {
@@ -438,8 +498,10 @@ ion-tab-button.tab-selected ion-icon {
 
   .qz-module-row.is-expanded,
   .qz-choice-card.is-selected,
+  .qz-type-chip.is-selected,
   .qz-toggle-card.is-active,
   .qz-import-card.is-selected,
+  .qz-criterion-select-row.is-selected,
   .qz-question-select-card.is-active {
     background: rgba(124, 110, 242, 0.22) !important;
     border-color: #7C6EF2 !important;
@@ -452,6 +514,9 @@ ion-tab-button.tab-selected ion-icon {
 
   /* 2. Modales, Drawers y Hojas Emergentes */
   .qz-modal-sheet,
+  .qz-modal-top-bar,
+  .qz-modal-docked-footer,
+  .qz-modal-results-scroll,
   .qz-sheet-container,
   .qz-tier-modal-sheet,
   .qz-modal-container,
@@ -496,7 +561,21 @@ ion-tab-button.tab-selected ion-icon {
   .qz-responses-count-pill,
   .qz-add-option-btn,
   .qz-option-letter,
-  .qz-no-group-icon-wrap {
+  .qz-no-group-icon-wrap,
+  .qz-btn--outline,
+  .qz-item-edit-btn,
+  .qz-add-criterion-btn,
+  .qz-role-badge,
+  .qz-score-badge,
+  .qz-criterion-points-pill,
+  .qz-reorder-handle,
+  .qz-mini-add-btn,
+  .qz-sheet-quick-add,
+  .qz-add-inline-btn,
+  .qz-row-drag-handle,
+  .qz-footer-badge,
+  .qz-add-icon-circle,
+  .qz-modal-close-btn {
     background: #28214B !important;
     color: #F7F7FD !important;
     border-color: rgba(255, 255, 255, 0.12) !important;
@@ -516,6 +595,7 @@ ion-tab-button.tab-selected ion-icon {
 
   .qz-btn--delete,
   .qz-opt-delete-btn,
+  .qz-delete-criterion-btn,
   .qz-btn-remove {
     background: rgba(255, 86, 86, 0.16) !important;
     color: #FF5656 !important;
@@ -622,6 +702,23 @@ ion-tab-button.tab-selected ion-icon {
   .qz-member-chip-name,
   .qz-info-value,
   .qz-note-title,
+  .qz-audio-title,
+  .qz-file-title,
+  .qz-type-chip-label,
+  .qz-dropzone-title,
+  .qz-rich-content,
+  .qz-rich-content *,
+  .qz-actions-title,
+  .qz-criterion-desc,
+  .qz-criterion-name,
+  .qz-import-panel-title,
+  .qz-number-input,
+  .qz-row-score-input,
+  .qz-sheet-title,
+  .qz-acc-lesson-topic,
+  .qz-activity-title,
+  .qz-criterion-desc-text,
+  .qz-code-textarea,
   .qz-member-name-label h3,
   .qz-area-title-label h4,
   ion-header ion-toolbar {
@@ -632,6 +729,7 @@ ion-tab-button.tab-selected ion-icon {
   .alert-sub-title,
   .alert-message,
   .qz-card-subtitle,
+  .qz-dropzone-sub,
   .qz-card-sub,
   .qz-empty-desc,
   .qz-lesson-course,
@@ -676,6 +774,9 @@ ion-tab-button.tab-selected ion-icon {
   .qz-divider-text,
   .qz-empty-text,
   .qz-waiting-text,
+  .qz-zoom-hint span,
+  .qz-audio-sub,
+  .qz-file-sub,
   .qz-options-title,
   .qz-no-group-text,
   .qz-max-badge,
@@ -694,6 +795,11 @@ ion-tab-button.tab-selected ion-icon {
   .qz-area-idle-box,
   .qz-notes-empty,
   .qz-period-select,
+  .qz-section-sub,
+  .qz-import-panel-hint,
+  .qz-code-label,
+  .qz-modal-desc,
+  .qz-empty-notice,
   .qz-winners-sub {
     color: #9E9BB8 !important;
   }
@@ -820,12 +926,31 @@ ion-tab-button.tab-selected ion-icon {
     color: #FFA3A3 !important;
   }
 
+  .qz-highlight-banner {
+    background: rgba(255, 143, 162, 0.12) !important;
+    border-color: rgba(255, 143, 162, 0.35) !important;
+  }
+
+  .qz-highlight-title {
+    color: #FF8FA2 !important;
+  }
+
+  .qz-highlight-desc {
+    color: #9E9BB8 !important;
+  }
+
+  .qz-highlight-icon {
+    background: #28214B !important;
+    color: #FF8FA2 !important;
+  }
+
   /* 9. Filas de Preguntas, Respuestas, Opciones y Módulos */
   .qz-question-row,
   .qz-option-row,
   .qz-answer-row,
   .qz-module-row,
-  .qz-tier-item-row {
+  .qz-tier-item-row,
+  .qz-criterion-row {
     background: #1D1838 !important;
     color: #F7F7FD !important;
     border-color: rgba(255, 255, 255, 0.08) !important;
@@ -835,6 +960,7 @@ ion-tab-button.tab-selected ion-icon {
   .qz-question-row:hover,
   .qz-option-row:hover,
   .qz-answer-row:hover,
+  .qz-criterion-row:hover,
   .qz-module-row:hover {
     background: #28214B !important;
   }
@@ -1005,6 +1131,32 @@ ion-popover ion-item ion-label {
 ion-modal ion-content {
 
   --padding-bottom: 25%;
+}
+
+/* QUEEZY MODAL SIZES & ROUNDED OVERLAYS */
+ion-modal.qz-activity-import-modal {
+  --border-radius: 28px !important;
+  --max-width: 680px !important;
+  --width: 92% !important;
+  --height: 85% !important;
+  --box-shadow: 0 20px 60px rgba(106, 90, 224, 0.3) !important;
+}
+
+ion-modal.qz-activity-import-modal::part(content) {
+  border-radius: 28px !important;
+  overflow: hidden !important;
+}
+
+ion-modal.qz-import-modal {
+  --border-radius: 28px !important;
+  --max-width: 560px !important;
+  --width: 90% !important;
+  --height: auto !important;
+}
+
+ion-modal.qz-import-modal::part(content) {
+  border-radius: 28px !important;
+  overflow: hidden !important;
 }
 
 ion-popover [popover]:not(:popover-open):not(dialog[open]) {
@@ -1196,5 +1348,384 @@ ion-alert ion-backdrop {
 }
 .alert-button:not(.alert-button-role-cancel):not(.alert-button-role-destructive):active {
   filter: brightness(0.92) !important;
+}
+
+/* ==========================================================================
+   QUEEZY GLOBAL ACTION SHEET STYLING (Modo md e ios)
+   ========================================================================== */
+ion-action-sheet {
+  --background: var(--qz-color-card-bg, #FFFFFF);
+  --color: var(--qz-color-text-main, #0C092A);
+  --backdrop-opacity: 0.45;
+  --button-background: transparent;
+  --button-color: var(--qz-color-text-main, #0C092A);
+  --button-color-activated: var(--qz-color-purple-primary, #6A5AE0);
+  --button-color-hover: var(--qz-color-purple-primary, #6A5AE0);
+  --button-color-focused: var(--qz-color-purple-primary, #6A5AE0);
+  --max-width: 440px;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif) !important;
+}
+
+ion-action-sheet ion-backdrop {
+  --backdrop-opacity: 0.45;
+  background: rgba(12, 9, 42, 0.45) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+}
+
+.action-sheet-wrapper.ion-overlay-wrapper {
+  max-width: 440px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  margin-bottom: calc(14px + var(--ion-safe-area-bottom, 0px)) !important;
+  width: calc(100% - 24px) !important;
+  box-sizing: border-box !important;
+}
+
+.action-sheet-container {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.action-sheet-group {
+  background: var(--qz-color-card-bg, #FFFFFF) !important;
+  background-image: none !important;
+  border-radius: 24px !important;
+  border: 1px solid var(--qz-color-border, rgba(106, 90, 224, 0.08)) !important;
+  box-shadow: 0 16px 36px -4px rgba(12, 9, 42, 0.12), 0 4px 12px rgba(106, 90, 224, 0.06) !important;
+  padding: 6px 0 !important;
+  overflow: hidden !important;
+  margin-bottom: 8px !important;
+}
+
+.action-sheet-group-cancel {
+  margin-top: 8px !important;
+  margin-bottom: 0 !important;
+  border-radius: 24px !important;
+  background: var(--qz-color-card-bg, #FFFFFF) !important;
+  background-image: none !important;
+  border: 1px solid var(--qz-color-border, rgba(106, 90, 224, 0.08)) !important;
+  box-shadow: 0 10px 24px rgba(12, 9, 42, 0.08) !important;
+  padding: 6px 0 !important;
+}
+
+.action-sheet-title {
+  font-family: var(--qz-font-family, 'Rubik', sans-serif) !important;
+  font-size: 17px !important;
+  font-weight: 800 !important;
+  color: var(--qz-color-text-main, #0C092A) !important;
+  text-align: center !important;
+  padding: 18px 20px 6px 20px !important;
+  min-height: auto !important;
+  letter-spacing: -0.2px !important;
+  background: transparent !important;
+  background-image: none !important;
+  border-bottom: none !important;
+}
+
+.action-sheet-sub-title {
+  font-family: var(--qz-font-family, 'Rubik', sans-serif) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--qz-color-text-muted, #858494) !important;
+  text-align: center !important;
+  padding: 0 20px 14px 20px !important;
+  line-height: 1.4 !important;
+  border-bottom: 1px solid var(--qz-color-border, rgba(106, 90, 224, 0.08)) !important;
+  margin-bottom: 4px !important;
+}
+
+.action-sheet-button {
+  font-family: var(--qz-font-family, 'Rubik', sans-serif) !important;
+  font-size: 14.5px !important;
+  font-weight: 700 !important;
+  color: var(--qz-color-text-main, #0C092A) !important;
+  height: 50px !important;
+  min-height: 50px !important;
+  margin: 4px 10px !important;
+  width: calc(100% - 20px) !important;
+  border-radius: 14px !important;
+  background: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  outline: none !important;
+  display: flex !important;
+  align-items: center !important;
+  cursor: pointer !important;
+  transition: background-color 0.15s ease, transform 0.1s ease !important;
+}
+
+.action-sheet-button:active,
+.action-sheet-button.ion-activated {
+  background: var(--qz-color-purple-light, #F3F1FD) !important;
+  transform: scale(0.98) !important;
+}
+
+.action-sheet-button-inner {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: 100% !important;
+  padding: 0 14px !important;
+  gap: 12px !important;
+  font-family: var(--qz-font-family, 'Rubik', sans-serif) !important;
+}
+
+.action-sheet-icon {
+  color: var(--qz-color-purple-primary, #6A5AE0) !important;
+  font-size: 22px !important;
+  min-width: 24px !important;
+  margin: 0 !important;
+  flex-shrink: 0 !important;
+}
+
+/* Botón Destructivo */
+.action-sheet-button.action-sheet-destructive,
+.action-sheet-destructive {
+  color: var(--qz-color-red-wrong, #FF5656) !important;
+}
+
+.action-sheet-button.action-sheet-destructive .action-sheet-icon,
+.action-sheet-destructive .action-sheet-icon {
+  color: var(--qz-color-red-wrong, #FF5656) !important;
+}
+
+.action-sheet-button.action-sheet-destructive:active,
+.action-sheet-button.action-sheet-destructive.ion-activated {
+  background: rgba(255, 86, 86, 0.1) !important;
+}
+
+/* Botón Cancelar (Modo Claro / Base) */
+.action-sheet-button.action-sheet-cancel,
+.action-sheet-cancel {
+  background: #EFEEFC !important;
+  color: var(--qz-color-purple-primary, #6A5AE0) !important;
+  font-weight: 800 !important;
+  border-radius: var(--qz-radius-full, 9999px) !important;
+  border: 1px solid #ECEAF9 !important;
+  justify-content: center !important;
+  margin-top: 4px !important;
+  margin-bottom: 4px !important;
+}
+
+.action-sheet-button.action-sheet-cancel .action-sheet-button-inner,
+.action-sheet-cancel .action-sheet-button-inner {
+  justify-content: center !important;
+}
+
+.action-sheet-button.action-sheet-cancel .action-sheet-icon,
+.action-sheet-cancel .action-sheet-icon {
+  color: var(--qz-color-purple-primary, #6A5AE0) !important;
+}
+
+.action-sheet-button.action-sheet-cancel:active,
+.action-sheet-cancel:active {
+  background: #E4E1F8 !important;
+  transform: scale(0.98) !important;
+}
+
+/* ==========================================================================
+   QUEEZY ACTION SHEET - MODO OSCURO (DARK MODE)
+   Garantizado mediante @media (prefers-color-scheme: dark) y selectores de clase
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  ion-action-sheet {
+    --background: #1D1838 !important;
+    --color: #F7F7FD !important;
+    --backdrop-opacity: 0.65;
+    --button-background: transparent !important;
+    --button-color: #F7F7FD !important;
+    --button-color-activated: #A39BF0 !important;
+    --button-color-hover: #A39BF0 !important;
+    --button-color-focused: #A39BF0 !important;
+  }
+
+  ion-action-sheet ion-backdrop {
+    --backdrop-opacity: 0.65;
+    background: rgba(0, 0, 0, 0.65) !important;
+  }
+
+  .action-sheet-group,
+  .action-sheet-group-cancel {
+    background: #1D1838 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.65) !important;
+  }
+
+  .action-sheet-title {
+    color: #F7F7FD !important;
+  }
+
+  .action-sheet-sub-title {
+    color: #9E9BB8 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .action-sheet-button {
+    color: #F7F7FD !important;
+  }
+
+  .action-sheet-button:active,
+  .action-sheet-button.ion-activated {
+    background: #28214B !important;
+  }
+
+  .action-sheet-icon {
+    color: #A39BF0 !important;
+  }
+
+  .action-sheet-button.action-sheet-destructive,
+  .action-sheet-destructive {
+    color: #FF8FA2 !important;
+  }
+
+  .action-sheet-button.action-sheet-destructive .action-sheet-icon,
+  .action-sheet-destructive .action-sheet-icon {
+    color: #FF8FA2 !important;
+  }
+
+  .action-sheet-button.action-sheet-destructive:active,
+  .action-sheet-button.action-sheet-destructive.ion-activated {
+    background: rgba(255, 143, 162, 0.16) !important;
+  }
+
+  .action-sheet-button.action-sheet-cancel,
+  .action-sheet-cancel {
+    background: #28214B !important;
+    color: #A39BF0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .action-sheet-button.action-sheet-cancel .action-sheet-icon,
+  .action-sheet-cancel .action-sheet-icon {
+    color: #A39BF0 !important;
+  }
+
+  .action-sheet-button.action-sheet-cancel:active,
+  .action-sheet-cancel:active {
+    background: #352B6A !important;
+  }
+}
+
+/* Soporte para clases explícitas de modo oscuro (.dark, body.dark, html.dark) */
+body.dark ion-action-sheet,
+html.dark ion-action-sheet,
+.dark ion-action-sheet {
+  --background: #1D1838 !important;
+  --color: #F7F7FD !important;
+  --backdrop-opacity: 0.65;
+  --button-background: transparent !important;
+  --button-color: #F7F7FD !important;
+  --button-color-activated: #A39BF0 !important;
+  --button-color-hover: #A39BF0 !important;
+  --button-color-focused: #A39BF0 !important;
+}
+
+body.dark ion-action-sheet ion-backdrop,
+html.dark ion-action-sheet ion-backdrop,
+.dark ion-action-sheet ion-backdrop {
+  background: rgba(0, 0, 0, 0.65) !important;
+}
+
+body.dark .action-sheet-group,
+html.dark .action-sheet-group,
+.dark .action-sheet-group,
+body.dark .action-sheet-group-cancel,
+html.dark .action-sheet-group-cancel,
+.dark .action-sheet-group-cancel {
+  background: #1D1838 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.65) !important;
+}
+
+body.dark .action-sheet-title,
+html.dark .action-sheet-title,
+.dark .action-sheet-title {
+  color: #F7F7FD !important;
+}
+
+body.dark .action-sheet-sub-title,
+html.dark .action-sheet-sub-title,
+.dark .action-sheet-sub-title {
+  color: #9E9BB8 !important;
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark .action-sheet-button,
+html.dark .action-sheet-button,
+.dark .action-sheet-button {
+  color: #F7F7FD !important;
+}
+
+body.dark .action-sheet-button:active,
+body.dark .action-sheet-button.ion-activated,
+html.dark .action-sheet-button:active,
+html.dark .action-sheet-button.ion-activated,
+.dark .action-sheet-button:active,
+.dark .action-sheet-button.ion-activated {
+  background: #28214B !important;
+}
+
+body.dark .action-sheet-icon,
+html.dark .action-sheet-icon,
+.dark .action-sheet-icon {
+  color: #A39BF0 !important;
+}
+
+body.dark .action-sheet-button.action-sheet-destructive,
+html.dark .action-sheet-button.action-sheet-destructive,
+.dark .action-sheet-button.action-sheet-destructive,
+body.dark .action-sheet-destructive,
+html.dark .action-sheet-destructive,
+.dark .action-sheet-destructive {
+  color: #FF8FA2 !important;
+}
+
+body.dark .action-sheet-button.action-sheet-destructive .action-sheet-icon,
+html.dark .action-sheet-button.action-sheet-destructive .action-sheet-icon,
+.dark .action-sheet-button.action-sheet-destructive .action-sheet-icon,
+body.dark .action-sheet-destructive .action-sheet-icon,
+html.dark .action-sheet-destructive .action-sheet-icon,
+.dark .action-sheet-destructive .action-sheet-icon {
+  color: #FF8FA2 !important;
+}
+
+body.dark .action-sheet-button.action-sheet-destructive:active,
+body.dark .action-sheet-button.action-sheet-destructive.ion-activated,
+html.dark .action-sheet-button.action-sheet-destructive:active,
+html.dark .action-sheet-button.action-sheet-destructive.ion-activated,
+.dark .action-sheet-button.action-sheet-destructive:active,
+.dark .action-sheet-button.action-sheet-destructive.ion-activated {
+  background: rgba(255, 143, 162, 0.16) !important;
+}
+
+body.dark .action-sheet-button.action-sheet-cancel,
+html.dark .action-sheet-button.action-sheet-cancel,
+.dark .action-sheet-button.action-sheet-cancel,
+body.dark .action-sheet-cancel,
+html.dark .action-sheet-cancel,
+.dark .action-sheet-cancel {
+  background: #28214B !important;
+  color: #A39BF0 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark .action-sheet-button.action-sheet-cancel .action-sheet-icon,
+html.dark .action-sheet-button.action-sheet-cancel .action-sheet-icon,
+.dark .action-sheet-button.action-sheet-cancel .action-sheet-icon,
+body.dark .action-sheet-cancel .action-sheet-icon,
+html.dark .action-sheet-cancel .action-sheet-icon,
+.dark .action-sheet-cancel .action-sheet-icon {
+  color: #A39BF0 !important;
+}
+
+body.dark .action-sheet-button.action-sheet-cancel:active,
+html.dark .action-sheet-button.action-sheet-cancel:active,
+.dark .action-sheet-button.action-sheet-cancel:active,
+body.dark .action-sheet-cancel:active,
+html.dark .action-sheet-cancel:active,
+.dark .action-sheet-cancel:active {
+  background: #352B6A !important;
 }
 

@@ -187,6 +187,10 @@ export default {
     };
 
     const goBack = () => {
+      if (lessonId) {
+        sessionStorage.setItem("lastActiveLessonId", String(lessonId));
+        sessionStorage.setItem("lastActiveSection", "actividades");
+      }
       if (backUrl.value) {
         router.push(backUrl.value);
       } else {
