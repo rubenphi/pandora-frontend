@@ -1,6 +1,21 @@
 import { FileSharer } from "@byteowls/capacitor-filesharer";
 import { Capacitor } from "@capacitor/core";
 import { alertController } from "@ionic/vue";
+import axios from "axios";
+
+/**
+ * Helper para verificar si un error de FileSharer o exportación fue debido a cancelación o cierre del usuario
+ */
+export function isShareCancelled(error) {
+  const msg = (error?.message || (typeof error === "string" ? error : "")).toLowerCase();
+  return (
+    msg.includes("cancelled") ||
+    msg.includes("user_cancelled") ||
+    msg.includes("dismiss") ||
+    msg.includes("user back") ||
+    msg.includes("back button")
+  );
+}
 
 // === CONFIGURACIÓN DE DISEÑO DEL GRÁFICO ===
 const CONFIG = {
@@ -598,13 +613,15 @@ export async function generateSurveyPDF(responses, sourceLabel, sessionInfo) {
       pdf.save(filename);
     }
   } catch (error) {
-    console.error("Error generating PDF:", error);
-    const alert = await alertController.create({
-      header: "Error",
-      message: "No se pudo generar el reporte PDF.",
-      buttons: ["OK"],
-    });
-    await alert.present();
+    if (!isShareCancelled(error)) {
+      console.error("Error generating PDF:", error);
+      const alert = await alertController.create({
+        header: "Error",
+        message: "No se pudo generar el reporte PDF.",
+        buttons: ["OK"],
+      });
+      await alert.present();
+    }
   } finally {
     await loadingAlert.dismiss();
   }
@@ -747,13 +764,381 @@ export async function generateStudentSurveyPDF(
       pdf.save(filename);
     }
   } catch (error) {
-    console.error("Error generating student survey PDF:", error);
+    if (!isShareCancelled(error)) {
+      console.error("Error generating student survey PDF:", error);
+      const alert = await alertController.create({
+        header: "Error",
+        message: "No se pudo generar el reporte PDF.",
+        buttons: ["OK"],
+      });
+      await alert.present();
+    }
+  } finally {
+    await loadingAlert.dismiss();
+  }
+}
+
+/**
+ * Carga una imagen (URL o base64) como DataURL para incrustar en jsPDF
+ */
+async function loadImageAsDataUrl(url) {
+  if (!url) return null;
+  if (url.startsWith("data:image/")) return url;
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.onload = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL("image/png"));
+      } catch (e) {
+        console.error("Error drawing image to canvas:", e);
+        resolve(null);
+      }
+    };
+    img.onerror = () => {
+      resolve(null);
+    };
+    let srcUrl = url;
+    if (!srcUrl.startsWith("http") && !srcUrl.startsWith("data:")) {
+      const base = axios.defaults.baseURL ? axios.defaults.baseURL.replace(/\/+$/, "") : "";
+      const path = srcUrl.startsWith("/") ? srcUrl : `/${srcUrl}`;
+      srcUrl = base ? `${base}${path}` : path;
+    }
+    img.src = srcUrl;
+  });
+}
+
+function getImageDimensions(dataUrl) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      resolve({
+        width: img.naturalWidth || 800,
+        height: img.naturalHeight || 1100,
+      });
+    };
+    img.onerror = () => {
+      resolve({ width: 800, height: 1100 });
+    };
+    img.src = dataUrl;
+  });
+}
+
+/**
+ * Genera y descarga/comparte un PDF de un escaneo individual
+ */
+export async function generateSingleScanPDF({
+  imageUrl,
+  code = "0001",
+  sessionInfo = null,
+  surveyType = "parent",
+}) {
+  if (!imageUrl) {
     const alert = await alertController.create({
-      header: "Error",
-      message: "No se pudo generar el reporte PDF.",
+      header: "Sin imagen",
+      message: "No hay ninguna imagen de escaneo para generar el PDF.",
       buttons: ["OK"],
     });
     await alert.present();
+    return;
+  }
+
+  const loadingAlert = await alertController.create({
+    header: "Generando PDF",
+    message: "Preparando la hoja escaneada...",
+    backdropDismiss: false,
+  });
+  await loadingAlert.present();
+
+  try {
+    const dataUrl = await loadImageAsDataUrl(imageUrl);
+    if (!dataUrl) {
+      throw new Error("No se pudo cargar la imagen del escaneo.");
+    }
+
+    const { jsPDF } = await import("jspdf");
+    const pdf = new jsPDF({
+      unit: "mm",
+      format: "letter",
+      orientation: "portrait",
+    });
+
+    const isParent = surveyType === "parent";
+    const titleText = isParent
+      ? "Encuesta a Padres de Familia"
+      : "Encuesta a Estudiantes";
+
+    // Encabezado
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(15);
+    pdf.setTextColor(30, 41, 59);
+    pdf.text(titleText, 15, 18);
+
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(9.5);
+    pdf.setTextColor(100, 116, 139);
+
+    const sessionLabel = sessionInfo?.label || "General";
+    const yearLabel = sessionInfo?.year ? ` • Año: ${sessionInfo.year}` : "";
+    pdf.text(`${sessionLabel}${yearLabel}`, 15, 24);
+
+    // Registro tag
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(11);
+    pdf.setTextColor(106, 90, 224);
+    pdf.text(`Registro #${code}`, 150, 18);
+
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(9);
+    pdf.setTextColor(100, 116, 139);
+    pdf.text(`Fecha: ${new Date().toLocaleDateString()}`, 150, 24);
+
+    // Línea divisoria estilo Queezy
+    pdf.setDrawColor(106, 90, 224);
+    pdf.setLineWidth(0.8);
+    pdf.line(15, 27, 200, 27);
+
+    // Área disponible: X: 15..200 (ancho max 185mm), Y: 32..260 (alto max 228mm)
+    const maxW = 185;
+    const maxH = 228;
+    const { width: imgW, height: imgH } = await getImageDimensions(dataUrl);
+    const aspect = imgW / imgH;
+
+    let targetW = maxW;
+    let targetH = targetW / aspect;
+
+    if (targetH > maxH) {
+      targetH = maxH;
+      targetW = targetH * aspect;
+    }
+
+    const posX = 15 + (maxW - targetW) / 2;
+    const posY = 32 + (maxH - targetH) / 2;
+
+    pdf.addImage(dataUrl, "PNG", posX, posY, targetW, targetH, undefined, "FAST");
+
+    // Pie de página
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8);
+    pdf.setTextColor(148, 163, 184);
+    pdf.text(
+      "Sistema Pandora OMR • Registro Oficial de Escaneo",
+      107.5,
+      270,
+      { align: "center" },
+    );
+
+    const sessionName = sessionInfo
+      ? sessionInfo.label.replace(/\s+/g, "_").toLowerCase()
+      : "general";
+    const filename = `escaneo_${surveyType}_${sessionName}_reg${code}.pdf`;
+
+    if (Capacitor.isNativePlatform()) {
+      const pdfOutput = pdf.output("datauristring");
+      const base64Data = pdfOutput.split(",")[1];
+      await FileSharer.share({
+        filename,
+        contentType: "application/pdf",
+        base64Data,
+      });
+    } else {
+      pdf.save(filename);
+    }
+  } catch (error) {
+    if (!isShareCancelled(error)) {
+      console.error("Error generating single scan PDF:", error);
+      const alert = await alertController.create({
+        header: "Error",
+        message: "No se pudo generar el PDF del escaneo.",
+        buttons: ["OK"],
+      });
+      await alert.present();
+    }
+  } finally {
+    await loadingAlert.dismiss();
+  }
+}
+
+/**
+ * Genera y descarga/comparte un PDF con la compilación de todas las hojas escaneadas
+ */
+export async function generateScansCompilationPDF(
+  items,
+  sessionInfo = null,
+  surveyType = "parent",
+) {
+  if (!items || items.length === 0) {
+    const alert = await alertController.create({
+      header: "Sin escaneos",
+      message: "No hay hojas escaneadas acumuladas para exportar.",
+      buttons: ["OK"],
+    });
+    await alert.present();
+    return;
+  }
+
+  const loadingAlert = await alertController.create({
+    header: "Generando PDF de Escaneos",
+    message: `Procesando ${items.length} hoja(s), por favor espere...`,
+    backdropDismiss: false,
+  });
+  await loadingAlert.present();
+
+  try {
+    const { jsPDF } = await import("jspdf");
+    const pdf = new jsPDF({
+      unit: "mm",
+      format: "letter",
+      orientation: "portrait",
+    });
+
+    const isParent = surveyType === "parent";
+    const titleText = isParent
+      ? "Encuesta a Padres de Familia"
+      : "Encuesta a Estudiantes";
+
+    const maxW = 185;
+    const maxH = 228;
+
+    for (let i = 0; i < items.length; i++) {
+      if (i > 0) {
+        pdf.addPage();
+      }
+
+      const item = items[i];
+      const code = item.code || String(i + 1).padStart(4, "0");
+      const imageUrl =
+        item.imageUrl ||
+        item.cleanImageUrl ||
+        (item.answers && item.answers.imageUrl);
+
+      // Encabezado
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(15);
+      pdf.setTextColor(30, 41, 59);
+      pdf.text(titleText, 15, 18);
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(9.5);
+      pdf.setTextColor(100, 116, 139);
+
+      const sessionLabel = sessionInfo?.label || "General";
+      const yearLabel = sessionInfo?.year ? ` • Año: ${sessionInfo.year}` : "";
+      pdf.text(`${sessionLabel}${yearLabel}`, 15, 24);
+
+      // Info derecha
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(11);
+      pdf.setTextColor(106, 90, 224);
+      pdf.text(`Registro #${code}`, 150, 18);
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(9);
+      pdf.setTextColor(100, 116, 139);
+      pdf.text(`Hoja ${i + 1} de ${items.length}`, 150, 24);
+
+      // Línea divisoria
+      pdf.setDrawColor(106, 90, 224);
+      pdf.setLineWidth(0.8);
+      pdf.line(15, 27, 200, 27);
+
+      // Cargar y estampar imagen si existe
+      if (imageUrl) {
+        const dataUrl = await loadImageAsDataUrl(imageUrl);
+        if (dataUrl) {
+          const { width: imgW, height: imgH } =
+            await getImageDimensions(dataUrl);
+          const aspect = imgW / imgH;
+
+          let targetW = maxW;
+          let targetH = targetW / aspect;
+
+          if (targetH > maxH) {
+            targetH = maxH;
+            targetW = targetH * aspect;
+          }
+
+          const posX = 15 + (maxW - targetW) / 2;
+          const posY = 32 + (maxH - targetH) / 2;
+
+          pdf.addImage(
+            dataUrl,
+            "PNG",
+            posX,
+            posY,
+            targetW,
+            targetH,
+            undefined,
+            "FAST",
+          );
+        } else {
+          pdf.setFont("helvetica", "italic");
+          pdf.setFontSize(11);
+          pdf.setTextColor(148, 163, 184);
+          pdf.text(
+            "(Imagen no disponible para este registro)",
+            107.5,
+            140,
+            { align: "center" },
+          );
+        }
+      } else {
+        pdf.setFont("helvetica", "italic");
+        pdf.setFontSize(11);
+        pdf.setTextColor(148, 163, 184);
+        pdf.text(
+          "(Sin imagen escaneada adjunta)",
+          107.5,
+          140,
+          { align: "center" },
+        );
+      }
+
+      // Pie de página
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8);
+      pdf.setTextColor(148, 163, 184);
+      pdf.text(
+        `Sistema Pandora OMR • Hoja ${i + 1} de ${items.length}`,
+        107.5,
+        270,
+        { align: "center" },
+      );
+    }
+
+    const sessionName = sessionInfo
+      ? sessionInfo.label.replace(/\s+/g, "_").toLowerCase()
+      : "general";
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const filename = `escaneos_${surveyType}_${sessionName}_${dateStr}.pdf`;
+
+    if (Capacitor.isNativePlatform()) {
+      const pdfOutput = pdf.output("datauristring");
+      const base64Data = pdfOutput.split(",")[1];
+      await FileSharer.share({
+        filename,
+        contentType: "application/pdf",
+        base64Data,
+      });
+    } else {
+      pdf.save(filename);
+    }
+  } catch (error) {
+    if (!isShareCancelled(error)) {
+      console.error("Error generating scans compilation PDF:", error);
+      const alert = await alertController.create({
+        header: "Error",
+        message: "No se pudo generar el PDF con los escaneos.",
+        buttons: ["OK"],
+      });
+      await alert.present();
+    }
   } finally {
     await loadingAlert.dismiss();
   }

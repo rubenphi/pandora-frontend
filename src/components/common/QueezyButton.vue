@@ -168,6 +168,71 @@ export default {
   transform: translateY(1px) scale(0.98);
 }
 
+/* Modo oscuro para variantes QueezyButton */
+body.dark .qz-btn--ghost,
+html.dark .qz-btn--ghost,
+.dark .qz-btn--ghost {
+  background-color: #252048;
+  color: #F7F7FD;
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+body.dark .qz-btn--ghost:hover:not(:disabled),
+html.dark .qz-btn--ghost:hover:not(:disabled),
+.dark .qz-btn--ghost:hover:not(:disabled) {
+  background-color: #2C2654;
+  border-color: #7C6EF2;
+  color: #A39BF0;
+}
+
+body.dark .qz-btn--ghost:active:not(:disabled),
+html.dark .qz-btn--ghost:active:not(:disabled),
+.dark .qz-btn--ghost:active:not(:disabled) {
+  background-color: #352E63;
+}
+
+body.dark .qz-btn--outline,
+html.dark .qz-btn--outline,
+.dark .qz-btn--outline {
+  color: #A39BF0;
+  border-color: #7C6EF2;
+}
+
+body.dark .qz-btn--outline:hover:not(:disabled),
+html.dark .qz-btn--outline:hover:not(:disabled),
+.dark .qz-btn--outline:hover:not(:disabled) {
+  background-color: rgba(124, 110, 242, 0.15);
+}
+
+@media (prefers-color-scheme: dark) {
+  .qz-btn--ghost {
+    background-color: #252048;
+    color: #F7F7FD;
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  }
+
+  .qz-btn--ghost:hover:not(:disabled) {
+    background-color: #2C2654;
+    border-color: #7C6EF2;
+    color: #A39BF0;
+  }
+
+  .qz-btn--ghost:active:not(:disabled) {
+    background-color: #352E63;
+  }
+
+  .qz-btn--outline {
+    color: #A39BF0;
+    border-color: #7C6EF2;
+  }
+
+  .qz-btn--outline:hover:not(:disabled) {
+    background-color: rgba(124, 110, 242, 0.15);
+  }
+}
+
 .qz-btn--disabled {
   opacity: 0.55;
   cursor: not-allowed;

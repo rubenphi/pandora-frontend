@@ -173,6 +173,15 @@ const routes = [
         },
       },
       {
+        path: "admin/papeleria",
+        name: "Papeleria",
+        component: () => import("@/views/PapeleriaPage.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
         path: "admin/imprimir-lista-estudiantes",
         name: "PrintableStudentList",
         component: () => import("@/views/PrintableStudentList.vue"),

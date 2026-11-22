@@ -4,7 +4,7 @@
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-back-button
-            default-href="/admin/gestionar/usuarios"
+            default-href="/admin/papeleria"
           ></ion-back-button>
         </ion-buttons>
         <ion-title>Marcadores de Respuestas</ion-title>
@@ -206,12 +206,25 @@ export default {
     });
 
     const allStudents = computed(() => {
-      return studentData.value[0]?.students || [];
+      if (!studentData.value || studentData.value.length === 0) return [];
+      if (studentData.value.length === 1) return studentData.value[0]?.students || [];
+      return studentData.value.flatMap((c) =>
+        (c.students || []).map((s) => ({ ...s, courseName: c.name }))
+      );
     });
 
     onMounted(() => {
-      if (window.history.state && window.history.state.studentData) {
-        studentData.value = window.history.state.studentData;
+      let data = window.history.state?.studentData;
+      if (!data) {
+        try {
+          const stored = sessionStorage.getItem("pandora_printable_studentData");
+          if (stored) data = JSON.parse(stored);
+        } catch (e) {
+          console.error("Error al leer sessionStorage en PrintableStudentQr:", e);
+        }
+      }
+      if (data) {
+        studentData.value = data;
       }
     });
 

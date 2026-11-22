@@ -123,6 +123,21 @@
                 <p class="qz-card-sub">Escáner y pruebas</p>
               </div>
             </div>
+
+            <!-- Tarjeta 8: Papelería y Formatos (Admin o Docente) -->
+            <div
+              v-if="admin || esProfesor"
+              class="qz-panel-card"
+              @click="navigateTo('/admin/papeleria')"
+            >
+              <div class="qz-card-icon-squircle qz-icon--purple">
+                <ion-icon :icon="printOutline"></ion-icon>
+              </div>
+              <div class="qz-card-text">
+                <h3 class="qz-card-name">Papelería</h3>
+                <p class="qz-card-sub">Formatos y listas</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -143,6 +158,7 @@ import {
   scanOutline,
   schoolOutline,
   constructOutline,
+  printOutline,
 } from "ionicons/icons";
 
 import {
@@ -192,6 +208,7 @@ export default {
       scanOutline,
       schoolOutline,
       constructOutline,
+      printOutline,
     };
   },
 };
@@ -210,7 +227,6 @@ export default {
 .qz-panel-wrapper {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
   box-sizing: border-box;
 }
 
@@ -274,7 +290,7 @@ export default {
 
 /* 2. CUERPO CON CUADRÍCULA QUEEZY (2 Columnas) */
 .qz-panel-body {
-  padding: 4px 16px 84px 16px;
+  padding: 4px 16px 24px 16px;
   max-width: 520px;
   margin: 0 auto;
   width: 100%;

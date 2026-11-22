@@ -4,7 +4,7 @@
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-back-button
-            default-href="/admin/gestionar/usuarios"
+            default-href="/admin/papeleria"
           ></ion-back-button>
         </ion-buttons>
         <ion-title>Hojas de Respuesta</ion-title>
@@ -178,7 +178,11 @@ export default {
     const totalQuestions = ref(20);
     const selectedSheetIndex = ref(0);
 
-    const courseName = computed(() => studentData.value[0]?.name);
+    const courseName = computed(() => {
+      if (!studentData.value || studentData.value.length === 0) return "";
+      if (studentData.value.length === 1) return studentData.value[0]?.name || "";
+      return "Institución";
+    });
     const sheets = computed(() =>
       buildSheets(totalQuestions.value, MAX_QUESTIONS_PER_SHEET),
     );
@@ -188,8 +192,21 @@ export default {
     const maxQuestionsPerSheet = MAX_QUESTIONS_PER_SHEET;
 
     onMounted(async () => {
-      if (window.history.state.studentData) {
-        const data = window.history.state.studentData;
+      let data = window.history.state?.studentData;
+      let yr = window.history.state?.year;
+
+      if (!data) {
+        try {
+          const stored = sessionStorage.getItem("pandora_printable_studentData");
+          if (stored) data = JSON.parse(stored);
+          const storedYear = sessionStorage.getItem("pandora_printable_year");
+          if (storedYear) yr = parseInt(storedYear, 10);
+        } catch (e) {
+          console.error("Error al leer sessionStorage en PrintableStudentSheet:", e);
+        }
+      }
+
+      if (data) {
         if (data[0] && data[0].students) {
           data[0].students.sort((a, b) => {
             const nameA = (a.lastName + " " + a.name).toLowerCase();
@@ -198,12 +215,12 @@ export default {
           });
         }
         studentData.value = data;
-        year.value = window.history.state.year;
+        year.value = yr;
       }
     });
 
     const generateSheetContentHTML = () => {
-      const students = studentData.value[0]?.students || [];
+      const students = allStudents.value;
       const course = courseName.value || "";
 
       // --- Configuración de Dimensiones y Posicionamiento ---
@@ -739,7 +756,11 @@ export default {
     };
 
     const allStudents = computed(() => {
-      return studentData.value[0]?.students || [];
+      if (!studentData.value || studentData.value.length === 0) return [];
+      if (studentData.value.length === 1) return studentData.value[0]?.students || [];
+      return studentData.value.flatMap((c) =>
+        (c.students || []).map((s) => ({ ...s, courseName: c.name }))
+      );
     });
 
     const openStudentSheetModal = (student) => {

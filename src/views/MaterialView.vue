@@ -1445,7 +1445,6 @@ export default defineComponent({
 }
 
 .qz-page-wrapper {
-  min-height: 100%;
   display: flex;
   flex-direction: column;
 }

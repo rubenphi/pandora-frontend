@@ -1230,7 +1230,6 @@ export default {
 }
 
 .qz-omr-wrapper {
-  min-height: 100%;
   display: flex;
   flex-direction: column;
   background-color: #f8f7fc;

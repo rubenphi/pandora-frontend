@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="omr-scanner-root">
     <div v-if="isLoading" class="loading-indicator">
       <ion-spinner name="crescent"></ion-spinner>
       <p>Iniciando escáner...</p>
@@ -13,25 +13,65 @@
         muted
         style="display: none"
       ></video>
-      <canvas ref="outputCanvas" class="video-feed"></canvas>
-      <div class="controls-container">
-        <ion-icon :icon="contrastOutline" class="contrast-icon"></ion-icon>
-        <ion-range
-          min="0"
-          max="200"
-          :value="contrastSliderValue"
-          @ionChange="onContrastChange"
-          class="contrast-slider"
-        ></ion-range>
-        <ion-button v-if="isFlashSupported" @click="toggleFlash" fill="clear">
-          <ion-icon
-            slot="icon-only"
-            :icon="isFlashOn ? flashlight : flashlightOutline"
-          ></ion-icon>
-        </ion-button>
-        <ion-button @click="cancelScan" fill="clear">
-          <ion-icon slot="icon-only" :icon="closeCircleOutline"></ion-icon>
-        </ion-button>
+
+      <!-- 1. CONTROLES EN LA PARTE SUPERIOR -->
+      <div class="controls-container controls-container--top">
+        <div class="controls-inner">
+          <div class="contrast-group">
+            <ion-icon :icon="contrastOutline" class="contrast-icon"></ion-icon>
+            <ion-range
+              min="0"
+              max="200"
+              :value="contrastSliderValue"
+              @ionChange="onContrastChange"
+              class="contrast-slider"
+              aria-label="Contraste"
+            ></ion-range>
+          </div>
+
+          <div class="scanner-action-btns">
+            <button
+              v-if="isFlashSupported"
+              type="button"
+              class="qz-scanner-ctrl-btn"
+              :class="{ 'qz-scanner-ctrl-btn--active': isFlashOn }"
+              @click="toggleFlash"
+              aria-label="Flash"
+              title="Flash"
+            >
+              <ion-icon
+                :icon="isFlashOn ? flashlight : flashlightOutline"
+              ></ion-icon>
+            </button>
+            <button
+              type="button"
+              class="qz-scanner-ctrl-btn qz-scanner-ctrl-btn--close"
+              @click="cancelScan"
+              aria-label="Cancelar"
+              title="Cancelar escaneo"
+            >
+              <ion-icon :icon="closeCircleOutline"></ion-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. VISOR REDUCIDO Y ENMARCADO -->
+      <div class="video-feed-wrapper">
+        <div class="video-feed-frame">
+          <canvas ref="outputCanvas" class="video-feed"></canvas>
+          <div class="scanner-corner scanner-corner--tl"></div>
+          <div class="scanner-corner scanner-corner--tr"></div>
+          <div class="scanner-corner scanner-corner--bl"></div>
+          <div class="scanner-corner scanner-corner--br"></div>
+        </div>
+      </div>
+
+      <!-- 3. GUÍA INFERIOR COMPACTA -->
+      <div class="scanner-bottom-hint">
+        <span class="scanner-hint-text">
+          Alinee los 4 marcadores dentro del recuadro
+        </span>
       </div>
     </div>
   </div>
@@ -43,7 +83,6 @@ import {
   IonSpinner,
   alertController,
   IonRange,
-  IonButton,
   IonIcon,
 } from "@ionic/vue";
 import {
@@ -81,7 +120,6 @@ export default {
   components: {
     IonSpinner,
     IonRange,
-    IonButton,
     IonIcon,
   },
   props: {
@@ -170,22 +208,85 @@ export default {
     const checkFlashAvailability = async () => {
       try {
         const { value } = await CapacitorFlash.isAvailable();
-        isFlashSupported.value = value;
+        if (value) {
+          isFlashSupported.value = true;
+          return;
+        }
       } catch (e) {
-        console.error("Error checking flash availability", e);
-        isFlashSupported.value = false;
+        // CapacitorFlash not available or not running native
       }
+
+      try {
+        if (stream) {
+          const track = stream.getVideoTracks()[0];
+          const capabilities = track?.getCapabilities ? track.getCapabilities() : null;
+          if (capabilities && "torch" in capabilities) {
+            isFlashSupported.value = true;
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("Could not check web torch capabilities:", e);
+      }
+
+      isFlashSupported.value = false;
     };
 
     const toggleFlash = async () => {
+      // 1. Try native CapacitorFlash
       try {
-        await CapacitorFlash.toggle();
-        const { value } = await CapacitorFlash.isSwitchedOn();
-        isFlashOn.value = value;
-        localStorage.setItem("omrFlashState", value);
+        const isCap = await CapacitorFlash.isAvailable()
+          .then((r) => r.value)
+          .catch(() => false);
+        if (isCap) {
+          await CapacitorFlash.toggle();
+          const { value } = await CapacitorFlash.isSwitchedOn();
+          isFlashOn.value = value;
+          localStorage.setItem("omrFlashState", String(value));
+          return;
+        }
       } catch (e) {
-        console.error("Error toggling flash", e);
+        // Fall back to web torch
       }
+
+      // 2. Try web torch via MediaStreamTrack
+      try {
+        if (stream) {
+          const track = stream.getVideoTracks()[0];
+          const newState = !isFlashOn.value;
+          await track.applyConstraints({
+            advanced: [{ torch: newState }],
+          });
+          isFlashOn.value = newState;
+          localStorage.setItem("omrFlashState", String(newState));
+        }
+      } catch (e) {
+        console.error("Error toggling flash/torch", e);
+      }
+    };
+
+    const turnOffFlash = async () => {
+      try {
+        const { value } = await CapacitorFlash.isSwitchedOn();
+        if (value) {
+          await CapacitorFlash.switchOff();
+        }
+      } catch (e) {
+        // ignore
+      }
+      try {
+        if (stream) {
+          const track = stream.getVideoTracks()[0];
+          if (track && track.applyConstraints) {
+            await track.applyConstraints({
+              advanced: [{ torch: false }],
+            });
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+      isFlashOn.value = false;
     };
 
     const startCamera = async () => {
@@ -201,6 +302,7 @@ export default {
           });
           video.value.srcObject = stream;
           await video.value.play();
+          await checkFlashAvailability();
         } else {
           throw new Error("La API de cámara no está disponible.");
         }
@@ -271,8 +373,12 @@ export default {
           let templates;
           if (props.templateName) {
             templates = await fetchSurveyTemplate(props.templateName);
+            OMR_STATE.isSurvey = true;
+            OMR_STATE.templateName = props.templateName;
           } else {
             templates = await fetchTemplates();
+            OMR_STATE.isSurvey = false;
+            OMR_STATE.templateName = null;
           }
           OMR_STATE.circleTemplate = templates.circleTemplate;
           OMR_STATE.matrixTemplate = templates.matrixTemplate;
@@ -282,7 +388,9 @@ export default {
             OMR_STATE.height = video.value.videoHeight;
             OMR_STATE.video = video.value;
             OMR_STATE.canvas = outputCanvas.value;
-            OMR_STATE.ctx = OMR_STATE.canvas.getContext("2d");
+            OMR_STATE.ctx = OMR_STATE.canvas.getContext("2d", {
+              willReadFrequently: true,
+            });
 
             OMR_STATE.canvas.width = OMR_STATE.width;
             OMR_STATE.canvas.height = OMR_STATE.height;
@@ -420,58 +528,57 @@ export default {
     };
 
     const handleCapture = async (markers) => {
-      // Make it async
-      const { cv, bw, width, height } = OMR_STATE;
-      const labelMap = {};
-      markers.forEach((m) => {
-        labelMap[m.label] = { x: m.cx, y: m.cy };
-      });
-
-      // Create a canvas from the black and white matrix 'bw'
-      const snapshotCanvas = document.createElement("canvas");
-      snapshotCanvas.width = width;
-      snapshotCanvas.height = height;
-      cv.imshow(snapshotCanvas, bw);
-
-      const { correctedCanvas, correctedMat, matrix } =
-        performPerspectiveCorrection(OMR_STATE, snapshotCanvas, labelMap);
-
-      const { finalResults, cleanDataUrl, bubbleCoords } =
-        extractAndDrawResults(
-          OMR_STATE,
-          correctedCanvas,
-          correctedMat,
-          matrix,
-          labelMap,
-          props.answerKeys
-        );
-
-      cv.imshow(outputCanvas.value, correctedMat);
-
-      // Get the image data from the canvas where results were drawn
-      const imageDataUrl = correctedCanvas.toDataURL("image/png");
-
-      correctedMat.delete();
-      matrix.delete();
-
-      // Turn off flash immediately after capture
       try {
-        const { value } = await CapacitorFlash.isSwitchedOn();
-        if (value) {
-          await CapacitorFlash.switchOff();
-          isFlashOn.value = false; // Update reactive state
-        }
-      } catch (e) {
-        console.error("Failed to turn off flash after capture", e);
-      }
+        const { cv, bw, width, height } = OMR_STATE;
+        const labelMap = {};
+        markers.forEach((m) => {
+          labelMap[m.label] = { x: m.cx, y: m.cy };
+        });
 
-      // Emit an object with results, the image URL, clean image and bubble coordinates
-      emit("scan-complete", {
-        results: finalResults,
-        imageUrl: imageDataUrl,
-        cleanImageUrl: cleanDataUrl,
-        bubbleCoords: bubbleCoords,
-      });
+        // Create a canvas from the black and white matrix 'bw'
+        const snapshotCanvas = document.createElement("canvas");
+        snapshotCanvas.width = width;
+        snapshotCanvas.height = height;
+        cv.imshow(snapshotCanvas, bw);
+
+        const { correctedCanvas, correctedMat, matrix } =
+          performPerspectiveCorrection(OMR_STATE, snapshotCanvas, labelMap);
+
+        const { finalResults, cleanDataUrl, bubbleCoords } =
+          extractAndDrawResults(
+            OMR_STATE,
+            correctedCanvas,
+            correctedMat,
+            matrix,
+            labelMap,
+            props.answerKeys
+          );
+
+        cv.imshow(outputCanvas.value, correctedMat);
+
+        // Get the image data from the canvas where results were drawn
+        const imageDataUrl = correctedCanvas.toDataURL("image/png");
+
+        correctedMat.delete();
+        matrix.delete();
+
+        // Turn off flash immediately after capture
+        await turnOffFlash();
+
+        // Emit an object with results, the image URL, clean image and bubble coordinates
+        emit("scan-complete", {
+          results: finalResults,
+          imageUrl: imageDataUrl,
+          cleanImageUrl: cleanDataUrl,
+          cleanDataUrl: cleanDataUrl,
+          bubbleCoords: bubbleCoords,
+        });
+      } catch (err) {
+        console.error("Error during handleCapture in OmrScanner:", err);
+        // Reset capture flag so camera loop does not freeze
+        OMR_STATE.captured = false;
+        animationFrameId = requestAnimationFrame(processingLoop);
+      }
     };
 
     const start = async () => {
@@ -505,14 +612,16 @@ export default {
       // Re-acquire camera stream if it was stopped
       if (!stream) {
         await startCamera();
+        await checkFlashAvailability();
       }
 
       // Restore flash state
       try {
         const storedFlash = localStorage.getItem("omrFlashState");
         if (storedFlash === "true" && isFlashSupported.value) {
-          await CapacitorFlash.switchOn();
-          isFlashOn.value = true;
+          if (!isFlashOn.value) {
+            await toggleFlash();
+          }
         }
       } catch (e) {
         console.warn("Could not restore flash state:", e);
@@ -541,15 +650,7 @@ export default {
         stream = null;
       }
       // Turn off flash if it's on
-      try {
-        const { value } = await CapacitorFlash.isSwitchedOn();
-        if (value) {
-          await CapacitorFlash.switchOff();
-          isFlashOn.value = false;
-        }
-      } catch (e) {
-        console.error("Failed to turn off flash on cancel", e);
-      }
+      await turnOffFlash();
       if (OMR_STATE.src) {
         OMR_STATE.src.delete();
         OMR_STATE.src = null;
@@ -576,14 +677,7 @@ export default {
     });
 
     onUnmounted(async () => {
-      try {
-        const { value } = await CapacitorFlash.isSwitchedOn();
-        if (value) {
-          await CapacitorFlash.switchOff();
-        }
-      } catch (e) {
-        console.error("Failed to turn off flash on unmount", e);
-      }
+      await turnOffFlash();
 
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
@@ -630,37 +724,233 @@ export default {
 </script>
 
 <style scoped>
-.scanner-content {
+.omr-scanner-root {
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  height: 90%;
+  position: relative;
+  overflow: hidden;
+  background-color: #0c091f;
 }
-.video-feed {
+
+.scanner-content {
+  flex: 1 1 0;
+  min-height: 0;
   width: 100%;
-  height: auto;
-  max-height: calc(100% - 80px); /* Adjust to leave space for controls */
-  object-fit: contain;
-  border-radius: 8px;
-  background-color: #000;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
 }
+
+/* 1. CONTROLES EN LA PARTE SUPERIOR */
+.controls-container--top {
+  flex-shrink: 0;
+  width: 100%;
+  padding: 8px 16px;
+  background: rgba(18, 16, 36, 0.98);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  z-index: 50;
+}
+
+.controls-inner {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.contrast-group {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 2px 12px;
+  min-height: 42px;
+}
+
+.contrast-icon {
+  font-size: 20px;
+  color: #c0b7ff;
+  flex-shrink: 0;
+}
+
+.contrast-slider {
+  flex: 1;
+  padding: 0;
+  --bar-background: rgba(255, 255, 255, 0.2);
+  --bar-background-active: #7c6ef2;
+  --knob-background: #ffffff;
+  --knob-size: 20px;
+  --pin-background: #7c6ef2;
+}
+
+.scanner-action-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.qz-scanner-ctrl-btn {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #f7f7fd;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.qz-scanner-ctrl-btn:active {
+  transform: scale(0.94);
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.qz-scanner-ctrl-btn--active {
+  background: #7c6ef2 !important;
+  border-color: #9488f5 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 14px rgba(124, 110, 242, 0.6);
+}
+
+.qz-scanner-ctrl-btn--close {
+  color: #ff6b6b;
+  border-color: rgba(255, 107, 107, 0.35);
+}
+
+.qz-scanner-ctrl-btn--close:active {
+  background: rgba(255, 107, 107, 0.25);
+}
+
+/* 2. VISOR ADAPTABLE Y ENMARCADO */
+.video-feed-wrapper {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
+  background-color: #0c091f;
+  overflow: hidden;
+}
+
+.video-feed-frame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  max-width: 960px;
+  max-height: 70vh;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 2px solid rgba(124, 110, 242, 0.5);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 0 20px rgba(106, 90, 224, 0.25);
+  background-color: #000000;
+}
+
+.video-feed {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  background-color: #000000;
+}
+
+/* Adaptación fluida para móviles */
+@media (max-width: 768px) {
+  .video-feed-wrapper {
+    padding: 8px 10px;
+  }
+
+  .video-feed-frame {
+    max-width: 100%;
+    max-height: 55vh;
+    border-radius: 14px;
+  }
+}
+
+/* Esquinas visuales tipo escáner */
+.scanner-corner {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-color: #7c6ef2;
+  border-style: solid;
+  pointer-events: none;
+  z-index: 10;
+}
+.scanner-corner--tl {
+  top: 10px;
+  left: 10px;
+  border-width: 3px 0 0 3px;
+  border-top-left-radius: 8px;
+}
+.scanner-corner--tr {
+  top: 10px;
+  right: 10px;
+  border-width: 3px 3px 0 0;
+  border-top-right-radius: 8px;
+}
+.scanner-corner--bl {
+  bottom: 10px;
+  left: 10px;
+  border-width: 0 0 3px 3px;
+  border-bottom-left-radius: 8px;
+}
+.scanner-corner--br {
+  bottom: 10px;
+  right: 10px;
+  border-width: 0 3px 3px 0;
+  border-bottom-right-radius: 8px;
+}
+
 .loading-indicator {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 300px;
+  height: 100%;
+  color: #a39bf0;
+  gap: 12px;
 }
-.controls-container {
-  padding: 8px 16px;
+
+/* 3. GUÍA INFERIOR COMPACTA */
+.scanner-bottom-hint {
+  flex-shrink: 0;
+  width: 100%;
+  padding: 8px 16px max(12px, env(safe-area-inset-bottom)) 16px;
+  background: rgba(18, 16, 36, 0.95);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
 }
-.contrast-icon {
-  transform: rotate(90deg);
-  font-size: 24px;
-}
-.contrast-slider {
-  flex-grow: 1;
+
+.scanner-hint-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: #a39bf0;
+  text-align: center;
+  max-width: 960px;
+  margin: 0 auto;
 }
 </style>

@@ -23,12 +23,22 @@ export function performPerspectiveCorrectionWithCurvature(OMR_STATE, snapCanvas,
   const dstWScaled = Math.max(1, Math.round(dstW * scale));
   const dstHScaled = Math.max(1, Math.round(dstH * scale));
 
-  // Capturar también el área superior (encabezado con nombre de estudiante) igual a la mitad del área de escaneo
-  const headerHScaled = Math.round(dstHScaled * 0.5);
-  const totalHScaled = dstHScaled + headerHScaled;
+  const isSurvey = Boolean(OMR_STATE?.isSurvey || OMR_STATE?.templateName);
 
-  // Espacio extra derecha e izquierda correspondiente a una cuarta parte del ancho del área de escaneo
-  const marginWScaled = Math.round(dstWScaled * 0.25);
+  // Encabezado: 1/3 (una tercera parte) para encuesta, 1/2 (50%) para cuestionario
+  const headerHScaled = isSurvey
+    ? Math.round(dstHScaled / 3)
+    : Math.round(dstHScaled * 0.5);
+
+  // Espacio extra lateral: 1/5 (una quinta parte) para encuesta, 1/4 (25%) para cuestionario
+  const marginWScaled = isSurvey
+    ? Math.round(dstWScaled / 5)
+    : Math.round(dstWScaled * 0.25);
+
+  // Parte inferior: 1/4 (una cuarta parte) para encuesta, 0 para cuestionario
+  const footerHScaled = isSurvey ? Math.round(dstHScaled / 4) : 0;
+
+  const totalHScaled = dstHScaled + headerHScaled + footerHScaled;
   const totalWScaled = dstWScaled + marginWScaled * 2;
 
   // Leer imagen fuente
@@ -54,8 +64,8 @@ export function performPerspectiveCorrectionWithCurvature(OMR_STATE, snapCanvas,
     const dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
       marginWScaled, headerHScaled,
       marginWScaled + dstWScaled, headerHScaled,
-      marginWScaled, totalHScaled,
-      marginWScaled + dstWScaled, totalHScaled,
+      marginWScaled, headerHScaled + dstHScaled,
+      marginWScaled + dstWScaled, headerHScaled + dstHScaled,
     ]);
     
     let M = cv.getPerspectiveTransform(srcTri, dstTri);

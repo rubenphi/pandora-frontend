@@ -809,7 +809,6 @@ export default {
 }
 
 .qz-page-wrapper {
-  min-height: 100%;
   display: flex;
   flex-direction: column;
 }

@@ -19,113 +19,114 @@ ion-modal.font-caligrafia ion-content * {
      ========================================================================== */
 
   /** Primary: Queezy Purple **/
-  --ion-color-primary: #6A5AE0;
+  --ion-color-primary: #6a5ae0;
   --ion-color-primary-rgb: 106, 90, 224;
   --ion-color-primary-contrast: #ffffff;
   --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #5A45D8;
-  --ion-color-primary-tint: #7C72E5;
+  --ion-color-primary-shade: #5a45d8;
+  --ion-color-primary-tint: #7c72e5;
 
   /** Secondary: Queezy Coral Pink **/
-  --ion-color-secondary: #FF8FA2;
+  --ion-color-secondary: #ff8fa2;
   --ion-color-secondary-rgb: 255, 143, 162;
   --ion-color-secondary-contrast: #ffffff;
   --ion-color-secondary-contrast-rgb: 255, 255, 255;
-  --ion-color-secondary-shade: #E07388;
-  --ion-color-secondary-tint: #FFCCD7;
+  --ion-color-secondary-shade: #e07388;
+  --ion-color-secondary-tint: #ffccd7;
 
   /** Tertiary: Queezy Soft Lilac / Brand Tint **/
-  --ion-color-tertiary: #9087E5;
+  --ion-color-tertiary: #9087e5;
   --ion-color-tertiary-rgb: 144, 135, 229;
   --ion-color-tertiary-contrast: #ffffff;
   --ion-color-tertiary-contrast-rgb: 255, 255, 255;
-  --ion-color-tertiary-shade: #7B72CE;
-  --ion-color-tertiary-tint: #A8A0EB;
+  --ion-color-tertiary-shade: #7b72ce;
+  --ion-color-tertiary-tint: #a8a0eb;
 
   /** Success: Quiz Correct Answer Green **/
-  --ion-color-success: #53DF83;
+  --ion-color-success: #53df83;
   --ion-color-success-rgb: 83, 223, 131;
   --ion-color-success-contrast: #ffffff;
   --ion-color-success-contrast-rgb: 255, 255, 255;
-  --ion-color-success-shade: #45C271;
-  --ion-color-success-tint: #E8F9F0;
+  --ion-color-success-shade: #45c271;
+  --ion-color-success-tint: #e8f9f0;
 
   /** Warning: Star / Gold / Coins **/
-  --ion-color-warning: #FFAE33;
+  --ion-color-warning: #ffae33;
   --ion-color-warning-rgb: 255, 174, 51;
   --ion-color-warning-contrast: #ffffff;
   --ion-color-warning-contrast-rgb: 255, 255, 255;
-  --ion-color-warning-shade: #DF9526;
-  --ion-color-warning-tint: #FFF4E5;
+  --ion-color-warning-shade: #df9526;
+  --ion-color-warning-tint: #fff4e5;
 
   /** Danger: Quiz Wrong Answer Red **/
-  --ion-color-danger: #FF5656;
+  --ion-color-danger: #ff5656;
   --ion-color-danger-rgb: 255, 86, 86;
   --ion-color-danger-contrast: #ffffff;
   --ion-color-danger-contrast-rgb: 255, 255, 255;
-  --ion-color-danger-shade: #DE3F3F;
-  --ion-color-danger-tint: #FFEAEA;
+  --ion-color-danger-shade: #de3f3f;
+  --ion-color-danger-tint: #ffeaea;
 
   /** Dark: Midnight Navy **/
-  --ion-color-dark: #0C092A;
+  --ion-color-dark: #0c092a;
   --ion-color-dark-rgb: 12, 9, 42;
   --ion-color-dark-contrast: #ffffff;
   --ion-color-dark-contrast-rgb: 255, 255, 255;
   --ion-color-dark-shade: #000929;
-  --ion-color-dark-tint: #2B254E;
+  --ion-color-dark-tint: #2b254e;
 
   /** Medium: Slate Gray (Text secondary / Muted) **/
   --ion-color-medium: #858494;
   --ion-color-medium-rgb: 133, 132, 148;
   --ion-color-medium-contrast: #ffffff;
   --ion-color-medium-contrast-rgb: 255, 255, 255;
-  --ion-color-medium-shade: #6F6E7D;
-  --ion-color-medium-tint: #B8B7C2;
+  --ion-color-medium-shade: #6f6e7d;
+  --ion-color-medium-tint: #b8b7c2;
 
   /** Light: Queezy Signature Background Soft Lilac **/
-  --ion-color-light: #EFEEFC;
+  --ion-color-light: #efeefc;
   --ion-color-light-rgb: 239, 238, 252;
-  --ion-color-light-contrast: #0C092A;
+  --ion-color-light-contrast: #0c092a;
   --ion-color-light-contrast-rgb: 12, 9, 42;
-  --ion-color-light-shade: #DFDCFA;
-  --ion-color-light-tint: #F7F7FD;
+  --ion-color-light-shade: #dfdcfa;
+  --ion-color-light-tint: #f7f7fd;
 
   /* ==========================================================================
      2. Queezy Custom Design Tokens
      ========================================================================== */
 
   /* Palette Queezy */
-  --qz-color-purple-primary: #6A5AE0;
-  --qz-color-purple-dark: #5A33D6;
-  --qz-color-purple-soft: #9087E5;
-  --qz-color-purple-light: #E1DEF9;
-  --qz-color-purple-bg: #EFEEFC;
+  --qz-color-purple-primary: #6a5ae0;
+  --qz-color-purple-dark: #5a33d6;
+  --qz-color-purple-soft: #9087e5;
+  --qz-color-purple-light: #e1def9;
+  --qz-color-purple-bg: #efeefc;
 
-  --qz-color-pink-coral: #FF8FA2;
-  --qz-color-pink-soft: #FFCCD7;
-  --qz-color-pink-bg: #FFF0F3;
+  --qz-color-pink-coral: #ff8fa2;
+  --qz-color-pink-soft: #ffccd7;
+  --qz-color-pink-bg: #fff0f3;
 
-  --qz-color-cyan: #70D6F5;
-  --qz-color-cyan-bg: #E8F9FE;
+  --qz-color-cyan: #70d6f5;
+  --qz-color-cyan-bg: #e8f9fe;
 
-  --qz-color-gold: #FFAE33;
-  --qz-color-gold-bg: #FFF6E7;
+  --qz-color-gold: #ffae33;
+  --qz-color-gold-bg: #fff6e7;
 
-  --qz-color-green-correct: #53DF83;
-  --qz-color-green-bg: #EAFBF1;
+  --qz-color-green-correct: #53df83;
+  --qz-color-green-bg: #eafbf1;
 
-  --qz-color-red-wrong: #FF5656;
-  --qz-color-red-bg: #FEECEC;
+  --qz-color-red-wrong: #ff5656;
+  --qz-color-red-bg: #feecec;
 
-  --qz-color-text-main: #0C092A;
+  --qz-color-text-main: #0c092a;
   --qz-color-text-muted: #858494;
-  --qz-color-text-white: #FFFFFF;
-  --qz-color-border: #E6E6E6;
-  --qz-color-card-bg: #FFFFFF;
+  --qz-color-text-white: #ffffff;
+  --qz-color-border: #e6e6e6;
+  --qz-color-card-bg: #ffffff;
 
   /* Typography */
-  --ion-font-family: 'Rubik', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --qz-font-family: 'Rubik', sans-serif;
+  --ion-font-family: "Rubik", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, sans-serif;
+  --qz-font-family: "Rubik", sans-serif;
 
   /* Radii */
   --qz-radius-xs: 8px;
@@ -137,26 +138,27 @@ ion-modal.font-caligrafia ion-content * {
   --qz-radius-full: 9999px;
 
   /* Shadows */
-  --qz-shadow-card: 0 8px 24px -4px rgba(106, 90, 224, 0.08), 0 2px 6px -1px rgba(12, 9, 42, 0.04);
+  --qz-shadow-card: 0 8px 24px -4px rgba(106, 90, 224, 0.08),
+    0 2px 6px -1px rgba(12, 9, 42, 0.04);
   --qz-shadow-button-primary: 0 10px 24px -2px rgba(106, 90, 224, 0.38);
   --qz-shadow-button-pink: 0 10px 24px -2px rgba(255, 143, 162, 0.38);
   --qz-shadow-float: 0 16px 32px -4px rgba(12, 9, 42, 0.12);
   --qz-shadow-selected: 0 6px 16px rgba(106, 90, 224, 0.2);
 
   /* Ionic App Defaults */
-  --ion-background-color: #EFEEFC;
-  --ion-text-color: #0C092A;
-  --ion-border-color: #E6E6E6;
-  --ion-card-background: #FFFFFF;
-  --ion-item-background: #FFFFFF;
-  --ion-toolbar-background: #FFFFFF;
-  --ion-tab-bar-background: #FFFFFF;
+  --ion-background-color: #efeefc;
+  --ion-text-color: #0c092a;
+  --ion-border-color: #e6e6e6;
+  --ion-card-background: #ffffff;
+  --ion-item-background: #ffffff;
+  --ion-toolbar-background: #ffffff;
+  --ion-tab-bar-background: #ffffff;
 }
 
 html,
 body {
-  background-color: var(--qz-color-purple-bg, #EFEEFC);
-  color: var(--qz-color-text-main, #0C092A);
+  background-color: var(--qz-color-purple-bg, #efeefc);
+  color: var(--qz-color-text-main, #0c092a);
 }
 
 /* ==========================================================================
@@ -166,7 +168,7 @@ body {
 /* Queezy Global Toolbar & Header */
 ion-header ion-toolbar {
   --background: transparent;
-  --color: #0C092A;
+  --color: #0c092a;
   --border-width: 0;
   --min-height: 56px;
   font-family: var(--qz-font-family);
@@ -188,6 +190,17 @@ ion-content {
 ion-content.content-purple {
   --background: var(--qz-color-purple-primary);
   --color: #ffffff;
+}
+
+/* Queezy Standard Layout Container */
+.qz-container {
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Queezy Rounded Cards */
@@ -232,14 +245,14 @@ ion-button.button-outline {
 }
 
 ion-button.button-ghost {
-  --background: #FFFFFF;
+  --background: #ffffff;
   --color: var(--qz-color-purple-primary);
   --box-shadow: 0 4px 12px rgba(12, 9, 42, 0.05);
 }
 
 /* Queezy Inputs */
 ion-item.qz-input-item {
-  --background: #FFFFFF;
+  --background: #ffffff;
   --border-radius: var(--qz-radius-lg);
   --padding-start: 16px;
   --padding-end: 16px;
@@ -258,7 +271,7 @@ ion-item.qz-input-item.ion-focused {
 
 /* Queezy Bottom Tab Bar */
 ion-tab-bar {
-  --background: #FFFFFF;
+  --background: #ffffff;
   --border: none;
   height: 72px;
   border-top-left-radius: var(--qz-radius-2xl);
@@ -289,63 +302,64 @@ ion-tab-button.tab-selected ion-icon {
     color-scheme: dark;
 
     /* Palette Queezy Dark */
-    --qz-color-purple-primary: #7C6EF2;
-    --qz-color-purple-dark: #5A33D6;
-    --qz-color-purple-soft: #A39BF0;
-    --qz-color-purple-light: #2A2350;
-    --qz-color-purple-bg: #120F24;
+    --qz-color-purple-primary: #7c6ef2;
+    --qz-color-purple-dark: #5a33d6;
+    --qz-color-purple-soft: #a39bf0;
+    --qz-color-purple-light: #2a2350;
+    --qz-color-purple-bg: #120f24;
 
-    --qz-color-pink-coral: #FF8FA2;
-    --qz-color-pink-soft: #FFCCD7;
+    --qz-color-pink-coral: #ff8fa2;
+    --qz-color-pink-soft: #ffccd7;
     --qz-color-pink-bg: rgba(255, 143, 162, 0.14);
 
-    --qz-color-cyan: #70D6F5;
+    --qz-color-cyan: #70d6f5;
     --qz-color-cyan-bg: rgba(112, 214, 245, 0.14);
 
-    --qz-color-gold: #FFAE33;
+    --qz-color-gold: #ffae33;
     --qz-color-gold-bg: rgba(255, 174, 51, 0.16);
 
-    --qz-color-green-correct: #53DF83;
+    --qz-color-green-correct: #53df83;
     --qz-color-green-bg: rgba(83, 223, 131, 0.14);
 
-    --qz-color-red-wrong: #FF5656;
+    --qz-color-red-wrong: #ff5656;
     --qz-color-red-bg: rgba(255, 86, 86, 0.16);
 
-    --qz-color-text-main: #F7F7FD;
-    --qz-color-text-muted: #9E9BB8;
-    --qz-color-text-white: #FFFFFF;
+    --qz-color-text-main: #f7f7fd;
+    --qz-color-text-muted: #9e9bb8;
+    --qz-color-text-white: #ffffff;
     --qz-color-border: rgba(255, 255, 255, 0.08);
-    --qz-color-card-bg: #1D1838;
+    --qz-color-card-bg: #1d1838;
 
     /* Shadows Dark */
-    --qz-shadow-card: 0 8px 24px -4px rgba(0, 0, 0, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.35);
+    --qz-shadow-card: 0 8px 24px -4px rgba(0, 0, 0, 0.5),
+      0 2px 6px -1px rgba(0, 0, 0, 0.35);
     --qz-shadow-float: 0 16px 36px -4px rgba(0, 0, 0, 0.7);
     --qz-shadow-button-primary: 0 10px 24px -2px rgba(124, 110, 242, 0.45);
 
     /* Ionic App Defaults */
-    --ion-background-color: #120F24;
-    --ion-text-color: #F7F7FD;
+    --ion-background-color: #120f24;
+    --ion-text-color: #f7f7fd;
     --ion-border-color: rgba(255, 255, 255, 0.08);
-    --ion-card-background: #1D1838;
-    --ion-item-background: #1D1838;
-    --ion-toolbar-background: #120F24;
-    --ion-tab-bar-background: #1D1838;
+    --ion-card-background: #1d1838;
+    --ion-item-background: #1d1838;
+    --ion-toolbar-background: #120f24;
+    --ion-tab-bar-background: #1d1838;
 
     --ion-color-step-50: #181430;
-    --ion-color-step-100: #1D1838;
-    --ion-color-step-150: #231E44;
+    --ion-color-step-100: #1d1838;
+    --ion-color-step-150: #231e44;
     --ion-color-step-200: #292450;
-    --ion-color-step-250: #302A5C;
-    --ion-color-step-300: #38316A;
-    --ion-color-step-350: #423A7A;
-    --ion-color-step-400: #4C438A;
+    --ion-color-step-250: #302a5c;
+    --ion-color-step-300: #38316a;
+    --ion-color-step-350: #423a7a;
+    --ion-color-step-400: #4c438a;
   }
 
   html,
   body {
     color-scheme: dark;
-    background-color: var(--qz-color-purple-bg, #120F24);
-    color: var(--qz-color-text-main, #F7F7FD);
+    background-color: var(--qz-color-purple-bg, #120f24);
+    color: var(--qz-color-text-main, #f7f7fd);
   }
 
   /* 1. Tarjetas y Superficies Principales */
@@ -390,8 +404,8 @@ ion-tab-button.tab-selected ion-icon {
   .panel-card,
   .report-header-card,
   .course-section {
-    background: var(--qz-color-card-bg, #1D1838) !important;
-    color: var(--qz-color-text-main, #F7F7FD) !important;
+    background: var(--qz-color-card-bg, #1d1838) !important;
+    color: var(--qz-color-text-main, #f7f7fd) !important;
     border-color: var(--qz-color-border, rgba(255, 255, 255, 0.08)) !important;
     box-shadow: var(--qz-shadow-card) !important;
   }
@@ -400,15 +414,20 @@ ion-tab-button.tab-selected ion-icon {
   .qz-hero-header,
   .qz-hero-banner,
   .qz-panel-hero {
-    background: linear-gradient(180deg, #5A4AD1 0%, #352B6A 80%, var(--qz-color-purple-bg, #120F24) 100%) !important;
+    background: linear-gradient(
+      180deg,
+      #5a4ad1 0%,
+      #352b6a 80%,
+      var(--qz-color-purple-bg, #120f24) 100%
+    ) !important;
   }
 
   .qz-sticky-header {
     background: linear-gradient(
       180deg,
-      #1D1838 0%,
-      #231D42 50%,
-      #28214B 75%,
+      #1d1838 0%,
+      #231d42 50%,
+      #28214b 75%,
       rgba(40, 33, 75, 0.7) 88%,
       rgba(29, 24, 56, 0) 100%
     ) !important;
@@ -460,9 +479,9 @@ ion-tab-button.tab-selected ion-icon {
   .qz-instructions-box,
   .qz-criterion-card,
   .student-card {
-    background: #231D42 !important;
+    background: #231d42 !important;
     border-color: rgba(255, 255, 255, 0.08) !important;
-    color: #F7F7FD !important;
+    color: #f7f7fd !important;
   }
 
   .qz-module-row,
@@ -491,9 +510,9 @@ ion-tab-button.tab-selected ion-icon {
   .qz-toggle-card,
   .qz-import-card,
   .qz-question-select-card {
-    background: #17132E !important;
+    background: #17132e !important;
     border-color: rgba(255, 255, 255, 0.1) !important;
-    color: #F7F7FD !important;
+    color: #f7f7fd !important;
   }
 
   .qz-module-row.is-expanded,
@@ -504,11 +523,11 @@ ion-tab-button.tab-selected ion-icon {
   .qz-criterion-select-row.is-selected,
   .qz-question-select-card.is-active {
     background: rgba(124, 110, 242, 0.22) !important;
-    border-color: #7C6EF2 !important;
+    border-color: #7c6ef2 !important;
   }
 
   .qz-winners-btn {
-    background: linear-gradient(135deg, #2A2140 0%, #221A36 100%) !important;
+    background: linear-gradient(135deg, #2a2140 0%, #221a36 100%) !important;
     border-color: rgba(255, 174, 51, 0.3) !important;
   }
 
@@ -527,8 +546,8 @@ ion-tab-button.tab-selected ion-icon {
   ion-popover .popover-content,
   .report-modal-content,
   ion-modal ion-content {
-    background: #1D1838 !important;
-    color: #F7F7FD !important;
+    background: #1d1838 !important;
+    color: #f7f7fd !important;
     border-color: rgba(255, 255, 255, 0.12) !important;
   }
 
@@ -576,8 +595,8 @@ ion-tab-button.tab-selected ion-icon {
   .qz-footer-badge,
   .qz-add-icon-circle,
   .qz-modal-close-btn {
-    background: #28214B !important;
-    color: #F7F7FD !important;
+    background: #28214b !important;
+    color: #f7f7fd !important;
     border-color: rgba(255, 255, 255, 0.12) !important;
   }
 
@@ -590,7 +609,7 @@ ion-tab-button.tab-selected ion-icon {
   .qz-bulk-btn--ghost:active,
   .qz-add-option-btn:active,
   .qz-add-item-btn:active {
-    background: #352C63 !important;
+    background: #352c63 !important;
   }
 
   .qz-btn--delete,
@@ -598,7 +617,7 @@ ion-tab-button.tab-selected ion-icon {
   .qz-delete-criterion-btn,
   .qz-btn-remove {
     background: rgba(255, 86, 86, 0.16) !important;
-    color: #FF5656 !important;
+    color: #ff5656 !important;
     border-color: rgba(255, 86, 86, 0.25) !important;
   }
 
@@ -609,24 +628,24 @@ ion-tab-button.tab-selected ion-icon {
   .qz-alert-pill,
   .new-students-warning {
     background: rgba(255, 174, 51, 0.18) !important;
-    color: #FFAE33 !important;
+    color: #ffae33 !important;
     border-color: rgba(255, 174, 51, 0.25) !important;
   }
 
   .qz-lock-badge.is-unlocked,
   .qz-badge--open {
     background: rgba(83, 223, 131, 0.18) !important;
-    color: #53DF83 !important;
+    color: #53df83 !important;
     border-color: rgba(83, 223, 131, 0.25) !important;
   }
 
   /* 5. Switch e Indicadores */
   .qz-pill-switch:not(.is-checked) {
-    background: #38316A !important;
+    background: #38316a !important;
   }
 
   .qz-pill-thumb {
-    background: #FFFFFF !important;
+    background: #ffffff !important;
   }
 
   /* 6. Inputs y Campos de Texto */
@@ -639,8 +658,8 @@ ion-tab-button.tab-selected ion-icon {
   .canvas-toolbar,
   .label-list-input,
   .num-input-box {
-    background: #17132E !important;
-    color: #F7F7FD !important;
+    background: #17132e !important;
+    color: #f7f7fd !important;
     border-color: rgba(255, 255, 255, 0.12) !important;
   }
 
@@ -650,9 +669,9 @@ ion-tab-button.tab-selected ion-icon {
   .qz-native-input,
   .qz-text-input,
   .qz-opt-input {
-    --color: #F7F7FD !important;
-    --placeholder-color: #9E9BB8 !important;
-    color: #F7F7FD !important;
+    --color: #f7f7fd !important;
+    --placeholder-color: #9e9bb8 !important;
+    color: #f7f7fd !important;
   }
 
   /* 6. Títulos y Textos Principales */
@@ -722,7 +741,7 @@ ion-tab-button.tab-selected ion-icon {
   .qz-member-name-label h3,
   .qz-area-title-label h4,
   ion-header ion-toolbar {
-    color: #F7F7FD !important;
+    color: #f7f7fd !important;
   }
 
   /* 7. Subtítulos y Textos Atenuados sobre Superficies Oscuras */
@@ -801,7 +820,7 @@ ion-tab-button.tab-selected ion-icon {
   .qz-modal-desc,
   .qz-empty-notice,
   .qz-winners-sub {
-    color: #9E9BB8 !important;
+    color: #9e9bb8 !important;
   }
 
   /* 7.1 Textos dentro de Cabeceras Hero y Tarjetas de Estadísticas (sobre fondo púrpura) */
@@ -815,12 +834,12 @@ ion-tab-button.tab-selected ion-icon {
   .qz-stat-value,
   .qz-hero-title,
   .qz-quiz-progress-pill {
-    color: #FFFFFF !important;
+    color: #ffffff !important;
   }
 
   .qz-open-questions-notice,
   .qz-diff-warning {
-    color: #FFAE33 !important;
+    color: #ffae33 !important;
   }
 
   /* 8. Íconos, Squircles y Badges Pastel Adaptados a Modo Oscuro */
@@ -833,15 +852,15 @@ ion-tab-button.tab-selected ion-icon {
   .qz-area-chevron,
   .qz-card-chevron,
   .qz-period-indicator {
-    background: #28214B !important;
+    background: #28214b !important;
     border-color: rgba(255, 255, 255, 0.08) !important;
-    color: #A39BF0 !important;
+    color: #a39bf0 !important;
   }
 
   .qz-area-chevron.qz-chevron--open,
   .qz-card-chevron.is-open {
-    background: #7C6EF2 !important;
-    color: #FFFFFF !important;
+    background: #7c6ef2 !important;
+    color: #ffffff !important;
   }
 
   /* Reemplazo de fondos pastel claros por tonos nocturnos translúcidos */
@@ -857,7 +876,7 @@ ion-tab-button.tab-selected ion-icon {
   .qz-edit-lesson-btn {
     background-color: rgba(124, 110, 242, 0.2) !important;
     background: rgba(124, 110, 242, 0.2) !important;
-    color: #A39BF0 !important;
+    color: #a39bf0 !important;
   }
 
   .qz-squircle--coral,
@@ -869,7 +888,7 @@ ion-tab-button.tab-selected ion-icon {
   .qz-avatar--coral {
     background-color: rgba(255, 117, 98, 0.2) !important;
     background: rgba(255, 117, 98, 0.2) !important;
-    color: #FF8FA2 !important;
+    color: #ff8fa2 !important;
   }
 
   .qz-squircle--cyan,
@@ -881,7 +900,7 @@ ion-tab-button.tab-selected ion-icon {
   .qz-avatar--cyan {
     background-color: rgba(112, 214, 245, 0.2) !important;
     background: rgba(112, 214, 245, 0.2) !important;
-    color: #70D6F5 !important;
+    color: #70d6f5 !important;
   }
 
   .qz-squircle--gold,
@@ -894,7 +913,7 @@ ion-tab-button.tab-selected ion-icon {
   .qz-winners-icon {
     background-color: rgba(255, 174, 51, 0.2) !important;
     background: rgba(255, 174, 51, 0.2) !important;
-    color: #FFAE33 !important;
+    color: #ffae33 !important;
   }
 
   .qz-squircle--green,
@@ -904,7 +923,7 @@ ion-tab-button.tab-selected ion-icon {
   .qz-avatar--green {
     background-color: rgba(83, 223, 131, 0.2) !important;
     background: rgba(83, 223, 131, 0.2) !important;
-    color: #53DF83 !important;
+    color: #53df83 !important;
   }
 
   .qz-badge--danger,
@@ -913,17 +932,17 @@ ion-tab-button.tab-selected ion-icon {
   .qz-choice--orange {
     background-color: rgba(255, 86, 86, 0.2) !important;
     background: rgba(255, 86, 86, 0.2) !important;
-    color: #FF5656 !important;
+    color: #ff5656 !important;
   }
 
   .qz-error-banner {
     background: rgba(255, 86, 86, 0.16) !important;
-    border-color: #FF5656 !important;
-    color: #FFA3A3 !important;
+    border-color: #ff5656 !important;
+    color: #ffa3a3 !important;
   }
 
   .qz-error-msg {
-    color: #FFA3A3 !important;
+    color: #ffa3a3 !important;
   }
 
   .qz-highlight-banner {
@@ -932,16 +951,16 @@ ion-tab-button.tab-selected ion-icon {
   }
 
   .qz-highlight-title {
-    color: #FF8FA2 !important;
+    color: #ff8fa2 !important;
   }
 
   .qz-highlight-desc {
-    color: #9E9BB8 !important;
+    color: #9e9bb8 !important;
   }
 
   .qz-highlight-icon {
-    background: #28214B !important;
-    color: #FF8FA2 !important;
+    background: #28214b !important;
+    color: #ff8fa2 !important;
   }
 
   /* 9. Filas de Preguntas, Respuestas, Opciones y Módulos */
@@ -951,8 +970,8 @@ ion-tab-button.tab-selected ion-icon {
   .qz-module-row,
   .qz-tier-item-row,
   .qz-criterion-row {
-    background: #1D1838 !important;
-    color: #F7F7FD !important;
+    background: #1d1838 !important;
+    color: #f7f7fd !important;
     border-color: rgba(255, 255, 255, 0.08) !important;
     box-shadow: 0 3px 10px -2px rgba(0, 0, 0, 0.35) !important;
   }
@@ -962,14 +981,14 @@ ion-tab-button.tab-selected ion-icon {
   .qz-answer-row:hover,
   .qz-criterion-row:hover,
   .qz-module-row:hover {
-    background: #28214B !important;
+    background: #28214b !important;
   }
 
   .qz-question-row:active,
   .qz-option-row:active,
   .qz-answer-row:active,
   .qz-module-row:active {
-    background: #352C63 !important;
+    background: #352c63 !important;
   }
 
   .qz-question-row.is-locked,
@@ -979,25 +998,25 @@ ion-tab-button.tab-selected ion-icon {
   }
 
   .qz-question-chevron {
-    color: #9E9BB8 !important;
+    color: #9e9bb8 !important;
   }
 
   .qz-no-questions-box h4 {
-    color: #F7F7FD !important;
+    color: #f7f7fd !important;
   }
 
   .qz-no-questions-box p {
-    color: #9E9BB8 !important;
+    color: #9e9bb8 !important;
   }
 
   .qz-no-q-icon {
-    color: #5B5480 !important;
+    color: #5b5480 !important;
   }
 
   .qz-option--selected,
   .qz-option-row.is-selected {
     background: rgba(124, 110, 242, 0.25) !important;
-    border-color: #7C6EF2 !important;
+    border-color: #7c6ef2 !important;
   }
 
   .qz-option--correct,
@@ -1005,7 +1024,7 @@ ion-tab-button.tab-selected ion-icon {
   .qz-card--correct,
   .qz-option-chip.is-correct {
     background: rgba(83, 223, 131, 0.16) !important;
-    border-color: #53DF83 !important;
+    border-color: #53df83 !important;
   }
 
   .qz-card--wrong,
@@ -1013,12 +1032,12 @@ ion-tab-button.tab-selected ion-icon {
   .qz-option--wrong,
   .qz-option-chip.is-wrong {
     background: rgba(255, 86, 86, 0.16) !important;
-    border-color: #FF5656 !important;
+    border-color: #ff5656 !important;
   }
 
   .qz-import-icon-box {
-    background: #28214B !important;
-    color: #A39BF0 !important;
+    background: #28214b !important;
+    color: #a39bf0 !important;
   }
 
   .qz-import-radio {
@@ -1026,13 +1045,13 @@ ion-tab-button.tab-selected ion-icon {
   }
 
   .qz-modal-handle {
-    background: #38316A !important;
+    background: #38316a !important;
   }
 
   /* 10. Frame del Código QR (Permanece blanco para que cámaras de móviles puedan escanear) */
   .qz-qr-frame {
-    background: #FFFFFF !important;
-    border-color: #28214B !important;
+    background: #ffffff !important;
+    border-color: #28214b !important;
   }
 
   /* 11. Popovers y Selects */
@@ -1041,51 +1060,51 @@ ion-tab-button.tab-selected ion-icon {
   }
 
   ion-popover ion-item {
-    --color: #F7F7FD !important;
+    --color: #f7f7fd !important;
   }
 
   ion-popover ion-item:hover,
   ion-popover ion-item.item-radio-checked {
-    --background: #28214B !important;
-    --color: #A39BF0 !important;
+    --background: #28214b !important;
+    --color: #a39bf0 !important;
   }
 
   /* 12. Alertas del Sistema */
   .alert-button.alert-button-role-cancel,
   .alert-button-role-cancel {
-    background: #28214B !important;
-    color: #A39BF0 !important;
+    background: #28214b !important;
+    color: #a39bf0 !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
   }
 
   /* 13. Barras Inferiores Flotantes y de Navegación */
   ion-tab-bar,
   .qz-bottom-bar {
-    --background: #17132E !important;
+    --background: #17132e !important;
     background: rgba(18, 15, 36, 0.95) !important;
     border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
     box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.45) !important;
   }
 
   ion-tab-button {
-    --color: #9E9BB8 !important;
-    --color-selected: #A39BF0 !important;
+    --color: #9e9bb8 !important;
+    --color-selected: #a39bf0 !important;
   }
 
   /* 14. Editor de Texto Enriquecido (Tiptap) */
   .tiptap-wrapper {
-    background: #17132E !important;
+    background: #17132e !important;
     border-color: rgba(255, 255, 255, 0.12) !important;
   }
 
   .tiptap-wrapper .ProseMirror {
-    color: #F7F7FD !important;
-    outline: #38316A solid 1px !important;
+    color: #f7f7fd !important;
+    outline: #38316a solid 1px !important;
   }
 
   .tiptap-wrapper th {
-    background-color: #28214B !important;
-    color: #F7F7FD !important;
+    background-color: #28214b !important;
+    color: #f7f7fd !important;
   }
 
   .tiptap-wrapper td,
@@ -1094,11 +1113,11 @@ ion-tab-button.tab-selected ion-icon {
   }
 
   .qz-tool-btn {
-    color: #F7F7FD !important;
+    color: #f7f7fd !important;
   }
 
   .qz-tool-btn:hover {
-    background: #28214B !important;
+    background: #28214b !important;
   }
 }
 
@@ -1129,7 +1148,6 @@ ion-popover ion-item ion-label {
 
 /* FIX GLOBAL: IonModal recorta contenido largo */
 ion-modal ion-content {
-
   --padding-bottom: 25%;
 }
 
@@ -1178,8 +1196,8 @@ ion-popover .popover-content {
   border-radius: 20px !important;
   box-shadow: 0 10px 30px -4px rgba(106, 90, 224, 0.22) !important;
   border: 1px solid rgba(106, 90, 224, 0.08) !important;
-  background: #FFFFFF !important;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif) !important;
+  background: #ffffff !important;
+  font-family: var(--qz-font-family, "Rubik", sans-serif) !important;
 }
 
 ion-popover ion-list {
@@ -1189,9 +1207,9 @@ ion-popover ion-list {
 
 ion-popover ion-item {
   --background: transparent;
-  --color: #0C092A;
+  --color: #0c092a;
   --border-radius: 12px;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-weight: 600;
   font-size: 14px;
   margin-bottom: 2px;
@@ -1200,24 +1218,47 @@ ion-popover ion-item {
 
 ion-popover ion-item:hover,
 ion-popover ion-item.item-radio-checked {
-  --background: #EFEEFC;
-  --color: #6A5AE0;
+  --background: #efeefc;
+  --color: #6a5ae0;
   font-weight: 700;
 }
 
 /* ==========================================================================
    SCROLL GLOBAL FIX (Eliminar espacio muerto y scroll excesivo)
+   Garantiza que todos los wrappers y cuerpos de vistas Queezy se ajusten
+   automáticamente a la altura de su contenido real sin generar scrolls
+   fantasmas ni espacios vacíos al final en vistas actuales y futuras.
    ========================================================================== */
 ion-content {
-  --background: var(--qz-color-purple-bg, #EFEEFC);
-  --color: var(--qz-color-text-main, #0C092A);
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  --background: var(--qz-color-purple-bg, #efeefc);
+  --color: var(--qz-color-text-main, #0c092a);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   --keyboard-offset: 0px !important;
 }
 
 /* Evitar que el scroll container interno rebote hacia un vacío o genere scroll fantasma */
 ion-content::part(scroll) {
   overscroll-behavior-y: contain;
+}
+
+/* 1. Ajuste estricto de todos los wrappers de página al contenido exacto (sin 100% forzado) */
+.qz-page-wrapper,
+.qz-panel-wrapper,
+.qz-academic-wrapper,
+.qz-users-wrapper,
+.qz-papeleria-wrapper,
+.qz-menu-wrapper,
+.qz-survey-wrapper,
+.qz-launcher-wrapper,
+.qz-omr-wrapper {
+  min-height: auto !important;
+  height: auto !important;
+  box-sizing: border-box !important;
+}
+
+/* 2. Evitar que el cuerpo principal de las vistas se expanda artificialmente con flex: 1 */
+.qz-main-body:not(.qz-home-content .qz-main-body) {
+  flex: 0 1 auto !important;
 }
 
 /* ==========================================================================
@@ -1233,9 +1274,9 @@ ion-alert ion-backdrop {
 .alert-wrapper.ion-overlay-wrapper {
   border-radius: 28px !important;
   box-shadow: 0 20px 50px -10px rgba(106, 90, 224, 0.3) !important;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif) !important;
-  background: var(--qz-color-card-bg, #FFFFFF) !important;
-  color: var(--qz-color-text-main, #0C092A) !important;
+  font-family: var(--qz-font-family, "Rubik", sans-serif) !important;
+  background: var(--qz-color-card-bg, #ffffff) !important;
+  color: var(--qz-color-text-main, #0c092a) !important;
   padding: 24px 20px 20px 20px !important;
   max-width: 330px !important;
   width: 88% !important;
@@ -1249,16 +1290,16 @@ ion-alert ion-backdrop {
 }
 
 .alert-title {
-  font-family: var(--qz-font-family, 'Rubik', sans-serif) !important;
+  font-family: var(--qz-font-family, "Rubik", sans-serif) !important;
   font-size: 20px !important;
   font-weight: 800 !important;
-  color: var(--qz-color-text-main, #0C092A) !important;
+  color: var(--qz-color-text-main, #0c092a) !important;
   letter-spacing: -0.3px !important;
   margin-bottom: 4px !important;
 }
 
 .alert-sub-title {
-  font-family: var(--qz-font-family, 'Rubik', sans-serif) !important;
+  font-family: var(--qz-font-family, "Rubik", sans-serif) !important;
   color: var(--qz-color-text-muted, #858494) !important;
   font-size: 13px !important;
   font-weight: 500 !important;
@@ -1266,7 +1307,7 @@ ion-alert ion-backdrop {
 
 .alert-message {
   color: var(--qz-color-text-muted, #858494) !important;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif) !important;
+  font-family: var(--qz-font-family, "Rubik", sans-serif) !important;
   font-size: 14px !important;
   line-height: 1.5 !important;
   text-align: center !important;
@@ -1279,11 +1320,11 @@ ion-alert ion-backdrop {
 }
 
 .alert-input {
-  background: var(--qz-color-purple-light, #F4F3FC) !important;
-  color: var(--qz-color-text-main, #0C092A) !important;
+  background: var(--qz-color-purple-light, #f4f3fc) !important;
+  color: var(--qz-color-text-main, #0c092a) !important;
   border: 1.5px solid var(--qz-color-border, rgba(106, 90, 224, 0.15)) !important;
   border-radius: 14px !important;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif) !important;
+  font-family: var(--qz-font-family, "Rubik", sans-serif) !important;
   font-size: 14px !important;
   padding: 10px 14px !important;
   margin-bottom: 8px !important;
@@ -1306,7 +1347,7 @@ ion-alert ion-backdrop {
   margin: 0 !important;
   height: 46px !important;
   border-radius: var(--qz-radius-full, 9999px) !important;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif) !important;
+  font-family: var(--qz-font-family, "Rubik", sans-serif) !important;
   font-size: 14px !important;
   font-weight: 800 !important;
   text-transform: none !important;
@@ -1326,27 +1367,27 @@ ion-alert ion-backdrop {
   align-items: center !important;
   justify-content: center !important;
   width: 100% !important;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif) !important;
+  font-family: var(--qz-font-family, "Rubik", sans-serif) !important;
   font-weight: 800 !important;
 }
 
 /* Botón Cancelar */
 .alert-button.alert-button-role-cancel,
 .alert-button-role-cancel {
-  background: #EFEEFC !important;
-  color: #6A5AE0 !important;
-  border: 1px solid #ECEAF9 !important;
+  background: #efeefc !important;
+  color: #6a5ae0 !important;
+  border: 1px solid #eceaf9 !important;
 }
 .alert-button.alert-button-role-cancel:active,
 .alert-button-role-cancel:active {
-  background: #E4E1F8 !important;
+  background: #e4e1f8 !important;
 }
 
 /* Botón Destructivo (Eliminar) */
 .alert-button.alert-button-role-destructive,
 .alert-button-role-destructive {
-  background: #FF5656 !important;
-  color: #FFFFFF !important;
+  background: #ff5656 !important;
+  color: #ffffff !important;
   border: none !important;
   box-shadow: 0 4px 14px rgba(255, 86, 86, 0.32) !important;
 }
@@ -1357,8 +1398,8 @@ ion-alert ion-backdrop {
 
 /* Botón Principal (Confirmar / Aceptar cuando no es cancel ni destructive) */
 .alert-button:not(.alert-button-role-cancel):not(.alert-button-role-destructive) {
-  background: #6A5AE0 !important;
-  color: #FFFFFF !important;
+  background: #6a5ae0 !important;
+  color: #ffffff !important;
   border: none !important;
   box-shadow: 0 4px 14px rgba(106, 90, 224, 0.32) !important;
 }
@@ -1373,8 +1414,8 @@ body.dark .alert-wrapper.ion-overlay-wrapper,
 html.dark .alert-wrapper.ion-overlay-wrapper,
 .dark .alert-wrapper.ion-overlay-wrapper,
 ion-alert.dark .alert-wrapper.ion-overlay-wrapper {
-  background: #1D1838 !important;
-  color: #F7F7FD !important;
+  background: #1d1838 !important;
+  color: #f7f7fd !important;
   border-color: rgba(255, 255, 255, 0.12) !important;
   box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6) !important;
 }
@@ -1382,7 +1423,7 @@ ion-alert.dark .alert-wrapper.ion-overlay-wrapper {
 body.dark .alert-title,
 html.dark .alert-title,
 .dark .alert-title {
-  color: #F7F7FD !important;
+  color: #f7f7fd !important;
 }
 
 body.dark .alert-sub-title,
@@ -1391,14 +1432,14 @@ html.dark .alert-sub-title,
 body.dark .alert-message,
 html.dark .alert-message,
 .dark .alert-message {
-  color: #9E9BB8 !important;
+  color: #9e9bb8 !important;
 }
 
 body.dark .alert-input,
 html.dark .alert-input,
 .dark .alert-input {
-  background: #231D42 !important;
-  color: #F7F7FD !important;
+  background: #231d42 !important;
+  color: #f7f7fd !important;
   border-color: rgba(255, 255, 255, 0.15) !important;
 }
 
@@ -1409,7 +1450,7 @@ body.dark .alert-button-role-cancel,
 html.dark .alert-button-role-cancel,
 .dark .alert-button-role-cancel {
   background: #252048 !important;
-  color: #A39BF0 !important;
+  color: #a39bf0 !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
@@ -1419,42 +1460,42 @@ html.dark .alert-radio-label,
 body.dark .alert-checkbox-label,
 html.dark .alert-checkbox-label,
 .dark .alert-checkbox-label {
-  color: #F7F7FD !important;
+  color: #f7f7fd !important;
 }
 
 @media (prefers-color-scheme: dark) {
   body:not(.light) .alert-wrapper.ion-overlay-wrapper {
-    background: #1D1838 !important;
-    color: #F7F7FD !important;
+    background: #1d1838 !important;
+    color: #f7f7fd !important;
     border-color: rgba(255, 255, 255, 0.12) !important;
     box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6) !important;
   }
 
   body:not(.light) .alert-title {
-    color: #F7F7FD !important;
+    color: #f7f7fd !important;
   }
 
   body:not(.light) .alert-sub-title,
   body:not(.light) .alert-message {
-    color: #9E9BB8 !important;
+    color: #9e9bb8 !important;
   }
 
   body:not(.light) .alert-input {
-    background: #231D42 !important;
-    color: #F7F7FD !important;
+    background: #231d42 !important;
+    color: #f7f7fd !important;
     border-color: rgba(255, 255, 255, 0.15) !important;
   }
 
   body:not(.light) .alert-button.alert-button-role-cancel,
   body:not(.light) .alert-button-role-cancel {
     background: #252048 !important;
-    color: #A39BF0 !important;
+    color: #a39bf0 !important;
     border-color: rgba(255, 255, 255, 0.1) !important;
   }
 
   body:not(.light) .alert-radio-label,
   body:not(.light) .alert-checkbox-label {
-    color: #F7F7FD !important;
+    color: #f7f7fd !important;
   }
 }
 
@@ -1462,16 +1503,16 @@ html.dark .alert-checkbox-label,
    QUEEZY GLOBAL ACTION SHEET STYLING (Modo md e ios)
    ========================================================================== */
 ion-action-sheet {
-  --background: var(--qz-color-card-bg, #FFFFFF);
-  --color: var(--qz-color-text-main, #0C092A);
+  --background: var(--qz-color-card-bg, #ffffff);
+  --color: var(--qz-color-text-main, #0c092a);
   --backdrop-opacity: 0.45;
   --button-background: transparent;
-  --button-color: var(--qz-color-text-main, #0C092A);
-  --button-color-activated: var(--qz-color-purple-primary, #6A5AE0);
-  --button-color-hover: var(--qz-color-purple-primary, #6A5AE0);
-  --button-color-focused: var(--qz-color-purple-primary, #6A5AE0);
+  --button-color: var(--qz-color-text-main, #0c092a);
+  --button-color-activated: var(--qz-color-purple-primary, #6a5ae0);
+  --button-color-hover: var(--qz-color-purple-primary, #6a5ae0);
+  --button-color-focused: var(--qz-color-purple-primary, #6a5ae0);
   --max-width: 440px;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif) !important;
+  font-family: var(--qz-font-family, "Rubik", sans-serif) !important;
 }
 
 ion-action-sheet ion-backdrop {
@@ -1497,11 +1538,12 @@ ion-action-sheet ion-backdrop {
 }
 
 .action-sheet-group {
-  background: var(--qz-color-card-bg, #FFFFFF) !important;
+  background: var(--qz-color-card-bg, #ffffff) !important;
   background-image: none !important;
   border-radius: 24px !important;
   border: 1px solid var(--qz-color-border, rgba(106, 90, 224, 0.08)) !important;
-  box-shadow: 0 16px 36px -4px rgba(12, 9, 42, 0.12), 0 4px 12px rgba(106, 90, 224, 0.06) !important;
+  box-shadow: 0 16px 36px -4px rgba(12, 9, 42, 0.12),
+    0 4px 12px rgba(106, 90, 224, 0.06) !important;
   padding: 6px 0 !important;
   overflow: hidden !important;
   margin-bottom: 8px !important;
@@ -1511,7 +1553,7 @@ ion-action-sheet ion-backdrop {
   margin-top: 8px !important;
   margin-bottom: 0 !important;
   border-radius: 24px !important;
-  background: var(--qz-color-card-bg, #FFFFFF) !important;
+  background: var(--qz-color-card-bg, #ffffff) !important;
   background-image: none !important;
   border: 1px solid var(--qz-color-border, rgba(106, 90, 224, 0.08)) !important;
   box-shadow: 0 10px 24px rgba(12, 9, 42, 0.08) !important;
@@ -1519,10 +1561,10 @@ ion-action-sheet ion-backdrop {
 }
 
 .action-sheet-title {
-  font-family: var(--qz-font-family, 'Rubik', sans-serif) !important;
+  font-family: var(--qz-font-family, "Rubik", sans-serif) !important;
   font-size: 17px !important;
   font-weight: 800 !important;
-  color: var(--qz-color-text-main, #0C092A) !important;
+  color: var(--qz-color-text-main, #0c092a) !important;
   text-align: center !important;
   padding: 18px 20px 6px 20px !important;
   min-height: auto !important;
@@ -1533,7 +1575,7 @@ ion-action-sheet ion-backdrop {
 }
 
 .action-sheet-sub-title {
-  font-family: var(--qz-font-family, 'Rubik', sans-serif) !important;
+  font-family: var(--qz-font-family, "Rubik", sans-serif) !important;
   font-size: 13px !important;
   font-weight: 500 !important;
   color: var(--qz-color-text-muted, #858494) !important;
@@ -1545,10 +1587,10 @@ ion-action-sheet ion-backdrop {
 }
 
 .action-sheet-button {
-  font-family: var(--qz-font-family, 'Rubik', sans-serif) !important;
+  font-family: var(--qz-font-family, "Rubik", sans-serif) !important;
   font-size: 14.5px !important;
   font-weight: 700 !important;
-  color: var(--qz-color-text-main, #0C092A) !important;
+  color: var(--qz-color-text-main, #0c092a) !important;
   height: 50px !important;
   min-height: 50px !important;
   margin: 4px 10px !important;
@@ -1566,7 +1608,7 @@ ion-action-sheet ion-backdrop {
 
 .action-sheet-button:active,
 .action-sheet-button.ion-activated {
-  background: var(--qz-color-purple-light, #F3F1FD) !important;
+  background: var(--qz-color-purple-light, #f3f1fd) !important;
   transform: scale(0.98) !important;
 }
 
@@ -1577,11 +1619,11 @@ ion-action-sheet ion-backdrop {
   width: 100% !important;
   padding: 0 14px !important;
   gap: 12px !important;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif) !important;
+  font-family: var(--qz-font-family, "Rubik", sans-serif) !important;
 }
 
 .action-sheet-icon {
-  color: var(--qz-color-purple-primary, #6A5AE0) !important;
+  color: var(--qz-color-purple-primary, #6a5ae0) !important;
   font-size: 22px !important;
   min-width: 24px !important;
   margin: 0 !important;
@@ -1591,12 +1633,12 @@ ion-action-sheet ion-backdrop {
 /* Botón Destructivo */
 .action-sheet-button.action-sheet-destructive,
 .action-sheet-destructive {
-  color: var(--qz-color-red-wrong, #FF5656) !important;
+  color: var(--qz-color-red-wrong, #ff5656) !important;
 }
 
 .action-sheet-button.action-sheet-destructive .action-sheet-icon,
 .action-sheet-destructive .action-sheet-icon {
-  color: var(--qz-color-red-wrong, #FF5656) !important;
+  color: var(--qz-color-red-wrong, #ff5656) !important;
 }
 
 .action-sheet-button.action-sheet-destructive:active,
@@ -1607,11 +1649,11 @@ ion-action-sheet ion-backdrop {
 /* Botón Cancelar (Modo Claro / Base) */
 .action-sheet-button.action-sheet-cancel,
 .action-sheet-cancel {
-  background: #EFEEFC !important;
-  color: var(--qz-color-purple-primary, #6A5AE0) !important;
+  background: #efeefc !important;
+  color: var(--qz-color-purple-primary, #6a5ae0) !important;
   font-weight: 800 !important;
   border-radius: var(--qz-radius-full, 9999px) !important;
-  border: 1px solid #ECEAF9 !important;
+  border: 1px solid #eceaf9 !important;
   justify-content: center !important;
   margin-top: 4px !important;
   margin-bottom: 4px !important;
@@ -1624,12 +1666,12 @@ ion-action-sheet ion-backdrop {
 
 .action-sheet-button.action-sheet-cancel .action-sheet-icon,
 .action-sheet-cancel .action-sheet-icon {
-  color: var(--qz-color-purple-primary, #6A5AE0) !important;
+  color: var(--qz-color-purple-primary, #6a5ae0) !important;
 }
 
 .action-sheet-button.action-sheet-cancel:active,
 .action-sheet-cancel:active {
-  background: #E4E1F8 !important;
+  background: #e4e1f8 !important;
   transform: scale(0.98) !important;
 }
 
@@ -1639,14 +1681,14 @@ ion-action-sheet ion-backdrop {
    ========================================================================== */
 @media (prefers-color-scheme: dark) {
   ion-action-sheet {
-    --background: #1D1838 !important;
-    --color: #F7F7FD !important;
+    --background: #1d1838 !important;
+    --color: #f7f7fd !important;
     --backdrop-opacity: 0.65;
     --button-background: transparent !important;
-    --button-color: #F7F7FD !important;
-    --button-color-activated: #A39BF0 !important;
-    --button-color-hover: #A39BF0 !important;
-    --button-color-focused: #A39BF0 !important;
+    --button-color: #f7f7fd !important;
+    --button-color-activated: #a39bf0 !important;
+    --button-color-hover: #a39bf0 !important;
+    --button-color-focused: #a39bf0 !important;
   }
 
   ion-action-sheet ion-backdrop {
@@ -1656,41 +1698,41 @@ ion-action-sheet ion-backdrop {
 
   .action-sheet-group,
   .action-sheet-group-cancel {
-    background: #1D1838 !important;
+    background: #1d1838 !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.65) !important;
   }
 
   .action-sheet-title {
-    color: #F7F7FD !important;
+    color: #f7f7fd !important;
   }
 
   .action-sheet-sub-title {
-    color: #9E9BB8 !important;
+    color: #9e9bb8 !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
   }
 
   .action-sheet-button {
-    color: #F7F7FD !important;
+    color: #f7f7fd !important;
   }
 
   .action-sheet-button:active,
   .action-sheet-button.ion-activated {
-    background: #28214B !important;
+    background: #28214b !important;
   }
 
   .action-sheet-icon {
-    color: #A39BF0 !important;
+    color: #a39bf0 !important;
   }
 
   .action-sheet-button.action-sheet-destructive,
   .action-sheet-destructive {
-    color: #FF8FA2 !important;
+    color: #ff8fa2 !important;
   }
 
   .action-sheet-button.action-sheet-destructive .action-sheet-icon,
   .action-sheet-destructive .action-sheet-icon {
-    color: #FF8FA2 !important;
+    color: #ff8fa2 !important;
   }
 
   .action-sheet-button.action-sheet-destructive:active,
@@ -1700,19 +1742,19 @@ ion-action-sheet ion-backdrop {
 
   .action-sheet-button.action-sheet-cancel,
   .action-sheet-cancel {
-    background: #28214B !important;
-    color: #A39BF0 !important;
+    background: #28214b !important;
+    color: #a39bf0 !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
   }
 
   .action-sheet-button.action-sheet-cancel .action-sheet-icon,
   .action-sheet-cancel .action-sheet-icon {
-    color: #A39BF0 !important;
+    color: #a39bf0 !important;
   }
 
   .action-sheet-button.action-sheet-cancel:active,
   .action-sheet-cancel:active {
-    background: #352B6A !important;
+    background: #352b6a !important;
   }
 }
 
@@ -1720,14 +1762,14 @@ ion-action-sheet ion-backdrop {
 body.dark ion-action-sheet,
 html.dark ion-action-sheet,
 .dark ion-action-sheet {
-  --background: #1D1838 !important;
-  --color: #F7F7FD !important;
+  --background: #1d1838 !important;
+  --color: #f7f7fd !important;
   --backdrop-opacity: 0.65;
   --button-background: transparent !important;
-  --button-color: #F7F7FD !important;
-  --button-color-activated: #A39BF0 !important;
-  --button-color-hover: #A39BF0 !important;
-  --button-color-focused: #A39BF0 !important;
+  --button-color: #f7f7fd !important;
+  --button-color-activated: #a39bf0 !important;
+  --button-color-hover: #a39bf0 !important;
+  --button-color-focused: #a39bf0 !important;
 }
 
 body.dark ion-action-sheet ion-backdrop,
@@ -1742,7 +1784,7 @@ html.dark .action-sheet-group,
 body.dark .action-sheet-group-cancel,
 html.dark .action-sheet-group-cancel,
 .dark .action-sheet-group-cancel {
-  background: #1D1838 !important;
+  background: #1d1838 !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
   box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.65) !important;
 }
@@ -1750,20 +1792,20 @@ html.dark .action-sheet-group-cancel,
 body.dark .action-sheet-title,
 html.dark .action-sheet-title,
 .dark .action-sheet-title {
-  color: #F7F7FD !important;
+  color: #f7f7fd !important;
 }
 
 body.dark .action-sheet-sub-title,
 html.dark .action-sheet-sub-title,
 .dark .action-sheet-sub-title {
-  color: #9E9BB8 !important;
+  color: #9e9bb8 !important;
   border-bottom-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 body.dark .action-sheet-button,
 html.dark .action-sheet-button,
 .dark .action-sheet-button {
-  color: #F7F7FD !important;
+  color: #f7f7fd !important;
 }
 
 body.dark .action-sheet-button:active,
@@ -1772,13 +1814,13 @@ html.dark .action-sheet-button:active,
 html.dark .action-sheet-button.ion-activated,
 .dark .action-sheet-button:active,
 .dark .action-sheet-button.ion-activated {
-  background: #28214B !important;
+  background: #28214b !important;
 }
 
 body.dark .action-sheet-icon,
 html.dark .action-sheet-icon,
 .dark .action-sheet-icon {
-  color: #A39BF0 !important;
+  color: #a39bf0 !important;
 }
 
 body.dark .action-sheet-button.action-sheet-destructive,
@@ -1787,7 +1829,7 @@ html.dark .action-sheet-button.action-sheet-destructive,
 body.dark .action-sheet-destructive,
 html.dark .action-sheet-destructive,
 .dark .action-sheet-destructive {
-  color: #FF8FA2 !important;
+  color: #ff8fa2 !important;
 }
 
 body.dark .action-sheet-button.action-sheet-destructive .action-sheet-icon,
@@ -1796,7 +1838,7 @@ html.dark .action-sheet-button.action-sheet-destructive .action-sheet-icon,
 body.dark .action-sheet-destructive .action-sheet-icon,
 html.dark .action-sheet-destructive .action-sheet-icon,
 .dark .action-sheet-destructive .action-sheet-icon {
-  color: #FF8FA2 !important;
+  color: #ff8fa2 !important;
 }
 
 body.dark .action-sheet-button.action-sheet-destructive:active,
@@ -1814,8 +1856,8 @@ html.dark .action-sheet-button.action-sheet-cancel,
 body.dark .action-sheet-cancel,
 html.dark .action-sheet-cancel,
 .dark .action-sheet-cancel {
-  background: #28214B !important;
-  color: #A39BF0 !important;
+  background: #28214b !important;
+  color: #a39bf0 !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
@@ -1825,7 +1867,7 @@ html.dark .action-sheet-button.action-sheet-cancel .action-sheet-icon,
 body.dark .action-sheet-cancel .action-sheet-icon,
 html.dark .action-sheet-cancel .action-sheet-icon,
 .dark .action-sheet-cancel .action-sheet-icon {
-  color: #A39BF0 !important;
+  color: #a39bf0 !important;
 }
 
 body.dark .action-sheet-button.action-sheet-cancel:active,
@@ -1834,6 +1876,5 @@ html.dark .action-sheet-button.action-sheet-cancel:active,
 body.dark .action-sheet-cancel:active,
 html.dark .action-sheet-cancel:active,
 .dark .action-sheet-cancel:active {
-  background: #352B6A !important;
+  background: #352b6a !important;
 }
-

@@ -44,8 +44,19 @@ export function saveLocalData(keys, responses, counter, session) {
     }
     return true;
   } catch (e) {
-    console.warn("Error saving local survey data:", e);
-    return false;
+    console.warn("Error saving local survey data, attempting lightweight fallback:", e);
+    try {
+      const lightweight = responses.map((r) => ({
+        ...r,
+        imageUrl: r.imageUrl?.startsWith("data:") ? undefined : r.imageUrl,
+      }));
+      localStorage.setItem(keys.STORAGE, JSON.stringify(lightweight));
+      localStorage.setItem(keys.COUNTER, String(counter));
+      return true;
+    } catch (e2) {
+      console.warn("Lightweight fallback also failed:", e2);
+      return false;
+    }
   }
 }
 

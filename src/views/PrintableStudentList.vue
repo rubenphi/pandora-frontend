@@ -3,7 +3,7 @@
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-back-button default-href="/admin/gestionar/usuarios"></ion-back-button>
+          <ion-back-button default-href="/admin/papeleria"></ion-back-button>
         </ion-buttons>
         <ion-title>Lista de Estudiantes</ion-title>
         <ion-buttons slot="end">
@@ -82,9 +82,23 @@ export default {
 
 
     onMounted(() => {
-      if (window.history.state.studentData) {
-        studentData.value = window.history.state.studentData;
-        year.value = window.history.state.year;
+      let data = window.history.state?.studentData;
+      let yr = window.history.state?.year;
+
+      if (!data) {
+        try {
+          const stored = sessionStorage.getItem("pandora_printable_studentData");
+          if (stored) data = JSON.parse(stored);
+          const storedYear = sessionStorage.getItem("pandora_printable_year");
+          if (storedYear) yr = parseInt(storedYear, 10);
+        } catch (e) {
+          console.error("Error al leer sessionStorage en PrintableStudentList:", e);
+        }
+      }
+
+      if (data) {
+        studentData.value = data;
+        year.value = yr;
       }
     });
 

@@ -547,4 +547,211 @@ export default {
     font-size: 18px;
   }
 }
+
+/* ==========================================================================
+   DARK MODE OVERRIDES (Login Page)
+   ========================================================================== */
+body.dark .qz-login-page,
+html.dark .qz-login-page,
+.dark .qz-login-page {
+  background-color: #110D26;
+}
+
+body.dark .qz-login-content,
+html.dark .qz-login-content,
+.dark .qz-login-content {
+  --background: #110D26;
+  background-color: #110D26;
+}
+
+body.dark .qz-auth-card,
+html.dark .qz-auth-card,
+.dark .qz-auth-card {
+  background: #1D1838;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+body.dark .qz-welcome-title,
+html.dark .qz-welcome-title,
+.dark .qz-welcome-title {
+  color: #F7F7FD;
+}
+
+body.dark .qz-welcome-subtitle,
+html.dark .qz-welcome-subtitle,
+.dark .qz-welcome-subtitle {
+  color: #9E9BB8;
+}
+
+body.dark .qz-field-label,
+html.dark .qz-field-label,
+.dark .qz-field-label {
+  color: #F7F7FD;
+}
+
+body.dark .qz-input-box,
+html.dark .qz-input-box,
+.dark .qz-input-box {
+  background: #17132E;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+body.dark .qz-input-box--focused,
+html.dark .qz-input-box--focused,
+.dark .qz-input-box--focused {
+  border-color: #7C6EF2;
+  box-shadow: 0 0 0 4px rgba(124, 110, 242, 0.22);
+}
+
+body.dark .qz-input-icon,
+html.dark .qz-input-icon,
+.dark .qz-input-icon {
+  color: #9E9BB8;
+}
+
+body.dark .qz-input-box--focused .qz-input-icon,
+html.dark .qz-input-box--focused .qz-input-icon,
+.dark .qz-input-box--focused .qz-input-icon {
+  color: #7C6EF2;
+}
+
+body.dark .qz-native-input,
+html.dark .qz-native-input,
+.dark .qz-native-input {
+  color: #F7F7FD;
+}
+
+body.dark .qz-native-input::placeholder,
+html.dark .qz-native-input::placeholder,
+.dark .qz-native-input::placeholder {
+  color: #6E6B8B;
+}
+
+body.dark .qz-eye-btn,
+html.dark .qz-eye-btn,
+.dark .qz-eye-btn {
+  color: #9E9BB8;
+}
+
+body.dark .qz-eye-btn:hover,
+html.dark .qz-eye-btn:hover,
+.dark .qz-eye-btn:hover {
+  color: #7C6EF2;
+}
+
+body.dark .qz-divider-line,
+html.dark .qz-divider-line,
+.dark .qz-divider-line {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark .qz-divider-text,
+html.dark .qz-divider-text,
+.dark .qz-divider-text {
+  color: #9E9BB8;
+}
+
+body.dark .qz-auth-footer .qz-btn--ghost,
+html.dark .qz-auth-footer .qz-btn--ghost,
+.dark .qz-auth-footer .qz-btn--ghost {
+  background-color: #252048;
+  color: #F7F7FD;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+body.dark .qz-auth-footer .qz-btn--ghost:hover:not(:disabled),
+html.dark .qz-auth-footer .qz-btn--ghost:hover:not(:disabled),
+.dark .qz-auth-footer .qz-btn--ghost:hover:not(:disabled) {
+  background-color: #2C2654;
+  border-color: #7C6EF2;
+  color: #A39BF0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .qz-login-page {
+    background-color: #110D26;
+  }
+
+  .qz-login-content {
+    --background: #110D26;
+    background-color: #110D26;
+  }
+
+  .qz-auth-card {
+    background: #1D1838;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.25);
+  }
+
+  .qz-welcome-title {
+    color: #F7F7FD;
+  }
+
+  .qz-welcome-subtitle {
+    color: #9E9BB8;
+  }
+
+  .qz-field-label {
+    color: #F7F7FD;
+  }
+
+  .qz-input-box {
+    background: #17132E;
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  }
+
+  .qz-input-box--focused {
+    border-color: #7C6EF2;
+    box-shadow: 0 0 0 4px rgba(124, 110, 242, 0.22);
+  }
+
+  .qz-input-icon {
+    color: #9E9BB8;
+  }
+
+  .qz-input-box--focused .qz-input-icon {
+    color: #7C6EF2;
+  }
+
+  .qz-native-input {
+    color: #F7F7FD;
+  }
+
+  .qz-native-input::placeholder {
+    color: #6E6B8B;
+  }
+
+  .qz-eye-btn {
+    color: #9E9BB8;
+  }
+
+  .qz-eye-btn:hover {
+    color: #7C6EF2;
+  }
+
+  .qz-divider-line {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .qz-divider-text {
+    color: #9E9BB8;
+  }
+
+  .qz-auth-footer .qz-btn--ghost {
+    background-color: #252048;
+    color: #F7F7FD;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  }
+
+  .qz-auth-footer .qz-btn--ghost:hover:not(:disabled) {
+    background-color: #2C2654;
+    border-color: #7C6EF2;
+    color: #A39BF0;
+  }
+}
 </style>

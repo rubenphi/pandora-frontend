@@ -309,7 +309,6 @@ export default {
 .qz-page-wrapper {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
   box-sizing: border-box;
 }
 

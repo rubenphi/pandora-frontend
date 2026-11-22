@@ -453,12 +453,22 @@ export function performPerspectiveCorrection(OMR_STATE, snapCanvas, labelMap) {
   const dstWScaled = Math.max(1, Math.round(dstW * scale));
   const dstHScaled = Math.max(1, Math.round(dstH * scale));
 
-  // Capturar también el área superior (encabezado con nombre de estudiante) igual a la mitad del área de escaneo
-  const headerHScaled = Math.round(dstHScaled * 0.5);
-  const totalHScaled = dstHScaled + headerHScaled;
+  const isSurvey = Boolean(OMR_STATE?.isSurvey || OMR_STATE?.templateName);
 
-  // Espacio extra derecha e izquierda correspondiente a una cuarta parte del ancho del área de escaneo
-  const marginWScaled = Math.round(dstWScaled * 0.25);
+  // Encabezado: 1/3 (una tercera parte) para encuesta, 1/2 (50%) para cuestionario
+  const headerHScaled = isSurvey
+    ? Math.round(dstHScaled / 3)
+    : Math.round(dstHScaled * 0.5);
+
+  // Espacio extra lateral: 1/5 (una quinta parte) para encuesta, 1/4 (25%) para cuestionario
+  const marginWScaled = isSurvey
+    ? Math.round(dstWScaled / 5)
+    : Math.round(dstWScaled * 0.25);
+
+  // Parte inferior: 1/4 (una cuarta parte) para encuesta, 0 para cuestionario
+  const footerHScaled = isSurvey ? Math.round(dstHScaled / 4) : 0;
+
+  const totalHScaled = dstHScaled + headerHScaled + footerHScaled;
   const totalWScaled = dstWScaled + marginWScaled * 2;
 
   const srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
@@ -477,9 +487,9 @@ export function performPerspectiveCorrection(OMR_STATE, snapCanvas, labelMap) {
     marginWScaled + dstWScaled,
     headerHScaled,
     marginWScaled,
-    totalHScaled,
+    headerHScaled + dstHScaled,
     marginWScaled + dstWScaled,
-    totalHScaled,
+    headerHScaled + dstHScaled,
   ]);
 
   let srcMat = cv.imread(snapCanvas);
@@ -733,9 +743,18 @@ export function extractAndDrawResults(
       const r = Math.floor(idx / cols);
       const c = idx % cols;
 
-      const optLetter = colLabels && colLabels[c]
-        ? colLabels[c].toUpperCase()
-        : String.fromCharCode("A".charCodeAt(0) + c);
+      let optLetter = "";
+      if (type === "multiselect") {
+        const rowLabels = matrixDef.labels;
+        const cell = rowLabels && rowLabels[r] && rowLabels[r][c];
+        optLetter = cell ? String(cell) : String.fromCharCode("A".charCodeAt(0) + c);
+      } else if (Array.isArray(colLabels) && colLabels[c] !== undefined && colLabels[c] !== null) {
+        optLetter = typeof colLabels[c] === "string"
+          ? colLabels[c].toUpperCase()
+          : String(colLabels[c]);
+      } else {
+        optLetter = String.fromCharCode("A".charCodeAt(0) + c);
+      }
 
       let isKey = false;
       let isCorrect = false;
@@ -755,29 +774,43 @@ export function extractAndDrawResults(
         }
 
         bubbleCoords.push({
+          sectionName: matrixDef.name || null,
+          matrixIdx: circleTemplate.indexOf(matrixDef),
           matrixType: type,
           questionIdx: qIdx,
           row: r,
           col: c,
           optLetter,
+          rawOptLabel: Array.isArray(colLabels) ? colLabels[c] : null,
           gx,
           gy,
           radius: displayRadius,
           isWinner,
           isKey,
+          isCorrect,
         });
       } else {
         bubbleCoords.push({
+          sectionName: matrixDef.name || null,
+          matrixIdx: circleTemplate.indexOf(matrixDef),
           matrixType: type,
           questionIdx: null,
           row: r,
           col: c,
           optLetter,
+          rawOptLabel:
+            type === "multiselect" &&
+            matrixDef.labels &&
+            matrixDef.labels[r] &&
+            matrixDef.labels[r][c]
+              ? matrixDef.labels[r][c]
+              : null,
           gx,
           gy,
           radius: displayRadius,
           isWinner,
           isKey: false,
+          isCorrect: false,
         });
       }
 
@@ -812,6 +845,19 @@ export function extractAndDrawResults(
           cctx.lineWidth = 1;
           cctx.stroke();
         }
+      } else if (type === "question" && !hasAnswerKeys) {
+        // Survey question matrices without answer keys -> Queezy purple for winner
+        if (isWinner) {
+          cctx.fillStyle = "rgba(106, 90, 224, 0.85)";
+          cctx.fill();
+          cctx.strokeStyle = "#6a5ae0";
+          cctx.lineWidth = 2.5;
+          cctx.stroke();
+        } else {
+          cctx.strokeStyle = "rgba(160, 160, 175, 0.35)";
+          cctx.lineWidth = 1;
+          cctx.stroke();
+        }
       } else if (type === "numeric") {
         if (isWinner) {
           // Detected student code digit -> Filled Queezy purple
@@ -826,15 +872,15 @@ export function extractAndDrawResults(
           cctx.stroke();
         }
       } else {
-        // Fallback for surveys or when no answerKeys
+        // Fallback for multiselect or other matrices
         if (isWinner) {
-          cctx.fillStyle = "rgba(128, 0, 128, 0.8)";
+          cctx.fillStyle = "rgba(106, 90, 224, 0.85)";
           cctx.fill();
-          cctx.strokeStyle = "rgba(128, 0, 128, 1)";
-          cctx.lineWidth = 2;
+          cctx.strokeStyle = "#6a5ae0";
+          cctx.lineWidth = 2.5;
           cctx.stroke();
         } else {
-          cctx.strokeStyle = "rgba(128, 0, 128, 0.6)";
+          cctx.strokeStyle = "rgba(160, 160, 175, 0.35)";
           cctx.lineWidth = 1;
           cctx.stroke();
         }
