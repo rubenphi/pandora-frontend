@@ -2032,4 +2032,63 @@ export default {
     max-height: 45vh;
   }
 }
+
+/* ==========================================================================
+   MODO OSCURO (DARK MODE)
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  .left-panel {
+    background: #17132e;
+    border-right-color: rgba(255, 255, 255, 0.08);
+  }
+  .canvas-area {
+    background: #120f24;
+  }
+  .panel-card {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .canvas-toolbar {
+    background: #1d1838;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+  .label-list-input:focus {
+    background: #231d42;
+    color: #f7f7fd;
+  }
+}
+
+:global(body.dark) .left-panel,
+:global(html.dark) .left-panel,
+:global(.dark) .left-panel {
+  background: #17132e;
+  border-right-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .canvas-area,
+:global(html.dark) .canvas-area,
+:global(.dark) .canvas-area {
+  background: #120f24;
+}
+
+:global(body.dark) .panel-card,
+:global(html.dark) .panel-card,
+:global(.dark) .panel-card {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .canvas-toolbar,
+:global(html.dark) .canvas-toolbar,
+:global(.dark) .canvas-toolbar {
+  background: #1d1838;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .label-list-input:focus,
+:global(html.dark) .label-list-input:focus,
+:global(.dark) .label-list-input:focus {
+  background: #231d42;
+  color: #f7f7fd;
+}
 </style>

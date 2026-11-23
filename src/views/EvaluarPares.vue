@@ -1349,4 +1349,96 @@ export default {
     color: #ff8fa2;
   }
 }
+
+:global(body.dark) .qz-peer-page,
+:global(html.dark) .qz-peer-page,
+:global(.dark) .qz-peer-page,
+:global(body.dark) .qz-peer-content,
+:global(html.dark) .qz-peer-content,
+:global(.dark) .qz-peer-content {
+  --background: #120f24;
+  background-color: #120f24;
+}
+
+:global(body.dark) .qz-sticky-header,
+:global(html.dark) .qz-sticky-header,
+:global(.dark) .qz-sticky-header {
+  background: linear-gradient(
+    180deg,
+    #1d1838 0%,
+    #231d42 50%,
+    #28214b 75%,
+    rgba(40, 33, 75, 0.7) 88%,
+    rgba(29, 24, 56, 0) 100%
+  ) !important;
+}
+
+:global(body.dark) .qz-hero-banner,
+:global(html.dark) .qz-hero-banner,
+:global(.dark) .qz-hero-banner {
+  background: linear-gradient(180deg, #5a4ad1 0%, #352b6a 80%, #120f24 100%);
+}
+
+:global(body.dark) .qz-student-accordion-item,
+:global(html.dark) .qz-student-accordion-item,
+:global(.dark) .qz-student-accordion-item,
+:global(body.dark) .qz-accordion-body,
+:global(html.dark) .qz-accordion-body,
+:global(.dark) .qz-accordion-body,
+:global(body.dark) .qz-empty-card,
+:global(html.dark) .qz-empty-card,
+:global(.dark) .qz-empty-card {
+  background: #1d1838 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+:global(body.dark) .qz-student-name,
+:global(html.dark) .qz-student-name,
+:global(.dark) .qz-student-name,
+:global(body.dark) .qz-sub-header h3,
+:global(html.dark) .qz-sub-header h3,
+:global(.dark) .qz-sub-header h3,
+:global(body.dark) .qz-empty-title,
+:global(html.dark) .qz-empty-title,
+:global(.dark) .qz-empty-title {
+  color: #f7f7fd !important;
+}
+
+:global(body.dark) .qz-evidence-inner,
+:global(html.dark) .qz-evidence-inner,
+:global(.dark) .qz-evidence-inner,
+:global(body.dark) .qz-single-evidence-box,
+:global(html.dark) .qz-single-evidence-box,
+:global(.dark) .qz-single-evidence-box {
+  background: #16122d !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+:global(body.dark) .qz-badge--none,
+:global(html.dark) .qz-badge--none,
+:global(.dark) .qz-badge--none {
+  background: rgba(255, 255, 255, 0.08);
+  color: #9e9bb8;
+}
+
+:global(body.dark) .qz-badge--high,
+:global(html.dark) .qz-badge--high,
+:global(.dark) .qz-badge--high {
+  background: rgba(83, 223, 131, 0.2);
+  color: #53df83;
+}
+
+:global(body.dark) .qz-badge--mid,
+:global(html.dark) .qz-badge--mid,
+:global(.dark) .qz-badge--mid {
+  background: rgba(255, 174, 51, 0.2);
+  color: #ffae33;
+}
+
+:global(body.dark) .qz-badge--low,
+:global(html.dark) .qz-badge--low,
+:global(.dark) .qz-badge--low {
+  background: rgba(255, 86, 86, 0.2);
+  color: #ff8fa2;
+}
 </style>

@@ -968,4 +968,19 @@ export default {
   height: auto;
   max-height: 90%;
 }
+
+/* ==========================================================================
+   MODO OSCURO (DARK MODE)
+   ========================================================================== */
+@media screen and (prefers-color-scheme: dark) {
+  #printable-area {
+    background: #120f24;
+  }
+}
+
+body.dark #printable-area,
+html.dark #printable-area,
+.dark #printable-area {
+  background: #120f24;
+}
 </style>

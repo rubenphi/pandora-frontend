@@ -349,4 +349,23 @@ export default {
 .underlined-digit {
   text-decoration: underline;
 }
+
+/* Modo Oscuro en pantalla (no altera la impresión en papel) */
+@media screen and (prefers-color-scheme: dark) {
+  .student-table th,
+  .student-table td {
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f7f7fd;
+  }
+}
+
+body.dark .student-table th,
+body.dark .student-table td,
+html.dark .student-table th,
+html.dark .student-table td,
+.dark .student-table th,
+.dark .student-table td {
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f7f7fd;
+}
 </style>

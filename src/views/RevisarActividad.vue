@@ -4040,4 +4040,253 @@ export default {
   cursor: pointer;
   transition: all 0.15s ease;
 }
+
+/* ==========================================================================
+   MODO OSCURO (DARK MODE)
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  .qz-review-page {
+    background-color: #120f24;
+  }
+  .qz-save-hero-btn {
+    background: #28214b;
+    color: #f7f7fd;
+  }
+  .qz-hero-banner {
+    background: linear-gradient(180deg, #5a4ad1 0%, #352b6a 40%, #120f24 100%);
+  }
+  .qz-group-pill-btn {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-list-header-bar {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-master-check-label,
+  .qz-student-fullname,
+  .qz-bulk-modal-title,
+  .qz-bulk-section-label,
+  .qz-bulk-criterion-name,
+  .qz-bulk-score-input,
+  .upload-area p,
+  .qz-physical-title,
+  .qz-delivery-card-title-row {
+    color: #f7f7fd;
+  }
+  .qz-tag--delivery,
+  .qz-badge--physical,
+  .qz-student-grade-pill,
+  .qz-save-individual-btn,
+  .qz-bulk-quick-btn {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-student-accordion-item {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-accordion-body-wrap {
+    background: #1d1838;
+    border-top-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-bulk-modal-content {
+    background: #1d1838;
+  }
+  .qz-bulk-modal-header {
+    background: linear-gradient(135deg, #231d42 0%, #1d1838 100%);
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-bulk-input-wrap {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+  .qz-bulk-modal-footer {
+    border-top-color: rgba(255, 255, 255, 0.08);
+    background: #1d1838;
+  }
+  .qz-bulk-cancel-btn {
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #9e9bb8;
+  }
+  .upload-area {
+    background-color: #231d42;
+  }
+  .qz-physical-modal-content {
+    background: #1d1838;
+  }
+  .qz-delivery-card {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-custom-search-wrap {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+  .qz-physical-modal-footer .qz-btn--cancel {
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+}
+
+:global(body.dark) .qz-review-page,
+:global(html.dark) .qz-review-page,
+:global(.dark) .qz-review-page {
+  background-color: #120f24;
+}
+
+:global(body.dark) .qz-save-hero-btn,
+:global(html.dark) .qz-save-hero-btn,
+:global(.dark) .qz-save-hero-btn {
+  background: #28214b;
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-hero-banner,
+:global(html.dark) .qz-hero-banner,
+:global(.dark) .qz-hero-banner {
+  background: linear-gradient(180deg, #5a4ad1 0%, #352b6a 40%, #120f24 100%);
+}
+
+:global(body.dark) .qz-group-pill-btn,
+:global(html.dark) .qz-group-pill-btn,
+:global(.dark) .qz-group-pill-btn {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-list-header-bar,
+:global(html.dark) .qz-list-header-bar,
+:global(.dark) .qz-list-header-bar {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-master-check-label,
+:global(html.dark) .qz-master-check-label,
+:global(.dark) .qz-master-check-label,
+:global(body.dark) .qz-student-fullname,
+:global(html.dark) .qz-student-fullname,
+:global(.dark) .qz-student-fullname,
+:global(body.dark) .qz-bulk-modal-title,
+:global(html.dark) .qz-bulk-modal-title,
+:global(.dark) .qz-bulk-modal-title,
+:global(body.dark) .qz-bulk-section-label,
+:global(html.dark) .qz-bulk-section-label,
+:global(.dark) .qz-bulk-section-label,
+:global(body.dark) .qz-bulk-criterion-name,
+:global(html.dark) .qz-bulk-criterion-name,
+:global(.dark) .qz-bulk-criterion-name,
+:global(body.dark) .qz-bulk-score-input,
+:global(html.dark) .qz-bulk-score-input,
+:global(.dark) .qz-bulk-score-input,
+:global(body.dark) .upload-area p,
+:global(html.dark) .upload-area p,
+:global(.dark) .upload-area p,
+:global(body.dark) .qz-physical-title,
+:global(html.dark) .qz-physical-title,
+:global(.dark) .qz-physical-title,
+:global(body.dark) .qz-delivery-card-title-row,
+:global(html.dark) .qz-delivery-card-title-row,
+:global(.dark) .qz-delivery-card-title-row {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-tag--delivery,
+:global(html.dark) .qz-tag--delivery,
+:global(.dark) .qz-tag--delivery,
+:global(body.dark) .qz-badge--physical,
+:global(html.dark) .qz-badge--physical,
+:global(.dark) .qz-badge--physical,
+:global(body.dark) .qz-student-grade-pill,
+:global(html.dark) .qz-student-grade-pill,
+:global(.dark) .qz-student-grade-pill,
+:global(body.dark) .qz-save-individual-btn,
+:global(html.dark) .qz-save-individual-btn,
+:global(.dark) .qz-save-individual-btn,
+:global(body.dark) .qz-bulk-quick-btn,
+:global(html.dark) .qz-bulk-quick-btn,
+:global(.dark) .qz-bulk-quick-btn {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-student-accordion-item,
+:global(html.dark) .qz-student-accordion-item,
+:global(.dark) .qz-student-accordion-item {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-accordion-body-wrap,
+:global(html.dark) .qz-accordion-body-wrap,
+:global(.dark) .qz-accordion-body-wrap {
+  background: #1d1838;
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-bulk-modal-content,
+:global(html.dark) .qz-bulk-modal-content,
+:global(.dark) .qz-bulk-modal-content {
+  background: #1d1838;
+}
+
+:global(body.dark) .qz-bulk-modal-header,
+:global(html.dark) .qz-bulk-modal-header,
+:global(.dark) .qz-bulk-modal-header {
+  background: linear-gradient(135deg, #231d42 0%, #1d1838 100%);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-bulk-input-wrap,
+:global(html.dark) .qz-bulk-input-wrap,
+:global(.dark) .qz-bulk-input-wrap {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+:global(body.dark) .qz-bulk-modal-footer,
+:global(html.dark) .qz-bulk-modal-footer,
+:global(.dark) .qz-bulk-modal-footer {
+  border-top-color: rgba(255, 255, 255, 0.08);
+  background: #1d1838;
+}
+
+:global(body.dark) .qz-bulk-cancel-btn,
+:global(html.dark) .qz-bulk-cancel-btn,
+:global(.dark) .qz-bulk-cancel-btn {
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #9e9bb8;
+}
+
+:global(body.dark) .upload-area,
+:global(html.dark) .upload-area,
+:global(.dark) .upload-area {
+  background-color: #231d42;
+}
+
+:global(body.dark) .qz-physical-modal-content,
+:global(html.dark) .qz-physical-modal-content,
+:global(.dark) .qz-physical-modal-content {
+  background: #1d1838;
+}
+
+:global(body.dark) .qz-delivery-card,
+:global(html.dark) .qz-delivery-card,
+:global(.dark) .qz-delivery-card {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-custom-search-wrap,
+:global(html.dark) .qz-custom-search-wrap,
+:global(.dark) .qz-custom-search-wrap {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+:global(body.dark) .qz-physical-modal-footer .qz-btn--cancel,
+:global(html.dark) .qz-physical-modal-footer .qz-btn--cancel,
+:global(.dark) .qz-physical-modal-footer .qz-btn--cancel {
+  border-color: rgba(255, 255, 255, 0.12);
+}
 </style>

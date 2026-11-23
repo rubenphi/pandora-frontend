@@ -1,6 +1,6 @@
 <template>
-  <ion-page class="qz-users-page">
-    <ion-content :fullscreen="true" class="qz-users-content">
+  <ion-page class="ion-page qz-users-page">
+    <ion-content class="qz-users-content">
       <div class="qz-users-wrapper">
         <!-- 1. CABECERA HERO QUEEZY -->
         <div class="qz-hero-header">
@@ -21,15 +21,23 @@
                 </p>
               </div>
 
-              <!-- Botón rápido Importar Usuarios (Solo Privilegiados) -->
-              <button
-                v-if="isPrivilegedUser"
-                class="qz-import-btn"
-                @click="router.push('/admin/importar-usuarios')"
-              >
-                <ion-icon :icon="personAddOutline"></ion-icon>
-                <span>Importar Usuarios</span>
-              </button>
+              <!-- Botones de Acción (Solo Privilegiados) -->
+              <div v-if="isPrivilegedUser" class="qz-hero-actions">
+                <button
+                  class="qz-header-btn qz-btn-new-user"
+                  @click="navigateTo('/admin/registro/usuarios')"
+                >
+                  <ion-icon :icon="personAddOutline"></ion-icon>
+                  <span>Nuevo Usuario</span>
+                </button>
+                <button
+                  class="qz-header-btn qz-import-btn"
+                  @click="isImportModalOpen = true"
+                >
+                  <ion-icon :icon="cloudUploadOutline"></ion-icon>
+                  <span>Importar Usuarios</span>
+                </button>
+              </div>
             </div>
 
             <!-- Selector de Año Lectivo Centralizado -->
@@ -90,9 +98,6 @@
                 <span class="qz-tab-label--full">Sin Asignar / En Espera</span>
                 <span class="qz-tab-label--short">En Espera</span>
               </span>
-              <span class="qz-tab-badge" v-if="unassignedCount > 0">{{
-                unassignedCount
-              }}</span>
             </button>
           </div>
 
@@ -128,7 +133,7 @@
                       <ion-icon :icon="schoolOutline"></ion-icon>
                     </div>
                     <div>
-                      <h3 class="qz-course-name">Curso {{ curso.name }}</h3>
+                      <h3 class="qz-course-name">{{ curso.name }}</h3>
                       <span class="qz-course-sub">
                         <template
                           v-if="
@@ -316,10 +321,11 @@
                 <div class="qz-teacher-actions">
                   <button
                     class="qz-teacher-btn qz-btn--assign-work"
-                    @click="openModal(teacher)"
+                    @click="router.push('/admin/gestion-academica')"
+                    title="Administrar carga académica en Gestión Académica"
                   >
                     <ion-icon :icon="schoolOutline"></ion-icon>
-                    <span>Asignar Carga</span>
+                    <span>Carga Académica</span>
                   </button>
 
                   <button
@@ -459,7 +465,7 @@
               <!-- Año de Asignación -->
               <div class="qz-field-group">
                 <label class="qz-field-label">Año Lectivo</label>
-                <div class="qz-select-wrapper">
+                <div class="qz-native-select-wrapper">
                   <ion-icon
                     :icon="calendarOutline"
                     class="qz-field-icon"
@@ -478,7 +484,7 @@
               <!-- Curso Destino -->
               <div class="qz-field-group">
                 <label class="qz-field-label">Curso Destino</label>
-                <div class="qz-select-wrapper">
+                <div class="qz-native-select-wrapper">
                   <ion-icon
                     :icon="schoolOutline"
                     class="qz-field-icon"
@@ -505,7 +511,7 @@
               <!-- Rol en el Curso -->
               <div class="qz-field-group">
                 <label class="qz-field-label">Rol Asignado</label>
-                <div class="qz-select-wrapper">
+                <div class="qz-native-select-wrapper">
                   <ion-icon
                     :icon="peopleOutline"
                     class="qz-field-icon"
@@ -525,7 +531,7 @@
               <!-- Grupo Destino (Si es estudiante) -->
               <div class="qz-field-group" v-if="rolSelected === 'student'">
                 <label class="qz-field-label">Grupo (Opcional)</label>
-                <div class="qz-select-wrapper">
+                <div class="qz-native-select-wrapper">
                   <ion-icon
                     :icon="layersOutline"
                     class="qz-field-icon"
@@ -549,38 +555,27 @@
                 </div>
               </div>
 
-              <!-- Áreas para Docentes/Admins -->
+              <!-- Nota informativa para Docentes/Admins -->
               <div
                 v-if="
                   selectedCourseId &&
                   selectedCourseId != 0 &&
                   (rolSelected === 'teacher' || rolSelected === 'admin')
                 "
-                class="qz-areas-selection-box"
+                class="qz-field-note"
+                style="
+                  margin-top: 12px;
+                  padding: 10px 14px;
+                  background: rgba(106, 90, 224, 0.08);
+                  border-radius: 12px;
+                  font-size: 13px;
+                  color: #6a5ae0;
+                  line-height: 1.4;
+                "
               >
-                <h5 class="qz-areas-select-title">
-                  Áreas que dictará en este curso:
-                </h5>
-                <div
-                  v-if="currentCourseAreas.length === 0"
-                  class="qz-empty-desc"
-                >
-                  Este curso no tiene áreas asignadas.
-                </div>
-                <div v-else class="qz-checkboxes-grid">
-                  <label
-                    v-for="area in currentCourseAreas"
-                    :key="area.id"
-                    class="qz-checkbox-item"
-                  >
-                    <input
-                      type="checkbox"
-                      :checked="selectedAreas[area.id]"
-                      @change="selectedAreas[area.id] = $event.target.checked"
-                    />
-                    <span>{{ area.name }}</span>
-                  </label>
-                </div>
+                ℹ️ La vinculación de materias y carga académica de este docente
+                se gestiona centralizadamente desde
+                <strong>Gestión Académica</strong>.
               </div>
             </div>
 
@@ -614,7 +609,16 @@
         <div class="qz-modal-container">
           <div class="qz-modal-header">
             <div>
-              <span class="qz-modal-tag">TRASLADO MASIVO</span>
+              <span
+                class="qz-modal-tag"
+                :class="{ 'qz-tag--warning': selectedCourseId === 'UNLINK' }"
+              >
+                {{
+                  selectedCourseId === "UNLINK"
+                    ? "DESVINCULACIÓN MASIVA"
+                    : "TRASLADO MASIVO"
+                }}
+              </span>
               <h3 class="qz-modal-title">
                 Mover Estudiantes de {{ sourceCourseForBulk?.name }}
               </h3>
@@ -625,45 +629,45 @@
           </div>
 
           <div class="qz-modal-body">
-            <div class="qz-filters-grid">
-              <div class="qz-field-group">
-                <label class="qz-field-label">Año Destino</label>
-                <div class="qz-select-wrapper">
-                  <ion-icon
-                    :icon="calendarOutline"
-                    class="qz-field-icon"
-                  ></ion-icon>
-                  <select
-                    v-model="selectedYearForBulk"
-                    class="qz-native-select"
-                  >
-                    <option v-for="y in years" :key="y" :value="y">
-                      {{ y }}
-                    </option>
-                  </select>
-                </div>
-              </div>
+            <div
+              class="qz-filters-grid"
+              :class="{
+                'qz-filters-grid--single': selectedCourseId === 'UNLINK',
+              }"
+            >
+              <QzSelect
+                v-if="selectedCourseId !== 'UNLINK'"
+                v-model="selectedYearForBulk"
+                label="Año Destino"
+                :icon="calendarOutline"
+                :options="bulkYearOptions"
+                placeholder="Seleccione año..."
+              />
 
-              <div class="qz-field-group">
-                <label class="qz-field-label">Curso Destino</label>
-                <div class="qz-select-wrapper">
-                  <ion-icon
-                    :icon="schoolOutline"
-                    class="qz-field-icon"
-                  ></ion-icon>
-                  <select v-model="selectedCourseId" class="qz-native-select">
-                    <option :value="null" disabled>Seleccione curso...</option>
-                    <option
-                      v-for="curso in cursosInstituto.filter(
-                        (c) => c.id !== sourceCourseForBulk?.id && c.id !== 0,
-                      )"
-                      :key="curso.id"
-                      :value="curso.id"
-                    >
-                      Curso {{ curso.name }}
-                    </option>
-                  </select>
-                </div>
+              <QzSelect
+                v-model="selectedCourseId"
+                label="Curso Destino o Acción"
+                :icon="schoolOutline"
+                :options="bulkDestinationOptions"
+                placeholder="Seleccione curso o desvincular..."
+              />
+            </div>
+
+            <!-- Aviso explicativo cuando se elige desvincular -->
+            <div v-if="selectedCourseId === 'UNLINK'" class="qz-unlink-notice">
+              <div class="qz-unlink-icon-squircle">
+                <ion-icon :icon="schoolOutline"></ion-icon>
+              </div>
+              <div class="qz-unlink-text">
+                <h4 class="qz-unlink-title">
+                  Desvinculación de Estudiantes (Graduados / Retirados)
+                </h4>
+                <p class="qz-unlink-desc">
+                  Los estudiantes seleccionados serán retirados de
+                  <strong>{{ sourceCourseForBulk?.name }}</strong
+                  >. No se matricularán en un nuevo curso y quedarán registrados
+                  como egresados / sin curso asignado.
+                </p>
               </div>
             </div>
 
@@ -730,27 +734,42 @@
                 Cancelar
               </button>
               <button
-                class="qz-modal-btn qz-btn--confirm"
+                class="qz-modal-btn"
+                :class="
+                  selectedCourseId === 'UNLINK'
+                    ? 'qz-btn--unlink-confirm'
+                    : 'qz-btn--confirm'
+                "
                 :disabled="!selectedCourseId || selectedStudents.length === 0"
                 @click="confirmBulkAssign"
               >
-                Trasladar {{ selectedStudents.length }} Estudiante(s)
+                <ion-icon
+                  :icon="
+                    selectedCourseId === 'UNLINK'
+                      ? schoolOutline
+                      : swapHorizontalOutline
+                  "
+                ></ion-icon>
+                <span>
+                  {{
+                    selectedCourseId === "UNLINK"
+                      ? `Desvincular ${selectedStudents.length} Estudiante(s)`
+                      : `Trasladar ${selectedStudents.length} Estudiante(s)`
+                  }}
+                </span>
               </button>
             </div>
           </div>
         </div>
       </ion-modal>
 
-      <!-- MODAL 3: MODAL DE ASIGNACIÓN DOCENTE IMPORTADO -->
-      <TeacherAssignmentModal
-        :is-open="isTeacherAssignmentModalOpen"
-        :selected-user="selectedUser"
-        @didDismiss="isTeacherAssignmentModalOpen = false"
-        @confirm="
-          isTeacherAssignmentModalOpen = false;
-          refreshCurrentView();
-        "
-      ></TeacherAssignmentModal>
+      <!-- MODAL ASISTENTE DE IMPORTACIÓN DE USUARIOS -->
+      <UserImportWizardModal
+        :is-open="isImportModalOpen"
+        :courses="availableCourses"
+        @didDismiss="isImportModalOpen = false"
+        @success="handleImportSuccess"
+      />
     </ion-content>
   </ion-page>
 </template>
@@ -759,8 +778,9 @@
 import axios from "axios";
 import { useRouter } from "vue-router";
 import { ref, computed } from "vue";
-import TeacherAssignmentModal from "../components/TeacherAssignmentModal.vue";
 import { tokenHeader, usuarioGet, currentServerYear } from "../globalService";
+import UserImportWizardModal from "../components/UserImportWizardModal.vue";
+import QzSelect from "../components/common/QzSelect.vue";
 
 import {
   IonPage,
@@ -779,6 +799,7 @@ import {
   schoolOutline,
   peopleOutline,
   personAddOutline,
+  cloudUploadOutline,
   swapHorizontalOutline,
   searchOutline,
   createOutline,
@@ -802,7 +823,8 @@ export default {
     IonModal,
     IonIcon,
     IonSpinner,
-    TeacherAssignmentModal,
+    UserImportWizardModal,
+    QzSelect,
   },
   setup() {
     const router = useRouter();
@@ -841,7 +863,12 @@ export default {
     // Modales
     const isModalOpen = ref(false);
     const isBulkAssignModalOpen = ref(false);
-    const isTeacherAssignmentModalOpen = ref(false);
+    const isImportModalOpen = ref(false);
+
+    const handleImportSuccess = async () => {
+      isImportModalOpen.value = false;
+      await refreshCurrentView();
+    };
 
     // Selección de usuario individual
     const selectedUser = ref(null);
@@ -856,6 +883,32 @@ export default {
     const sourceCourseForBulk = ref(null);
     const studentsForBulkAssign = ref([]);
     const selectedStudents = ref([]);
+
+    const bulkYearOptions = computed(() => {
+      return years.value.map((y) => ({
+        value: y,
+        label: `Año ${y}`,
+      }));
+    });
+
+    const bulkDestinationOptions = computed(() => {
+      const opts = [
+        {
+          value: "UNLINK",
+          label: "Desvincular del curso",
+        },
+      ];
+      const otherCourses = cursosInstituto.value.filter(
+        (c) => c.id !== sourceCourseForBulk.value?.id && c.id !== 0,
+      );
+      otherCourses.forEach((curso) => {
+        opts.push({
+          value: curso.id,
+          label: `${curso.name}`,
+        });
+      });
+      return opts;
+    });
 
     const roles = ref([
       { titulo: "Estudiante", rol: "student" },
@@ -1112,19 +1165,15 @@ export default {
     // Modal individual
     const openModal = async (user) => {
       selectedUser.value = user;
-      if (user.rol === "teacher" || user.rol === "admin") {
-        isTeacherAssignmentModalOpen.value = true;
-      } else {
-        selectedCourseId.value = courseSelected.value?.id || null;
-        selectedGroupId.value = null;
-        selectedAreas.value = {};
-        currentCourseAreas.value = [];
-        selectedYearForAssignment.value = selectedYear.value;
-        rolSelected.value = user.rol || "student";
-        isModalOpen.value = true;
-        if (selectedCourseId.value) {
-          await getGruposCurso();
-        }
+      selectedCourseId.value = courseSelected.value?.id || null;
+      selectedGroupId.value = null;
+      selectedAreas.value = {};
+      currentCourseAreas.value = [];
+      selectedYearForAssignment.value = selectedYear.value;
+      rolSelected.value = user.rol || "student";
+      isModalOpen.value = true;
+      if (selectedCourseId.value) {
+        await getGruposCurso();
       }
     };
 
@@ -1259,15 +1308,19 @@ export default {
         const alert = await alertController.create({
           header: "Información incompleta",
           message:
-            "Por favor seleccione un curso de destino y al menos un estudiante.",
+            "Por favor seleccione un curso de destino o la opción de desvincular, y al menos un estudiante.",
           buttons: ["Entendido"],
         });
         await alert.present();
         return;
       }
 
+      const isUnlink = selectedCourseId.value === "UNLINK";
+
       const loader = await loadingController.create({
-        message: "Procesando traslado masivo...",
+        message: isUnlink
+          ? "Desvinculando estudiantes del curso..."
+          : "Procesando traslado masivo...",
       });
       await loader.present();
 
@@ -1281,31 +1334,43 @@ export default {
         );
         await Promise.all(deactivationPromises);
 
-        const assignments = selectedStudents.value.map((userId) => ({
-          userId,
-          year: parseInt(selectedYearForBulk.value, 10),
-          rol: "student",
-        }));
+        if (!isUnlink) {
+          const assignments = selectedStudents.value.map((userId) => ({
+            userId,
+            year: parseInt(selectedYearForBulk.value, 10),
+            rol: "student",
+          }));
 
-        await axios.post(
-          `/courses/${selectedCourseId.value}/users`,
-          assignments,
-          tokenHeader(),
-        );
+          await axios.post(
+            `/courses/${selectedCourseId.value}/users`,
+            assignments,
+            tokenHeader(),
+          );
+        }
 
         await loader.dismiss();
         closeBulkAssignModal();
 
+        const courseName = sourceCourseForBulk.value?.name || "";
         const successAlert = await alertController.create({
-          header: "Traslado Exitoso",
-          message: `Se han trasladado ${selectedStudents.value.length} estudiantes correctamente.`,
+          header: isUnlink ? "Desvinculación Exitosa" : "Traslado Exitoso",
+          message: isUnlink
+            ? `Se han desvinculado ${selectedStudents.value.length} estudiante(s) del curso ${courseName}. Ahora quedan registrados como egresados / sin curso activo.`
+            : `Se han trasladado ${selectedStudents.value.length} estudiante(s) correctamente al curso seleccionado.`,
           buttons: ["OK"],
         });
         await successAlert.present();
         await refreshCurrentView();
       } catch (error) {
         await loader.dismiss();
-        console.error("Error en la asignación múltiple:", error);
+        console.error("Error en la operación masiva:", error);
+        const errorAlert = await alertController.create({
+          header: "Error",
+          message:
+            "Ocurrió un error al procesar los estudiantes seleccionados.",
+          buttons: ["OK"],
+        });
+        await errorAlert.present();
       }
     };
 
@@ -1427,8 +1492,13 @@ export default {
       return (initial1 + initial2).trim() || "?";
     };
 
+    const navigateTo = (path) => {
+      router.push(path);
+    };
+
     return {
       router,
+      navigateTo,
       usuario,
       years,
       selectedYear,
@@ -1471,15 +1541,18 @@ export default {
       getGruposCurso,
       asignarUsuario,
       isBulkAssignModalOpen,
+      isImportModalOpen,
+      handleImportSuccess,
       sourceCourseForBulk,
       studentsForBulkAssign,
       selectedStudents,
+      bulkYearOptions,
+      bulkDestinationOptions,
       openBulkAssignModal,
       closeBulkAssignModal,
       toggleSelectAllNative,
       toggleStudentSelection,
       confirmBulkAssign,
-      isTeacherAssignmentModalOpen,
       refreshCurrentView,
       getRoleLabel,
       getRoleBadgeClass,
@@ -1490,6 +1563,7 @@ export default {
       schoolOutline,
       peopleOutline,
       personAddOutline,
+      cloudUploadOutline,
       swapHorizontalOutline,
       searchOutline,
       createOutline,
@@ -1522,7 +1596,8 @@ export default {
 .qz-users-wrapper {
   max-width: 960px;
   margin: 0 auto;
-  padding-bottom: 24px;
+  padding-bottom: 70px;
+  box-sizing: border-box;
 }
 
 /* 1. HERO HEADER */
@@ -1598,6 +1673,44 @@ export default {
   max-width: 580px;
 }
 
+.qz-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.qz-header-btn {
+  border: none;
+  border-radius: 14px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+}
+
+.qz-header-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.qz-btn-new-user {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(8px);
+}
+
+.qz-btn-new-user:hover {
+  background: rgba(255, 255, 255, 0.32);
+  color: #ffffff;
+}
+
 .qz-import-btn {
   background: #ffffff;
   color: #6a5ae0;
@@ -1607,7 +1720,7 @@ export default {
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -2414,24 +2527,39 @@ export default {
   letter-spacing: 0.5px;
 }
 
-.qz-select-wrapper {
+.qz-native-select-wrapper {
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
 }
 
 .qz-field-icon {
   position: absolute;
   left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 18px;
   color: #6a5ae0;
   pointer-events: none;
+  z-index: 2;
 }
 
 .qz-native-select {
   width: 100%;
-  padding: 12px 16px 12px 42px;
-  background: #f4f3fd;
+  height: 46px;
+  line-height: normal;
+  display: flex;
+  align-items: center;
+  padding: 0 38px 0 42px;
+  background-color: #f4f3fd;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='none' stroke='%236a5ae0' stroke-linecap='round' stroke-linejoin='round' stroke-width='48' d='M112 184l144 144 144-144'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
   border: 1.5px solid rgba(106, 90, 224, 0.15);
   border-radius: 14px;
   font-size: 14px;
@@ -2440,6 +2568,92 @@ export default {
   outline: none;
   cursor: pointer;
   appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+}
+
+/* Filtros y Selectores en Grid para Modales */
+.qz-filters-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.qz-filters-grid--single {
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 600px) {
+  .qz-filters-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+/* Aviso explicativo de desvinculación */
+.qz-unlink-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  border-radius: 16px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.qz-unlink-icon-squircle {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: #fef3c7;
+  color: #d97706;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.qz-unlink-text {
+  flex: 1;
+}
+
+.qz-unlink-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #92400e;
+  margin: 0 0 3px;
+}
+
+.qz-unlink-desc {
+  font-size: 12px;
+  color: #b45309;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.qz-tag--warning {
+  background: #fef3c7 !important;
+  color: #d97706 !important;
+}
+
+.qz-btn--unlink-confirm {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.35) !important;
+  border: none;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.qz-btn--unlink-confirm:hover {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+  transform: translateY(-1px);
 }
 
 .qz-checkboxes-grid {
@@ -2559,97 +2773,857 @@ export default {
 /* ==========================================================================
    DARK MODE
    ========================================================================== */
-body.dark .qz-users-page {
+@media (prefers-color-scheme: dark) {
+  .qz-users-page {
+    --background: #110d26;
+    background-color: #110d26;
+  }
+  .qz-hero-header {
+    background: linear-gradient(135deg, #1d1838 0%, #29204d 100%);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+  }
+  .qz-btn-new-user {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+  }
+  .qz-btn-new-user:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+  }
+  .qz-import-btn {
+    background: #2b2254;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+  .qz-import-btn:hover {
+    background: #362b69;
+    color: #ffffff;
+  }
+  .qz-hero-tag {
+    background: rgba(255, 255, 255, 0.12);
+    color: #b5a9ff;
+    border: 1px solid rgba(181, 169, 255, 0.3);
+  }
+  .qz-back-btn {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  .qz-back-btn:hover {
+    background: rgba(255, 255, 255, 0.22);
+  }
+  .qz-year-pill-container {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  .qz-year-select option {
+    background: #1d1838;
+    color: #ffffff;
+  }
+  .qz-tabs-container,
+  .qz-course-card,
+  .qz-teacher-card,
+  .qz-unassigned-card,
+  .qz-modal-container {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-tab-btn {
+    color: #a49fc4;
+  }
+  .qz-tab-btn:hover {
+    background: #231d42;
+    color: #ffffff;
+  }
+  .qz-tab-btn--active {
+    background: #2b2254;
+    color: #b5a9ff;
+  }
+  .qz-subtab-pill {
+    background: #241d42;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #a49fc4;
+  }
+  .qz-subtab-pill:hover {
+    background: #2a2250;
+    color: #ffffff;
+  }
+  .qz-subtab-pill--active {
+    background: #6a5ae0;
+    color: #ffffff;
+    border-color: #6a5ae0;
+  }
+  .qz-search-input {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+  }
+  .qz-search-icon {
+    color: #a49fc4;
+  }
+  .qz-course-card--expanded {
+    border-color: rgba(106, 90, 224, 0.6);
+  }
+  .qz-course-name,
+  .qz-user-fullname,
+  .qz-area-name,
+  .qz-teacher-name,
+  .qz-modal-title,
+  .qz-bulk-student-name {
+    color: #ffffff;
+  }
+  .qz-course-sub,
+  .qz-area-teacher,
+  .qz-teacher-code,
+  .qz-user-code,
+  .qz-empty-desc {
+    color: #a49fc4;
+  }
+  .qz-field-label {
+    color: #b5a9ff;
+  }
+  .qz-checkbox-item {
+    color: #f7f7fd;
+  }
+  .qz-areas-select-title {
+    color: #ffffff;
+  }
+  .qz-course-card-body {
+    background: #181430;
+    border-top-color: rgba(255, 255, 255, 0.06);
+  }
+  .qz-user-row-card,
+  .qz-area-card,
+  .qz-selected-user-card {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.06);
+  }
+  .qz-user-avatar-squircle {
+    background: #2b2254;
+    color: #b5a9ff;
+  }
+  .qz-course-icon-squircle {
+    background: #2b2254;
+    color: #b5a9ff;
+  }
+  .qz-area-icon-squircle {
+    background: rgba(0, 172, 193, 0.2);
+    color: #4dd0e1;
+  }
+  .qz-teacher-avatar {
+    background: rgba(217, 119, 6, 0.2);
+    color: #fbbf24;
+  }
+  .qz-banner-icon {
+    background: rgba(37, 99, 235, 0.25);
+    color: #93c5fd;
+  }
+  .qz-badge--student {
+    background: rgba(14, 165, 233, 0.2);
+    color: #7dd3fc;
+    border: 1px solid rgba(14, 165, 233, 0.35);
+  }
+  .qz-badge--teacher {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fcd34d;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+  }
+  .qz-badge--admin {
+    background: rgba(236, 72, 153, 0.2);
+    color: #f472b6;
+    border: 1px solid rgba(236, 72, 153, 0.35);
+  }
+  .qz-teacher-role-tag,
+  .qz-modal-tag {
+    background: #2b2254;
+    color: #b5a9ff;
+    border: 1px solid rgba(181, 169, 255, 0.25);
+  }
+  .qz-course-action-btn {
+    background: #2b2254;
+    color: #b5a9ff;
+    border: 1px solid rgba(106, 90, 224, 0.3);
+  }
+  .qz-course-action-btn:hover {
+    background: #362b69;
+    color: #ffffff;
+  }
+  .qz-course-toggle-btn {
+    background: #241d42;
+    color: #b5a9ff;
+  }
+  .qz-course-toggle-btn:hover {
+    background: #2c2550;
+    color: #ffffff;
+  }
+  .qz-btn--reassign {
+    background: #2b2254;
+    color: #b5a9ff;
+  }
+  .qz-btn--reassign:hover {
+    background: #6a5ae0;
+    color: #ffffff;
+  }
+  .qz-btn--edit {
+    background: #241d42;
+    color: #a49fc4;
+  }
+  .qz-btn--edit:hover {
+    background: #00acc1;
+    color: #ffffff;
+  }
+  .qz-btn--delete {
+    background: rgba(225, 29, 72, 0.2);
+    color: #fda4af;
+  }
+  .qz-btn--delete:hover {
+    background: #e11d48;
+    color: #ffffff;
+  }
+  .qz-assign-teacher-btn,
+  .qz-btn--edit-profile {
+    background: #2b2254;
+    color: #b5a9ff;
+    border: 1px solid rgba(106, 90, 224, 0.3);
+  }
+  .qz-assign-teacher-btn:hover,
+  .qz-btn--edit-profile:hover {
+    background: #362b69;
+    color: #ffffff;
+  }
+  .qz-modal-modern {
+    --background: #1d1838;
+  }
+  .qz-modal-close-btn {
+    background: #241d42;
+    color: #a49fc4;
+  }
+  .qz-modal-close-btn:hover {
+    background: #2c2550;
+    color: #ffffff;
+  }
+  .qz-btn--cancel {
+    background: #241d42;
+    color: #a49fc4;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .qz-btn--cancel:hover {
+    background: #2c2550;
+    color: #ffffff;
+  }
+  .qz-field-icon {
+    color: #b5a9ff;
+  }
+  .qz-native-select {
+    background-color: #241d42;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='none' stroke='%23b5a9ff' stroke-linecap='round' stroke-linejoin='round' stroke-width='48' d='M112 184l144 144 144-144'/%3E%3C/svg%3E");
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+  }
+  .qz-native-select option {
+    background: #1d1838;
+    color: #ffffff;
+  }
+  .qz-unassigned-banner {
+    background: rgba(37, 99, 235, 0.15);
+    border-color: rgba(37, 99, 235, 0.3);
+  }
+  .qz-banner-title {
+    color: #93c5fd;
+  }
+  .qz-banner-desc {
+    color: #bfdbfe;
+  }
+  .qz-bulk-select-header {
+    background: #241d42;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .qz-select-all-label,
+  .qz-selected-count-badge {
+    color: #b5a9ff;
+  }
+  .qz-bulk-student-row {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.06);
+  }
+  .qz-bulk-student-row--selected {
+    background: #2b2254;
+    border-color: #6a5ae0;
+  }
+  .qz-empty-box {
+    color: #a49fc4;
+  }
+  .qz-empty-box ion-icon {
+    color: #4d447d;
+  }
+  .qz-unlink-notice {
+    background: #231c26;
+    border-color: rgba(245, 158, 11, 0.3);
+  }
+  .qz-unlink-icon-squircle {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+  }
+  .qz-unlink-title {
+    color: #fef08a;
+  }
+  .qz-unlink-desc {
+    color: #fed7aa;
+  }
+  .qz-tag--warning {
+    background: rgba(245, 158, 11, 0.2) !important;
+    color: #fbbf24 !important;
+  }
+}
+
+:global(body.dark) .qz-users-page,
+:global(html.dark) .qz-users-page,
+:global(.dark) .qz-users-page {
   --background: #110d26;
   background-color: #110d26;
 }
 
-body.dark .qz-hero-header {
+:global(body.dark) .qz-hero-header,
+:global(html.dark) .qz-hero-header,
+:global(.dark) .qz-hero-header {
   background: linear-gradient(135deg, #1d1838 0%, #29204d 100%);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
 }
 
-body.dark .qz-tabs-container,
-body.dark .qz-course-card,
-body.dark .qz-teacher-card,
-body.dark .qz-unassigned-card,
-body.dark .qz-modal-container {
+:global(body.dark) .qz-btn-new-user,
+:global(html.dark) .qz-btn-new-user,
+:global(.dark) .qz-btn-new-user {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+:global(body.dark) .qz-btn-new-user:hover,
+:global(html.dark) .qz-btn-new-user:hover,
+:global(.dark) .qz-btn-new-user:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+:global(body.dark) .qz-import-btn,
+:global(html.dark) .qz-import-btn,
+:global(.dark) .qz-import-btn {
+  background: #2b2254;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+:global(body.dark) .qz-import-btn:hover,
+:global(html.dark) .qz-import-btn:hover,
+:global(.dark) .qz-import-btn:hover {
+  background: #362b69;
+  color: #ffffff;
+}
+
+:global(body.dark) .qz-hero-tag,
+:global(html.dark) .qz-hero-tag,
+:global(.dark) .qz-hero-tag {
+  background: rgba(255, 255, 255, 0.12);
+  color: #b5a9ff;
+  border: 1px solid rgba(181, 169, 255, 0.3);
+}
+
+:global(body.dark) .qz-back-btn,
+:global(html.dark) .qz-back-btn,
+:global(.dark) .qz-back-btn {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+:global(body.dark) .qz-back-btn:hover,
+:global(html.dark) .qz-back-btn:hover,
+:global(.dark) .qz-back-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+:global(body.dark) .qz-year-pill-container,
+:global(html.dark) .qz-year-pill-container,
+:global(.dark) .qz-year-pill-container {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+:global(body.dark) .qz-year-select option,
+:global(html.dark) .qz-year-select option,
+:global(.dark) .qz-year-select option {
+  background: #1d1838;
+  color: #ffffff;
+}
+
+:global(body.dark) .qz-tabs-container,
+:global(html.dark) .qz-tabs-container,
+:global(.dark) .qz-tabs-container,
+:global(body.dark) .qz-course-card,
+:global(html.dark) .qz-course-card,
+:global(.dark) .qz-course-card,
+:global(body.dark) .qz-teacher-card,
+:global(html.dark) .qz-teacher-card,
+:global(.dark) .qz-teacher-card,
+:global(body.dark) .qz-unassigned-card,
+:global(html.dark) .qz-unassigned-card,
+:global(.dark) .qz-unassigned-card,
+:global(body.dark) .qz-modal-container,
+:global(html.dark) .qz-modal-container,
+:global(.dark) .qz-modal-container {
   background: #1d1838;
   border-color: rgba(255, 255, 255, 0.08);
 }
 
-body.dark .qz-tab-btn {
+:global(body.dark) .qz-tab-btn,
+:global(html.dark) .qz-tab-btn,
+:global(.dark) .qz-tab-btn {
   color: #a49fc4;
 }
 
-body.dark .qz-tab-btn--active {
+:global(body.dark) .qz-tab-btn:hover,
+:global(html.dark) .qz-tab-btn:hover,
+:global(.dark) .qz-tab-btn:hover {
+  background: #231d42;
+  color: #ffffff;
+}
+
+:global(body.dark) .qz-tab-btn--active,
+:global(html.dark) .qz-tab-btn--active,
+:global(.dark) .qz-tab-btn--active {
   background: #2b2254;
   color: #b5a9ff;
 }
 
-body.dark .qz-search-input {
+:global(body.dark) .qz-subtab-pill,
+:global(html.dark) .qz-subtab-pill,
+:global(.dark) .qz-subtab-pill {
+  background: #241d42;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #a49fc4;
+}
+
+:global(body.dark) .qz-subtab-pill:hover,
+:global(html.dark) .qz-subtab-pill:hover,
+:global(.dark) .qz-subtab-pill:hover {
+  background: #2a2250;
+  color: #ffffff;
+}
+
+:global(body.dark) .qz-subtab-pill--active,
+:global(html.dark) .qz-subtab-pill--active,
+:global(.dark) .qz-subtab-pill--active {
+  background: #6a5ae0;
+  color: #ffffff;
+  border-color: #6a5ae0;
+}
+
+:global(body.dark) .qz-search-input,
+:global(html.dark) .qz-search-input,
+:global(.dark) .qz-search-input {
   background: #231d42;
   border-color: rgba(255, 255, 255, 0.1);
   color: #ffffff;
 }
 
-body.dark .qz-course-name,
-body.dark .qz-user-fullname,
-body.dark .qz-area-name,
-body.dark .qz-teacher-name,
-body.dark .qz-modal-title,
-body.dark .qz-bulk-student-name {
+:global(body.dark) .qz-search-icon,
+:global(html.dark) .qz-search-icon,
+:global(.dark) .qz-search-icon {
+  color: #a49fc4;
+}
+
+:global(body.dark) .qz-course-card--expanded,
+:global(html.dark) .qz-course-card--expanded,
+:global(.dark) .qz-course-card--expanded {
+  border-color: rgba(106, 90, 224, 0.6);
+}
+
+:global(body.dark) .qz-course-name,
+:global(html.dark) .qz-course-name,
+:global(.dark) .qz-course-name,
+:global(body.dark) .qz-user-fullname,
+:global(html.dark) .qz-user-fullname,
+:global(.dark) .qz-user-fullname,
+:global(body.dark) .qz-area-name,
+:global(html.dark) .qz-area-name,
+:global(.dark) .qz-area-name,
+:global(body.dark) .qz-teacher-name,
+:global(html.dark) .qz-teacher-name,
+:global(.dark) .qz-teacher-name,
+:global(body.dark) .qz-modal-title,
+:global(html.dark) .qz-modal-title,
+:global(.dark) .qz-modal-title,
+:global(body.dark) .qz-bulk-student-name,
+:global(html.dark) .qz-bulk-student-name,
+:global(.dark) .qz-bulk-student-name {
   color: #ffffff;
 }
 
-body.dark .qz-course-card-body {
+:global(body.dark) .qz-course-sub,
+:global(html.dark) .qz-course-sub,
+:global(.dark) .qz-course-sub,
+:global(body.dark) .qz-area-teacher,
+:global(html.dark) .qz-area-teacher,
+:global(.dark) .qz-area-teacher,
+:global(body.dark) .qz-teacher-code,
+:global(html.dark) .qz-teacher-code,
+:global(.dark) .qz-teacher-code,
+:global(body.dark) .qz-user-code,
+:global(html.dark) .qz-user-code,
+:global(.dark) .qz-user-code,
+:global(body.dark) .qz-empty-desc,
+:global(html.dark) .qz-empty-desc,
+:global(.dark) .qz-empty-desc {
+  color: #a49fc4;
+}
+
+:global(body.dark) .qz-field-label,
+:global(html.dark) .qz-field-label,
+:global(.dark) .qz-field-label {
+  color: #b5a9ff;
+}
+
+:global(body.dark) .qz-checkbox-item,
+:global(html.dark) .qz-checkbox-item,
+:global(.dark) .qz-checkbox-item {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-areas-select-title,
+:global(html.dark) .qz-areas-select-title,
+:global(.dark) .qz-areas-select-title {
+  color: #ffffff;
+}
+
+:global(body.dark) .qz-course-card-body,
+:global(html.dark) .qz-course-card-body,
+:global(.dark) .qz-course-card-body {
   background: #181430;
   border-top-color: rgba(255, 255, 255, 0.06);
 }
 
-body.dark .qz-user-row-card,
-body.dark .qz-area-card,
-body.dark .qz-selected-user-card {
+:global(body.dark) .qz-user-row-card,
+:global(html.dark) .qz-user-row-card,
+:global(.dark) .qz-user-row-card,
+:global(body.dark) .qz-area-card,
+:global(html.dark) .qz-area-card,
+:global(.dark) .qz-area-card,
+:global(body.dark) .qz-selected-user-card,
+:global(html.dark) .qz-selected-user-card,
+:global(.dark) .qz-selected-user-card {
   background: #231d42;
   border-color: rgba(255, 255, 255, 0.06);
 }
 
-body.dark .qz-user-avatar-squircle {
+:global(body.dark) .qz-user-avatar-squircle,
+:global(html.dark) .qz-user-avatar-squircle,
+:global(.dark) .qz-user-avatar-squircle {
   background: #2b2254;
   color: #b5a9ff;
 }
 
-body.dark .qz-native-select {
+:global(body.dark) .qz-course-icon-squircle,
+:global(html.dark) .qz-course-icon-squircle,
+:global(.dark) .qz-course-icon-squircle {
+  background: #2b2254;
+  color: #b5a9ff;
+}
+
+:global(body.dark) .qz-area-icon-squircle,
+:global(html.dark) .qz-area-icon-squircle,
+:global(.dark) .qz-area-icon-squircle {
+  background: rgba(0, 172, 193, 0.2);
+  color: #4dd0e1;
+}
+
+:global(body.dark) .qz-teacher-avatar,
+:global(html.dark) .qz-teacher-avatar,
+:global(.dark) .qz-teacher-avatar {
+  background: rgba(217, 119, 6, 0.2);
+  color: #fbbf24;
+}
+
+:global(body.dark) .qz-banner-icon,
+:global(html.dark) .qz-banner-icon,
+:global(.dark) .qz-banner-icon {
+  background: rgba(37, 99, 235, 0.25);
+  color: #93c5fd;
+}
+
+:global(body.dark) .qz-badge--student,
+:global(html.dark) .qz-badge--student,
+:global(.dark) .qz-badge--student {
+  background: rgba(14, 165, 233, 0.2);
+  color: #7dd3fc;
+  border: 1px solid rgba(14, 165, 233, 0.35);
+}
+
+:global(body.dark) .qz-badge--teacher,
+:global(html.dark) .qz-badge--teacher,
+:global(.dark) .qz-badge--teacher {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fcd34d;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+:global(body.dark) .qz-badge--admin,
+:global(html.dark) .qz-badge--admin,
+:global(.dark) .qz-badge--admin {
+  background: rgba(236, 72, 153, 0.2);
+  color: #f472b6;
+  border: 1px solid rgba(236, 72, 153, 0.35);
+}
+
+:global(body.dark) .qz-teacher-role-tag,
+:global(html.dark) .qz-teacher-role-tag,
+:global(.dark) .qz-teacher-role-tag,
+:global(body.dark) .qz-modal-tag,
+:global(html.dark) .qz-modal-tag,
+:global(.dark) .qz-modal-tag {
+  background: #2b2254;
+  color: #b5a9ff;
+  border: 1px solid rgba(181, 169, 255, 0.25);
+}
+
+:global(body.dark) .qz-course-action-btn,
+:global(html.dark) .qz-course-action-btn,
+:global(.dark) .qz-course-action-btn {
+  background: #2b2254;
+  color: #b5a9ff;
+  border: 1px solid rgba(106, 90, 224, 0.3);
+}
+
+:global(body.dark) .qz-course-action-btn:hover,
+:global(html.dark) .qz-course-action-btn:hover,
+:global(.dark) .qz-course-action-btn:hover {
+  background: #362b69;
+  color: #ffffff;
+}
+
+:global(body.dark) .qz-course-toggle-btn,
+:global(html.dark) .qz-course-toggle-btn,
+:global(.dark) .qz-course-toggle-btn {
   background: #241d42;
+  color: #b5a9ff;
+}
+
+:global(body.dark) .qz-course-toggle-btn:hover,
+:global(html.dark) .qz-course-toggle-btn:hover,
+:global(.dark) .qz-course-toggle-btn:hover {
+  background: #2c2550;
+  color: #ffffff;
+}
+
+:global(body.dark) .qz-btn--reassign,
+:global(html.dark) .qz-btn--reassign,
+:global(.dark) .qz-btn--reassign {
+  background: #2b2254;
+  color: #b5a9ff;
+}
+
+:global(body.dark) .qz-btn--reassign:hover,
+:global(html.dark) .qz-btn--reassign:hover,
+:global(.dark) .qz-btn--reassign:hover {
+  background: #6a5ae0;
+  color: #ffffff;
+}
+
+:global(body.dark) .qz-btn--edit,
+:global(html.dark) .qz-btn--edit,
+:global(.dark) .qz-btn--edit {
+  background: #241d42;
+  color: #a49fc4;
+}
+
+:global(body.dark) .qz-btn--edit:hover,
+:global(html.dark) .qz-btn--edit:hover,
+:global(.dark) .qz-btn--edit:hover {
+  background: #00acc1;
+  color: #ffffff;
+}
+
+:global(body.dark) .qz-btn--delete,
+:global(html.dark) .qz-btn--delete,
+:global(.dark) .qz-btn--delete {
+  background: rgba(225, 29, 72, 0.2);
+  color: #fda4af;
+}
+
+:global(body.dark) .qz-btn--delete:hover,
+:global(html.dark) .qz-btn--delete:hover,
+:global(.dark) .qz-btn--delete:hover {
+  background: #e11d48;
+  color: #ffffff;
+}
+
+:global(body.dark) .qz-assign-teacher-btn,
+:global(html.dark) .qz-assign-teacher-btn,
+:global(.dark) .qz-assign-teacher-btn,
+:global(body.dark) .qz-btn--edit-profile,
+:global(html.dark) .qz-btn--edit-profile,
+:global(.dark) .qz-btn--edit-profile {
+  background: #2b2254;
+  color: #b5a9ff;
+  border: 1px solid rgba(106, 90, 224, 0.3);
+}
+
+:global(body.dark) .qz-assign-teacher-btn:hover,
+:global(html.dark) .qz-assign-teacher-btn:hover,
+:global(.dark) .qz-assign-teacher-btn:hover,
+:global(body.dark) .qz-btn--edit-profile:hover,
+:global(html.dark) .qz-btn--edit-profile:hover,
+:global(.dark) .qz-btn--edit-profile:hover {
+  background: #362b69;
+  color: #ffffff;
+}
+
+:global(body.dark) .qz-modal-modern,
+:global(html.dark) .qz-modal-modern,
+:global(.dark) .qz-modal-modern {
+  --background: #1d1838;
+}
+
+:global(body.dark) .qz-modal-close-btn,
+:global(html.dark) .qz-modal-close-btn,
+:global(.dark) .qz-modal-close-btn {
+  background: #241d42;
+  color: #a49fc4;
+}
+
+:global(body.dark) .qz-modal-close-btn:hover,
+:global(html.dark) .qz-modal-close-btn:hover,
+:global(.dark) .qz-modal-close-btn:hover {
+  background: #2c2550;
+  color: #ffffff;
+}
+
+:global(body.dark) .qz-btn--cancel,
+:global(html.dark) .qz-btn--cancel,
+:global(.dark) .qz-btn--cancel {
+  background: #241d42;
+  color: #a49fc4;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+:global(body.dark) .qz-btn--cancel:hover,
+:global(html.dark) .qz-btn--cancel:hover,
+:global(.dark) .qz-btn--cancel:hover {
+  background: #2c2550;
+  color: #ffffff;
+}
+
+:global(body.dark) .qz-field-icon,
+:global(html.dark) .qz-field-icon,
+:global(.dark) .qz-field-icon {
+  color: #b5a9ff;
+}
+
+:global(body.dark) .qz-native-select,
+:global(html.dark) .qz-native-select,
+:global(.dark) .qz-native-select {
+  background-color: #241d42;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='none' stroke='%23b5a9ff' stroke-linecap='round' stroke-linejoin='round' stroke-width='48' d='M112 184l144 144 144-144'/%3E%3C/svg%3E");
   border-color: rgba(255, 255, 255, 0.12);
   color: #ffffff;
 }
 
-body.dark .qz-native-select option {
+:global(body.dark) .qz-native-select option,
+:global(html.dark) .qz-native-select option,
+:global(.dark) .qz-native-select option {
   background: #1d1838;
   color: #ffffff;
 }
 
-body.dark .qz-unassigned-banner {
+:global(body.dark) .qz-unassigned-banner,
+:global(html.dark) .qz-unassigned-banner,
+:global(.dark) .qz-unassigned-banner {
   background: rgba(37, 99, 235, 0.15);
   border-color: rgba(37, 99, 235, 0.3);
 }
 
-body.dark .qz-banner-title {
+:global(body.dark) .qz-banner-title,
+:global(html.dark) .qz-banner-title,
+:global(.dark) .qz-banner-title {
   color: #93c5fd;
 }
 
-body.dark .qz-banner-desc {
+:global(body.dark) .qz-banner-desc,
+:global(html.dark) .qz-banner-desc,
+:global(.dark) .qz-banner-desc {
   color: #bfdbfe;
 }
 
-body.dark .qz-bulk-student-row {
+:global(body.dark) .qz-bulk-select-header,
+:global(html.dark) .qz-bulk-select-header,
+:global(.dark) .qz-bulk-select-header {
+  background: #241d42;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-select-all-label,
+:global(html.dark) .qz-select-all-label,
+:global(.dark) .qz-select-all-label,
+:global(body.dark) .qz-selected-count-badge,
+:global(html.dark) .qz-selected-count-badge,
+:global(.dark) .qz-selected-count-badge {
+  color: #b5a9ff;
+}
+
+:global(body.dark) .qz-bulk-student-row,
+:global(html.dark) .qz-bulk-student-row,
+:global(.dark) .qz-bulk-student-row {
   background: #231d42;
   border-color: rgba(255, 255, 255, 0.06);
 }
 
-body.dark .qz-bulk-student-row--selected {
+:global(body.dark) .qz-bulk-student-row--selected,
+:global(html.dark) .qz-bulk-student-row--selected,
+:global(.dark) .qz-bulk-student-row--selected {
   background: #2b2254;
   border-color: #6a5ae0;
+}
+
+:global(body.dark) .qz-empty-box,
+:global(html.dark) .qz-empty-box,
+:global(.dark) .qz-empty-box {
+  color: #a49fc4;
+}
+
+:global(body.dark) .qz-empty-box ion-icon,
+:global(html.dark) .qz-empty-box ion-icon,
+:global(.dark) .qz-empty-box ion-icon {
+  color: #4d447d;
+}
+
+:global(body.dark) .qz-unlink-notice,
+:global(html.dark) .qz-unlink-notice,
+:global(.dark) .qz-unlink-notice {
+  background: #231c26;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+:global(body.dark) .qz-unlink-icon-squircle,
+:global(html.dark) .qz-unlink-icon-squircle,
+:global(.dark) .qz-unlink-icon-squircle {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+:global(body.dark) .qz-unlink-title,
+:global(html.dark) .qz-unlink-title,
+:global(.dark) .qz-unlink-title {
+  color: #fef08a;
+}
+
+:global(body.dark) .qz-unlink-desc,
+:global(html.dark) .qz-unlink-desc,
+:global(.dark) .qz-unlink-desc {
+  color: #fed7aa;
+}
+
+:global(body.dark) .qz-tag--warning,
+:global(html.dark) .qz-tag--warning,
+:global(.dark) .qz-tag--warning {
+  background: rgba(245, 158, 11, 0.2) !important;
+  color: #fbbf24 !important;
 }
 </style>

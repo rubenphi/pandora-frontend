@@ -1710,4 +1710,318 @@ export default {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   MODO OSCURO (DARK MODE)
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  .qz-create-question-page {
+    background-color: #120f24;
+  }
+  .qz-create-question-content {
+    --background: #120f24;
+  }
+  .qz-top-title {
+    color: #f7f7fd;
+  }
+  .qz-circle-btn {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f7f7fd;
+  }
+  .qz-btn--delete {
+    background: #1d1838;
+  }
+  .qz-quiz-chip-card {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-quiz-icon-box {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-quiz-name {
+    color: #f7f7fd;
+  }
+  .qz-form-card {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-icon--purple {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-field-label {
+    color: #f7f7fd;
+  }
+  .qz-options-counter {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-text-input {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f7f7fd;
+  }
+  .qz-text-input:focus {
+    background: #2a2254;
+    border-color: #7c6ef2;
+  }
+  .qz-toggle-card {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-tg--purple {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-toggle-title {
+    color: #f7f7fd;
+  }
+  .qz-pill-thumb {
+    background: #ffffff;
+  }
+  .qz-upload-dropzone:hover,
+  .qz-upload-dropzone:active {
+    background: #231d42;
+  }
+  .qz-dropzone-icon {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-dropzone-title {
+    color: #f7f7fd;
+  }
+  .qz-image-preview-card {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-preview-frame {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-meta-name {
+    color: #f7f7fd;
+  }
+  .qz-btn-change {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-option-row {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-opt-input {
+    color: #f7f7fd;
+  }
+  .qz-opt-check-btn {
+    background: #28214b;
+    color: #9e9bb8;
+  }
+  .qz-add-option-btn {
+    background: #231d42;
+    border-color: rgba(124, 110, 242, 0.4);
+    color: #a39bf0;
+  }
+  .qz-add-option-btn:active {
+    background: #2a2254;
+  }
+}
+
+:global(body.dark) .qz-create-question-page,
+:global(html.dark) .qz-create-question-page,
+:global(.dark) .qz-create-question-page {
+  background-color: #120f24;
+}
+
+:global(body.dark) .qz-create-question-content,
+:global(html.dark) .qz-create-question-content,
+:global(.dark) .qz-create-question-content {
+  --background: #120f24;
+}
+
+:global(body.dark) .qz-top-title,
+:global(html.dark) .qz-top-title,
+:global(.dark) .qz-top-title {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-circle-btn,
+:global(html.dark) .qz-circle-btn,
+:global(.dark) .qz-circle-btn {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-btn--delete,
+:global(html.dark) .qz-btn--delete,
+:global(.dark) .qz-btn--delete {
+  background: #1d1838;
+}
+
+:global(body.dark) .qz-quiz-chip-card,
+:global(html.dark) .qz-quiz-chip-card,
+:global(.dark) .qz-quiz-chip-card {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-quiz-icon-box,
+:global(html.dark) .qz-quiz-icon-box,
+:global(.dark) .qz-quiz-icon-box {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-quiz-name,
+:global(html.dark) .qz-quiz-name,
+:global(.dark) .qz-quiz-name {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-form-card,
+:global(html.dark) .qz-form-card,
+:global(.dark) .qz-form-card {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-icon--purple,
+:global(html.dark) .qz-icon--purple,
+:global(.dark) .qz-icon--purple {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-field-label,
+:global(html.dark) .qz-field-label,
+:global(.dark) .qz-field-label {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-options-counter,
+:global(html.dark) .qz-options-counter,
+:global(.dark) .qz-options-counter {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-text-input,
+:global(html.dark) .qz-text-input,
+:global(.dark) .qz-text-input {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-text-input:focus,
+:global(html.dark) .qz-text-input:focus,
+:global(.dark) .qz-text-input:focus {
+  background: #2a2254;
+  border-color: #7c6ef2;
+}
+
+:global(body.dark) .qz-toggle-card,
+:global(html.dark) .qz-toggle-card,
+:global(.dark) .qz-toggle-card {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-tg--purple,
+:global(html.dark) .qz-tg--purple,
+:global(.dark) .qz-tg--purple {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-toggle-title,
+:global(html.dark) .qz-toggle-title,
+:global(.dark) .qz-toggle-title {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-upload-dropzone:hover,
+:global(html.dark) .qz-upload-dropzone:hover,
+:global(.dark) .qz-upload-dropzone:hover,
+:global(body.dark) .qz-upload-dropzone:active,
+:global(html.dark) .qz-upload-dropzone:active,
+:global(.dark) .qz-upload-dropzone:active {
+  background: #231d42;
+}
+
+:global(body.dark) .qz-dropzone-icon,
+:global(html.dark) .qz-dropzone-icon,
+:global(.dark) .qz-dropzone-icon {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-dropzone-title,
+:global(html.dark) .qz-dropzone-title,
+:global(.dark) .qz-dropzone-title {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-image-preview-card,
+:global(html.dark) .qz-image-preview-card,
+:global(.dark) .qz-image-preview-card {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-preview-frame,
+:global(html.dark) .qz-preview-frame,
+:global(.dark) .qz-preview-frame {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-meta-name,
+:global(html.dark) .qz-meta-name,
+:global(.dark) .qz-meta-name {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-btn-change,
+:global(html.dark) .qz-btn-change,
+:global(.dark) .qz-btn-change {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-option-row,
+:global(html.dark) .qz-option-row,
+:global(.dark) .qz-option-row {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-opt-input,
+:global(html.dark) .qz-opt-input,
+:global(.dark) .qz-opt-input {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-opt-check-btn,
+:global(html.dark) .qz-opt-check-btn,
+:global(.dark) .qz-opt-check-btn {
+  background: #28214b;
+  color: #9e9bb8;
+}
+
+:global(body.dark) .qz-add-option-btn,
+:global(html.dark) .qz-add-option-btn,
+:global(.dark) .qz-add-option-btn {
+  background: #231d42;
+  border-color: rgba(124, 110, 242, 0.4);
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-add-option-btn:active,
+:global(html.dark) .qz-add-option-btn:active,
+:global(.dark) .qz-add-option-btn:active {
+  background: #2a2254;
+}
 </style>

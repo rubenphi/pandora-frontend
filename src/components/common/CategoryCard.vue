@@ -107,4 +107,53 @@ export default {
   color: var(--qz-color-text-muted, #858494);
   margin: 0;
 }
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
+  body:not(.light) .qz-cat-card {
+    background-color: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  }
+
+  body:not(.light) .qz-cat-card:hover {
+    border-color: #7c6ef2;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  }
+
+  body:not(.light) .qz-cat-card__name {
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .qz-cat-card__count {
+    color: #9e9bb8;
+  }
+}
+
+:global(body.dark) .qz-cat-card,
+:global(html.dark) .qz-cat-card,
+:global(.dark) .qz-cat-card {
+  background-color: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+:global(body.dark) .qz-cat-card:hover,
+:global(html.dark) .qz-cat-card:hover,
+:global(.dark) .qz-cat-card:hover {
+  border-color: #7c6ef2;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+:global(body.dark) .qz-cat-card__name,
+:global(html.dark) .qz-cat-card__name,
+:global(.dark) .qz-cat-card__name {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-cat-card__count,
+:global(html.dark) .qz-cat-card__count,
+:global(.dark) .qz-cat-card__count {
+  color: #9e9bb8;
+}
 </style>

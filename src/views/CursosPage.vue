@@ -1120,4 +1120,186 @@ export default {
     border: 1px solid #ddd;
   }
 }
+
+/* ==========================================================================
+   MODO OSCURO (DARK MODE)
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  .report-modal-content {
+    --background: #120f24;
+    color: #f7f7fd;
+  }
+  .report-header-card {
+    background: #1d1838;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .report-header-info h2 {
+    color: #f7f7fd;
+  }
+  .report-subtitle {
+    color: #9e9bb8;
+  }
+  .loading-container,
+  .empty-state,
+  .error-container {
+    background: #1d1838;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .loading-container p {
+    color: #f7f7fd;
+  }
+  .course-section {
+    background: #1d1838;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+  .course-header {
+    background: #28214b;
+    color: #f7f7fd;
+  }
+  .area-section {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .area-header {
+    border-bottom: 2px solid rgba(255, 255, 255, 0.12);
+  }
+  .area-title {
+    color: #a39bf0;
+  }
+  .student-card {
+    background: #231d42;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .student-header {
+    background: #2a2254;
+  }
+  .student-name {
+    color: #f7f7fd;
+  }
+  .report-table th {
+    background: #28214b;
+    color: #f7f7fd;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .report-table td {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    color: #f7f7fd;
+  }
+}
+
+:global(body.dark) .report-modal-content,
+:global(html.dark) .report-modal-content,
+:global(.dark) .report-modal-content {
+  --background: #120f24;
+  color: #f7f7fd;
+}
+
+:global(body.dark) .report-header-card,
+:global(html.dark) .report-header-card,
+:global(.dark) .report-header-card {
+  background: #1d1838;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .report-header-info h2,
+:global(html.dark) .report-header-info h2,
+:global(.dark) .report-header-info h2 {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .report-subtitle,
+:global(html.dark) .report-subtitle,
+:global(.dark) .report-subtitle {
+  color: #9e9bb8;
+}
+
+:global(body.dark) .loading-container,
+:global(html.dark) .loading-container,
+:global(.dark) .loading-container,
+:global(body.dark) .empty-state,
+:global(html.dark) .empty-state,
+:global(.dark) .empty-state,
+:global(body.dark) .error-container,
+:global(html.dark) .error-container,
+:global(.dark) .error-container {
+  background: #1d1838;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .loading-container p,
+:global(html.dark) .loading-container p,
+:global(.dark) .loading-container p {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .course-section,
+:global(html.dark) .course-section,
+:global(.dark) .course-section {
+  background: #1d1838;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+:global(body.dark) .course-header,
+:global(html.dark) .course-header,
+:global(.dark) .course-header {
+  background: #28214b;
+  color: #f7f7fd;
+}
+
+:global(body.dark) .area-section,
+:global(html.dark) .area-section,
+:global(.dark) .area-section {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .area-header,
+:global(html.dark) .area-header,
+:global(.dark) .area-header {
+  border-bottom: 2px solid rgba(255, 255, 255, 0.12);
+}
+
+:global(body.dark) .area-title,
+:global(html.dark) .area-title,
+:global(.dark) .area-title {
+  color: #a39bf0;
+}
+
+:global(body.dark) .student-card,
+:global(html.dark) .student-card,
+:global(.dark) .student-card {
+  background: #231d42;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .student-header,
+:global(html.dark) .student-header,
+:global(.dark) .student-header {
+  background: #2a2254;
+}
+
+:global(body.dark) .student-name,
+:global(html.dark) .student-name,
+:global(.dark) .student-name {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .report-table th,
+:global(html.dark) .report-table th,
+:global(.dark) .report-table th {
+  background: #28214b;
+  color: #f7f7fd;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+:global(body.dark) .report-table td,
+:global(html.dark) .report-table td,
+:global(.dark) .report-table td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: #f7f7fd;
+}
 </style>

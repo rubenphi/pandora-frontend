@@ -203,4 +203,21 @@ export default {
   height: 22px;
   margin-left: 2px;
 }
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
+  body:not(.light) .qz-featured-card__btn {
+    background: #241d42;
+    color: #a39bf0;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.45);
+  }
+}
+
+:global(body.dark) .qz-featured-card__btn,
+:global(html.dark) .qz-featured-card__btn,
+:global(.dark) .qz-featured-card__btn {
+  background: #241d42;
+  color: #a39bf0;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.45);
+}
 </style>

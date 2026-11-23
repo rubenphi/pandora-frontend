@@ -1710,4 +1710,95 @@ export default defineComponent({
   flex: 1 1 calc(50% - 10px);
   box-sizing: border-box;
 }
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
+  body:not(.light) .qz-config-card,
+  body:not(.light) .qz-preview-wrapper {
+    background: #1d1838;
+    color: #f7f7fd;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  body:not(.light) .qz-config-label {
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .qz-select-container,
+  body:not(.light) .qz-input-wrap {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  body:not(.light) .qz-gen-select {
+    --color: #f7f7fd;
+  }
+
+  body:not(.light) .qz-native-input {
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .qz-btn-secondary {
+    background: #28214b;
+    color: #a39bf0;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  body:not(.light) .qz-preview-header {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+}
+
+:global(body.dark) .qz-config-card,
+:global(html.dark) .qz-config-card,
+:global(.dark) .qz-config-card,
+:global(body.dark) .qz-preview-wrapper,
+:global(html.dark) .qz-preview-wrapper,
+:global(.dark) .qz-preview-wrapper {
+  background: #1d1838;
+  color: #f7f7fd;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-config-label,
+:global(html.dark) .qz-config-label,
+:global(.dark) .qz-config-label {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-select-container,
+:global(body.dark) .qz-input-wrap,
+:global(html.dark) .qz-select-container,
+:global(html.dark) .qz-input-wrap,
+:global(.dark) .qz-select-container,
+:global(.dark) .qz-input-wrap {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+:global(body.dark) .qz-gen-select,
+:global(html.dark) .qz-gen-select,
+:global(.dark) .qz-gen-select {
+  --color: #f7f7fd;
+}
+
+:global(body.dark) .qz-native-input,
+:global(html.dark) .qz-native-input,
+:global(.dark) .qz-native-input {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-btn-secondary,
+:global(html.dark) .qz-btn-secondary,
+:global(.dark) .qz-btn-secondary {
+  background: #28214b;
+  color: #a39bf0;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+:global(body.dark) .qz-preview-header,
+:global(html.dark) .qz-preview-header,
+:global(.dark) .qz-preview-header {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
 </style>

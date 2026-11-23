@@ -297,6 +297,81 @@ ion-tab-button.tab-selected ion-icon {
    QUEEZY DARK THEME (Soporte Centralizado Completo)
    ========================================================================== */
 
+:root[data-theme="dark"],
+html.dark,
+body.dark,
+.dark {
+  color-scheme: dark;
+
+  /* Palette Queezy Dark */
+  --qz-color-purple-primary: #7c6ef2;
+  --qz-color-purple-dark: #5a33d6;
+  --qz-color-purple-soft: #a39bf0;
+  --qz-color-purple-light: #2a2350;
+  --qz-color-purple-bg: #120f24;
+
+  --qz-color-pink-coral: #ff8fa2;
+  --qz-color-pink-soft: #ffccd7;
+  --qz-color-pink-bg: rgba(255, 143, 162, 0.14);
+
+  --qz-color-cyan: #70d6f5;
+  --qz-color-cyan-bg: rgba(112, 214, 245, 0.14);
+
+  --qz-color-gold: #ffae33;
+  --qz-color-gold-bg: rgba(255, 174, 51, 0.16);
+
+  --qz-color-green-correct: #53df83;
+  --qz-color-green-bg: rgba(83, 223, 131, 0.14);
+
+  --qz-color-red-wrong: #ff5656;
+  --qz-color-red-bg: rgba(255, 86, 86, 0.16);
+
+  --qz-color-text-main: #f7f7fd;
+  --qz-color-text-muted: #9e9bb8;
+  --qz-color-text-white: #ffffff;
+  --qz-color-border: rgba(255, 255, 255, 0.08);
+  --qz-color-card-bg: #1d1838;
+
+  /* Shadows Dark */
+  --qz-shadow-card: 0 8px 24px -4px rgba(0, 0, 0, 0.5),
+    0 2px 6px -1px rgba(0, 0, 0, 0.35);
+  --qz-shadow-float: 0 16px 36px -4px rgba(0, 0, 0, 0.7);
+  --qz-shadow-button-primary: 0 10px 24px -2px rgba(124, 110, 242, 0.45);
+
+  /* Ionic App Defaults */
+  --ion-background-color: #120f24;
+  --ion-text-color: #f7f7fd;
+  --ion-border-color: rgba(255, 255, 255, 0.08);
+  --ion-card-background: #1d1838;
+  --ion-item-background: #1d1838;
+  --ion-toolbar-background: #120f24;
+  --ion-tab-bar-background: #1d1838;
+
+  /** Ionic Light & Dark Colors adapted for Dark Theme **/
+  --ion-color-light: #231d42;
+  --ion-color-light-rgb: 35, 29, 66;
+  --ion-color-light-contrast: #f7f7fd;
+  --ion-color-light-contrast-rgb: 247, 247, 253;
+  --ion-color-light-shade: #1d1838;
+  --ion-color-light-tint: #2a2350;
+
+  --ion-color-dark: #f7f7fd;
+  --ion-color-dark-rgb: 247, 247, 253;
+  --ion-color-dark-contrast: #120f24;
+  --ion-color-dark-contrast-rgb: 18, 15, 36;
+  --ion-color-dark-shade: #dad8ee;
+  --ion-color-dark-tint: #ffffff;
+
+  --ion-color-step-50: #181430;
+  --ion-color-step-100: #1d1838;
+  --ion-color-step-150: #231e44;
+  --ion-color-step-200: #292450;
+  --ion-color-step-250: #302a5c;
+  --ion-color-step-300: #38316a;
+  --ion-color-step-350: #423a7a;
+  --ion-color-step-400: #4c438a;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
@@ -345,6 +420,21 @@ ion-tab-button.tab-selected ion-icon {
     --ion-toolbar-background: #120f24;
     --ion-tab-bar-background: #1d1838;
 
+    /** Ionic Light & Dark Colors adapted for Dark Theme **/
+    --ion-color-light: #231d42;
+    --ion-color-light-rgb: 35, 29, 66;
+    --ion-color-light-contrast: #f7f7fd;
+    --ion-color-light-contrast-rgb: 247, 247, 253;
+    --ion-color-light-shade: #1d1838;
+    --ion-color-light-tint: #2a2350;
+
+    --ion-color-dark: #f7f7fd;
+    --ion-color-dark-rgb: 247, 247, 253;
+    --ion-color-dark-contrast: #120f24;
+    --ion-color-dark-contrast-rgb: 18, 15, 36;
+    --ion-color-dark-shade: #dad8ee;
+    --ion-color-dark-tint: #ffffff;
+
     --ion-color-step-50: #181430;
     --ion-color-step-100: #1d1838;
     --ion-color-step-150: #231e44;
@@ -360,6 +450,45 @@ ion-tab-button.tab-selected ion-icon {
     color-scheme: dark;
     background-color: var(--qz-color-purple-bg, #120f24);
     color: var(--qz-color-text-main, #f7f7fd);
+  }
+
+  /* 0. Wrappers Globales de Páginas y Vistas */
+  .qz-home-page,
+  .qz-home-content,
+  .qz-areas-page,
+  .qz-areas-content,
+  .qz-lessons-page,
+  .qz-lessons-content,
+  .qz-cuestionarios-page,
+  .qz-cuestionarios-content,
+  .qz-panel-page,
+  .qz-panel-content,
+  .qz-activity-page,
+  .qz-activity-content,
+  .qz-create-criterion-page,
+  .qz-create-question-page,
+  .qz-question-page,
+  .qz-question-content,
+  .qz-review-page,
+  .qz-profile-page,
+  .qz-profile-content,
+  .qz-pregunta-result-page,
+  .qz-result-content,
+  .qz-papeleria-page,
+  .qz-papeleria-content,
+  .qz-users-page,
+  .qz-page-wrapper,
+  .qz-panel-wrapper,
+  .qz-academic-wrapper,
+  .qz-users-wrapper,
+  .qz-papeleria-wrapper,
+  .qz-menu-wrapper,
+  .qz-survey-wrapper,
+  .qz-launcher-wrapper,
+  .qz-omr-wrapper {
+    --background: var(--qz-color-purple-bg, #120f24) !important;
+    background-color: var(--qz-color-purple-bg, #120f24) !important;
+    color: var(--qz-color-text-main, #f7f7fd) !important;
   }
 
   /* 1. Tarjetas y Superficies Principales */
@@ -1195,8 +1324,9 @@ ion-popover::part(backdrop) {
 ion-popover .popover-content {
   border-radius: 20px !important;
   box-shadow: 0 10px 30px -4px rgba(106, 90, 224, 0.22) !important;
-  border: 1px solid rgba(106, 90, 224, 0.08) !important;
-  background: #ffffff !important;
+  border: 1px solid var(--qz-color-border, rgba(106, 90, 224, 0.08)) !important;
+  background: var(--qz-color-card-bg, #ffffff) !important;
+  color: var(--qz-color-text-main, #0c092a) !important;
   font-family: var(--qz-font-family, "Rubik", sans-serif) !important;
 }
 
@@ -1207,7 +1337,7 @@ ion-popover ion-list {
 
 ion-popover ion-item {
   --background: transparent;
-  --color: #0c092a;
+  --color: var(--qz-color-text-main, #0c092a);
   --border-radius: 12px;
   font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-weight: 600;
@@ -1218,47 +1348,84 @@ ion-popover ion-item {
 
 ion-popover ion-item:hover,
 ion-popover ion-item.item-radio-checked {
-  --background: #efeefc;
-  --color: #6a5ae0;
+  --background: var(--qz-color-purple-bg, #efeefc);
+  --color: var(--qz-color-purple-primary, #6a5ae0);
   font-weight: 700;
 }
 
 /* ==========================================================================
+   QUEEZY POPOVER DARK MODE OVERRIDES
+   ========================================================================== */
+body.dark ion-popover .popover-content,
+html.dark ion-popover .popover-content,
+.dark ion-popover .popover-content,
+ion-popover.dark .popover-content,
+body.dark ion-popover.qz-popover-filter .popover-content,
+html.dark ion-popover.qz-popover-filter .popover-content,
+.dark ion-popover.qz-popover-filter .popover-content,
+body.dark .qz-popover-filter .popover-content,
+html.dark .qz-popover-filter .popover-content,
+.dark .qz-popover-filter .popover-content {
+  background: #1d1838 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.6) !important;
+  color: #f7f7fd !important;
+}
+
+body.dark ion-popover ion-item,
+html.dark ion-popover ion-item,
+.dark ion-popover ion-item {
+  --color: #f7f7fd !important;
+  color: #f7f7fd !important;
+}
+
+body.dark ion-popover ion-item:hover,
+body.dark ion-popover ion-item.item-radio-checked,
+html.dark ion-popover ion-item:hover,
+html.dark ion-popover ion-item.item-radio-checked,
+.dark ion-popover ion-item:hover,
+.dark ion-popover ion-item.item-radio-checked {
+  --background: #28214b !important;
+  --color: #a39bf0 !important;
+  color: #a39bf0 !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  body:not(.light) ion-popover .popover-content,
+  body:not(.light) ion-popover.qz-popover-filter .popover-content,
+  body:not(.light) .qz-popover-filter .popover-content {
+    background: #1d1838 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.6) !important;
+    color: #f7f7fd !important;
+  }
+
+  body:not(.light) ion-popover ion-item {
+    --color: #f7f7fd !important;
+    color: #f7f7fd !important;
+  }
+
+  body:not(.light) ion-popover ion-item:hover,
+  body:not(.light) ion-popover ion-item.item-radio-checked {
+    --background: #28214b !important;
+    --color: #a39bf0 !important;
+    color: #a39bf0 !important;
+  }
+}
+
+/* ==========================================================================
    SCROLL GLOBAL FIX (Eliminar espacio muerto y scroll excesivo)
-   Garantiza que todos los wrappers y cuerpos de vistas Queezy se ajusten
-   automáticamente a la altura de su contenido real sin generar scrolls
-   fantasmas ni espacios vacíos al final en vistas actuales y futuras.
    ========================================================================== */
 ion-content {
-  --background: var(--qz-color-purple-bg, #efeefc);
-  --color: var(--qz-color-text-main, #0c092a);
-  font-family: var(--qz-font-family, "Rubik", sans-serif);
+  --background: var(--qz-color-purple-bg, #EFEEFC);
+  --color: var(--qz-color-text-main, #0C092A);
+  font-family: var(--qz-font-family, 'Rubik', sans-serif);
   --keyboard-offset: 0px !important;
 }
 
 /* Evitar que el scroll container interno rebote hacia un vacío o genere scroll fantasma */
 ion-content::part(scroll) {
-  overscroll-behavior-y: contain;
-}
-
-/* 1. Ajuste estricto de todos los wrappers de página al contenido exacto (sin 100% forzado) */
-.qz-page-wrapper,
-.qz-panel-wrapper,
-.qz-academic-wrapper,
-.qz-users-wrapper,
-.qz-papeleria-wrapper,
-.qz-menu-wrapper,
-.qz-survey-wrapper,
-.qz-launcher-wrapper,
-.qz-omr-wrapper {
-  min-height: auto !important;
-  height: auto !important;
-  box-sizing: border-box !important;
-}
-
-/* 2. Evitar que el cuerpo principal de las vistas se expanda artificialmente con flex: 1 */
-.qz-main-body:not(.qz-home-content .qz-main-body) {
-  flex: 0 1 auto !important;
+  overscroll-behavior-y: none;
 }
 
 /* ==========================================================================

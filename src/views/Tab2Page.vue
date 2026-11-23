@@ -1,5 +1,5 @@
 <template>
-  <ion-page class="qz-home-page">
+  <ion-page class="ion-page qz-home-page">
     <ion-content :fullscreen="true" class="qz-home-content">
       <div class="qz-page-wrapper">
         <!-- 1. CABECERA HERO COMPACTA (Fondo púrpura Queezy) -->
@@ -596,5 +596,134 @@ export default {
   font-weight: 500;
   color: var(--qz-color-text-muted, #858494);
   max-width: 280px;
+}
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
+  body:not(.light) .qz-home-page,
+  body:not(.light) .qz-home-content {
+    --background: #120f24;
+    background-color: #120f24;
+  }
+
+  body:not(.light) .qz-hero-header {
+    background: linear-gradient(180deg, #5a4ad1 0%, #352b6a 80%, #120f24 100%);
+  }
+
+  body:not(.light) .qz-qr-card {
+    background: #1d1838;
+    box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.5);
+  }
+
+  body:not(.light) .qz-card-title {
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .qz-ip-block {
+    background-color: #231d42;
+    border-color: rgba(163, 155, 240, 0.3);
+  }
+
+  body:not(.light) .qz-ip-legend {
+    color: #a39bf0;
+  }
+
+  body:not(.light) .qz-ip-full {
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .qz-copy-btn {
+    background-color: #28214b;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #a39bf0;
+  }
+
+  body:not(.light) .qz-copy-btn:hover {
+    background-color: #352c63;
+  }
+
+  body:not(.light) .qz-ip-loading {
+    background-color: #231d42;
+    color: #9e9bb8;
+  }
+
+  body:not(.light) .qz-qr-frame {
+    border-color: #28214b;
+  }
+}
+
+:global(body.dark) .qz-home-page,
+:global(body.dark) .qz-home-content,
+:global(html.dark) .qz-home-page,
+:global(html.dark) .qz-home-content,
+:global(.dark) .qz-home-page,
+:global(.dark) .qz-home-content {
+  --background: #120f24;
+  background-color: #120f24;
+}
+
+:global(body.dark) .qz-hero-header,
+:global(html.dark) .qz-hero-header,
+:global(.dark) .qz-hero-header {
+  background: linear-gradient(180deg, #5a4ad1 0%, #352b6a 80%, #120f24 100%);
+}
+
+:global(body.dark) .qz-qr-card,
+:global(html.dark) .qz-qr-card,
+:global(.dark) .qz-qr-card {
+  background: #1d1838;
+  box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.5);
+}
+
+:global(body.dark) .qz-card-title,
+:global(html.dark) .qz-card-title,
+:global(.dark) .qz-card-title {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-ip-block,
+:global(html.dark) .qz-ip-block,
+:global(.dark) .qz-ip-block {
+  background-color: #231d42;
+  border-color: rgba(163, 155, 240, 0.3);
+}
+
+:global(body.dark) .qz-ip-legend,
+:global(html.dark) .qz-ip-legend,
+:global(.dark) .qz-ip-legend {
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-ip-full,
+:global(html.dark) .qz-ip-full,
+:global(.dark) .qz-ip-full {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-copy-btn,
+:global(html.dark) .qz-copy-btn,
+:global(.dark) .qz-copy-btn {
+  background-color: #28214b;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-copy-btn:hover,
+:global(html.dark) .qz-copy-btn:hover,
+:global(.dark) .qz-copy-btn:hover {
+  background-color: #352c63;
+}
+
+:global(body.dark) .qz-ip-loading,
+:global(html.dark) .qz-ip-loading,
+:global(.dark) .qz-ip-loading {
+  background-color: #231d42;
+  color: #9e9bb8;
+}
+
+:global(body.dark) .qz-qr-frame,
+:global(html.dark) .qz-qr-frame,
+:global(.dark) .qz-qr-frame {
+  border-color: #28214b;
 }
 </style>

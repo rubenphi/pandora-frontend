@@ -1,6 +1,6 @@
 <template>
-  <ion-page class="qz-areas-page">
-    <ion-content :fullscreen="true" class="qz-areas-content">
+  <ion-page class="ion-page qz-areas-page">
+    <ion-content class="qz-areas-content">
       <div class="qz-page-wrapper">
         <!-- 1. CABECERA HERO QUEEZY PÚRPURA -->
         <div class="qz-hero-header">
@@ -16,7 +16,10 @@
             </button>
 
             <div class="qz-course-badge" v-if="courseName">
-              <ion-icon :icon="schoolOutline" class="qz-course-badge-icon"></ion-icon>
+              <ion-icon
+                :icon="schoolOutline"
+                class="qz-course-badge-icon"
+              ></ion-icon>
               <span>{{ courseName }}</span>
             </div>
           </div>
@@ -24,7 +27,9 @@
           <!-- Títulos del Hero -->
           <div class="qz-hero-titles">
             <span class="qz-hero-tag">GESTIÓN ACADÉMICA</span>
-            <h1 class="qz-hero-title">{{ courseName ? courseName : 'Áreas y Materias' }}</h1>
+            <h1 class="qz-hero-title">
+              {{ courseName ? courseName : "Áreas y Materias" }}
+            </h1>
             <p class="qz-hero-subtitle">
               Selecciona un área para ingresar a sus lecciones y actividades
             </p>
@@ -34,7 +39,10 @@
           <div class="qz-filters-row">
             <!-- Filtro de Año -->
             <div class="qz-filter-pill">
-              <ion-icon :icon="calendarOutline" class="qz-filter-icon"></ion-icon>
+              <ion-icon
+                :icon="calendarOutline"
+                class="qz-filter-icon"
+              ></ion-icon>
               <span class="qz-filter-label">Año:</span>
               <ion-select
                 v-model="yearSelected"
@@ -58,7 +66,7 @@
               class="qz-filter-pill"
               :class="{
                 'qz-filter-pill--alert': !periodoSelected,
-                'qz-filter-pill--pulse': shouldHighlightPeriod
+                'qz-filter-pill--pulse': shouldHighlightPeriod,
               }"
             >
               <ion-icon :icon="timeOutline" class="qz-filter-icon"></ion-icon>
@@ -109,11 +117,16 @@
                 <!-- Tarjeta Principal del Área (Estilo image7_1_2_375x812.png) -->
                 <div
                   class="qz-area-card"
-                  :class="{ 'qz-area-card--active': expandedAreaId === area.id }"
+                  :class="{
+                    'qz-area-card--active': expandedAreaId === area.id,
+                  }"
                   @click="toggleArea(area.id)"
                 >
                   <!-- Squircle Pastel con icono de Materia -->
-                  <div class="qz-area-squircle" :class="getSquircleColor(index)">
+                  <div
+                    class="qz-area-squircle"
+                    :class="getSquircleColor(index)"
+                  >
                     <ion-icon :icon="bookOutline"></ion-icon>
                   </div>
 
@@ -121,7 +134,11 @@
                   <div class="qz-area-info">
                     <h3 class="qz-area-name">{{ area.name }}</h3>
                     <p class="qz-area-sub">
-                      {{ expandedAreaId === area.id ? 'Selecciona una actividad:' : 'Lecciones, refuerzos y nivelaciones' }}
+                      {{
+                        expandedAreaId === area.id
+                          ? "Selecciona una actividad:"
+                          : "Lecciones, refuerzos y nivelaciones"
+                      }}
                     </p>
                   </div>
 
@@ -135,10 +152,7 @@
                 </div>
 
                 <!-- Acordeón / Sub-tarjeta con opciones (Estilo image13_1_2_375x1211.png) -->
-                <div
-                  v-if="expandedAreaId === area.id"
-                  class="qz-options-card"
-                >
+                <div v-if="expandedAreaId === area.id" class="qz-options-card">
                   <!-- 1. Lecciones Estándar -->
                   <div
                     class="qz-option-row"
@@ -149,7 +163,9 @@
                     </div>
                     <div class="qz-option-info">
                       <h4 class="qz-option-title">Lecciones</h4>
-                      <p class="qz-option-desc">Cuestionarios y contenido temático</p>
+                      <p class="qz-option-desc">
+                        Cuestionarios y contenido temático
+                      </p>
                     </div>
                     <div class="qz-option-arrow">
                       <ion-icon :icon="chevronForwardOutline"></ion-icon>
@@ -160,7 +176,9 @@
                   <div
                     v-if="adminOProfesor || hasReinforcement(area.id)"
                     class="qz-option-row"
-                    @click.stop="navigateToTab3(area.id, LessonType.REINFORCEMENT)"
+                    @click.stop="
+                      navigateToTab3(area.id, LessonType.REINFORCEMENT)
+                    "
                   >
                     <div class="qz-option-badge qz-badge--coral">
                       <ion-icon :icon="trendingUpOutline"></ion-icon>
@@ -175,7 +193,9 @@
                           {{ assignmentsCount[area.id].reinforcement }}
                         </span>
                       </div>
-                      <p class="qz-option-desc">Actividades de apoyo asignadas</p>
+                      <p class="qz-option-desc">
+                        Actividades de apoyo asignadas
+                      </p>
                     </div>
                     <div class="qz-option-arrow">
                       <ion-icon :icon="chevronForwardOutline"></ion-icon>
@@ -201,7 +221,9 @@
                           {{ assignmentsCount[area.id].remedial }}
                         </span>
                       </div>
-                      <p class="qz-option-desc">Plan de mejora y recuperación</p>
+                      <p class="qz-option-desc">
+                        Plan de mejora y recuperación
+                      </p>
                     </div>
                     <div class="qz-option-arrow">
                       <ion-icon :icon="chevronForwardOutline"></ion-icon>
@@ -218,7 +240,8 @@
               </div>
               <h3 class="qz-empty-title">Sin áreas asignadas</h3>
               <p class="qz-empty-desc">
-                No se encontraron áreas activas para este curso en el año lectivo {{ yearSelected }}.
+                No se encontraron áreas activas para este curso en el año
+                lectivo {{ yearSelected }}.
               </p>
             </div>
           </div>
@@ -386,7 +409,7 @@ export default {
                 lessonType: LessonType.REMEDIAL,
               },
             }),
-          ])
+          ]),
         );
 
         let idx = 0;
@@ -405,7 +428,7 @@ export default {
       adminOProfesor.value = adminOprofesor();
       periodos.value = periodosGet();
       periodoSelected.value = JSON.parse(
-        localStorage.getItem("periodoSelected")
+        localStorage.getItem("periodoSelected"),
       );
       const curServerYear = currentServerYear();
       years.value = new Array(10).fill(0).map((_, i) => curServerYear - i);
@@ -434,7 +457,7 @@ export default {
 
         const storedYearValue = storedYear ? JSON.parse(storedYear) : null;
         const isValidStoredYear = sortedCourses.some(
-          (c) => c.year == storedYearValue
+          (c) => c.year == storedYearValue,
         );
 
         if (isValidStoredYear) {
@@ -448,11 +471,14 @@ export default {
           sortedCourses.find(
             (c) =>
               c.year == yearSelected.value &&
-              (c.active == 1 || c.active === true || c.active)
+              (c.active == 1 || c.active === true || c.active),
           ) || sortedCourses[0];
 
         if (courseSelected) {
-          localStorage.setItem("courseSelected", JSON.stringify(courseSelected));
+          localStorage.setItem(
+            "courseSelected",
+            JSON.stringify(courseSelected),
+          );
           if (courseSelected.name) {
             courseName.value = courseSelected.name;
           }
@@ -532,7 +558,7 @@ export default {
         const cursosUsuario =
           JSON.parse(localStorage.getItem("cursosUsuario")) || [];
         const courseForYear = cursosUsuario.find(
-          (c) => c.year == selectedYearValue
+          (c) => c.year == selectedYearValue,
         );
         if (courseForYear) {
           localStorage.setItem("courseSelected", JSON.stringify(courseForYear));
@@ -550,7 +576,7 @@ export default {
       }
 
       router.push(
-        `/lecciones/${id}/${areaId}/${periodoSelected.value}/${yearSelected.value}/${type}`
+        `/lecciones/${id}/${areaId}/${periodoSelected.value}/${yearSelected.value}/${type}`,
       );
     };
 
@@ -606,23 +632,24 @@ export default {
 
 <style scoped>
 .qz-areas-page {
-  background-color: var(--qz-color-purple-bg, #EFEEFC);
+  background-color: var(--qz-color-purple-bg, #efeefc);
 }
 
 .qz-areas-content {
-  --background: var(--qz-color-purple-bg, #EFEEFC);
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  --background: var(--qz-color-purple-bg, #efeefc);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
 }
 
 .qz-page-wrapper {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  padding-bottom: 70px;
 }
 
 /* 1. CABECERA HERO QUEEZY PÚRPURA */
 .qz-hero-header {
-  background: linear-gradient(180deg, #6A5AE0 0%, #7668E3 85%, #EFEEFC 100%);
+  background: linear-gradient(180deg, #6a5ae0 0%, #7668e3 85%, #efeefc 100%);
   padding-top: max(16px, env(safe-area-inset-top));
   padding-bottom: 20px;
   flex-shrink: 0;
@@ -640,7 +667,7 @@ export default {
 .qz-back-btn {
   background: rgba(255, 255, 255, 0.22);
   border: 1px solid rgba(255, 255, 255, 0.35);
-  color: #FFFFFF;
+  color: #ffffff;
   border-radius: var(--qz-radius-full, 9999px);
   width: 40px;
   height: 40px;
@@ -666,7 +693,7 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: var(--qz-radius-full, 9999px);
   padding: 5px 14px;
-  color: #FFFFFF;
+  color: #ffffff;
   font-size: 13px;
   font-weight: 700;
 }
@@ -693,10 +720,10 @@ export default {
 
 .qz-hero-title {
   margin: 3px 0 4px 0;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-size: 24px;
   font-weight: 800;
-  color: #FFFFFF;
+  color: #ffffff;
   letter-spacing: -0.4px;
 }
 
@@ -724,7 +751,7 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: var(--qz-radius-full, 9999px);
   padding: 3px 12px;
-  color: #FFFFFF;
+  color: #ffffff;
   transition: all 0.2s ease;
 }
 
@@ -751,7 +778,7 @@ export default {
 .qz-filter-icon {
   font-size: 16px;
   margin-right: 5px;
-  color: #FFFFFF;
+  color: #ffffff;
   flex-shrink: 0;
 }
 
@@ -764,9 +791,9 @@ export default {
 }
 
 .qz-filter-select {
-  --color: #FFFFFF;
+  --color: #ffffff;
   --placeholder-color: rgba(255, 255, 255, 0.85);
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-size: 13px;
   font-weight: 700;
   padding-left: 0;
@@ -801,16 +828,16 @@ export default {
 
 .qz-section-title {
   margin: 0;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-size: 20px;
   font-weight: 800;
-  color: #0C092A;
+  color: #0c092a;
   letter-spacing: -0.3px;
 }
 
 .qz-section-count {
-  background: var(--ion-color-primary, #6A5AE0);
-  color: #FFFFFF;
+  background: var(--ion-color-primary, #6a5ae0);
+  color: #ffffff;
   font-size: 12px;
   font-weight: 700;
   border-radius: var(--qz-radius-full, 9999px);
@@ -822,8 +849,8 @@ export default {
 .qz-period-indicator {
   font-size: 13px;
   font-weight: 600;
-  color: var(--ion-color-primary, #6A5AE0);
-  background: #FFFFFF;
+  color: var(--ion-color-primary, #6a5ae0);
+  background: #ffffff;
   padding: 3px 10px;
   border-radius: var(--qz-radius-full, 9999px);
   box-shadow: 0 2px 8px rgba(106, 90, 224, 0.08);
@@ -843,7 +870,7 @@ export default {
 
 /* Tarjeta de Área estilo image7_1_2_375x812.png */
 .qz-area-card {
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: var(--qz-radius-xl, 22px);
   padding: 14px 16px;
   display: flex;
@@ -853,7 +880,8 @@ export default {
   border: 1px solid rgba(106, 90, 224, 0.04);
   cursor: pointer;
   user-select: none;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-radius 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease,
+    border-radius 0.15s ease;
   position: relative;
   z-index: 2;
 }
@@ -887,28 +915,28 @@ export default {
 
 /* Paleta Pastel Queezy */
 .qz-squircle--purple {
-  background-color: #EFEEFC;
-  color: #6A5AE0;
+  background-color: #efeefc;
+  color: #6a5ae0;
 }
 
 .qz-squircle--coral {
-  background-color: #FFEAEA;
-  color: #FF7562;
+  background-color: #ffeaea;
+  color: #ff7562;
 }
 
 .qz-squircle--cyan {
-  background-color: #E2F6FC;
-  color: #0582CA;
+  background-color: #e2f6fc;
+  color: #0582ca;
 }
 
 .qz-squircle--gold {
-  background-color: #FFF3DA;
-  color: #E59800;
+  background-color: #fff3da;
+  color: #e59800;
 }
 
 .qz-squircle--green {
-  background-color: #E4F9EC;
-  color: #10B981;
+  background-color: #e4f9ec;
+  color: #10b981;
 }
 
 /* Info del Área */
@@ -919,10 +947,10 @@ export default {
 
 .qz-area-name {
   margin: 0 0 3px 0;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-size: 16px;
   font-weight: 700;
-  color: #0C092A;
+  color: #0c092a;
   letter-spacing: -0.2px;
   white-space: nowrap;
   overflow: hidden;
@@ -941,8 +969,8 @@ export default {
   width: 34px;
   height: 34px;
   border-radius: var(--qz-radius-full, 9999px);
-  background: var(--qz-color-purple-bg, #EFEEFC);
-  color: var(--ion-color-primary, #6A5AE0);
+  background: var(--qz-color-purple-bg, #efeefc);
+  color: var(--ion-color-primary, #6a5ae0);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -953,13 +981,13 @@ export default {
 
 .qz-chevron--open {
   transform: rotate(90deg);
-  background: var(--ion-color-primary, #6A5AE0);
-  color: #FFFFFF;
+  background: var(--ion-color-primary, #6a5ae0);
+  color: #ffffff;
 }
 
 /* Sub-tarjeta de Opciones estilo image13_1_2_375x1211.png */
 .qz-options-card {
-  background: #F4F3FD;
+  background: #f4f3fd;
   border-radius: 0 0 var(--qz-radius-xl, 22px) var(--qz-radius-xl, 22px);
   padding: 14px 12px 14px 12px;
   margin-top: -8px;
@@ -986,7 +1014,7 @@ export default {
 
 /* Fila de opción estilo Questions en image13 */
 .qz-option-row {
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: var(--qz-radius-lg, 16px);
   padding: 12px 14px;
   display: flex;
@@ -1014,18 +1042,18 @@ export default {
 }
 
 .qz-badge--purple {
-  background: #EFEEFC;
-  color: #6A5AE0;
+  background: #efeefc;
+  color: #6a5ae0;
 }
 
 .qz-badge--coral {
-  background: #FFEAEA;
-  color: #FF7562;
+  background: #ffeaea;
+  color: #ff7562;
 }
 
 .qz-badge--cyan {
-  background: #E2F6FC;
-  color: #0582CA;
+  background: #e2f6fc;
+  color: #0582ca;
 }
 
 .qz-option-info {
@@ -1041,10 +1069,10 @@ export default {
 
 .qz-option-title {
   margin: 0;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-size: 14px;
   font-weight: 700;
-  color: #0C092A;
+  color: #0c092a;
 }
 
 .qz-count-chip {
@@ -1055,13 +1083,13 @@ export default {
 }
 
 .qz-chip--coral {
-  background: #FFEAEA;
-  color: #FF7562;
+  background: #ffeaea;
+  color: #ff7562;
 }
 
 .qz-chip--cyan {
-  background: #E2F6FC;
-  color: #0582CA;
+  background: #e2f6fc;
+  color: #0582ca;
 }
 
 .qz-option-desc {
@@ -1072,7 +1100,7 @@ export default {
 }
 
 .qz-option-arrow {
-  color: #9D9BB0;
+  color: #9d9bb0;
   font-size: 16px;
   flex-shrink: 0;
   transition: transform 0.15s ease, color 0.15s ease;
@@ -1080,12 +1108,12 @@ export default {
 
 .qz-option-row:active .qz-option-arrow {
   transform: translateX(2px);
-  color: #6A5AE0;
+  color: #6a5ae0;
 }
 
 /* Estado Vacío */
 .qz-empty-card {
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: var(--qz-radius-2xl, 28px);
   padding: 36px 24px;
   text-align: center;
@@ -1097,8 +1125,8 @@ export default {
   width: 68px;
   height: 68px;
   border-radius: 22px;
-  background: var(--qz-color-purple-bg, #EFEEFC);
-  color: var(--ion-color-primary, #6A5AE0);
+  background: var(--qz-color-purple-bg, #efeefc);
+  color: var(--ion-color-primary, #6a5ae0);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1108,10 +1136,10 @@ export default {
 
 .qz-empty-title {
   margin: 0 0 8px 0;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-size: 18px;
   font-weight: 700;
-  color: #0C092A;
+  color: #0c092a;
 }
 
 .qz-empty-desc {
@@ -1119,5 +1147,220 @@ export default {
   font-size: 14px;
   color: #858494;
   line-height: 1.5;
+}
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
+  body:not(.light) .qz-areas-page,
+  body:not(.light) .qz-areas-content {
+    --background: #120f24;
+    background-color: #120f24;
+  }
+
+  body:not(.light) .qz-hero-header {
+    background: linear-gradient(180deg, #5a4ad1 0%, #352b6a 80%, #120f24 100%);
+  }
+
+  body:not(.light) .qz-section-title,
+  body:not(.light) .qz-area-name,
+  body:not(.light) .qz-option-title,
+  body:not(.light) .qz-empty-title {
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .qz-period-indicator {
+    background: #28214b;
+    color: #a39bf0;
+  }
+
+  body:not(.light) .qz-area-card {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 6px 20px -4px rgba(0, 0, 0, 0.4);
+  }
+
+  body:not(.light) .qz-options-card {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  body:not(.light) .qz-option-row {
+    background: #1d1838;
+    box-shadow: 0 3px 10px -2px rgba(0, 0, 0, 0.35);
+  }
+
+  body:not(.light) .qz-option-desc {
+    color: #9e9bb8;
+  }
+
+  body:not(.light) .qz-empty-card {
+    background: #1d1838;
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.4);
+  }
+
+  body:not(.light) .qz-empty-icon-box {
+    background: #28214b;
+    color: #a39bf0;
+  }
+
+  body:not(.light) .qz-squircle--purple,
+  body:not(.light) .qz-badge--purple {
+    background-color: rgba(124, 110, 242, 0.2);
+    color: #a39bf0;
+  }
+
+  body:not(.light) .qz-squircle--coral,
+  body:not(.light) .qz-badge--coral,
+  body:not(.light) .qz-chip--coral {
+    background-color: rgba(255, 143, 162, 0.2);
+    color: #ff8fa2;
+  }
+
+  body:not(.light) .qz-squircle--cyan,
+  body:not(.light) .qz-badge--cyan,
+  body:not(.light) .qz-chip--cyan {
+    background-color: rgba(112, 214, 245, 0.2);
+    color: #70d6f5;
+  }
+
+  body:not(.light) .qz-squircle--gold {
+    background-color: rgba(255, 174, 51, 0.2);
+    color: #ffae33;
+  }
+
+  body:not(.light) .qz-squircle--green {
+    background-color: rgba(83, 223, 131, 0.2);
+    color: #53df83;
+  }
+}
+
+:global(body.dark) .qz-areas-page,
+:global(body.dark) .qz-areas-content,
+:global(html.dark) .qz-areas-page,
+:global(html.dark) .qz-areas-content,
+:global(.dark) .qz-areas-page,
+:global(.dark) .qz-areas-content {
+  --background: #120f24;
+  background-color: #120f24;
+}
+
+:global(body.dark) .qz-hero-header,
+:global(html.dark) .qz-hero-header,
+:global(.dark) .qz-hero-header {
+  background: linear-gradient(180deg, #5a4ad1 0%, #352b6a 80%, #120f24 100%);
+}
+
+:global(body.dark) .qz-section-title,
+:global(body.dark) .qz-area-name,
+:global(body.dark) .qz-option-title,
+:global(body.dark) .qz-empty-title,
+:global(html.dark) .qz-section-title,
+:global(html.dark) .qz-area-name,
+:global(html.dark) .qz-option-title,
+:global(html.dark) .qz-empty-title,
+:global(.dark) .qz-section-title,
+:global(.dark) .qz-area-name,
+:global(.dark) .qz-option-title,
+:global(.dark) .qz-empty-title {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-period-indicator,
+:global(html.dark) .qz-period-indicator,
+:global(.dark) .qz-period-indicator {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-area-card,
+:global(html.dark) .qz-area-card,
+:global(.dark) .qz-area-card {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 6px 20px -4px rgba(0, 0, 0, 0.4);
+}
+
+:global(body.dark) .qz-options-card,
+:global(html.dark) .qz-options-card,
+:global(.dark) .qz-options-card {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-option-row,
+:global(html.dark) .qz-option-row,
+:global(.dark) .qz-option-row {
+  background: #1d1838;
+  box-shadow: 0 3px 10px -2px rgba(0, 0, 0, 0.35);
+}
+
+:global(body.dark) .qz-option-desc,
+:global(html.dark) .qz-option-desc,
+:global(.dark) .qz-option-desc {
+  color: #9e9bb8;
+}
+
+:global(body.dark) .qz-empty-card,
+:global(html.dark) .qz-empty-card,
+:global(.dark) .qz-empty-card {
+  background: #1d1838;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.4);
+}
+
+:global(body.dark) .qz-empty-icon-box,
+:global(html.dark) .qz-empty-icon-box,
+:global(.dark) .qz-empty-icon-box {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-squircle--purple,
+:global(body.dark) .qz-badge--purple,
+:global(html.dark) .qz-squircle--purple,
+:global(html.dark) .qz-badge--purple,
+:global(.dark) .qz-squircle--purple,
+:global(.dark) .qz-badge--purple {
+  background-color: rgba(124, 110, 242, 0.2);
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-squircle--coral,
+:global(body.dark) .qz-badge--coral,
+:global(body.dark) .qz-chip--coral,
+:global(html.dark) .qz-squircle--coral,
+:global(html.dark) .qz-badge--coral,
+:global(html.dark) .qz-chip--coral,
+:global(.dark) .qz-squircle--coral,
+:global(.dark) .qz-badge--coral,
+:global(.dark) .qz-chip--coral {
+  background-color: rgba(255, 143, 162, 0.2);
+  color: #ff8fa2;
+}
+
+:global(body.dark) .qz-squircle--cyan,
+:global(body.dark) .qz-badge--cyan,
+:global(body.dark) .qz-chip--cyan,
+:global(html.dark) .qz-squircle--cyan,
+:global(html.dark) .qz-badge--cyan,
+:global(html.dark) .qz-chip--cyan,
+:global(.dark) .qz-squircle--cyan,
+:global(.dark) .qz-badge--cyan,
+:global(.dark) .qz-chip--cyan {
+  background-color: rgba(112, 214, 245, 0.2);
+  color: #70d6f5;
+}
+
+:global(body.dark) .qz-squircle--gold,
+:global(html.dark) .qz-squircle--gold,
+:global(.dark) .qz-squircle--gold {
+  background-color: rgba(255, 174, 51, 0.2);
+  color: #ffae33;
+}
+
+:global(body.dark) .qz-squircle--green,
+:global(html.dark) .qz-squircle--green,
+:global(.dark) .qz-squircle--green {
+  background-color: rgba(83, 223, 131, 0.2);
+  color: #53df83;
 }
 </style>

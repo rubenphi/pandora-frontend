@@ -685,4 +685,33 @@ export default defineComponent({
   font-size: 1.1em;
   margin: 0;
 }
+
+@media (prefers-color-scheme: dark) {
+  .file-drop-area {
+    border-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+  .file-drop-area:hover,
+  .file-drop-area.drag-over {
+    background-color: rgba(106, 90, 224, 0.15);
+    border-color: #8c7ef8;
+  }
+}
+
+:global(body.dark) .file-drop-area,
+:global(html.dark) .file-drop-area,
+:global(.dark) .file-drop-area {
+  border-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+:global(body.dark) .file-drop-area:hover,
+:global(html.dark) .file-drop-area:hover,
+:global(.dark) .file-drop-area:hover,
+:global(body.dark) .file-drop-area.drag-over,
+:global(html.dark) .file-drop-area.drag-over,
+:global(.dark) .file-drop-area.drag-over {
+  background-color: rgba(106, 90, 224, 0.15);
+  border-color: #8c7ef8;
+}
 </style>

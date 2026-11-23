@@ -1,12 +1,6 @@
 <template>
-  <ion-page class="qz-login-page">
-    <ion-header class="ion-no-border">
-      <ion-toolbar class="qz-toolbar">
-        <!-- Barra superior limpia con safe-area -->
-      </ion-toolbar>
-    </ion-header>
-
-    <ion-content :fullscreen="true" class="qz-login-content">
+  <ion-page class="ion-page qz-login-page">
+    <ion-content class="qz-login-content">
       <div class="qz-auth-wrapper">
         <div class="qz-auth-card">
           <!-- 1. IDENTIDAD Y LOGO (Centralizado en AppLogo.vue) -->
@@ -122,8 +116,6 @@ import {
 import {
   alertController,
   IonPage,
-  IonHeader,
-  IonToolbar,
   IonContent,
   IonIcon,
   onIonViewWillEnter,
@@ -143,8 +135,6 @@ export default {
   name: "LoginPage",
   components: {
     IonPage,
-    IonHeader,
-    IonToolbar,
     IonContent,
     IonIcon,
     AppLogo,
@@ -316,12 +306,8 @@ export default {
 <style scoped>
 /* Contenedor y Fondo Queezy */
 .qz-login-page {
+  --background: var(--qz-color-purple-bg, #EFEEFC);
   background-color: var(--qz-color-purple-bg, #EFEEFC);
-}
-
-.qz-toolbar {
-  --background: transparent;
-  --min-height: 20px;
 }
 
 .qz-login-content {
@@ -329,8 +315,18 @@ export default {
   font-family: var(--qz-font-family, 'Rubik', sans-serif);
 }
 
-.qz-auth-wrapper {
+.qz-login-content::part(scroll) {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   min-height: 100%;
+}
+
+.qz-auth-wrapper {
+  margin: auto;
+  width: 100%;
+  max-width: 440px;
   display: flex;
   align-items: center;
   justify-content: center;

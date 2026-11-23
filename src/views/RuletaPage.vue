@@ -471,4 +471,34 @@ export default defineComponent({
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* ==========================================================================
+   MODO OSCURO (DARK MODE)
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  .roulette-window {
+    background: #120f24;
+    border-color: #6a5ae0;
+  }
+  .roulette-item {
+    background: #1d1838;
+    color: #f7f7fd;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+}
+
+:global(body.dark) .roulette-window,
+:global(html.dark) .roulette-window,
+:global(.dark) .roulette-window {
+  background: #120f24;
+  border-color: #6a5ae0;
+}
+
+:global(body.dark) .roulette-item,
+:global(html.dark) .roulette-item,
+:global(.dark) .roulette-item {
+  background: #1d1838;
+  color: #f7f7fd;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
 </style>

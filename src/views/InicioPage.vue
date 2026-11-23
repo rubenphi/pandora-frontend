@@ -1,5 +1,5 @@
 <template>
-  <ion-page class="qz-home-page">
+  <ion-page class="ion-page qz-home-page">
     <ion-content :fullscreen="true" class="qz-home-content">
       <div class="qz-page-wrapper">
         <!-- 1. CABECERA HERO COMPACTA (Fondo púrpura Queezy) -->
@@ -7,7 +7,10 @@
           <div class="qz-hero-container">
             <div class="qz-user-greeting">
               <div class="qz-greeting-tag">
-                <ion-icon :icon="greetingIcon" class="qz-greeting-icon"></ion-icon>
+                <ion-icon
+                  :icon="greetingIcon"
+                  class="qz-greeting-icon"
+                ></ion-icon>
                 <span>{{ greetingText }}</span>
               </div>
               <h1 class="qz-user-name">{{ userName }}</h1>
@@ -42,10 +45,17 @@
             </div>
 
             <!-- DIRECCIÓN IP NÍTIDA Y COMPLETA (Visible al 100% y botón centrado debajo) -->
-            <div v-if="serverIp && serverIp !== 'Error al obtener IP'" class="qz-ip-block">
+            <div
+              v-if="serverIp && serverIp !== 'Error al obtener IP'"
+              class="qz-ip-block"
+            >
               <div class="qz-ip-details">
                 <span class="qz-ip-legend">DIRECCIÓN DE ACCESO:</span>
-                <div class="qz-ip-display" @click="copiarEnlace" title="Toca para copiar">
+                <div
+                  class="qz-ip-display"
+                  @click="copiarEnlace"
+                  title="Toca para copiar"
+                >
                   <span class="qz-ip-full">http://{{ serverIp }}:3000</span>
                 </div>
               </div>
@@ -58,8 +68,12 @@
                   title="Copiar dirección al portapapeles"
                   @click="copiarEnlace"
                 >
-                  <ion-icon :icon="copied ? checkmarkCircleOutline : copyOutline"></ion-icon>
-                  <span>{{ copied ? '¡Enlace copiado!' : 'Copiar enlace' }}</span>
+                  <ion-icon
+                    :icon="copied ? checkmarkCircleOutline : copyOutline"
+                  ></ion-icon>
+                  <span>{{
+                    copied ? "¡Enlace copiado!" : "Copiar enlace"
+                  }}</span>
                 </button>
               </div>
             </div>
@@ -185,7 +199,7 @@ export default {
           },
           function (error) {
             if (error) console.error("Error generating QR:", error);
-          }
+          },
         );
       }
     };
@@ -266,7 +280,7 @@ export default {
 
     const salir = () => {
       const periodoSelected = JSON.parse(
-        localStorage.getItem("periodoSelected")
+        localStorage.getItem("periodoSelected"),
       );
       localStorage.clear();
       localStorage.setItem("periodoSelected", JSON.stringify(periodoSelected));
@@ -297,13 +311,13 @@ export default {
 
 <style scoped>
 .qz-home-page {
-  background-color: var(--qz-color-purple-bg, #EFEEFC);
+  background-color: var(--qz-color-purple-bg, #efeefc);
 }
 
 .qz-home-content {
-  --background: var(--qz-color-purple-bg, #EFEEFC);
+  --background: var(--qz-color-purple-bg, #efeefc);
   --overflow: hidden;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
 }
 
 .qz-page-wrapper {
@@ -314,7 +328,7 @@ export default {
 
 /* 1. CABECERA HERO COMPACTA */
 .qz-hero-header {
-  background: linear-gradient(180deg, #6A5AE0 0%, #7668E3 85%, #EFEEFC 100%);
+  background: linear-gradient(180deg, #6a5ae0 0%, #7668e3 85%, #efeefc 100%);
   padding-top: max(16px, env(safe-area-inset-top));
   padding-bottom: 12px;
   flex-shrink: 0;
@@ -347,15 +361,15 @@ export default {
 
 .qz-greeting-icon {
   font-size: 13px;
-  color: #FFAE33;
+  color: #ffae33;
 }
 
 .qz-user-name {
   margin: 2px 0 4px 0;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-size: 20px;
   font-weight: 800;
-  color: #FFFFFF;
+  color: #ffffff;
   line-height: 1.2;
 }
 
@@ -363,7 +377,7 @@ export default {
   display: inline-block;
   align-self: flex-start;
   background: rgba(255, 255, 255, 0.22);
-  color: #FFFFFF;
+  color: #ffffff;
   font-size: 10px;
   font-weight: 600;
   padding: 2px 8px;
@@ -377,7 +391,7 @@ export default {
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.2);
   border: 1.5px solid rgba(255, 255, 255, 0.4);
-  color: #FFFFFF;
+  color: #ffffff;
   font-size: 20px;
   display: flex;
   align-items: center;
@@ -406,7 +420,7 @@ export default {
 .qz-qr-card {
   width: 100%;
   max-width: 440px;
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: var(--qz-radius-2xl, 28px);
   padding: 18px 18px;
   box-shadow: 0 10px 30px -4px rgba(106, 90, 224, 0.12);
@@ -427,8 +441,8 @@ export default {
   width: 40px;
   height: 40px;
   border-radius: var(--qz-radius-md, 14px);
-  background-color: var(--qz-color-cyan-bg, #E8F9FE);
-  color: var(--qz-color-cyan, #70D6F5);
+  background-color: var(--qz-color-cyan-bg, #e8f9fe);
+  color: var(--qz-color-cyan, #70d6f5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -444,7 +458,7 @@ export default {
   margin: 0;
   font-size: 16px;
   font-weight: 700;
-  color: var(--qz-color-text-main, #0C092A);
+  color: var(--qz-color-text-main, #0c092a);
   letter-spacing: -0.2px;
 }
 
@@ -461,8 +475,8 @@ export default {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  background-color: var(--qz-color-purple-bg, #EFEEFC);
-  border: 1.5px dashed var(--qz-color-purple-soft, #9087E5);
+  background-color: var(--qz-color-purple-bg, #efeefc);
+  border: 1.5px dashed var(--qz-color-purple-soft, #9087e5);
   border-radius: var(--qz-radius-lg, 18px);
   padding: 10px 14px;
   gap: 8px;
@@ -479,7 +493,7 @@ export default {
 .qz-ip-legend {
   font-size: 10px;
   font-weight: 700;
-  color: var(--qz-color-purple-primary, #6A5AE0);
+  color: var(--qz-color-purple-primary, #6a5ae0);
   letter-spacing: 0.8px;
 }
 
@@ -489,10 +503,10 @@ export default {
 }
 
 .qz-ip-full {
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-size: 16px;
   font-weight: 800;
-  color: var(--qz-color-text-main, #0C092A);
+  color: var(--qz-color-text-main, #0c092a);
   letter-spacing: 0.4px;
   word-break: break-all;
   line-height: 1.25;
@@ -509,28 +523,28 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  background-color: #FFFFFF;
-  border: 1px solid var(--qz-color-border, #E6E6E6);
+  background-color: #ffffff;
+  border: 1px solid var(--qz-color-border, #e6e6e6);
   border-radius: var(--qz-radius-full, 9999px);
   padding: 5px 16px;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-size: 12px;
   font-weight: 700;
-  color: var(--qz-color-purple-primary, #6A5AE0);
+  color: var(--qz-color-purple-primary, #6a5ae0);
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 2px 6px rgba(12, 9, 42, 0.04);
 }
 
 .qz-copy-btn:hover {
-  background-color: #F8F7FD;
-  border-color: var(--qz-color-purple-primary, #6A5AE0);
+  background-color: #f8f7fd;
+  border-color: var(--qz-color-purple-primary, #6a5ae0);
 }
 
 .qz-copy-btn--copied {
-  background-color: var(--qz-color-green-correct, #53DF83) !important;
-  border-color: var(--qz-color-green-correct, #53DF83) !important;
-  color: #FFFFFF !important;
+  background-color: var(--qz-color-green-correct, #53df83) !important;
+  border-color: var(--qz-color-green-correct, #53df83) !important;
+  color: #ffffff !important;
 }
 
 .qz-ip-loading {
@@ -539,7 +553,7 @@ export default {
   justify-content: center;
   gap: 10px;
   padding: 12px 14px;
-  background-color: var(--qz-color-purple-bg, #EFEEFC);
+  background-color: var(--qz-color-purple-bg, #efeefc);
   border-radius: var(--qz-radius-lg, 18px);
   font-size: 12px;
   color: var(--qz-color-text-muted, #858494);
@@ -549,7 +563,7 @@ export default {
 .qz-spinner {
   width: 20px;
   height: 20px;
-  --color: var(--qz-color-purple-primary, #6A5AE0);
+  --color: var(--qz-color-purple-primary, #6a5ae0);
 }
 
 /* SECCIÓN DEL CÓDIGO QR */
@@ -562,8 +576,8 @@ export default {
 }
 
 .qz-qr-frame {
-  background: #FFFFFF;
-  border: 2px solid var(--qz-color-purple-bg, #EFEEFC);
+  background: #ffffff;
+  border: 2px solid var(--qz-color-purple-bg, #efeefc);
   border-radius: var(--qz-radius-xl, 20px);
   padding: 6px;
   box-shadow: 0 4px 16px rgba(106, 90, 224, 0.06);
@@ -582,5 +596,134 @@ export default {
   font-weight: 500;
   color: var(--qz-color-text-muted, #858494);
   max-width: 280px;
+}
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
+  body:not(.light) .qz-home-page,
+  body:not(.light) .qz-home-content {
+    --background: #120f24;
+    background-color: #120f24;
+  }
+
+  body:not(.light) .qz-hero-header {
+    background: linear-gradient(180deg, #5a4ad1 0%, #352b6a 80%, #120f24 100%);
+  }
+
+  body:not(.light) .qz-qr-card {
+    background: #1d1838;
+    box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.5);
+  }
+
+  body:not(.light) .qz-qr-card-title {
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .qz-ip-block {
+    background-color: #231d42;
+    border-color: rgba(163, 155, 240, 0.3);
+  }
+
+  body:not(.light) .qz-ip-legend {
+    color: #a39bf0;
+  }
+
+  body:not(.light) .qz-ip-full {
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .qz-copy-btn {
+    background-color: #28214b;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #a39bf0;
+  }
+
+  body:not(.light) .qz-copy-btn:hover {
+    background-color: #352c63;
+  }
+
+  body:not(.light) .qz-ip-loading {
+    background-color: #231d42;
+    color: #9e9bb8;
+  }
+
+  body:not(.light) .qz-qr-frame {
+    border-color: #28214b;
+  }
+}
+
+:global(body.dark) .qz-home-page,
+:global(body.dark) .qz-home-content,
+:global(html.dark) .qz-home-page,
+:global(html.dark) .qz-home-content,
+:global(.dark) .qz-home-page,
+:global(.dark) .qz-home-content {
+  --background: #120f24;
+  background-color: #120f24;
+}
+
+:global(body.dark) .qz-hero-header,
+:global(html.dark) .qz-hero-header,
+:global(.dark) .qz-hero-header {
+  background: linear-gradient(180deg, #5a4ad1 0%, #352b6a 80%, #120f24 100%);
+}
+
+:global(body.dark) .qz-qr-card,
+:global(html.dark) .qz-qr-card,
+:global(.dark) .qz-qr-card {
+  background: #1d1838;
+  box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.5);
+}
+
+:global(body.dark) .qz-qr-card-title,
+:global(html.dark) .qz-qr-card-title,
+:global(.dark) .qz-qr-card-title {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-ip-block,
+:global(html.dark) .qz-ip-block,
+:global(.dark) .qz-ip-block {
+  background-color: #231d42;
+  border-color: rgba(163, 155, 240, 0.3);
+}
+
+:global(body.dark) .qz-ip-legend,
+:global(html.dark) .qz-ip-legend,
+:global(.dark) .qz-ip-legend {
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-ip-full,
+:global(html.dark) .qz-ip-full,
+:global(.dark) .qz-ip-full {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-copy-btn,
+:global(html.dark) .qz-copy-btn,
+:global(.dark) .qz-copy-btn {
+  background-color: #28214b;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-copy-btn:hover,
+:global(html.dark) .qz-copy-btn:hover,
+:global(.dark) .qz-copy-btn:hover {
+  background-color: #352c63;
+}
+
+:global(body.dark) .qz-ip-loading,
+:global(html.dark) .qz-ip-loading,
+:global(.dark) .qz-ip-loading {
+  background-color: #231d42;
+  color: #9e9bb8;
+}
+
+:global(body.dark) .qz-qr-frame,
+:global(html.dark) .qz-qr-frame,
+:global(.dark) .qz-qr-frame {
+  border-color: #28214b;
 }
 </style>

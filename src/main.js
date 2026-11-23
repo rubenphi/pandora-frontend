@@ -22,10 +22,21 @@ import "@ionic/vue/css/text-transformation.css";
 import "@ionic/vue/css/flex-utils.css";
 import "@ionic/vue/css/display.css";
 
-/* Theme variables */
+/* Theme variables and Queezy UI design system */
 import "./theme/variables.css";
+import "./theme/queezy-ui.css";
+
+/* Queezy Global UI Components */
+import QzButton from "./components/common/QzButton.vue";
+import QzSelect from "./components/common/QzSelect.vue";
+import QzFilterPill from "./components/common/QzFilterPill.vue";
 
 const app = createApp(App).use(IonicVue).use(router);
+
+app.component("QzButton", QzButton);
+app.component("QzSelect", QzSelect);
+app.component("QzFilterPill", QzFilterPill);
+app.component("QueezyButton", QzButton);
 
 router.isReady().then(() => {
   app.mount("#app");

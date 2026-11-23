@@ -1624,8 +1624,7 @@ export default {
 }
 
 /* ─── 7. MODO OSCURO (DARK THEME) ─────────────────────────────────────────── */
-body.dark .qz-special-lesson-page,
-.dark .qz-special-lesson-page,
+
 @media (prefers-color-scheme: dark) {
   .qz-special-lesson-page {
     --background: #16132b;
@@ -1725,6 +1724,162 @@ body.dark .qz-special-lesson-page,
     color: #86efac;
     border-color: rgba(16, 185, 129, 0.4);
   }
+}
+
+:global(body.dark) .qz-special-lesson-page,
+:global(html.dark) .qz-special-lesson-page,
+:global(.dark) .qz-special-lesson-page {
+  --background: #16132b;
+  background-color: #16132b;
+}
+
+:global(body.dark) .qz-special-lesson-content,
+:global(html.dark) .qz-special-lesson-content,
+:global(.dark) .qz-special-lesson-content {
+  --background: #16132b;
+}
+
+:global(body.dark) .qz-hero-banner,
+:global(html.dark) .qz-hero-banner,
+:global(.dark) .qz-hero-banner {
+  background: linear-gradient(180deg, #6a5ae0 0%, #5748c9 80%, #16132b 100%);
+}
+
+:global(body.dark) .qz-form-card,
+:global(html.dark) .qz-form-card,
+:global(.dark) .qz-form-card,
+:global(body.dark) .qz-toolbox-card,
+:global(html.dark) .qz-toolbox-card,
+:global(.dark) .qz-toolbox-card,
+:global(body.dark) .qz-loading-card,
+:global(html.dark) .qz-loading-card,
+:global(.dark) .qz-loading-card,
+:global(body.dark) .qz-empty-card,
+:global(html.dark) .qz-empty-card,
+:global(.dark) .qz-empty-card {
+  background: #1e1a3a;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+:global(body.dark) .qz-card-title,
+:global(html.dark) .qz-card-title,
+:global(.dark) .qz-card-title,
+:global(body.dark) .qz-toolbox-title,
+:global(html.dark) .qz-toolbox-title,
+:global(.dark) .qz-toolbox-title,
+:global(body.dark) .qz-empty-title,
+:global(html.dark) .qz-empty-title,
+:global(.dark) .qz-empty-title,
+:global(body.dark) .qz-student-name,
+:global(html.dark) .qz-student-name,
+:global(.dark) .qz-student-name {
+  color: #f3f2ff;
+}
+
+:global(body.dark) .qz-card-subtitle,
+:global(html.dark) .qz-card-subtitle,
+:global(.dark) .qz-card-subtitle,
+:global(body.dark) .qz-sub-label,
+:global(html.dark) .qz-sub-label,
+:global(.dark) .qz-sub-label,
+:global(body.dark) .qz-empty-desc,
+:global(html.dark) .qz-empty-desc,
+:global(.dark) .qz-empty-desc,
+:global(body.dark) .qz-student-status-text,
+:global(html.dark) .qz-student-status-text,
+:global(.dark) .qz-student-status-text {
+  color: #a5a1c9;
+}
+
+:global(body.dark) .qz-text-input,
+:global(html.dark) .qz-text-input,
+:global(.dark) .qz-text-input,
+:global(body.dark) .qz-search-input,
+:global(html.dark) .qz-search-input,
+:global(.dark) .qz-search-input {
+  background: #16132b;
+  border-color: #2e2954;
+  color: #f3f2ff;
+}
+
+:global(body.dark) .qz-text-input:focus,
+:global(html.dark) .qz-text-input:focus,
+:global(.dark) .qz-text-input:focus,
+:global(body.dark) .qz-search-input:focus,
+:global(html.dark) .qz-search-input:focus,
+:global(.dark) .qz-search-input:focus {
+  border-color: #8c7eff;
+  background: #1a1633;
+}
+
+:global(body.dark) .qz-student-card,
+:global(html.dark) .qz-student-card,
+:global(.dark) .qz-student-card {
+  background: #1e1a3a;
+  border-color: #2a2550;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+:global(body.dark) .qz-student-card.is-selected,
+:global(html.dark) .qz-student-card.is-selected,
+:global(.dark) .qz-student-card.is-selected {
+  background: #252048;
+  border-color: #8c7eff;
+  box-shadow: 0 4px 16px rgba(140, 126, 255, 0.15);
+}
+
+:global(body.dark) .qz-student-avatar,
+:global(html.dark) .qz-student-avatar,
+:global(.dark) .qz-student-avatar {
+  background: linear-gradient(135deg, #2d2660 0%, #3a3278 100%);
+  color: #c4beff;
+}
+
+:global(body.dark) .qz-clear-filter-btn,
+:global(html.dark) .qz-clear-filter-btn,
+:global(.dark) .qz-clear-filter-btn {
+  background: #252048;
+  color: #c4beff;
+  border-color: #373068;
+}
+
+:global(body.dark) .qz-clear-filter-btn:hover,
+:global(html.dark) .qz-clear-filter-btn:hover,
+:global(.dark) .qz-clear-filter-btn:hover {
+  background: #2f295b;
+}
+
+:global(body.dark) .qz-badge--neutral,
+:global(html.dark) .qz-badge--neutral,
+:global(.dark) .qz-badge--neutral {
+  background: #252048;
+  color: #c4beff;
+  border-color: #373068;
+}
+
+:global(body.dark) .qz-badge--danger,
+:global(html.dark) .qz-badge--danger,
+:global(.dark) .qz-badge--danger {
+  background: rgba(239, 68, 68, 0.22);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+:global(body.dark) .qz-badge--warning,
+:global(html.dark) .qz-badge--warning,
+:global(.dark) .qz-badge--warning {
+  background: rgba(245, 158, 11, 0.22);
+  color: #fcd34d;
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+:global(body.dark) .qz-badge--success,
+:global(html.dark) .qz-badge--success,
+:global(.dark) .qz-badge--success {
+  background: rgba(16, 185, 129, 0.22);
+  color: #86efac;
+  border-color: rgba(16, 185, 129, 0.4);
 }
 
 /* ─── 8. RESPONSIVIDAD MÓVIL (< 600px) ─────────────────────────────────────── */

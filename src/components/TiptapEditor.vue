@@ -454,6 +454,79 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
 }
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
+  body:not(.light) .tiptap-wrapper {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  body:not(.light) .tiptap-toolbar {
+    background-color: #231d42;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  body:not(.light) .qz-tool-divider {
+    background-color: rgba(255, 255, 255, 0.12);
+  }
+
+  body:not(.light) .qz-tool-btn {
+    color: #9e9bb8;
+  }
+
+  body:not(.light) .qz-tool-btn:hover {
+    background-color: #2e2659;
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .qz-tool-btn--chip {
+    background-color: #28214b;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #a39bf0;
+  }
+}
+
+:global(body.dark) .tiptap-wrapper,
+:global(html.dark) .tiptap-wrapper,
+:global(.dark) .tiptap-wrapper {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .tiptap-toolbar,
+:global(html.dark) .tiptap-toolbar,
+:global(.dark) .tiptap-toolbar {
+  background-color: #231d42;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-tool-divider,
+:global(html.dark) .qz-tool-divider,
+:global(.dark) .qz-tool-divider {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+:global(body.dark) .qz-tool-btn,
+:global(html.dark) .qz-tool-btn,
+:global(.dark) .qz-tool-btn {
+  color: #9e9bb8;
+}
+
+:global(body.dark) .qz-tool-btn:hover,
+:global(html.dark) .qz-tool-btn:hover,
+:global(.dark) .qz-tool-btn:hover {
+  background-color: #2e2659;
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-tool-btn--chip,
+:global(html.dark) .qz-tool-btn--chip,
+:global(.dark) .qz-tool-btn--chip {
+  background-color: #28214b;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #a39bf0;
+}
 </style>
 
 <style>
@@ -599,5 +672,86 @@ export default defineComponent({
 .tiptap-editor-area table td,
 .tiptap-editor-area table th {
   position: relative;
+}
+
+/* Modo oscuro para área interior */
+body.dark .tiptap-editor-area,
+html.dark .tiptap-editor-area,
+.dark .tiptap-editor-area {
+  color: #f7f7fd;
+}
+
+body.dark .tiptap-editor-area h1,
+body.dark .tiptap-editor-area h2,
+body.dark .tiptap-editor-area h3,
+body.dark .tiptap-editor-area h4,
+body.dark .tiptap-editor-area h5,
+body.dark .tiptap-editor-area h6,
+html.dark .tiptap-editor-area h1,
+html.dark .tiptap-editor-area h2,
+html.dark .tiptap-editor-area h3,
+html.dark .tiptap-editor-area h4,
+html.dark .tiptap-editor-area h5,
+html.dark .tiptap-editor-area h6,
+.dark .tiptap-editor-area h1,
+.dark .tiptap-editor-area h2,
+.dark .tiptap-editor-area h3,
+.dark .tiptap-editor-area h4,
+.dark .tiptap-editor-area h5,
+.dark .tiptap-editor-area h6 {
+  color: #f7f7fd;
+}
+
+body.dark .tiptap-editor-area table,
+html.dark .tiptap-editor-area table,
+.dark .tiptap-editor-area table {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+body.dark .tiptap-editor-area th,
+html.dark .tiptap-editor-area th,
+.dark .tiptap-editor-area th {
+  background-color: #28214b;
+  color: #a39bf0;
+  border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+
+body.dark .tiptap-editor-area td,
+html.dark .tiptap-editor-area td,
+.dark .tiptap-editor-area td {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  color: #f7f7fd;
+}
+
+@media (prefers-color-scheme: dark) {
+  body:not(.light) .tiptap-editor-area {
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .tiptap-editor-area h1,
+  body:not(.light) .tiptap-editor-area h2,
+  body:not(.light) .tiptap-editor-area h3,
+  body:not(.light) .tiptap-editor-area h4,
+  body:not(.light) .tiptap-editor-area h5,
+  body:not(.light) .tiptap-editor-area h6 {
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .tiptap-editor-area table {
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  }
+
+  body:not(.light) .tiptap-editor-area th {
+    background-color: #28214b;
+    color: #a39bf0;
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+  }
+
+  body:not(.light) .tiptap-editor-area td {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+    color: #f7f7fd;
+  }
 }
 </style>

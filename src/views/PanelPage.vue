@@ -1,6 +1,6 @@
 <template>
-  <ion-page class="qz-panel-page">
-    <ion-content :fullscreen="true" class="qz-panel-content">
+  <ion-page class="ion-page qz-panel-page">
+    <ion-content class="qz-panel-content">
       <div class="qz-panel-wrapper">
         <!-- 1. CABECERA HERO QUEEZY -->
         <div class="qz-panel-hero">
@@ -13,7 +13,10 @@
             <div class="qz-admin-badge" v-if="admin">
               <span>Admin</span>
             </div>
-            <div class="qz-admin-badge qz-badge--teacher" v-else-if="esProfesor">
+            <div
+              class="qz-admin-badge qz-badge--teacher"
+              v-else-if="esProfesor"
+            >
               <span>Docente</span>
             </div>
           </div>
@@ -66,20 +69,7 @@
               </div>
             </div>
 
-            <!-- Tarjeta 4: Añadir Usuario (Solo Admin) -->
-            <div
-              v-if="admin"
-              class="qz-panel-card"
-              @click="navigateTo('/admin/registro/usuarios')"
-            >
-              <div class="qz-card-icon-squircle qz-icon--gold">
-                <ion-icon :icon="personAddOutline"></ion-icon>
-              </div>
-              <div class="qz-card-text">
-                <h3 class="qz-card-name">Nuevo Usuario</h3>
-                <p class="qz-card-sub">Crear registros</p>
-              </div>
-            </div>
+
 
             <!-- Tarjeta 5: Configuraciones (Admin o Docente - Incluye Autorizaciones) -->
             <div
@@ -97,10 +87,7 @@
             </div>
 
             <!-- Tarjeta 6: Herramientas -->
-            <div
-              class="qz-panel-card"
-              @click="navigateTo('/herramientas')"
-            >
+            <div class="qz-panel-card" @click="navigateTo('/herramientas')">
               <div class="qz-card-icon-squircle qz-icon--gold-soft">
                 <ion-icon :icon="constructOutline"></ion-icon>
               </div>
@@ -111,10 +98,7 @@
             </div>
 
             <!-- Tarjeta 7: Encuestas y Test OMR -->
-            <div
-              class="qz-panel-card"
-              @click="navigateTo('/encuestas-test')"
-            >
+            <div class="qz-panel-card" @click="navigateTo('/encuestas-test')">
               <div class="qz-card-icon-squircle qz-icon--lilac">
                 <ion-icon :icon="scanOutline"></ion-icon>
               </div>
@@ -161,12 +145,7 @@ import {
   printOutline,
 } from "ionicons/icons";
 
-import {
-  onIonViewWillEnter,
-  IonPage,
-  IonContent,
-  IonIcon,
-} from "@ionic/vue";
+import { onIonViewWillEnter, IonPage, IonContent, IonIcon } from "@ionic/vue";
 
 export default {
   name: "PanelPage",
@@ -216,23 +195,24 @@ export default {
 
 <style scoped>
 .qz-panel-page {
-  background-color: var(--qz-color-purple-bg, #EFEEFC);
+  background-color: var(--qz-color-purple-bg, #efeefc);
 }
 
 .qz-panel-content {
-  --background: var(--qz-color-purple-bg, #EFEEFC);
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  --background: var(--qz-color-purple-bg, #efeefc);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
 }
 
 .qz-panel-wrapper {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  padding-bottom: 70px;
 }
 
 /* 1. CABECERA HERO PÚRPURA QUEEZY */
 .qz-panel-hero {
-  background: linear-gradient(180deg, #6A5AE0 0%, #7668E3 85%, #EFEEFC 100%);
+  background: linear-gradient(180deg, #6a5ae0 0%, #7668e3 85%, #efeefc 100%);
   padding-top: max(16px, env(safe-area-inset-top));
   padding-bottom: 14px;
   flex-shrink: 0;
@@ -262,10 +242,10 @@ export default {
 
 .qz-panel-title {
   margin: 2px 0 0 0;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-size: 22px;
   font-weight: 800;
-  color: #FFFFFF;
+  color: #ffffff;
   letter-spacing: -0.3px;
 }
 
@@ -274,7 +254,7 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: var(--qz-radius-full, 9999px);
   padding: 4px 12px;
-  color: #FFFFFF;
+  color: #ffffff;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.5px;
@@ -285,7 +265,7 @@ export default {
 .qz-badge--teacher {
   background: rgba(112, 214, 245, 0.28);
   border-color: rgba(112, 214, 245, 0.5);
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 /* 2. CUERPO CON CUADRÍCULA QUEEZY (2 Columnas) */
@@ -308,7 +288,7 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   border-radius: var(--qz-radius-xl, 24px);
   padding: 18px 16px;
   min-height: 136px;
@@ -343,38 +323,38 @@ export default {
 }
 
 .qz-icon--purple {
-  background-color: var(--qz-color-purple-bg, #EFEEFC);
-  color: var(--qz-color-purple-primary, #6A5AE0);
+  background-color: var(--qz-color-purple-bg, #efeefc);
+  color: var(--qz-color-purple-primary, #6a5ae0);
 }
 
 .qz-icon--cyan {
-  background-color: var(--qz-color-cyan-bg, #E8F9FE);
-  color: var(--qz-color-cyan, #70D6F5);
+  background-color: var(--qz-color-cyan-bg, #e8f9fe);
+  color: var(--qz-color-cyan, #70d6f5);
 }
 
 .qz-icon--green {
-  background-color: var(--qz-color-green-bg, #EAFBF1);
-  color: var(--qz-color-green-correct, #53DF83);
+  background-color: var(--qz-color-green-bg, #eafbf1);
+  color: var(--qz-color-green-correct, #53df83);
 }
 
 .qz-icon--gold {
-  background-color: var(--qz-color-gold-bg, #FFF6E7);
-  color: var(--qz-color-gold, #FFAE33);
+  background-color: var(--qz-color-gold-bg, #fff6e7);
+  color: var(--qz-color-gold, #ffae33);
 }
 
 .qz-icon--coral {
-  background-color: var(--qz-color-pink-bg, #FFF0F3);
-  color: var(--qz-color-pink-coral, #FF8FA2);
+  background-color: var(--qz-color-pink-bg, #fff0f3);
+  color: var(--qz-color-pink-coral, #ff8fa2);
 }
 
 .qz-icon--gold-soft {
-  background-color: #FFF9EE;
-  color: #E59822;
+  background-color: #fff9ee;
+  color: #e59822;
 }
 
 .qz-icon--lilac {
-  background-color: var(--qz-color-purple-light, #E1DEF9);
-  color: var(--qz-color-purple-soft, #9087E5);
+  background-color: var(--qz-color-purple-light, #e1def9);
+  color: var(--qz-color-purple-soft, #9087e5);
 }
 
 /* TEXTOS DE LA TARJETA */
@@ -383,10 +363,10 @@ export default {
 }
 
 .qz-card-name {
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-size: 15px;
   font-weight: 700;
-  color: var(--qz-color-text-main, #0C092A);
+  color: var(--qz-color-text-main, #0c092a);
   margin: 0 0 3px 0;
   letter-spacing: -0.1px;
 }
@@ -404,5 +384,164 @@ export default {
   .qz-grid-container {
     grid-template-columns: 1fr;
   }
+}
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
+  body:not(.light) .qz-panel-page,
+  body:not(.light) .qz-panel-content {
+    --background: #120f24;
+    background-color: #120f24;
+  }
+
+  body:not(.light) .qz-panel-hero {
+    background: linear-gradient(180deg, #5a4ad1 0%, #352b6a 80%, #120f24 100%);
+  }
+
+  body:not(.light) .qz-panel-card {
+    background-color: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+
+  body:not(.light) .qz-panel-card:hover {
+    border-color: #7c6ef2;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.6);
+  }
+
+  body:not(.light) .qz-card-name {
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .qz-card-sub {
+    color: #9e9bb8;
+  }
+
+  body:not(.light) .qz-icon--purple {
+    background-color: rgba(124, 110, 242, 0.2);
+    color: #a39bf0;
+  }
+
+  body:not(.light) .qz-icon--cyan {
+    background-color: rgba(112, 214, 245, 0.2);
+    color: #70d6f5;
+  }
+
+  body:not(.light) .qz-icon--green {
+    background-color: rgba(83, 223, 131, 0.2);
+    color: #53df83;
+  }
+
+  body:not(.light) .qz-icon--gold {
+    background-color: rgba(255, 174, 51, 0.2);
+    color: #ffae33;
+  }
+
+  body:not(.light) .qz-icon--coral {
+    background-color: rgba(255, 143, 162, 0.2);
+    color: #ff8fa2;
+  }
+
+  body:not(.light) .qz-icon--gold-soft {
+    background-color: rgba(255, 174, 51, 0.2);
+    color: #ffae33;
+  }
+
+  body:not(.light) .qz-icon--lilac {
+    background-color: rgba(144, 135, 229, 0.2);
+    color: #a39bf0;
+  }
+}
+
+:global(body.dark) .qz-panel-page,
+:global(body.dark) .qz-panel-content,
+:global(html.dark) .qz-panel-page,
+:global(html.dark) .qz-panel-content,
+:global(.dark) .qz-panel-page,
+:global(.dark) .qz-panel-content {
+  --background: #120f24;
+  background-color: #120f24;
+}
+
+:global(body.dark) .qz-panel-hero,
+:global(html.dark) .qz-panel-hero,
+:global(.dark) .qz-panel-hero {
+  background: linear-gradient(180deg, #5a4ad1 0%, #352b6a 80%, #120f24 100%);
+}
+
+:global(body.dark) .qz-panel-card,
+:global(html.dark) .qz-panel-card,
+:global(.dark) .qz-panel-card {
+  background-color: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+:global(body.dark) .qz-panel-card:hover,
+:global(html.dark) .qz-panel-card:hover,
+:global(.dark) .qz-panel-card:hover {
+  border-color: #7c6ef2;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.6);
+}
+
+:global(body.dark) .qz-card-name,
+:global(html.dark) .qz-card-name,
+:global(.dark) .qz-card-name {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-card-sub,
+:global(html.dark) .qz-card-sub,
+:global(.dark) .qz-card-sub {
+  color: #9e9bb8;
+}
+
+:global(body.dark) .qz-icon--purple,
+:global(html.dark) .qz-icon--purple,
+:global(.dark) .qz-icon--purple {
+  background-color: rgba(124, 110, 242, 0.2);
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-icon--cyan,
+:global(html.dark) .qz-icon--cyan,
+:global(.dark) .qz-icon--cyan {
+  background-color: rgba(112, 214, 245, 0.2);
+  color: #70d6f5;
+}
+
+:global(body.dark) .qz-icon--green,
+:global(html.dark) .qz-icon--green,
+:global(.dark) .qz-icon--green {
+  background-color: rgba(83, 223, 131, 0.2);
+  color: #53df83;
+}
+
+:global(body.dark) .qz-icon--gold,
+:global(html.dark) .qz-icon--gold,
+:global(.dark) .qz-icon--gold {
+  background-color: rgba(255, 174, 51, 0.2);
+  color: #ffae33;
+}
+
+:global(body.dark) .qz-icon--coral,
+:global(html.dark) .qz-icon--coral,
+:global(.dark) .qz-icon--coral {
+  background-color: rgba(255, 143, 162, 0.2);
+  color: #ff8fa2;
+}
+
+:global(body.dark) .qz-icon--gold-soft,
+:global(html.dark) .qz-icon--gold-soft,
+:global(.dark) .qz-icon--gold-soft {
+  background-color: rgba(255, 174, 51, 0.2);
+  color: #ffae33;
+}
+
+:global(body.dark) .qz-icon--lilac,
+:global(html.dark) .qz-icon--lilac,
+:global(.dark) .qz-icon--lilac {
+  background-color: rgba(144, 135, 229, 0.2);
+  color: #a39bf0;
 }
 </style>

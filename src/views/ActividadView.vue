@@ -1025,4 +1025,206 @@ export default {
 .qz-add-criterion-btn:active {
   transform: scale(0.98);
 }
+
+/* ==========================================================================
+   MODO OSCURO (DARK MODE)
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  .qz-activity-page {
+    --background: #120f24;
+    background: #120f24;
+  }
+  .qz-activity-content {
+    --background: #120f24;
+  }
+  .qz-hero-header {
+    background: linear-gradient(180deg, #5a4ad1 0%, #352b6a 80%, #120f24 100%);
+  }
+  .qz-loading-card,
+  .qz-activity-actions-card,
+  .qz-form-card {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-actions-title,
+  .qz-field-label,
+  .qz-rich-content,
+  .qz-criterion-desc {
+    color: #f7f7fd;
+  }
+  .qz-role-badge {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-btn--secondary {
+    background: #28214b;
+    color: #a39bf0;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  .qz-btn--outline {
+    background: #231d42;
+    color: #f7f7fd;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+  .qz-highlight-icon {
+    background: #28214b;
+  }
+  .qz-score-badge {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-instructions-box {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-criterion-card {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-criterion-points-pill {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-item-edit-btn {
+    background: #28214b;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f7f7fd;
+  }
+  .qz-add-criterion-btn {
+    background: #1d1838;
+    border-color: #7c6ef2;
+    color: #a39bf0;
+  }
+  .qz-add-criterion-btn:hover {
+    background: #28214b;
+    border-color: #9d93f7;
+  }
+}
+
+:global(body.dark) .qz-activity-page,
+:global(html.dark) .qz-activity-page,
+:global(.dark) .qz-activity-page {
+  --background: #120f24;
+  background: #120f24;
+}
+
+:global(body.dark) .qz-activity-content,
+:global(html.dark) .qz-activity-content,
+:global(.dark) .qz-activity-content {
+  --background: #120f24;
+}
+
+:global(body.dark) .qz-hero-header,
+:global(html.dark) .qz-hero-header,
+:global(.dark) .qz-hero-header {
+  background: linear-gradient(180deg, #5a4ad1 0%, #352b6a 80%, #120f24 100%);
+}
+
+:global(body.dark) .qz-loading-card,
+:global(html.dark) .qz-loading-card,
+:global(.dark) .qz-loading-card,
+:global(body.dark) .qz-activity-actions-card,
+:global(html.dark) .qz-activity-actions-card,
+:global(.dark) .qz-activity-actions-card,
+:global(body.dark) .qz-form-card,
+:global(html.dark) .qz-form-card,
+:global(.dark) .qz-form-card {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-actions-title,
+:global(html.dark) .qz-actions-title,
+:global(.dark) .qz-actions-title,
+:global(body.dark) .qz-field-label,
+:global(html.dark) .qz-field-label,
+:global(.dark) .qz-field-label,
+:global(body.dark) .qz-rich-content,
+:global(html.dark) .qz-rich-content,
+:global(.dark) .qz-rich-content,
+:global(body.dark) .qz-criterion-desc,
+:global(html.dark) .qz-criterion-desc,
+:global(.dark) .qz-criterion-desc {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-role-badge,
+:global(html.dark) .qz-role-badge,
+:global(.dark) .qz-role-badge {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-btn--secondary,
+:global(html.dark) .qz-btn--secondary,
+:global(.dark) .qz-btn--secondary {
+  background: #28214b;
+  color: #a39bf0;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:global(body.dark) .qz-btn--outline,
+:global(html.dark) .qz-btn--outline,
+:global(.dark) .qz-btn--outline {
+  background: #231d42;
+  color: #f7f7fd;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+:global(body.dark) .qz-highlight-icon,
+:global(html.dark) .qz-highlight-icon,
+:global(.dark) .qz-highlight-icon {
+  background: #28214b;
+}
+
+:global(body.dark) .qz-score-badge,
+:global(html.dark) .qz-score-badge,
+:global(.dark) .qz-score-badge {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-instructions-box,
+:global(html.dark) .qz-instructions-box,
+:global(.dark) .qz-instructions-box {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-criterion-card,
+:global(html.dark) .qz-criterion-card,
+:global(.dark) .qz-criterion-card {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-criterion-points-pill,
+:global(html.dark) .qz-criterion-points-pill,
+:global(.dark) .qz-criterion-points-pill {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-item-edit-btn,
+:global(html.dark) .qz-item-edit-btn,
+:global(.dark) .qz-item-edit-btn {
+  background: #28214b;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-add-criterion-btn,
+:global(html.dark) .qz-add-criterion-btn,
+:global(.dark) .qz-add-criterion-btn {
+  background: #1d1838;
+  border-color: #7c6ef2;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-add-criterion-btn:hover,
+:global(html.dark) .qz-add-criterion-btn:hover,
+:global(.dark) .qz-add-criterion-btn:hover {
+  background: #28214b;
+  border-color: #9d93f7;
+}
 </style>

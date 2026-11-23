@@ -100,4 +100,44 @@ th {
   pointer-events: none;
 }
 
+/* Modo oscuro global para tablas y contenido tipográfico */
+body.dark th,
+html.dark th,
+.dark th {
+  background-color: #28214b;
+  color: #f7f7fd;
+}
+
+body.dark th,
+body.dark td,
+html.dark th,
+html.dark td,
+.dark th,
+.dark td {
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f7f7fd;
+}
+
+body.dark .selectedCell:after,
+html.dark .selectedCell:after,
+.dark .selectedCell:after {
+  background: rgba(124, 110, 242, 0.28);
+}
+
+@media (prefers-color-scheme: dark) {
+  body:not(.light) th {
+    background-color: #28214b;
+    color: #f7f7fd;
+  }
+
+  body:not(.light) th,
+  body:not(.light) td {
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .selectedCell:after {
+    background: rgba(124, 110, 242, 0.28);
+  }
+}
 </style>

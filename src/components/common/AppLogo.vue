@@ -279,4 +279,41 @@ export default {
 .app-logo--purple .app-logo__subtitle {
   color: rgba(255, 255, 255, 0.85);
 }
+
+/* Modo oscuro para versión estándar */
+@media (prefers-color-scheme: dark) {
+  body:not(.light) .app-logo:not(.app-logo--purple) .app-logo__badge {
+    background: #241d42;
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 10px 24px -2px rgba(0, 0, 0, 0.5);
+  }
+
+  body:not(.light) .app-logo:not(.app-logo--purple) .app-logo__title {
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .app-logo:not(.app-logo--purple) .app-logo__subtitle {
+    color: #9e9bb8;
+  }
+}
+
+:global(body.dark) .app-logo:not(.app-logo--purple) .app-logo__badge,
+:global(html.dark) .app-logo:not(.app-logo--purple) .app-logo__badge,
+:global(.dark) .app-logo:not(.app-logo--purple) .app-logo__badge {
+  background: #241d42;
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 10px 24px -2px rgba(0, 0, 0, 0.5);
+}
+
+:global(body.dark) .app-logo:not(.app-logo--purple) .app-logo__title,
+:global(html.dark) .app-logo:not(.app-logo--purple) .app-logo__title,
+:global(.dark) .app-logo:not(.app-logo--purple) .app-logo__title {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .app-logo:not(.app-logo--purple) .app-logo__subtitle,
+:global(html.dark) .app-logo:not(.app-logo--purple) .app-logo__subtitle,
+:global(.dark) .app-logo:not(.app-logo--purple) .app-logo__subtitle {
+  color: #9e9bb8;
+}
 </style>

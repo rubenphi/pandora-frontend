@@ -960,4 +960,176 @@ export default {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   MODO OSCURO (DARK MODE)
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  .qz-create-quiz-page {
+    background-color: #120f24;
+  }
+  .qz-create-quiz-content {
+    --background: #120f24;
+  }
+  .qz-top-title {
+    color: #f7f7fd;
+  }
+  .qz-circle-btn {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f7f7fd;
+  }
+  .qz-btn--delete {
+    background: #1d1838;
+  }
+  .qz-lesson-chip-card {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-lesson-icon-box {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-lesson-title {
+    color: #f7f7fd;
+  }
+  .qz-form-card {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-icon--purple {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-field-label {
+    color: #f7f7fd;
+  }
+  .qz-text-input {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f7f7fd;
+  }
+  .qz-text-input:focus {
+    background: #2a2254;
+    border-color: #7c6ef2;
+  }
+  .qz-choice-card {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-choice--purple {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-choice-title {
+    color: #f7f7fd;
+  }
+}
+
+:global(body.dark) .qz-create-quiz-page,
+:global(html.dark) .qz-create-quiz-page,
+:global(.dark) .qz-create-quiz-page {
+  background-color: #120f24;
+}
+
+:global(body.dark) .qz-create-quiz-content,
+:global(html.dark) .qz-create-quiz-content,
+:global(.dark) .qz-create-quiz-content {
+  --background: #120f24;
+}
+
+:global(body.dark) .qz-top-title,
+:global(html.dark) .qz-top-title,
+:global(.dark) .qz-top-title {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-circle-btn,
+:global(html.dark) .qz-circle-btn,
+:global(.dark) .qz-circle-btn {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-btn--delete,
+:global(html.dark) .qz-btn--delete,
+:global(.dark) .qz-btn--delete {
+  background: #1d1838;
+}
+
+:global(body.dark) .qz-lesson-chip-card,
+:global(html.dark) .qz-lesson-chip-card,
+:global(.dark) .qz-lesson-chip-card {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-lesson-icon-box,
+:global(html.dark) .qz-lesson-icon-box,
+:global(.dark) .qz-lesson-icon-box {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-lesson-title,
+:global(html.dark) .qz-lesson-title,
+:global(.dark) .qz-lesson-title {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-form-card,
+:global(html.dark) .qz-form-card,
+:global(.dark) .qz-form-card {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-icon--purple,
+:global(html.dark) .qz-icon--purple,
+:global(.dark) .qz-icon--purple {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-field-label,
+:global(html.dark) .qz-field-label,
+:global(.dark) .qz-field-label {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-text-input,
+:global(html.dark) .qz-text-input,
+:global(.dark) .qz-text-input {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-text-input:focus,
+:global(html.dark) .qz-text-input:focus,
+:global(.dark) .qz-text-input:focus {
+  background: #2a2254;
+  border-color: #7c6ef2;
+}
+
+:global(body.dark) .qz-choice-card,
+:global(html.dark) .qz-choice-card,
+:global(.dark) .qz-choice-card {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-choice--purple,
+:global(html.dark) .qz-choice--purple,
+:global(.dark) .qz-choice--purple {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-choice-title,
+:global(html.dark) .qz-choice-title,
+:global(.dark) .qz-choice-title {
+  color: #f7f7fd;
+}
 </style>

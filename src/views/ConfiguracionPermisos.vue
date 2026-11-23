@@ -1848,6 +1848,7 @@ export default {
   flex: 1;
   max-width: 70%;
   display: flex;
+  align-items: center;
   justify-content: flex-end;
 }
 
@@ -1864,6 +1865,26 @@ export default {
   color: var(--qz-color-text-main, #0c092a);
   max-width: 100%;
   width: 100%;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+}
+
+.qz-select-wrapper ion-select::part(container) {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.qz-select-wrapper ion-select::part(text) {
+  display: flex;
+  align-items: center;
+}
+
+.qz-select-wrapper ion-select::part(icon) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ─── Barra Inferior Fija ───────────────────────────────────────────────── */
@@ -2048,8 +2069,7 @@ export default {
 }
 
 /* ─── Soporte Dark Theme ────────────────────────────────────────────────── */
-body.dark .qz-permissions-page,
-.dark .qz-permissions-page,
+
 @media (prefers-color-scheme: dark) {
   .qz-permissions-page {
     --background: #16132b;
@@ -2070,6 +2090,42 @@ body.dark .qz-permissions-page,
   .qz-alert-content p {
     color: #fcd34d;
   }
+}
+
+:global(body.dark) .qz-permissions-page,
+:global(html.dark) .qz-permissions-page,
+:global(.dark) .qz-permissions-page {
+  --background: #16132b;
+  background-color: #16132b;
+}
+
+:global(body.dark) .qz-permissions-content,
+:global(html.dark) .qz-permissions-content,
+:global(.dark) .qz-permissions-content {
+  --background: #16132b;
+}
+
+:global(body.dark) .qz-perm-selector-row,
+:global(html.dark) .qz-perm-selector-row,
+:global(.dark) .qz-perm-selector-row {
+  background: #16132b;
+}
+
+:global(body.dark) .qz-alert-banner--warning,
+:global(html.dark) .qz-alert-banner--warning,
+:global(.dark) .qz-alert-banner--warning {
+  background: rgba(245, 158, 11, 0.18);
+  border-color: rgba(245, 158, 11, 0.45);
+  color: #fcd34d;
+}
+
+:global(body.dark) .qz-alert-content strong,
+:global(html.dark) .qz-alert-content strong,
+:global(.dark) .qz-alert-content strong,
+:global(body.dark) .qz-alert-content p,
+:global(html.dark) .qz-alert-content p,
+:global(.dark) .qz-alert-content p {
+  color: #fcd34d;
 }
 
 /* ─── Responsividad Móvil ───────────────────────────────────────────────── */

@@ -1,6 +1,6 @@
 <template>
-  <ion-page class="qz-cursos-page">
-    <ion-content :fullscreen="true" class="qz-cursos-content">
+  <ion-page class="ion-page qz-cursos-page">
+    <ion-content class="qz-cursos-content">
       <div class="qz-page-wrapper">
         <!-- 1. CABECERA HERO QUEEZY CON FONDO PÚRPURA -->
         <div class="qz-hero-header">
@@ -17,7 +17,10 @@
 
             <!-- Cápsula Selector de Año Lectivo -->
             <div class="qz-year-capsule">
-              <ion-icon :icon="calendarOutline" class="qz-calendar-icon"></ion-icon>
+              <ion-icon
+                :icon="calendarOutline"
+                class="qz-calendar-icon"
+              ></ion-icon>
               <span class="qz-year-label">Año:</span>
               <ion-select
                 v-model="selectedYear"
@@ -58,14 +61,19 @@
                 @click="courseSelected(curso)"
               >
                 <!-- Squircle de Birrete Educativo con paleta pastel alternada -->
-                <div class="qz-avatar-squircle" :class="getSquircleColor(index)">
+                <div
+                  class="qz-avatar-squircle"
+                  :class="getSquircleColor(index)"
+                >
                   <ion-icon :icon="schoolOutline"></ion-icon>
                 </div>
 
                 <!-- Info del Curso -->
                 <div class="qz-course-info">
                   <h2 class="qz-course-name">{{ curso.name }}</h2>
-                  <span class="qz-course-sub">Año lectivo {{ selectedYear }}</span>
+                  <span class="qz-course-sub"
+                    >Año lectivo {{ selectedYear }}</span
+                  >
                 </div>
 
                 <!-- Botón flecha Queezy -->
@@ -82,8 +90,9 @@
               </div>
               <h3 class="qz-empty-title">No hay cursos registrados</h3>
               <p class="qz-empty-desc">
-                No se encontraron cursos activos para el año lectivo {{ selectedYear }}.
-                Prueba seleccionando otro año en el filtro superior.
+                No se encontraron cursos activos para el año lectivo
+                {{ selectedYear }}. Prueba seleccionando otro año en el filtro
+                superior.
               </p>
             </div>
           </div>
@@ -135,7 +144,7 @@ export default {
     const cursos = ref([]);
     const selectedYear = ref();
     const availableYears = ref(
-      Array.from({ length: 10 }, (_, i) => currentServerYear() - i)
+      Array.from({ length: 10 }, (_, i) => currentServerYear() - i),
     );
 
     // Paleta pastel Queezy para el squircle de los birretes
@@ -174,7 +183,7 @@ export default {
           // Fetch ALL institute courses
           response = await axios.get(
             `/courses?instituteId=${usuario.value.institute.id}&exist=true`,
-            tokenHeader()
+            tokenHeader(),
           );
           cursos.value = response.data
             .map((c) => ({
@@ -188,7 +197,7 @@ export default {
           // Fetch only assigned courses
           response = await axios.get(
             `/users/${usuario.value.id}/courses?year=${year}&active=true`,
-            tokenHeader()
+            tokenHeader(),
           );
           cursos.value = response.data
             .map((c) => ({
@@ -239,23 +248,24 @@ export default {
 
 <style scoped>
 .qz-cursos-page {
-  background-color: var(--qz-color-purple-bg, #EFEEFC);
+  background-color: var(--qz-color-purple-bg, #efeefc);
 }
 
 .qz-cursos-content {
-  --background: var(--qz-color-purple-bg, #EFEEFC);
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  --background: var(--qz-color-purple-bg, #efeefc);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
 }
 
 .qz-page-wrapper {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  padding-bottom: 70px;
 }
 
 /* 1. CABECERA HERO QUEEZY PÚRPURA */
 .qz-hero-header {
-  background: linear-gradient(180deg, #6A5AE0 0%, #7668E3 85%, #EFEEFC 100%);
+  background: linear-gradient(180deg, #6a5ae0 0%, #7668e3 85%, #efeefc 100%);
   padding-top: max(16px, env(safe-area-inset-top));
   padding-bottom: 22px;
   flex-shrink: 0;
@@ -273,7 +283,7 @@ export default {
 .qz-back-btn {
   background: rgba(255, 255, 255, 0.22);
   border: 1px solid rgba(255, 255, 255, 0.35);
-  color: #FFFFFF;
+  color: #ffffff;
   border-radius: var(--qz-radius-full, 9999px);
   width: 40px;
   height: 40px;
@@ -299,12 +309,12 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: var(--qz-radius-full, 9999px);
   padding: 4px 14px;
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .qz-calendar-icon {
   font-size: 16px;
-  color: #FFFFFF;
+  color: #ffffff;
   margin-right: 6px;
 }
 
@@ -316,9 +326,9 @@ export default {
 }
 
 .qz-year-select {
-  --color: #FFFFFF;
-  --placeholder-color: #FFFFFF;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  --color: #ffffff;
+  --placeholder-color: #ffffff;
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-size: 14px;
   font-weight: 700;
   padding-left: 0;
@@ -342,10 +352,10 @@ export default {
 
 .qz-hero-title {
   margin: 3px 0 4px 0;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-size: 24px;
   font-weight: 800;
-  color: #FFFFFF;
+  color: #ffffff;
   letter-spacing: -0.4px;
 }
 
@@ -375,7 +385,7 @@ export default {
 }
 
 .qz-course-card {
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: var(--qz-radius-xl, 22px);
   padding: 14px 16px;
   display: flex;
@@ -412,28 +422,28 @@ export default {
 
 /* Variantes Pastel de Squircles */
 .qz-squircle--purple {
-  background-color: #EFEEFC;
-  color: #6A5AE0;
+  background-color: #efeefc;
+  color: #6a5ae0;
 }
 
 .qz-squircle--coral {
-  background-color: #FFEAEA;
-  color: #FF7562;
+  background-color: #ffeaea;
+  color: #ff7562;
 }
 
 .qz-squircle--cyan {
-  background-color: #E2F6FC;
-  color: #0582CA;
+  background-color: #e2f6fc;
+  color: #0582ca;
 }
 
 .qz-squircle--gold {
-  background-color: #FFF3DA;
-  color: #E59800;
+  background-color: #fff3da;
+  color: #e59800;
 }
 
 .qz-squircle--green {
-  background-color: #E4F9EC;
-  color: #10B981;
+  background-color: #e4f9ec;
+  color: #10b981;
 }
 
 /* Información del Curso */
@@ -444,10 +454,10 @@ export default {
 
 .qz-course-name {
   margin: 0 0 3px 0;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-size: 17px;
   font-weight: 700;
-  color: #0C092A;
+  color: #0c092a;
   letter-spacing: -0.2px;
   white-space: nowrap;
   overflow: hidden;
@@ -466,8 +476,8 @@ export default {
   width: 36px;
   height: 36px;
   border-radius: var(--qz-radius-full, 9999px);
-  background: var(--qz-color-purple-bg, #EFEEFC);
-  color: var(--ion-color-primary, #6A5AE0);
+  background: var(--qz-color-purple-bg, #efeefc);
+  color: var(--ion-color-primary, #6a5ae0);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -477,13 +487,13 @@ export default {
 }
 
 .qz-course-card:active .qz-action-pill {
-  background: var(--ion-color-primary, #6A5AE0);
-  color: #FFFFFF;
+  background: var(--ion-color-primary, #6a5ae0);
+  color: #ffffff;
 }
 
 /* Estado Vacío */
 .qz-empty-card {
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: var(--qz-radius-2xl, 28px);
   padding: 36px 24px;
   text-align: center;
@@ -495,8 +505,8 @@ export default {
   width: 68px;
   height: 68px;
   border-radius: 22px;
-  background: var(--qz-color-purple-bg, #EFEEFC);
-  color: var(--ion-color-primary, #6A5AE0);
+  background: var(--qz-color-purple-bg, #efeefc);
+  color: var(--ion-color-primary, #6a5ae0);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -506,10 +516,10 @@ export default {
 
 .qz-empty-title {
   margin: 0 0 8px 0;
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   font-size: 18px;
   font-weight: 700;
-  color: #0C092A;
+  color: #0c092a;
 }
 
 .qz-empty-desc {
@@ -517,5 +527,188 @@ export default {
   font-size: 14px;
   color: #858494;
   line-height: 1.5;
+}
+
+/* ==========================================================================
+   MODO OSCURO (DARK MODE)
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  .qz-cursos-page {
+    background-color: #120f24;
+  }
+  .qz-cursos-content {
+    --background: #120f24;
+  }
+  .qz-hero-header {
+    background: linear-gradient(180deg, #5a4ad1 0%, #352b6a 80%, #120f24 100%);
+  }
+  .qz-course-card {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 6px 20px -4px rgba(0, 0, 0, 0.35);
+  }
+  .qz-course-name {
+    color: #f7f7fd;
+  }
+  .qz-course-sub {
+    color: #9e9bb8;
+  }
+  .qz-action-pill {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-course-card:active .qz-action-pill {
+    background: #352b6a;
+    color: #ffffff;
+  }
+  .qz-empty-card {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.35);
+  }
+  .qz-empty-title {
+    color: #f7f7fd;
+  }
+  .qz-empty-desc {
+    color: #9e9bb8;
+  }
+  .qz-empty-icon-box {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-squircle--purple {
+    background-color: #2a2254;
+    color: #a39bf0;
+  }
+  .qz-squircle--coral {
+    background-color: #482433;
+    color: #ff8577;
+  }
+  .qz-squircle--cyan {
+    background-color: #16344d;
+    color: #38bdf8;
+  }
+  .qz-squircle--gold {
+    background-color: #42321c;
+    color: #f0af3d;
+  }
+  .qz-squircle--green {
+    background-color: #143d2b;
+    color: #34d399;
+  }
+}
+
+:global(body.dark) .qz-cursos-page,
+:global(html.dark) .qz-cursos-page,
+:global(.dark) .qz-cursos-page {
+  background-color: #120f24;
+}
+
+:global(body.dark) .qz-cursos-content,
+:global(html.dark) .qz-cursos-content,
+:global(.dark) .qz-cursos-content {
+  --background: #120f24;
+}
+
+:global(body.dark) .qz-hero-header,
+:global(html.dark) .qz-hero-header,
+:global(.dark) .qz-hero-header {
+  background: linear-gradient(180deg, #5a4ad1 0%, #352b6a 80%, #120f24 100%);
+}
+
+:global(body.dark) .qz-course-card,
+:global(html.dark) .qz-course-card,
+:global(.dark) .qz-course-card {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 6px 20px -4px rgba(0, 0, 0, 0.35);
+}
+
+:global(body.dark) .qz-course-name,
+:global(html.dark) .qz-course-name,
+:global(.dark) .qz-course-name {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-course-sub,
+:global(html.dark) .qz-course-sub,
+:global(.dark) .qz-course-sub {
+  color: #9e9bb8;
+}
+
+:global(body.dark) .qz-action-pill,
+:global(html.dark) .qz-action-pill,
+:global(.dark) .qz-action-pill {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-course-card:active .qz-action-pill,
+:global(html.dark) .qz-course-card:active .qz-action-pill,
+:global(.dark) .qz-course-card:active .qz-action-pill {
+  background: #352b6a;
+  color: #ffffff;
+}
+
+:global(body.dark) .qz-empty-card,
+:global(html.dark) .qz-empty-card,
+:global(.dark) .qz-empty-card {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.35);
+}
+
+:global(body.dark) .qz-empty-title,
+:global(html.dark) .qz-empty-title,
+:global(.dark) .qz-empty-title {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-empty-desc,
+:global(html.dark) .qz-empty-desc,
+:global(.dark) .qz-empty-desc {
+  color: #9e9bb8;
+}
+
+:global(body.dark) .qz-empty-icon-box,
+:global(html.dark) .qz-empty-icon-box,
+:global(.dark) .qz-empty-icon-box {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-squircle--purple,
+:global(html.dark) .qz-squircle--purple,
+:global(.dark) .qz-squircle--purple {
+  background-color: #2a2254;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-squircle--coral,
+:global(html.dark) .qz-squircle--coral,
+:global(.dark) .qz-squircle--coral {
+  background-color: #482433;
+  color: #ff8577;
+}
+
+:global(body.dark) .qz-squircle--cyan,
+:global(html.dark) .qz-squircle--cyan,
+:global(.dark) .qz-squircle--cyan {
+  background-color: #16344d;
+  color: #38bdf8;
+}
+
+:global(body.dark) .qz-squircle--gold,
+:global(html.dark) .qz-squircle--gold,
+:global(.dark) .qz-squircle--gold {
+  background-color: #42321c;
+  color: #f0af3d;
+}
+
+:global(body.dark) .qz-squircle--green,
+:global(html.dark) .qz-squircle--green,
+:global(.dark) .qz-squircle--green {
+  background-color: #143d2b;
+  color: #34d399;
 }
 </style>

@@ -125,4 +125,43 @@ export default {
   color: var(--qz-color-text-muted, #858494);
   min-width: 32px;
 }
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
+  body:not(.light) .qz-criterion-row {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  body:not(.light) .qz-criterion-desc {
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .score-input {
+    background: #17132e;
+    color: #f7f7fd;
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+}
+
+:global(body.dark) .qz-criterion-row,
+:global(html.dark) .qz-criterion-row,
+:global(.dark) .qz-criterion-row {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-criterion-desc,
+:global(html.dark) .qz-criterion-desc,
+:global(.dark) .qz-criterion-desc {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .score-input,
+:global(html.dark) .score-input,
+:global(.dark) .score-input {
+  background: #17132e;
+  color: #f7f7fd;
+  border-color: rgba(255, 255, 255, 0.15);
+}
 </style>

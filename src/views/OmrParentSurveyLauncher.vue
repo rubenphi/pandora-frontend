@@ -5,28 +5,28 @@
         <!-- 1. CABECERA HERO QUEEZY PÚRPURA -->
         <header class="qz-hero-header">
           <div class="qz-hero-top">
-            <button
-              type="button"
-              class="qz-back-btn"
+            <qz-button
+              circle
+              variant="translucent"
               title="Regresar"
               @click="goBack"
             >
               <ion-icon :icon="arrowBackOutline"></ion-icon>
-            </button>
+            </qz-button>
 
             <div class="qz-hero-status-pill">
               <ion-icon :icon="peopleOutline"></ion-icon>
               <span>Encuestas Padres</span>
             </div>
 
-            <button
-              type="button"
-              class="qz-action-btn"
+            <qz-button
+              circle
+              variant="translucent"
               title="Crear Nueva Sesión"
               @click="showCreateModal = true"
             >
               <ion-icon :icon="addOutline"></ion-icon>
-            </button>
+            </qz-button>
           </div>
 
           <div class="qz-hero-titles">
@@ -60,15 +60,16 @@
                     />
                   </div>
                 </div>
-                <button
-                  type="button"
-                  class="qz-btn-search"
+                <qz-button
+                  pill
+                  size="sm"
+                  variant="primary"
                   @click="fetchSessions"
                   title="Buscar sesiones"
                 >
                   <ion-icon :icon="searchOutline"></ion-icon>
                   <span>Buscar</span>
-                </button>
+                </qz-button>
               </div>
             </div>
 
@@ -159,14 +160,15 @@
                 <p class="qz-empty-desc">
                   No se encontraron sesiones registradas para este año lectivo. Presione <strong>Nueva Sesión</strong> para comenzar.
                 </p>
-                <button
-                  type="button"
-                  class="qz-btn-create-empty"
+                <qz-button
+                  pill
+                  size="md"
+                  variant="primary"
                   @click="showCreateModal = true"
                 >
                   <ion-icon :icon="addOutline"></ion-icon>
                   <span>Crear Sesión {{ year }}</span>
-                </button>
+                </qz-button>
               </div>
             </div>
           </div>
@@ -184,14 +186,15 @@
         <div class="qz-modal-header">
           <div class="qz-modal-badge">NUEVA SESIÓN</div>
           <h3 class="qz-modal-title">Crear Sesión de Encuesta Padres</h3>
-          <button
-            type="button"
-            class="qz-modal-close-btn"
+          <qz-button
+            circle
+            size="sm"
+            variant="ghost"
             @click="showCreateModal = false"
             aria-label="Cerrar"
           >
             <ion-icon :icon="closeOutline"></ion-icon>
-          </button>
+          </qz-button>
         </div>
 
         <div class="qz-modal-body">
@@ -217,15 +220,16 @@
             />
           </div>
 
-          <button
-            type="button"
-            class="qz-modal-submit-btn"
+          <qz-button
+            block
+            size="lg"
+            variant="primary"
             @click="createSession"
             :disabled="!createLabel || !createYear"
           >
             <ion-icon :icon="checkmarkOutline"></ion-icon>
             <span>Crear y Abrir Sesión</span>
-          </button>
+          </qz-button>
         </div>
       </div>
     </ion-modal>
@@ -240,14 +244,15 @@
         <div class="qz-modal-header">
           <div class="qz-modal-badge">MODIFICAR SESIÓN</div>
           <h3 class="qz-modal-title">Editar Sesión de Padres</h3>
-          <button
-            type="button"
-            class="qz-modal-close-btn"
+          <qz-button
+            circle
+            size="sm"
+            variant="ghost"
             @click="closeEditModal"
             aria-label="Cerrar"
           >
             <ion-icon :icon="closeOutline"></ion-icon>
-          </button>
+          </qz-button>
         </div>
 
         <div class="qz-modal-body">
@@ -273,15 +278,16 @@
             />
           </div>
 
-          <button
-            type="button"
-            class="qz-modal-submit-btn"
+          <qz-button
+            block
+            size="lg"
+            variant="primary"
             @click="updateSession"
             :disabled="!editLabel || !editYear || isUpdatingSession"
           >
             <ion-icon :icon="checkmarkOutline"></ion-icon>
             <span>Guardar Cambios</span>
-          </button>
+          </qz-button>
         </div>
       </div>
     </ion-modal>
@@ -691,8 +697,8 @@ export default {
 
 /* MAIN BODY */
 .qz-main-body {
-  flex: 1;
-  padding: 16px 16px 40px 16px;
+  flex: 0 1 auto;
+  padding: 16px 16px 20px 16px;
   box-sizing: border-box;
 }
 

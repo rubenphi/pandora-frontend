@@ -1433,4 +1433,232 @@ export default {
   cursor: not-allowed;
   box-shadow: none;
 }
+
+/* ==========================================================================
+   MODO OSCURO (DARK MODE)
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  .qz-quiz-page {
+    background-color: #120f24;
+  }
+  .qz-quiz-content {
+    --background: #120f24;
+  }
+  .qz-hero-header {
+    background: linear-gradient(180deg, #5a4ad1 0%, #352b6a 80%, #120f24 100%);
+  }
+  .qz-summary-card {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-category-pill {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-auth-code-btn {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f7f7fd;
+  }
+  .qz-auth-code-btn:active {
+    background: #2a2254;
+  }
+  .qz-quiz-title {
+    color: #f7f7fd;
+  }
+  .qz-questions-title {
+    color: #f7f7fd;
+  }
+  .qz-questions-card-box {
+    background: #17132e;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-question-row {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-question-num {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-question-text {
+    color: #f7f7fd;
+  }
+  .qz-no-questions-box h4 {
+    color: #f7f7fd;
+  }
+  .qz-secondary-btn {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #a39bf0;
+  }
+  .qz-secondary-btn:active {
+    background: #2a2254;
+  }
+  .qz-modal-sheet {
+    background: #1d1838;
+  }
+  .qz-modal-title {
+    color: #f7f7fd;
+  }
+  .qz-import-card {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-import-card.is-selected {
+    background: #2a2254;
+    border-color: #7c6ef2;
+  }
+  .qz-import-name {
+    color: #f7f7fd;
+  }
+  .qz-btn--cancel {
+    background: #28214b;
+    color: #9e9bb8;
+  }
+}
+
+:global(body.dark) .qz-quiz-page,
+:global(html.dark) .qz-quiz-page,
+:global(.dark) .qz-quiz-page {
+  background-color: #120f24;
+}
+
+:global(body.dark) .qz-quiz-content,
+:global(html.dark) .qz-quiz-content,
+:global(.dark) .qz-quiz-content {
+  --background: #120f24;
+}
+
+:global(body.dark) .qz-hero-header,
+:global(html.dark) .qz-hero-header,
+:global(.dark) .qz-hero-header {
+  background: linear-gradient(180deg, #5a4ad1 0%, #352b6a 80%, #120f24 100%);
+}
+
+:global(body.dark) .qz-summary-card,
+:global(html.dark) .qz-summary-card,
+:global(.dark) .qz-summary-card {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-category-pill,
+:global(html.dark) .qz-category-pill,
+:global(.dark) .qz-category-pill {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-auth-code-btn,
+:global(html.dark) .qz-auth-code-btn,
+:global(.dark) .qz-auth-code-btn {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-auth-code-btn:active,
+:global(html.dark) .qz-auth-code-btn:active,
+:global(.dark) .qz-auth-code-btn:active {
+  background: #2a2254;
+}
+
+:global(body.dark) .qz-quiz-title,
+:global(html.dark) .qz-quiz-title,
+:global(.dark) .qz-quiz-title {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-questions-title,
+:global(html.dark) .qz-questions-title,
+:global(.dark) .qz-questions-title {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-questions-card-box,
+:global(html.dark) .qz-questions-card-box,
+:global(.dark) .qz-questions-card-box {
+  background: #17132e;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-question-row,
+:global(html.dark) .qz-question-row,
+:global(.dark) .qz-question-row {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-question-num,
+:global(html.dark) .qz-question-num,
+:global(.dark) .qz-question-num {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-question-text,
+:global(html.dark) .qz-question-text,
+:global(.dark) .qz-question-text {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-no-questions-box h4,
+:global(html.dark) .qz-no-questions-box h4,
+:global(.dark) .qz-no-questions-box h4 {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-secondary-btn,
+:global(html.dark) .qz-secondary-btn,
+:global(.dark) .qz-secondary-btn {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-secondary-btn:active,
+:global(html.dark) .qz-secondary-btn:active,
+:global(.dark) .qz-secondary-btn:active {
+  background: #2a2254;
+}
+
+:global(body.dark) .qz-modal-sheet,
+:global(html.dark) .qz-modal-sheet,
+:global(.dark) .qz-modal-sheet {
+  background: #1d1838;
+}
+
+:global(body.dark) .qz-modal-title,
+:global(html.dark) .qz-modal-title,
+:global(.dark) .qz-modal-title {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-import-card,
+:global(html.dark) .qz-import-card,
+:global(.dark) .qz-import-card {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-import-card.is-selected,
+:global(html.dark) .qz-import-card.is-selected,
+:global(.dark) .qz-import-card.is-selected {
+  background: #2a2254;
+  border-color: #7c6ef2;
+}
+
+:global(body.dark) .qz-import-name,
+:global(html.dark) .qz-import-name,
+:global(.dark) .qz-import-name {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-btn--cancel,
+:global(html.dark) .qz-btn--cancel,
+:global(.dark) .qz-btn--cancel {
+  background: #28214b;
+  color: #9e9bb8;
+}
 </style>

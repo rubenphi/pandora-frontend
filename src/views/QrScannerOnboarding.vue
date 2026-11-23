@@ -220,4 +220,41 @@ ion-button {
   font-size: 0.95em;
   max-width: 100%;
 }
+
+/* ==========================================================================
+   MODO OSCURO (DARK MODE)
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  p {
+    color: #9e9bb8;
+  }
+  .modal-content h2 {
+    color: #f7f7fd;
+  }
+  .qr-content {
+    background-color: #231d42;
+    color: #f7f7fd;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+}
+
+:global(body.dark) p,
+:global(html.dark) p,
+:global(.dark) p {
+  color: #9e9bb8;
+}
+
+:global(body.dark) .modal-content h2,
+:global(html.dark) .modal-content h2,
+:global(.dark) .modal-content h2 {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qr-content,
+:global(html.dark) .qr-content,
+:global(.dark) .qr-content {
+  background-color: #231d42;
+  color: #f7f7fd;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
 </style>

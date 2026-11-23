@@ -340,4 +340,83 @@ export default {
 .qz-action-pill-btn:active {
   transform: scale(0.96);
 }
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
+  body:not(.light) .qz-modal-sheet {
+    background: #1d1838;
+    color: #f7f7fd;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  body:not(.light) .qz-modal-icon {
+    background: #28214b;
+    color: #a39bf0;
+  }
+
+  body:not(.light) .qz-modal-title {
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .qz-modal-close-btn {
+    background: #28214b;
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .qz-code-textarea {
+    background: #17132e;
+    color: #f7f7fd;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  body:not(.light) .qz-btn--secondary {
+    background: #28214b;
+    color: #a39bf0;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+}
+
+:global(body.dark) .qz-modal-sheet,
+:global(html.dark) .qz-modal-sheet,
+:global(.dark) .qz-modal-sheet {
+  background: #1d1838;
+  color: #f7f7fd;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+:global(body.dark) .qz-modal-icon,
+:global(html.dark) .qz-modal-icon,
+:global(.dark) .qz-modal-icon {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-modal-title,
+:global(html.dark) .qz-modal-title,
+:global(.dark) .qz-modal-title {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-modal-close-btn,
+:global(html.dark) .qz-modal-close-btn,
+:global(.dark) .qz-modal-close-btn {
+  background: #28214b;
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-code-textarea,
+:global(html.dark) .qz-code-textarea,
+:global(.dark) .qz-code-textarea {
+  background: #17132e;
+  color: #f7f7fd;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+:global(body.dark) .qz-btn--secondary,
+:global(html.dark) .qz-btn--secondary,
+:global(.dark) .qz-btn--secondary {
+  background: #28214b;
+  color: #a39bf0;
+  border-color: rgba(255, 255, 255, 0.12);
+}
 </style>

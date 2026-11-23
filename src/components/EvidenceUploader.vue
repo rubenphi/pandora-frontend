@@ -1761,4 +1761,153 @@ export default {
   border-top: 1px solid var(--qz-color-border, #eee);
   background: #faf9fd;
 }
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
+  body:not(.light) .qz-team-modal-content,
+  body:not(.light) .qz-photo-modal-content {
+    background: #1d1838;
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .qz-team-modal-title,
+  body:not(.light) .qz-photo-title,
+  body:not(.light) .qz-member-name {
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .qz-delivery-card {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  body:not(.light) .qz-delivery-card--active {
+    border-color: #7c6ef2;
+    background: rgba(124, 110, 242, 0.16);
+  }
+
+  body:not(.light) .qz-custom-picker-section {
+    background: #17132e;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  body:not(.light) .qz-custom-search-wrap {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  body:not(.light) .qz-custom-search-input {
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .qz-custom-member-item--selected {
+    background: rgba(124, 110, 242, 0.2);
+  }
+
+  body:not(.light) .qz-photo-rotate-btn {
+    background: #28214b;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #a39bf0;
+  }
+
+  body:not(.light) .qz-photo-add-btn {
+    background: #231d42;
+    border-color: #7c6ef2;
+    color: #a39bf0;
+  }
+
+  body:not(.light) .qz-photo-modal-header,
+  body:not(.light) .qz-photo-modal-footer {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+}
+
+:global(body.dark) .qz-team-modal-content,
+:global(html.dark) .qz-team-modal-content,
+:global(.dark) .qz-team-modal-content,
+:global(body.dark) .qz-photo-modal-content,
+:global(html.dark) .qz-photo-modal-content,
+:global(.dark) .qz-photo-modal-content {
+  background: #1d1838;
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-team-modal-title,
+:global(html.dark) .qz-team-modal-title,
+:global(.dark) .qz-team-modal-title,
+:global(body.dark) .qz-photo-title,
+:global(html.dark) .qz-photo-title,
+:global(.dark) .qz-photo-title,
+:global(body.dark) .qz-member-name,
+:global(html.dark) .qz-member-name,
+:global(.dark) .qz-member-name {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-delivery-card,
+:global(html.dark) .qz-delivery-card,
+:global(.dark) .qz-delivery-card {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-delivery-card--active,
+:global(html.dark) .qz-delivery-card--active,
+:global(.dark) .qz-delivery-card--active {
+  border-color: #7c6ef2;
+  background: rgba(124, 110, 242, 0.16);
+}
+
+:global(body.dark) .qz-custom-picker-section,
+:global(html.dark) .qz-custom-picker-section,
+:global(.dark) .qz-custom-picker-section {
+  background: #17132e;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-custom-search-wrap,
+:global(html.dark) .qz-custom-search-wrap,
+:global(.dark) .qz-custom-search-wrap {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+:global(body.dark) .qz-custom-search-input,
+:global(html.dark) .qz-custom-search-input,
+:global(.dark) .qz-custom-search-input {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-custom-member-item--selected,
+:global(html.dark) .qz-custom-member-item--selected,
+:global(.dark) .qz-custom-member-item--selected {
+  background: rgba(124, 110, 242, 0.2);
+}
+
+:global(body.dark) .qz-photo-rotate-btn,
+:global(html.dark) .qz-photo-rotate-btn,
+:global(.dark) .qz-photo-rotate-btn {
+  background: #28214b;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-photo-add-btn,
+:global(html.dark) .qz-photo-add-btn,
+:global(.dark) .qz-photo-add-btn {
+  background: #231d42;
+  border-color: #7c6ef2;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-photo-modal-header,
+:global(body.dark) .qz-photo-modal-footer,
+:global(html.dark) .qz-photo-modal-header,
+:global(html.dark) .qz-photo-modal-footer,
+:global(.dark) .qz-photo-modal-header,
+:global(.dark) .qz-photo-modal-footer {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.08);
+}
 </style>

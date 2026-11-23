@@ -1450,4 +1450,173 @@ export default {
   color: var(--qz-color-red-wrong, #ff5656);
   border: 1.5px solid rgba(255, 86, 86, 0.4);
 }
+
+/* ==========================================================================
+   MODO OSCURO (DARK MODE)
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  .qz-pregunta-result-page {
+    --background: #120f24;
+    background-color: #120f24;
+  }
+  .qz-result-content {
+    --background: #120f24;
+  }
+  .qz-circle-btn.is-active {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-sheet-container {
+    background: #1d1838;
+  }
+  .qz-sheet-title,
+  .qz-participant-name,
+  .qz-option-sentence-box,
+  .qz-empty-title,
+  .qz-waiting-title {
+    color: #f7f7fd;
+  }
+  .qz-sheet-badge {
+    background-color: #28214b;
+    color: #a39bf0;
+  }
+  .qz-response-card {
+    background-color: #231d42;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-avatar--purple {
+    background-color: #28214b;
+    color: #a39bf0;
+  }
+  .qz-empty-card,
+  .qz-waiting-card {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+  .qz-empty-icon-wrap,
+  .qz-waiting-icon-wrap {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-waiting-icon-wrap.is-answered {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-responses-count-pill {
+    background-color: #28214b;
+    color: #a39bf0;
+  }
+  .qz-btn--secondary {
+    background-color: #28214b;
+    color: #a39bf0;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+:global(body.dark) .qz-pregunta-result-page,
+:global(html.dark) .qz-pregunta-result-page,
+:global(.dark) .qz-pregunta-result-page {
+  --background: #120f24;
+  background-color: #120f24;
+}
+
+:global(body.dark) .qz-result-content,
+:global(html.dark) .qz-result-content,
+:global(.dark) .qz-result-content {
+  --background: #120f24;
+}
+
+:global(body.dark) .qz-circle-btn.is-active,
+:global(html.dark) .qz-circle-btn.is-active,
+:global(.dark) .qz-circle-btn.is-active {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-sheet-container,
+:global(html.dark) .qz-sheet-container,
+:global(.dark) .qz-sheet-container {
+  background: #1d1838;
+}
+
+:global(body.dark) .qz-sheet-title,
+:global(html.dark) .qz-sheet-title,
+:global(.dark) .qz-sheet-title,
+:global(body.dark) .qz-participant-name,
+:global(html.dark) .qz-participant-name,
+:global(.dark) .qz-participant-name,
+:global(body.dark) .qz-option-sentence-box,
+:global(html.dark) .qz-option-sentence-box,
+:global(.dark) .qz-option-sentence-box,
+:global(body.dark) .qz-empty-title,
+:global(html.dark) .qz-empty-title,
+:global(.dark) .qz-empty-title,
+:global(body.dark) .qz-waiting-title,
+:global(html.dark) .qz-waiting-title,
+:global(.dark) .qz-waiting-title {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-sheet-badge,
+:global(html.dark) .qz-sheet-badge,
+:global(.dark) .qz-sheet-badge {
+  background-color: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-response-card,
+:global(html.dark) .qz-response-card,
+:global(.dark) .qz-response-card {
+  background-color: #231d42;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-avatar--purple,
+:global(html.dark) .qz-avatar--purple,
+:global(.dark) .qz-avatar--purple {
+  background-color: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-empty-card,
+:global(html.dark) .qz-empty-card,
+:global(.dark) .qz-empty-card,
+:global(body.dark) .qz-waiting-card,
+:global(html.dark) .qz-waiting-card,
+:global(.dark) .qz-waiting-card {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+:global(body.dark) .qz-empty-icon-wrap,
+:global(html.dark) .qz-empty-icon-wrap,
+:global(.dark) .qz-empty-icon-wrap,
+:global(body.dark) .qz-waiting-icon-wrap,
+:global(html.dark) .qz-waiting-icon-wrap,
+:global(.dark) .qz-waiting-icon-wrap {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-waiting-icon-wrap.is-answered,
+:global(html.dark) .qz-waiting-icon-wrap.is-answered,
+:global(.dark) .qz-waiting-icon-wrap.is-answered {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-responses-count-pill,
+:global(html.dark) .qz-responses-count-pill,
+:global(.dark) .qz-responses-count-pill {
+  background-color: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-btn--secondary,
+:global(html.dark) .qz-btn--secondary,
+:global(.dark) .qz-btn--secondary {
+  background-color: #28214b;
+  color: #a39bf0;
+  border-color: rgba(255, 255, 255, 0.1);
+}
 </style>

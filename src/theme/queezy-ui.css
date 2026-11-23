@@ -1,0 +1,503 @@
+/* ==========================================================================
+   QUEEZY UI - SISTEMA DE DISEÑO GLOBAL Y CONTROL DE LAYOUT
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. CONTROL DE SCROLL GLOBAL Y ESTRUCTURA DE PÁGINAS (Prevenir espacios muertos)
+   -------------------------------------------------------------------------- */
+
+/* Asegurar que toda vista montada en ion-router-outlet tenga la estructura completa
+   de .ion-page, incluso si en su template se omitió la clase 'ion-page' al definir una clase personalizada */
+ion-router-outlet > div {
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  position: absolute;
+  flex-direction: column;
+  justify-content: space-between;
+  contain: layout size style;
+  overflow: hidden;
+  z-index: 0;
+}
+
+/* Prevenir rebote excesivo (rubber-band) hacia áreas vacías */
+ion-content::part(scroll) {
+  overscroll-behavior-y: none;
+}
+
+/* Capping global de padding-bottom: previene que :fullscreen o cálculos erróneos
+   inyecten cientos de píxeles de espacio muerto al final del contenido.
+   Garantiza 72px (holgura ideal de 16px sobre el ion-tab-bar de 56px) en todas las vistas. */
+ion-content:not(ion-modal ion-content):not(.qz-login-content)::part(scroll) {
+  padding-bottom: calc(
+    var(--qz-scroll-padding-bottom, 72px) + env(safe-area-inset-bottom, 0px)
+  ) !important;
+}
+
+/* --------------------------------------------------------------------------
+   2. BOTONES GLOBALES UNIFICADOS (.qz-btn)
+   -------------------------------------------------------------------------- */
+.qz-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  box-sizing: border-box;
+  outline: none;
+  white-space: nowrap;
+}
+
+/* Tamaños */
+.qz-btn--sm {
+  min-height: 38px;
+  padding: 0 14px;
+  font-size: 13px;
+  border-radius: var(--qz-radius-md, 14px);
+}
+
+.qz-btn--md {
+  min-height: 46px;
+  padding: 0 18px;
+  font-size: 14.5px;
+  border-radius: var(--qz-radius-lg, 18px);
+}
+
+.qz-btn--lg {
+  min-height: 54px;
+  padding: 0 24px;
+  font-size: 16px;
+  border-radius: var(--qz-radius-lg, 20px);
+}
+
+.qz-btn--block {
+  width: 100%;
+}
+
+.qz-btn--pill {
+  border-radius: var(--qz-radius-full, 9999px) !important;
+}
+
+.qz-btn--circle {
+  width: 40px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  font-size: 18px;
+}
+
+/* Variantes Cromáticas */
+.qz-btn--primary {
+  background-color: var(--qz-color-purple-primary, #6a5ae0);
+  color: #ffffff;
+  box-shadow: var(
+    --qz-shadow-button-primary,
+    0 10px 24px -2px rgba(106, 90, 224, 0.38)
+  );
+}
+.qz-btn--primary:hover:not(:disabled) {
+  background-color: var(--qz-color-purple-dark, #5a33d6);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -2px rgba(106, 90, 224, 0.45);
+}
+.qz-btn--primary:active:not(:disabled) {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 0 4px 12px rgba(106, 90, 224, 0.25);
+}
+
+.qz-btn--secondary {
+  background-color: var(--qz-color-pink-coral, #ff8fa2);
+  color: #ffffff;
+  box-shadow: var(
+    --qz-shadow-button-pink,
+    0 10px 24px -2px rgba(255, 143, 162, 0.38)
+  );
+}
+.qz-btn--secondary:hover:not(:disabled) {
+  background-color: #f57a90;
+  transform: translateY(-2px);
+}
+.qz-btn--secondary:active:not(:disabled) {
+  transform: translateY(1px) scale(0.98);
+}
+
+.qz-btn--outline {
+  background-color: transparent;
+  color: var(--qz-color-purple-primary, #6a5ae0);
+  border: 2px solid var(--qz-color-purple-primary, #6a5ae0);
+}
+.qz-btn--outline:hover:not(:disabled) {
+  background-color: rgba(106, 90, 224, 0.08);
+  transform: translateY(-1px);
+}
+.qz-btn--outline:active:not(:disabled) {
+  transform: translateY(1px) scale(0.98);
+}
+
+.qz-btn--ghost {
+  background-color: #ffffff;
+  color: var(--qz-color-text-main, #0c092a);
+  box-shadow: 0 4px 14px rgba(12, 9, 42, 0.06);
+  border: 1px solid var(--qz-color-border, #e6e6e6);
+}
+.qz-btn--ghost:hover:not(:disabled) {
+  border-color: var(--qz-color-purple-primary, #6a5ae0);
+  color: var(--qz-color-purple-primary, #6a5ae0);
+  transform: translateY(-1px);
+}
+.qz-btn--ghost:active:not(:disabled) {
+  transform: translateY(1px) scale(0.98);
+}
+
+.qz-btn--translucent {
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.qz-btn--translucent:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.32);
+}
+.qz-btn--translucent:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.qz-btn--danger {
+  background-color: var(--qz-color-red-wrong, #ff5656);
+  color: #ffffff;
+  box-shadow: 0 8px 20px -2px rgba(255, 86, 86, 0.35);
+}
+
+.qz-btn--success {
+  background-color: var(--qz-color-green-correct, #53df83);
+  color: #ffffff;
+  box-shadow: 0 8px 20px -2px rgba(83, 223, 131, 0.35);
+}
+
+.qz-btn--disabled,
+.qz-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   3. SELECTORES GLOBALES (.qz-select-wrapper & .qz-select-field)
+   -------------------------------------------------------------------------- */
+.qz-select-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Soporte cuando .qz-select-wrapper actúa directamente como contenedor flex en fila (sin label ni select-field) */
+.qz-select-wrapper:not(:has(.qz-select-field)):not(:has(.qz-select-label)) {
+  flex-direction: row;
+  align-items: center;
+}
+
+.qz-select-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--qz-color-text-main, #0c092a);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+}
+
+.qz-select-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--qz-color-card-bg, #ffffff);
+  border: 1.5px solid var(--qz-color-border, rgba(106, 90, 224, 0.15));
+  border-radius: var(--qz-radius-md, 14px);
+  min-height: 46px;
+  padding: 0 12px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.qz-select-field:hover,
+.qz-select-field:focus-within {
+  border-color: var(--qz-color-purple-primary, #6a5ae0);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(106, 90, 224, 0.12);
+}
+
+.qz-select-icon,
+.qz-select-field > ion-icon {
+  font-size: 18px;
+  color: var(--qz-color-purple-primary, #6a5ae0);
+  margin-right: 8px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qz-custom-select,
+.qz-select-field ion-select {
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--qz-color-text-main, #0c092a);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+}
+
+.qz-custom-select::part(container),
+.qz-select-field ion-select::part(container) {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.qz-custom-select::part(text),
+.qz-select-field ion-select::part(text) {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  color: var(--qz-color-text-main, #0c092a);
+}
+
+.qz-custom-select::part(icon),
+.qz-select-field ion-select::part(icon) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--qz-color-purple-primary, #6a5ae0);
+  opacity: 0.8;
+  font-size: 18px;
+}
+
+/* --------------------------------------------------------------------------
+   4. PÍLDORAS DE FILTRO (.qz-filter-pill)
+   -------------------------------------------------------------------------- */
+.qz-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--qz-color-card-bg, #ffffff);
+  border: 1.5px solid var(--qz-color-border, rgba(106, 90, 224, 0.15));
+  border-radius: var(--qz-radius-full, 9999px);
+  padding: 4px 14px;
+  min-height: 38px;
+  box-shadow: 0 2px 8px rgba(106, 90, 224, 0.05);
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.qz-filter-pill:hover,
+.qz-filter-pill:focus-within {
+  border-color: var(--qz-color-purple-primary, #6a5ae0);
+  box-shadow: 0 0 0 3px rgba(106, 90, 224, 0.12);
+}
+
+.qz-filter-icon {
+  color: var(--qz-color-purple-primary, #6a5ae0);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.qz-filter-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--qz-color-text-muted, #858494);
+  white-space: nowrap;
+}
+
+.qz-filter-select {
+  --padding-start: 4px;
+  --padding-end: 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--qz-color-purple-primary, #6a5ae0);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+}
+
+.qz-filter-select::part(text) {
+  color: var(--qz-color-purple-primary, #6a5ae0);
+  font-weight: 700;
+}
+
+.qz-filter-select::part(icon) {
+  color: var(--qz-color-purple-primary, #6a5ae0);
+  opacity: 0.75;
+  font-size: 16px;
+}
+
+/* --------------------------------------------------------------------------
+   5. MODO OSCURO (DARK MODE) CENTRALIZADO
+   -------------------------------------------------------------------------- */
+body.dark .qz-btn--ghost,
+html.dark .qz-btn--ghost,
+.dark .qz-btn--ghost {
+  background-color: #252048;
+  color: #f7f7fd;
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+body.dark .qz-btn--ghost:hover:not(:disabled),
+html.dark .qz-btn--ghost:hover:not(:disabled),
+.dark .qz-btn--ghost:hover:not(:disabled) {
+  background-color: #2c2654;
+  border-color: #7c6ef2;
+  color: #a39bf0;
+}
+
+body.dark .qz-btn--outline,
+html.dark .qz-btn--outline,
+.dark .qz-btn--outline {
+  color: #a39bf0;
+  border-color: #7c6ef2;
+}
+
+body.dark .qz-select-field,
+html.dark .qz-select-field,
+.dark .qz-select-field {
+  background: #241d42;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+body.dark .qz-select-field:hover,
+body.dark .qz-select-field:focus-within,
+html.dark .qz-select-field:hover,
+html.dark .qz-select-field:focus-within,
+.dark .qz-select-field:hover,
+.dark .qz-select-field:focus-within {
+  background: #2a2250;
+  border-color: #8c7ef8;
+  box-shadow: 0 0 0 3px rgba(106, 90, 224, 0.2);
+}
+
+body.dark .qz-select-label,
+html.dark .qz-select-label,
+.dark .qz-select-label {
+  color: #f7f7fd;
+}
+
+body.dark .qz-custom-select,
+body.dark .qz-custom-select::part(text),
+html.dark .qz-custom-select,
+html.dark .qz-custom-select::part(text),
+.dark .qz-custom-select,
+.dark .qz-custom-select::part(text) {
+  color: #ffffff;
+}
+
+body.dark .qz-custom-select::part(icon),
+html.dark .qz-custom-select::part(icon),
+.dark .qz-custom-select::part(icon) {
+  color: #b5a9ff;
+}
+
+body.dark .qz-filter-pill,
+html.dark .qz-filter-pill,
+.dark .qz-filter-pill {
+  background: #241d42;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+body.dark .qz-filter-label,
+html.dark .qz-filter-label,
+.dark .qz-filter-label {
+  color: #9e9bb8;
+}
+
+body.dark .qz-filter-select,
+body.dark .qz-filter-select::part(text),
+html.dark .qz-filter-select,
+html.dark .qz-filter-select::part(text),
+.dark .qz-filter-select,
+.dark .qz-filter-select::part(text) {
+  color: #a39bf0;
+}
+
+body.dark .qz-filter-select::part(icon),
+html.dark .qz-filter-select::part(icon),
+.dark .qz-filter-select::part(icon) {
+  color: #a39bf0;
+}
+
+@media (prefers-color-scheme: dark) {
+  body:not(.light) .qz-btn--ghost {
+    background-color: #252048;
+    color: #f7f7fd;
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  }
+
+  body:not(.light) .qz-btn--ghost:hover:not(:disabled) {
+    background-color: #2c2654;
+    border-color: #7c6ef2;
+    color: #a39bf0;
+  }
+
+  body:not(.light) .qz-btn--outline {
+    color: #a39bf0;
+    border-color: #7c6ef2;
+  }
+
+  body:not(.light) .qz-select-field {
+    background: #241d42;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  body:not(.light) .qz-select-field:hover,
+  body:not(.light) .qz-select-field:focus-within {
+    background: #2a2250;
+    border-color: #8c7ef8;
+    box-shadow: 0 0 0 3px rgba(106, 90, 224, 0.2);
+  }
+
+  body:not(.light) .qz-select-label {
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .qz-custom-select,
+  body:not(.light) .qz-custom-select::part(text) {
+    color: #ffffff;
+  }
+
+  body:not(.light) .qz-custom-select::part(icon) {
+    color: #b5a9ff;
+  }
+
+  body:not(.light) .qz-filter-pill {
+    background: #241d42;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  body:not(.light) .qz-filter-label {
+    color: #9e9bb8;
+  }
+
+  body:not(.light) .qz-filter-select,
+  body:not(.light) .qz-filter-select::part(text) {
+    color: #a39bf0;
+  }
+
+  body:not(.light) .qz-filter-select::part(icon) {
+    color: #a39bf0;
+  }
+}

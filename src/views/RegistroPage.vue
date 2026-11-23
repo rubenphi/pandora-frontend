@@ -4,14 +4,14 @@
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-button
-            v-if="Number.isInteger(userLoged?.id) == false"
-            :href="'/login'"
+            v-if="!userLoged?.id"
+            @click="goBack('/login')"
           >
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
           <ion-button
-            v-if="Number.isInteger(userLoged?.id) == true"
-            :href="'/admin/panel'"
+            v-if="userLoged?.id"
+            @click="goBack('/admin/gestionar/usuarios')"
           >
             <ion-icon :icon="arrowBackOutline"></ion-icon>
           </ion-button>
@@ -21,7 +21,7 @@
             <ion-icon :icon="checkmarkOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
-        <ion-title>Registro </ion-title>
+        <ion-title>{{ esAdmin ? 'Nuevo Usuario' : 'Registro' }}</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content>
@@ -70,9 +70,9 @@
             @input="filterNumericInput($event, formData, 'telephone')"
           ></ion-input>
         </ion-item>
-        <ion-item>
+        <ion-item v-if="!esAdmin">
           <ion-label position="stacked"
-            >Invitación de la institución (number)</ion-label
+            >Invitación de la institución</ion-label
           >
           <ion-input
             v-model="formData.instituteInvitation"
@@ -90,10 +90,10 @@
           ></ion-input>
         </ion-item>
 
-        <!-- Nuevos campos para administradores -->
+        <!-- Nuevos campos para administradores y directivos -->
         <template v-if="esAdmin">
           <ion-item>
-            <ion-label>Año</ion-label>
+            <ion-label>Año Lectivo</ion-label>
             <ion-select
               v-model="selectedYear"
               placeholder="Seleccione el año"
@@ -110,7 +110,7 @@
           </ion-item>
 
           <ion-item>
-            <ion-label>Rol en el curso</ion-label>
+            <ion-label>Rol del usuario</ion-label>
             <ion-select v-model="selectedRol" placeholder="Seleccione el rol">
               <ion-select-option
                 v-for="rol in roles"
@@ -126,9 +126,10 @@
             <ion-label>Curso</ion-label>
             <ion-select
               v-model="selectedCourseId"
-              placeholder="Seleccione el curso"
+              placeholder="Seleccione el curso (opcional)"
               @ionChange="getGruposCurso"
             >
+              <ion-select-option :value="null">Sin asignar</ion-select-option>
               <ion-select-option
                 v-for="curso in cursosInstituto"
                 :key="curso.id"
@@ -139,13 +140,14 @@
             </ion-select>
           </ion-item>
 
-          <ion-item>
+          <ion-item v-if="selectedCourseId">
             <ion-label>Grupo</ion-label>
             <ion-select
               v-model="selectedGroupId"
-              placeholder="Seleccione el grupo"
+              placeholder="Seleccione el grupo (opcional)"
               :disabled="!selectedCourseId"
             >
+              <ion-select-option :value="null">Sin asignar</ion-select-option>
               <ion-select-option
                 v-for="grupo in gruposCursoDestino"
                 :key="grupo.id"
@@ -201,6 +203,7 @@ import {
 import axios from "axios";
 import { arrowBackOutline, checkmarkOutline } from "ionicons/icons";
 import { ref } from "vue";
+import { useRouter } from "vue-router";
 import { adminOdirectivo, tokenHeader, selectedYear as selectedYearService, currentServerYear } from "../globalService";
 
 export default {
@@ -222,11 +225,15 @@ export default {
     IonSelectOption,
   },
   setup() {
+    const router = useRouter();
+    const goBack = (target) => {
+      router.push(target);
+    };
     const isSuccessToastOpen = ref(false);
     const isErrorToastOpen = ref(false);
     const errorMessage = ref("");
     const userLoged = ref({});
-    const esAdmin = adminOdirectivo();
+    const esAdmin = ref(!!adminOdirectivo());
 
     // Nuevas referencias para la gestión de cursos
     const selectedYearVal = selectedYearService();
@@ -234,7 +241,7 @@ export default {
     const years = ref(
       Array.from({ length: 10 }, (_, i) => currentServerYear() - i)
     );
-    const selectedRol = ref(null);
+    const selectedRol = ref("student");
     const selectedCourseId = ref(null);
     const selectedGroupId = ref(null);
     const cursosInstituto = ref([]);
@@ -243,6 +250,8 @@ export default {
     const roles = ref([
       { titulo: "Estudiante", rol: "student" },
       { titulo: "Profesor", rol: "teacher" },
+      { titulo: "Coordinador", rol: "coordinator" },
+      { titulo: "Rector / Directivo", rol: "director" },
       { titulo: "Administrador", rol: "admin" },
     ]);
 
@@ -310,13 +319,16 @@ export default {
     };
 
     onIonViewWillEnter(async () => {
-      userLoged.value = JSON.parse(localStorage.getItem("usuario"));
-      if (esAdmin) {
+      userLoged.value = JSON.parse(localStorage.getItem("usuario")) || {};
+      esAdmin.value = !!adminOdirectivo();
+      if (esAdmin.value) {
         await getCursos();
       }
     });
 
     return {
+      router,
+      goBack,
       arrowBackOutline,
       checkmarkOutline,
       isSuccessToastOpen,
@@ -413,19 +425,43 @@ export default {
       if (this.formData.telephone && !/^\d+$/.test(this.formData.telephone)) {
         this.errorMessage = "El número de teléfono solo debe contener dígitos.";
         this.isErrorToastOpen = true;
-        return; // Stop execution if validation fails
+        return;
+      }
+
+      if (
+        !this.formData.name ||
+        !this.formData.lastName ||
+        !this.formData.code ||
+        !this.formData.password
+      ) {
+        this.errorMessage =
+          "Por favor completa los campos obligatorios: nombre, apellido, código y contraseña.";
+        this.isErrorToastOpen = true;
+        return;
       }
 
       try {
-        // Set the authorization header if available to allow admin overrides
         tokenHeader();
-        
-        const response = await axios.post("/users", this.formData, {
+
+        const payload = {
+          name: this.formData.name,
+          lastName: this.formData.lastName,
+          email: this.formData.email,
+          code: this.formData.code,
+          telephone: this.formData.telephone || undefined,
+          password: this.formData.password,
+          exist: true,
+        };
+
+        if (this.esAdmin) {
+          payload.rol = this.selectedRol || "student";
+        } else {
+          payload.instituteInvitation = this.formData.instituteInvitation;
+        }
+
+        const response = await axios.post("/users", payload, {
           headers: {
             "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-            // Authorization header is set by tokenHeader() in axios defaults, 
-            // but ensuring it's there for this specific request if needed by global config
           },
         });
 
@@ -436,15 +472,15 @@ export default {
 
         this.isSuccessToastOpen = true;
         setTimeout(() => {
-          if (this.userLoged.id !== undefined) {
-            this.$router.push("/inicio");
+          if (this.userLoged?.id !== undefined) {
+            this.$router.push("/admin/gestionar/usuarios");
           } else {
             this.$router.push("/login");
           }
-        }, 3000);
+        }, 1800);
       } catch (error) {
         this.errorMessage =
-          error.response?.data?.message || "Error al registrar";
+          error.response?.data?.message || "Error al registrar el usuario";
         this.isErrorToastOpen = true;
       }
     },

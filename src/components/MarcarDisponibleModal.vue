@@ -467,4 +467,109 @@ export default {
   color: #FFFFFF;
   box-shadow: 0 4px 14px rgba(106, 90, 224, 0.28);
 }
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
+  body:not(.light) .qz-modal-container {
+    background: #1d1838;
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .qz-modal-title,
+  body:not(.light) .qz-question-select-title,
+  body:not(.light) .qz-empty-questions h4 {
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .qz-modal-handle {
+    background: #38316a;
+  }
+
+  body:not(.light) .qz-count-capsule {
+    background: #28214b;
+    color: #a39bf0;
+  }
+
+  body:not(.light) .qz-bulk-btn {
+    background: #28214b;
+    color: #a39bf0;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  body:not(.light) .qz-question-select-card {
+    background: #17132e;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  body:not(.light) .qz-question-select-card.is-active {
+    background: rgba(124, 110, 242, 0.22);
+    border-color: #7c6ef2;
+  }
+
+  body:not(.light) .qz-btn--cancel {
+    background: #28214b;
+    color: #a39bf0;
+  }
+}
+
+:global(body.dark) .qz-modal-container,
+:global(html.dark) .qz-modal-container,
+:global(.dark) .qz-modal-container {
+  background: #1d1838;
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-modal-title,
+:global(body.dark) .qz-question-select-title,
+:global(body.dark) .qz-empty-questions h4,
+:global(html.dark) .qz-modal-title,
+:global(html.dark) .qz-question-select-title,
+:global(html.dark) .qz-empty-questions h4,
+:global(.dark) .qz-modal-title,
+:global(.dark) .qz-question-select-title,
+:global(.dark) .qz-empty-questions h4 {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-modal-handle,
+:global(html.dark) .qz-modal-handle,
+:global(.dark) .qz-modal-handle {
+  background: #38316a;
+}
+
+:global(body.dark) .qz-count-capsule,
+:global(html.dark) .qz-count-capsule,
+:global(.dark) .qz-count-capsule {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-bulk-btn,
+:global(html.dark) .qz-bulk-btn,
+:global(.dark) .qz-bulk-btn {
+  background: #28214b;
+  color: #a39bf0;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+:global(body.dark) .qz-question-select-card,
+:global(html.dark) .qz-question-select-card,
+:global(.dark) .qz-question-select-card {
+  background: #17132e;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-question-select-card.is-active,
+:global(html.dark) .qz-question-select-card.is-active,
+:global(.dark) .qz-question-select-card.is-active {
+  background: rgba(124, 110, 242, 0.22);
+  border-color: #7c6ef2;
+}
+
+:global(body.dark) .qz-btn--cancel,
+:global(html.dark) .qz-btn--cancel,
+:global(.dark) .qz-btn--cancel {
+  background: #28214b;
+  color: #a39bf0;
+}
 </style>

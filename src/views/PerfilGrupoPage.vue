@@ -2529,4 +2529,224 @@ export default {
   gap: 10px;
   margin-top: 8px;
 }
+
+/* ==========================================================================
+   MODO OSCURO (DARK MODE)
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  .qz-profile-page {
+    --background: #120f24;
+    background-color: #120f24;
+  }
+  .qz-profile-content {
+    --background: #120f24;
+  }
+  .qz-card {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-icon-pill {
+    background-color: #28214b;
+    color: #a39bf0;
+  }
+  .qz-card-title,
+  .qz-group-hero-name,
+  .qz-member-chip,
+  .qz-individual-text strong,
+  .qz-info-value,
+  .qz-period-select,
+  .qz-member-name-label h3,
+  .qz-area-title-label h4,
+  .qz-note-title,
+  .qz-restricted-title,
+  .qz-modal-title,
+  .qz-modal-select,
+  .qz-modal-input {
+    color: #f7f7fd;
+  }
+  .qz-badge--group {
+    background-color: #28214b;
+    color: #a39bf0;
+  }
+  .qz-group-hero-badge {
+    background: linear-gradient(135deg, #231d42 0%, #1d1838 100%);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-member-chip {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-member-chip.is-self {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-self-pill {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-member-content-wrap {
+    background: #1d1838;
+  }
+  .qz-area-header-item {
+    --background: #1d1838;
+  }
+  .qz-dimension-accordion {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-note-item.is-clickable:active {
+    background: #28214b;
+  }
+  .qz-btn--secondary {
+    background-color: #28214b;
+    color: #a39bf0;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  .qz-modal-sheet {
+    background: #1d1838;
+  }
+}
+
+:global(body.dark) .qz-profile-page,
+:global(html.dark) .qz-profile-page,
+:global(.dark) .qz-profile-page {
+  --background: #120f24;
+  background-color: #120f24;
+}
+
+:global(body.dark) .qz-profile-content,
+:global(html.dark) .qz-profile-content,
+:global(.dark) .qz-profile-content {
+  --background: #120f24;
+}
+
+:global(body.dark) .qz-card,
+:global(html.dark) .qz-card,
+:global(.dark) .qz-card {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-icon-pill,
+:global(html.dark) .qz-icon-pill,
+:global(.dark) .qz-icon-pill {
+  background-color: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-card-title,
+:global(html.dark) .qz-card-title,
+:global(.dark) .qz-card-title,
+:global(body.dark) .qz-group-hero-name,
+:global(html.dark) .qz-group-hero-name,
+:global(.dark) .qz-group-hero-name,
+:global(body.dark) .qz-member-chip,
+:global(html.dark) .qz-member-chip,
+:global(.dark) .qz-member-chip,
+:global(body.dark) .qz-individual-text strong,
+:global(html.dark) .qz-individual-text strong,
+:global(.dark) .qz-individual-text strong,
+:global(body.dark) .qz-info-value,
+:global(html.dark) .qz-info-value,
+:global(.dark) .qz-info-value,
+:global(body.dark) .qz-period-select,
+:global(html.dark) .qz-period-select,
+:global(.dark) .qz-period-select,
+:global(body.dark) .qz-member-name-label h3,
+:global(html.dark) .qz-member-name-label h3,
+:global(.dark) .qz-member-name-label h3,
+:global(body.dark) .qz-area-title-label h4,
+:global(html.dark) .qz-area-title-label h4,
+:global(.dark) .qz-area-title-label h4,
+:global(body.dark) .qz-note-title,
+:global(html.dark) .qz-note-title,
+:global(.dark) .qz-note-title,
+:global(body.dark) .qz-restricted-title,
+:global(html.dark) .qz-restricted-title,
+:global(.dark) .qz-restricted-title,
+:global(body.dark) .qz-modal-title,
+:global(html.dark) .qz-modal-title,
+:global(.dark) .qz-modal-title,
+:global(body.dark) .qz-modal-select,
+:global(html.dark) .qz-modal-select,
+:global(.dark) .qz-modal-select,
+:global(body.dark) .qz-modal-input,
+:global(html.dark) .qz-modal-input,
+:global(.dark) .qz-modal-input {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-badge--group,
+:global(html.dark) .qz-badge--group,
+:global(.dark) .qz-badge--group {
+  background-color: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-group-hero-badge,
+:global(html.dark) .qz-group-hero-badge,
+:global(.dark) .qz-group-hero-badge {
+  background: linear-gradient(135deg, #231d42 0%, #1d1838 100%);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-member-chip,
+:global(html.dark) .qz-member-chip,
+:global(.dark) .qz-member-chip {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-member-chip.is-self,
+:global(html.dark) .qz-member-chip.is-self,
+:global(.dark) .qz-member-chip.is-self {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-self-pill,
+:global(html.dark) .qz-self-pill,
+:global(.dark) .qz-self-pill {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-member-content-wrap,
+:global(html.dark) .qz-member-content-wrap,
+:global(.dark) .qz-member-content-wrap {
+  background: #1d1838;
+}
+
+:global(body.dark) .qz-area-header-item,
+:global(html.dark) .qz-area-header-item,
+:global(.dark) .qz-area-header-item {
+  --background: #1d1838;
+}
+
+:global(body.dark) .qz-dimension-accordion,
+:global(html.dark) .qz-dimension-accordion,
+:global(.dark) .qz-dimension-accordion {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-note-item.is-clickable:active,
+:global(html.dark) .qz-note-item.is-clickable:active,
+:global(.dark) .qz-note-item.is-clickable:active {
+  background: #28214b;
+}
+
+:global(body.dark) .qz-btn--secondary,
+:global(html.dark) .qz-btn--secondary,
+:global(.dark) .qz-btn--secondary {
+  background-color: #28214b;
+  color: #a39bf0;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:global(body.dark) .qz-modal-sheet,
+:global(html.dark) .qz-modal-sheet,
+:global(.dark) .qz-modal-sheet {
+  background: #1d1838;
+}
 </style>

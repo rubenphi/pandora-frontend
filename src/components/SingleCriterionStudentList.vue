@@ -277,4 +277,65 @@ export default {
 .row-suffix {
   margin-top: 8px;
 }
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
+  body:not(.light) .student-row {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  body:not(.light) .student-name {
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .student-grade {
+    background: #28214b;
+    color: #a39bf0;
+  }
+
+  body:not(.light) .score-input {
+    background: #17132e;
+    color: #f7f7fd;
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  body:not(.light) .row-body {
+    border-top-color: rgba(255, 255, 255, 0.08);
+  }
+}
+
+:global(body.dark) .student-row,
+:global(html.dark) .student-row,
+:global(.dark) .student-row {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .student-name,
+:global(html.dark) .student-name,
+:global(.dark) .student-name {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .student-grade,
+:global(html.dark) .student-grade,
+:global(.dark) .student-grade {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .score-input,
+:global(html.dark) .score-input,
+:global(.dark) .score-input {
+  background: #17132e;
+  color: #f7f7fd;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+:global(body.dark) .row-body,
+:global(html.dark) .row-body,
+:global(.dark) .row-body {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
 </style>

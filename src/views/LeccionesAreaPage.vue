@@ -1933,4 +1933,309 @@ export default {
 .qz-empty-action-btn:active {
   transform: scale(0.96);
 }
+
+/* ==========================================================================
+   MODO OSCURO (DARK MODE)
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  .qz-lecciones-page {
+    background-color: #120f24;
+  }
+  .qz-lecciones-content {
+    --background: #120f24;
+  }
+  .qz-hero-header {
+    background: linear-gradient(180deg, #5a4ad1 0%, #352b6a 80%, #120f24 100%);
+  }
+  .qz-create-btn {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-toggle-all-btn {
+    background: #28214b;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #a39bf0;
+  }
+  .qz-toggle-all-btn:active {
+    background: #352b6a;
+  }
+  .qz-section-title {
+    color: #f7f7fd;
+  }
+  .qz-section-badge {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-lesson-card {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 6px 20px -4px rgba(0, 0, 0, 0.35);
+  }
+  .qz-lesson-card-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .qz-lesson-topic {
+    color: #f7f7fd;
+  }
+  .qz-lesson-badge {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-module-row {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-module-row:active {
+    background: #2c2552;
+  }
+  .qz-module-name {
+    color: #f7f7fd;
+  }
+  .qz-module-desc {
+    color: #9e9bb8;
+  }
+  .qz-expanded-drawer {
+    background: #17132e;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  .qz-item-card {
+    background: #1d1838;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  }
+  .qz-item-label {
+    color: #f7f7fd;
+  }
+  .qz-item-action-btn {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-add-item-btn {
+    background: #1d1838;
+    border-color: #7c6ef2;
+    color: #a39bf0;
+  }
+  .qz-add-item-btn:active {
+    background: #28214b;
+  }
+  .qz-empty-card {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.35);
+  }
+  .qz-empty-title {
+    color: #f7f7fd;
+  }
+  .qz-empty-desc {
+    color: #9e9bb8;
+  }
+  .qz-empty-icon-box {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-bullet--purple {
+    background: #2a2254;
+    color: #a39bf0;
+  }
+  .qz-bullet--coral {
+    background: #482433;
+    color: #ff8577;
+  }
+  .qz-bullet--cyan {
+    background: #16344d;
+    color: #38bdf8;
+  }
+}
+
+:global(body.dark) .qz-lecciones-page,
+:global(html.dark) .qz-lecciones-page,
+:global(.dark) .qz-lecciones-page {
+  background-color: #120f24;
+}
+
+:global(body.dark) .qz-lecciones-content,
+:global(html.dark) .qz-lecciones-content,
+:global(.dark) .qz-lecciones-content {
+  --background: #120f24;
+}
+
+:global(body.dark) .qz-hero-header,
+:global(html.dark) .qz-hero-header,
+:global(.dark) .qz-hero-header {
+  background: linear-gradient(180deg, #5a4ad1 0%, #352b6a 80%, #120f24 100%);
+}
+
+:global(body.dark) .qz-create-btn,
+:global(html.dark) .qz-create-btn,
+:global(.dark) .qz-create-btn {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-toggle-all-btn,
+:global(html.dark) .qz-toggle-all-btn,
+:global(.dark) .qz-toggle-all-btn {
+  background: #28214b;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-toggle-all-btn:active,
+:global(html.dark) .qz-toggle-all-btn:active,
+:global(.dark) .qz-toggle-all-btn:active {
+  background: #352b6a;
+}
+
+:global(body.dark) .qz-section-title,
+:global(html.dark) .qz-section-title,
+:global(.dark) .qz-section-title {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-section-badge,
+:global(html.dark) .qz-section-badge,
+:global(.dark) .qz-section-badge {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-lesson-card,
+:global(html.dark) .qz-lesson-card,
+:global(.dark) .qz-lesson-card {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 6px 20px -4px rgba(0, 0, 0, 0.35);
+}
+
+:global(body.dark) .qz-lesson-card-header,
+:global(html.dark) .qz-lesson-card-header,
+:global(.dark) .qz-lesson-card-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-lesson-topic,
+:global(html.dark) .qz-lesson-topic,
+:global(.dark) .qz-lesson-topic {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-lesson-badge,
+:global(html.dark) .qz-lesson-badge,
+:global(.dark) .qz-lesson-badge {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-module-row,
+:global(html.dark) .qz-module-row,
+:global(.dark) .qz-module-row {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-module-row:active,
+:global(html.dark) .qz-module-row:active,
+:global(.dark) .qz-module-row:active {
+  background: #2c2552;
+}
+
+:global(body.dark) .qz-module-name,
+:global(html.dark) .qz-module-name,
+:global(.dark) .qz-module-name {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-module-desc,
+:global(html.dark) .qz-module-desc,
+:global(.dark) .qz-module-desc {
+  color: #9e9bb8;
+}
+
+:global(body.dark) .qz-expanded-drawer,
+:global(html.dark) .qz-expanded-drawer,
+:global(.dark) .qz-expanded-drawer {
+  background: #17132e;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:global(body.dark) .qz-item-card,
+:global(html.dark) .qz-item-card,
+:global(.dark) .qz-item-card {
+  background: #1d1838;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+:global(body.dark) .qz-item-label,
+:global(html.dark) .qz-item-label,
+:global(.dark) .qz-item-label {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-item-action-btn,
+:global(html.dark) .qz-item-action-btn,
+:global(.dark) .qz-item-action-btn {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-add-item-btn,
+:global(html.dark) .qz-add-item-btn,
+:global(.dark) .qz-add-item-btn {
+  background: #1d1838;
+  border-color: #7c6ef2;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-add-item-btn:active,
+:global(html.dark) .qz-add-item-btn:active,
+:global(.dark) .qz-add-item-btn:active {
+  background: #28214b;
+}
+
+:global(body.dark) .qz-empty-card,
+:global(html.dark) .qz-empty-card,
+:global(.dark) .qz-empty-card {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.35);
+}
+
+:global(body.dark) .qz-empty-title,
+:global(html.dark) .qz-empty-title,
+:global(.dark) .qz-empty-title {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-empty-desc,
+:global(html.dark) .qz-empty-desc,
+:global(.dark) .qz-empty-desc {
+  color: #9e9bb8;
+}
+
+:global(body.dark) .qz-empty-icon-box,
+:global(html.dark) .qz-empty-icon-box,
+:global(.dark) .qz-empty-icon-box {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-bullet--purple,
+:global(html.dark) .qz-bullet--purple,
+:global(.dark) .qz-bullet--purple {
+  background: #2a2254;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-bullet--coral,
+:global(html.dark) .qz-bullet--coral,
+:global(.dark) .qz-bullet--coral {
+  background: #482433;
+  color: #ff8577;
+}
+
+:global(body.dark) .qz-bullet--cyan,
+:global(html.dark) .qz-bullet--cyan,
+:global(.dark) .qz-bullet--cyan {
+  background: #16344d;
+  color: #38bdf8;
+}
 </style>
