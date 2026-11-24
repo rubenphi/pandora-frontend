@@ -248,10 +248,7 @@ import axios from 'axios';
 import { tokenHeader } from '../globalService';
 import { decodeMarkGrid, idFromPattern, GRID_SIZE } from '../utils/matrixPattern';
 
-const PAPER_MIN_THRESHOLD = 180;
-const PAPER_MIN_AREA_RATIO = 0.01;
-// Low-light boost: when the frame is dark or lit unevenly we run a second
-// detection pass over a histogram-equalized copy (see collectDetections).
+// Low-light boost: when the frame is dark or lit unevenly we run an adaptive threshold pass
 const LOW_LIGHT_OTSU = 180;
 const UNEVEN_LIGHT_DELTA = 20;
 
@@ -269,16 +266,6 @@ function waitForOpenCv(cvModule) {
       resolve();
     }
   });
-}
-
-function polygonArea(points) {
-  let area = 0;
-  for (let i = 0; i < points.length; i += 1) {
-    const current = points[i];
-    const next = points[(i + 1) % points.length];
-    area += current.x * next.y - next.x * current.y;
-  }
-  return Math.abs(area) / 2;
 }
 
 function orderQuad(points) {
@@ -307,76 +294,58 @@ function orderQuad(points) {
   return ordered.map((_, index) => ordered[(startIndex + index) % 4]);
 }
 
-function quadFromContour(contour) {
-  const rect = cv.minAreaRect(contour);
-  const points = cv.boxPoints(rect).map((point) => ({ x: point.x, y: point.y }));
-  return orderQuad(points);
-}
+const MIN_MARKER_SIZE = 24;
 
-function markerQuadFromContour(contour) {
+function markerQuadsFromContour(contour) {
   const area = cv.contourArea(contour);
   const rect = cv.minAreaRect(contour);
   const width = rect.size.width;
   const height = rect.size.height;
+  const minDim = Math.min(width, height);
+  const maxDim = Math.max(width, height);
 
-  if (width < 48 || height < 48 || width / height < 0.72 || width / height > 1.38) {
-    return null;
+  // Filter by size and perspective aspect ratio (allowing realistic tilt up to ~45°)
+  if (minDim < MIN_MARKER_SIZE || maxDim / (minDim || 1) > 1.8) {
+    return [];
   }
-  if (area < 48 * 48 * 0.68) return null;
+  const minArea = MIN_MARKER_SIZE * MIN_MARKER_SIZE * 0.6;
+  if (area < minArea) return [];
 
-  const quad = quadFromContour(contour);
-  if (!quad || polygonArea(quad) < 48 * 48 * 0.68) return null;
-  return quad;
-}
-
-function paperQuadFromContour(contour, frameWidth, frameHeight) {
-  const rect = cv.minAreaRect(contour);
-  const width = rect.size.width;
-  const height = rect.size.height;
-  const aspect = width / height;
-  const quad = quadFromContour(contour);
-
-  if (width < 64 || height < 64 || aspect < 0.15 || aspect > 6.5) {
-    return null;
-  }
-  if (!quad || polygonArea(quad) < frameWidth * frameHeight * PAPER_MIN_AREA_RATIO) return null;
-  return quad;
-}
-
-function paperQuadsFromContours(contours, frameWidth, frameHeight) {
-  const quads = [];
-
-  for (let index = 0; index < contours.size(); index += 1) {
-    const quad = paperQuadFromContour(contours.get(index), frameWidth, frameHeight);
-    if (quad) quads.push(quad);
-  }
-
-  return quads;
-}
-
-function fillQuadMask(mask, quads) {
-  mask.setTo(new cv.Scalar(0));
-
-  for (const quad of quads) {
-    const points = cv.matFromArray(
-      4,
-      1,
-      cv.CV_32SC2,
-      new Int32Array(
-        quad.flatMap((point) => [Math.round(point.x), Math.round(point.y)]),
-      ),
-    );
-    try {
-      cv.fillConvexPoly(mask, points, new cv.Scalar(255), cv.LINE_8, 0);
-    } finally {
-      points.delete();
+  const candidates = [];
+  const peri = cv.arcLength(contour, true);
+  const approx = new cv.Mat();
+  try {
+    // Epsilon between 0.02 and 0.05 is standard in fiducial detection (ArUco / Plickers)
+    // to accurately extract the 4 corners of tilted quadrilaterals under perspective projection.
+    cv.approxPolyDP(contour, approx, 0.04 * peri, true);
+    if (approx.rows === 4 && cv.isContourConvex(approx)) {
+      const points = [];
+      for (let i = 0; i < 4; i += 1) {
+        points.push({
+          x: approx.data32S[i * 2],
+          y: approx.data32S[i * 2 + 1],
+        });
+      }
+      candidates.push(orderQuad(points));
     }
+  } catch (_) {
+    // fallback if exception occurs
+  } finally {
+    approx.delete();
   }
+
+  // Include minAreaRect bounding box points (critical when corner notch indents contour)
+  const bp = cv.boxPoints(rect).map((point) => ({ x: point.x, y: point.y }));
+  candidates.push(orderQuad(bp));
+
+  return candidates;
 }
 
-function gridFromWarpedMarker(warped, size = GRID_SIZE * 36) {
+function gridsFromWarpedMarker(warped, size = GRID_SIZE * 36) {
   const cellSize = size / GRID_SIZE;
   const means = [];
+  let minMean = 255;
+  let maxMean = 0;
 
   for (let row = 0; row < GRID_SIZE; row += 1) {
     for (let col = 0; col < GRID_SIZE; col += 1) {
@@ -394,68 +363,120 @@ function gridFromWarpedMarker(warped, size = GRID_SIZE * 36) {
         }
       }
 
-      means.push(sum / count);
+      const mean = count > 0 ? sum / count : 128;
+      means.push(mean);
+      if (mean < minMean) minMean = mean;
+      if (mean > maxMean) maxMean = mean;
     }
   }
 
-  const sorted = [...means].sort((a, b) => a - b);
-  const dark = sorted[Math.floor((sorted.length - 1) * 0.25)];
-  const light = sorted[Math.floor((sorted.length - 1) * 0.75)];
-  if (light - dark < 45) return null;
+  // Minimum required contrast between the darkest and brightest cell
+  // (relaxed from 45 to 25 so distant markers with slight optical blur are readable)
+  if (maxMean - minMean < 25) return [];
 
-  const threshold = (dark + light) / 2;
-  const bits = means.map((mean) => (mean < threshold ? 1 : 0));
-  return Array.from({ length: GRID_SIZE }, (_, row) =>
-    bits.slice(row * GRID_SIZE, (row + 1) * GRID_SIZE),
-  );
+  // Primary: 1D Otsu on the 36 cell means to adaptively find the optimal black/white split
+  let bestThresh = (minMean + maxMean) / 2;
+  let maxVarBetween = -1;
+  const sorted = [...means].sort((a, b) => a - b);
+  const totalCount = means.length;
+  let totalSum = 0;
+  for (let i = 0; i < totalCount; i += 1) totalSum += sorted[i];
+
+  let sumB = 0;
+  let wB = 0;
+  for (let i = 0; i < totalCount - 1; i += 1) {
+    wB += 1;
+    const wF = totalCount - wB;
+    sumB += sorted[i];
+    const mB = sumB / wB;
+    const mF = (totalSum - sumB) / wF;
+    const between = wB * wF * (mB - mF) * (mB - mF);
+    if (between > maxVarBetween) {
+      maxVarBetween = between;
+      bestThresh = (sorted[i] + sorted[i + 1]) / 2;
+    }
+  }
+
+  // Secondary candidate threshold: largest gap between sorted cell means
+  // (handles cards split between direct light and deep shadows)
+  let maxGap = -1;
+  let gapT = bestThresh;
+  for (let k = 8; k < 28; k += 1) {
+    const gap = sorted[k + 1] - sorted[k];
+    if (gap > maxGap) {
+      maxGap = gap;
+      gapT = (sorted[k] + sorted[k + 1]) / 2;
+    }
+  }
+
+  const thresholds = [bestThresh];
+  if (Math.abs(gapT - bestThresh) > 10) thresholds.push(gapT);
+
+  return thresholds.map((thresh) => {
+    const bits = means.map((mean) => (mean < thresh ? 1 : 0));
+    return Array.from({ length: GRID_SIZE }, (_, row) =>
+      bits.slice(row * GRID_SIZE, (row + 1) * GRID_SIZE),
+    );
+  });
 }
 
-function decodeMarkerContour(contour, gray) {
-  const quad = markerQuadFromContour(contour);
-  if (!quad) return null;
+function decodeMarkerContour(contour, gray, rejectedQuads = null) {
+  const quads = markerQuadsFromContour(contour);
+  if (!quads || quads.length === 0) return null;
 
   const size = GRID_SIZE * 36;
-  const source = cv.matFromArray(
-    4,
-    1,
-    cv.CV_32FC2,
-    new Float32Array(quad.flatMap((point) => [point.x, point.y])),
-  );
   const destination = cv.matFromArray(
     4,
     1,
     cv.CV_32FC2,
     new Float32Array([0, 0, size, 0, size, size, 0, size]),
   );
-  const transform = cv.getPerspectiveTransform(source, destination);
-  const warped = new cv.Mat();
 
   try {
-    cv.warpPerspective(
-      gray,
-      warped,
-      transform,
-      new cv.Size(size, size),
-      cv.INTER_LINEAR,
-      cv.BORDER_CONSTANT,
-      new cv.Scalar(255, 255, 255, 255),
-    );
+    for (const quad of quads) {
+      const source = cv.matFromArray(
+        4,
+        1,
+        cv.CV_32FC2,
+        new Float32Array(quad.flatMap((point) => [point.x, point.y])),
+      );
+      const transform = cv.getPerspectiveTransform(source, destination);
+      const warped = new cv.Mat();
 
-    const grid = gridFromWarpedMarker(warped, size);
-    if (!grid) return null;
+      try {
+        cv.warpPerspective(
+          gray,
+          warped,
+          transform,
+          new cv.Size(size, size),
+          cv.INTER_LINEAR,
+          cv.BORDER_CONSTANT,
+          new cv.Scalar(255, 255, 255, 255),
+        );
 
-    const decoded = decodeMarkGrid(grid);
-    if (!decoded.valid) return null;
+        const grids = gridsFromWarpedMarker(warped, size);
+        for (const grid of grids) {
+          const decoded = decodeMarkGrid(grid);
+          if (decoded.valid) {
+            const studentId = idFromPattern(decoded.mask);
+            if (studentId !== null) {
+              return { quad, studentId, optionIndex: decoded.optionIndex };
+            }
+          }
+        }
+      } finally {
+        source.delete();
+        transform.delete();
+        warped.delete();
+      }
+    }
 
-    const studentId = idFromPattern(decoded.mask);
-    if (studentId === null) return null;
-
-    return { quad, studentId, optionIndex: decoded.optionIndex };
+    if (rejectedQuads && rejectedQuads.length < 50 && quads.length > 0) {
+      rejectedQuads.push(quads[0]);
+    }
+    return null;
   } finally {
-    source.delete();
     destination.delete();
-    transform.delete();
-    warped.delete();
   }
 }
 
@@ -515,8 +536,9 @@ export default {
       (window.innerWidth <= 768);
 
     // Cap the decode canvas width (display is upscaled/downscaled by CSS).
-    // 960px on mobile keeps small (ultra-wide) QRs detectable; 1080px on desktop.
-    const MAX_DETECT_WIDTH = isMobileView ? 960 : 1080;
+    // 1280px provides the high optical resolution required to detect and decode
+    // distant cards (5-6 meters away) across the entire classroom.
+    const MAX_DETECT_WIDTH = 1280;
     // Run OpenCV detection only every N frames (still draw live video every frame)
     const DETECT_EVERY = isMobileView ? 2 : 1;
 
@@ -549,10 +571,7 @@ export default {
     let srcMat  = null;
     let grayMat = null;
     let bwMat   = null;
-    let paperMask = null;
-    let detectionGrayMat = null;
-    let boostedGrayMat = null;
-    let bwBoostedMat = null;
+    let bwAdaptiveMat = null;
 
     // ─── Unified zoom setter ─────────────────────────────────────────
     // Perceived zoom `z` is split into:
@@ -748,10 +767,7 @@ export default {
       if (srcMat)  { try { srcMat.delete(); } catch (_) { void 0; } finally { srcMat = null; } }
       if (grayMat) { try { grayMat.delete(); } catch (_) { void 0; } finally { grayMat = null; } }
       if (bwMat)   { try { bwMat.delete(); } catch (_) { void 0; } finally { bwMat = null; } }
-      if (paperMask) { try { paperMask.delete(); } catch (_) { void 0; } finally { paperMask = null; } }
-      if (detectionGrayMat) { try { detectionGrayMat.delete(); } catch (_) { void 0; } finally { detectionGrayMat = null; } }
-      if (boostedGrayMat) { try { boostedGrayMat.delete(); } catch (_) { void 0; } finally { boostedGrayMat = null; } }
-      if (bwBoostedMat) { try { bwBoostedMat.delete(); } catch (_) { void 0; } finally { bwBoostedMat = null; } }
+      if (bwAdaptiveMat) { try { bwAdaptiveMat.delete(); } catch (_) { void 0; } finally { bwAdaptiveMat = null; } }
     };
 
     const ensureOpenCvResources = (width, height) => {
@@ -761,68 +777,26 @@ export default {
         !srcMat
         || srcMat.cols !== width
         || srcMat.rows !== height
-        || !paperMask
-        || !detectionGrayMat
-        || !boostedGrayMat
-        || !bwBoostedMat
+        || !bwAdaptiveMat
       ) {
         if (srcMat)  { try { srcMat.delete();  } catch (_) { /* ignore */ } }
         if (grayMat) { try { grayMat.delete(); } catch (_) { /* ignore */ } }
         if (bwMat)   { try { bwMat.delete();   } catch (_) { /* ignore */ } }
-        if (paperMask) { try { paperMask.delete(); } catch (_) { /* ignore */ } }
-        if (detectionGrayMat) { try { detectionGrayMat.delete(); } catch (_) { /* ignore */ } }
-        if (boostedGrayMat) { try { boostedGrayMat.delete(); } catch (_) { /* ignore */ } }
-        if (bwBoostedMat) { try { bwBoostedMat.delete(); } catch (_) { /* ignore */ } }
+        if (bwAdaptiveMat) { try { bwAdaptiveMat.delete(); } catch (_) { /* ignore */ } }
 
         srcMat  = markRaw(new cv.Mat(height, width, cv.CV_8UC4));
         grayMat = markRaw(new cv.Mat(height, width, cv.CV_8UC1));
         bwMat   = markRaw(new cv.Mat(height, width, cv.CV_8UC1));
-        paperMask = markRaw(new cv.Mat(height, width, cv.CV_8UC1));
-        detectionGrayMat = markRaw(new cv.Mat(height, width, cv.CV_8UC1));
-        boostedGrayMat = markRaw(new cv.Mat(height, width, cv.CV_8UC1));
-        bwBoostedMat = markRaw(new cv.Mat(height, width, cv.CV_8UC1));
+        bwAdaptiveMat = markRaw(new cv.Mat(height, width, cv.CV_8UC1));
       }
 
       return true;
     };
 
-    const prepareDetectionImage = (gray, width, height) => {
-      if (!paperMask || !detectionGrayMat) return gray;
-
-      const paperContours = new cv.MatVector();
-      const hierarchy = new cv.Mat();
-
-      try {
-        const otsuThreshold = cv.threshold(
-          gray,
-          bwMat,
-          0,
-          255,
-          cv.THRESH_BINARY + cv.THRESH_OTSU,
-        );
-        const paperThreshold = Math.max(PAPER_MIN_THRESHOLD, otsuThreshold);
-        cv.threshold(gray, bwMat, paperThreshold, 255, cv.THRESH_BINARY);
-        cv.findContours(
-          bwMat,
-          paperContours,
-          hierarchy,
-          cv.RETR_EXTERNAL,
-          cv.CHAIN_APPROX_SIMPLE,
-        );
-        const paperQuads = paperQuadsFromContours(paperContours, width, height);
-        if (paperQuads.length === 0) return gray;
-
-        fillQuadMask(paperMask, paperQuads);
-        detectionGrayMat.setTo(new cv.Scalar(255));
-        gray.copyTo(detectionGrayMat, paperMask);
-        return detectionGrayMat;
-      } catch (_) {
-        return gray;
-      } finally {
-        hierarchy.delete();
-        paperContours.delete();
-      }
-    };
+    // In fiducial marker systems (Plickers / ArUco), candidate search runs
+    // on the full grayscale image so students across the entire classroom
+    // (front, middle, and back rows) are scanned simultaneously without paper clipping.
+    const prepareDetectionImage = (gray) => gray;
 
     // Cheap shadow detector: compares the mean brightness of the four quadrants.
     // A bright/dim split means the global Otsu pass may lose part of the marker.
@@ -858,7 +832,9 @@ export default {
 
     // Runs one full detection pass (contours + grid decode) over the given
     // grayscale/binary pair and returns a map of "studentId:option" -> detection.
-    const collectDetections = (gray, binary) => {
+    // Uses cv.RETR_LIST (identical to ArUco) so markers held in front of dark
+    // clothes or backgrounds are not skipped.
+    const collectDetections = (gray, binary, rejectedQuads = null) => {
       const contours = new cv.MatVector();
       const hierarchy = new cv.Mat();
       const observed = new Map();
@@ -870,12 +846,12 @@ export default {
           binary,
           contours,
           hierarchy,
-          cv.RETR_EXTERNAL,
+          cv.RETR_LIST,
           cv.CHAIN_APPROX_SIMPLE,
         );
 
         for (let index = 0; index < contours.size(); index += 1) {
-          const detection = decodeMarkerContour(contours.get(index), gray);
+          const detection = decodeMarkerContour(contours.get(index), gray, rejectedQuads);
           if (!detection) continue;
 
           const option = options[detection.optionIndex];
@@ -895,6 +871,20 @@ export default {
       }
 
       return observed;
+    };
+
+    // Visual diagnostic: draws faint yellow outline on candidate quads that met
+    // geometry filters but failed grid decoding (e.g. obscured marker or glare).
+    const drawRejectedQuad = (ctx, quad) => {
+      ctx.beginPath();
+      ctx.moveTo(quad[0].x, quad[0].y);
+      ctx.lineTo(quad[1].x, quad[1].y);
+      ctx.lineTo(quad[2].x, quad[2].y);
+      ctx.lineTo(quad[3].x, quad[3].y);
+      ctx.closePath();
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(255, 235, 59, 0.45)';
+      ctx.stroke();
     };
 
     const drawDetectedMarker = (ctx, quad, color, fillColor, label) => {
@@ -930,7 +920,7 @@ export default {
       ctx.textBaseline = 'alphabetic';
     };
 
-    // ─── Main Processing Loop (Multi-Pass: Alternate Grayscale / Otsu Binary) ─────
+    // ─── Main Processing Loop (Multi-Pass: Fast Global Otsu + Adaptive Threshold) ─────
     const processingLoop = () => {
       if (!isRunning || !video.value || video.value.paused || video.value.ended) return;
 
@@ -987,24 +977,43 @@ export default {
           srcMat.data.set(imageData.data);
           detectCounter++;
           cv.cvtColor(srcMat, grayMat, cv.COLOR_RGBA2GRAY);
-          const detectionGray = prepareDetectionImage(grayMat, dw, dh);
+          const detectionGray = prepareDetectionImage(grayMat);
           const frameOtsu = cv.threshold(detectionGray, bwMat, 0, 255, cv.THRESH_BINARY_INV + cv.THRESH_OTSU);
 
-          const observed = collectDetections(detectionGray, bwMat);
+          const rejectedQuads = [];
+          // Pass 1: Global Otsu (ultra-fast for well-lit cards in front & center)
+          const observed = collectDetections(detectionGray, bwMat, rejectedQuads);
 
-          // Low light / shadow fallback: a second pass over a histogram-equalized
-          // copy recovers markers that the global threshold splits or dims away.
-          if (
+          // Pass 2: Plickers-like Adaptive Thresholding.
+          // Solves shadows, window glare, and uneven classroom lighting where global Otsu fails.
+          // Runs if Otsu found nothing, if lighting is uneven, or periodically
+          // whenever missing students remain in the roster so students in dim/back areas
+          // are captured simultaneously.
+          const shouldRunAdaptive =
             observed.size === 0
             || frameOtsu < LOW_LIGHT_OTSU
             || hasUnevenLighting(detectionGray)
-          ) {
-            cv.equalizeHist(detectionGray, boostedGrayMat);
-            cv.threshold(boostedGrayMat, bwBoostedMat, 0, 255, cv.THRESH_BINARY_INV + cv.THRESH_OTSU);
-            const boosted = collectDetections(boostedGrayMat, bwBoostedMat);
-            for (const [code, detection] of boosted) {
+            || (missingStudents.value.length > 0 && detectCounter % 2 === 0);
+
+          if (shouldRunAdaptive) {
+            cv.adaptiveThreshold(
+              detectionGray,
+              bwAdaptiveMat,
+              255,
+              cv.ADAPTIVE_THRESH_GAUSSIAN_C,
+              cv.THRESH_BINARY_INV,
+              31,
+              7,
+            );
+            const adaptiveDetections = collectDetections(detectionGray, bwAdaptiveMat, rejectedQuads);
+            for (const [code, detection] of adaptiveDetections) {
               if (!observed.has(code)) observed.set(code, detection);
             }
+          }
+
+          // Visual diagnostic: draw faint outline for candidate quads that failed marker verification
+          for (const quad of rejectedQuads) {
+            drawRejectedQuad(ctx, quad);
           }
 
           for (const code of candidateStreaks.keys()) {

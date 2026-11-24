@@ -150,4 +150,19 @@ describe("matrixPattern", () => {
     expect(idFromPattern(decoded.mask)).toBe(157);
     expect(decoded.optionIndex).toBe(0);
   });
+
+  it("tolerates at most 1 noisy non-corner frame cell while requiring an unambiguous corner notch", () => {
+    const id = 42;
+    const grid = markGridForId(id);
+    // Noise on non-corner edge cell (row 0, col 3)
+    grid[0][3] = 0;
+    const decoded1 = decodeMarkGrid(grid);
+    expect(decoded1.valid).toBe(true);
+    expect(idFromPattern(decoded1.mask)).toBe(id);
+
+    // Two noisy edge cells should be rejected for safety
+    grid[0][4] = 0;
+    const decoded2 = decodeMarkGrid(grid);
+    expect(decoded2.valid).toBe(false);
+  });
 });

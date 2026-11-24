@@ -113,7 +113,9 @@ function inspectGrid(grid) {
     return { ok: false, notch: null, optionIndex: null };
   }
 
-  let notch = null;
+  let cornerNotch = null;
+  let invalidCornerCount = 0;
+  let nonCornerWhiteCount = 0;
 
   for (let row = 0; row < GRID_SIZE; row += 1) {
     if (!Array.isArray(grid[row]) || grid[row].length !== GRID_SIZE) {
@@ -126,28 +128,47 @@ function inspectGrid(grid) {
         return { ok: false, notch: null, optionIndex: null };
       }
 
+      const isCorner =
+        (row === 0 && col === 0) ||
+        (row === GRID_SIZE - 1 && col === 0) ||
+        (row === GRID_SIZE - 1 && col === GRID_SIZE - 1) ||
+        (row === 0 && col === GRID_SIZE - 1);
+
       const isFrame =
         row === 0 || row === GRID_SIZE - 1 || col === 0 || col === GRID_SIZE - 1;
 
-      if (isFrame && cell === 0) {
-        if (notch !== null) {
-          return { ok: false, notch: null, optionIndex: null };
+      if (isCorner) {
+        if (cell === 0) {
+          if (cornerNotch !== null) {
+            invalidCornerCount += 1;
+          }
+          cornerNotch = { row, col };
         }
-        notch = { row, col };
+      } else if (isFrame) {
+        if (cell === 0) {
+          nonCornerWhiteCount += 1;
+        }
       }
     }
   }
 
-  if (notch === null) {
+  // Exactly one corner must be the white notch (cell === 0)
+  if (cornerNotch === null || invalidCornerCount > 0) {
     return { ok: false, notch: null, optionIndex: null };
   }
 
-  const optionIndex = CORNER_OPTIONS.get(`${notch.row},${notch.col}`);
+  // At least 15 of the 16 non-corner frame cells must be black (cell === 1),
+  // allowing tolerance for at most 1 noisy edge cell from camera glare or finger edges.
+  if (nonCornerWhiteCount > 1) {
+    return { ok: false, notch: null, optionIndex: null };
+  }
+
+  const optionIndex = CORNER_OPTIONS.get(`${cornerNotch.row},${cornerNotch.col}`);
   if (optionIndex === undefined) {
     return { ok: false, notch: null, optionIndex: null };
   }
 
-  return { ok: true, notch, optionIndex };
+  return { ok: true, notch: cornerNotch, optionIndex };
 }
 
 export function validateFrame(grid) {
