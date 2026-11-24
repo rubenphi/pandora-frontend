@@ -944,11 +944,19 @@
                   interface="popover"
                   class="qz-config-select"
                 >
-                  <ion-select-option value="lt">Menor a (&lt;)</ion-select-option>
-                  <ion-select-option value="lte">Igual o menor a (≤)</ion-select-option>
+                  <ion-select-option value="lt"
+                    >Menor a (&lt;)</ion-select-option
+                  >
+                  <ion-select-option value="lte"
+                    >Igual o menor a (≤)</ion-select-option
+                  >
                   <ion-select-option value="eq">Igual a (=)</ion-select-option>
-                  <ion-select-option value="gt">Mayor a (&gt;)</ion-select-option>
-                  <ion-select-option value="gte">Igual o mayor a (≥)</ion-select-option>
+                  <ion-select-option value="gt"
+                    >Mayor a (&gt;)</ion-select-option
+                  >
+                  <ion-select-option value="gte"
+                    >Igual o mayor a (≥)</ion-select-option
+                  >
                 </ion-select>
               </div>
             </div>
@@ -1028,9 +1036,14 @@
                   </div>
                   <div class="qz-format-info">
                     <span class="qz-format-title">Resumido</span>
-                    <span class="qz-format-desc">Lista rápida con nombres y promedios finales</span>
+                    <span class="qz-format-desc"
+                      >Lista rápida con nombres y promedios finales</span
+                    >
                   </div>
-                  <ion-icon :icon="listOutline" class="qz-format-icon"></ion-icon>
+                  <ion-icon
+                    :icon="listOutline"
+                    class="qz-format-icon"
+                  ></ion-icon>
                 </div>
 
                 <div
@@ -1043,9 +1056,14 @@
                   </div>
                   <div class="qz-format-info">
                     <span class="qz-format-title">Detallado</span>
-                    <span class="qz-format-desc">Desglose por dimensiones y actividades evaluadas</span>
+                    <span class="qz-format-desc"
+                      >Desglose por dimensiones y actividades evaluadas</span
+                    >
                   </div>
-                  <ion-icon :icon="readerOutline" class="qz-format-icon"></ion-icon>
+                  <ion-icon
+                    :icon="readerOutline"
+                    class="qz-format-icon"
+                  ></ion-icon>
                 </div>
               </div>
             </div>
@@ -1538,7 +1556,6 @@
 </template>
 
 <script>
-/* eslint-disable no-unused-vars */
 import axios from "axios";
 import { ref, computed, watch, nextTick } from "vue";
 import { alertController, actionSheetController } from "@ionic/vue";
@@ -2478,243 +2495,25 @@ export default {
       }
     };
 
-    const getGradeBadgeStyle = (grade) => {
-      if (grade === null || isNaN(grade) || grade === undefined) {
-        return "background-color: #f1f5f9; color: #64748b; font-weight: bold; padding: 3px 8px; border-radius: 4px; border: 1px solid #cbd5e1;";
-      }
-      const num = parseFloat(grade);
-      if (num < 3.0) {
-        return "background-color: #fee2e2; color: #b91c1c; font-weight: bold; padding: 3px 8px; border-radius: 4px; border: 1px solid #fca5a5;";
-      }
-      if (num >= 3.0 && num < 4.0) {
-        return "background-color: #fef3c7; color: #b45309; font-weight: bold; padding: 3px 8px; border-radius: 4px; border: 1px solid #fde68a;";
-      }
-      if (num >= 4.0 && num < 4.5) {
-        return "background-color: #dcfce7; color: #15803d; font-weight: bold; padding: 3px 8px; border-radius: 4px; border: 1px solid #86efac;";
-      }
-      return "background-color: #dbeafe; color: #1d4ed8; font-weight: bold; padding: 3px 8px; border-radius: 4px; border: 1px solid #93c5fd;";
-    };
-
-    const getPerformanceLabel = (grade) => {
-      if (grade === null || isNaN(grade) || grade === undefined) return "Pendiente";
-      const num = parseFloat(grade);
-      if (num < 3.0) return "Bajo";
-      if (num >= 3.0 && num < 4.0) return "Básico";
-      if (num >= 4.0 && num < 4.5) return "Alto";
-      return "Superior";
-    };
-
-    const buildWordReportHtml = () => {
-      const periodoObj =
-        (periodos.value || []).find((p) => p.id === periodoSelected.value) || {};
-      const periodoNombre =
-        periodoObj.name || ("Periodo " + (periodoSelected.value || ""));
-      const cursoNombre = cursoSelected.value?.name || "Sin curso";
-      const areaNombre = areaSelected.value?.name || "Sin área";
-
-      let tableHtml = "";
-
-      if (reportConfig.value.format === "short") {
-        let rowsHtml = "";
-        (estudiantesReporte.value || []).forEach((est, index) => {
-          const bgRow = index % 2 === 0 ? "#ffffff" : "#f8fafc";
-          const badgeStyle = getGradeBadgeStyle(est.promedioRegular);
-          const perfLabel = getPerformanceLabel(est.promedioRegular);
-          rowsHtml += `
-            <tr style="background-color: ${bgRow};">
-              <td style="padding: 8px 12px; border: 1px solid #e2e8f0; font-size: 13px; color: #1e293b;">${est.lastName || ""}</td>
-              <td style="padding: 8px 12px; border: 1px solid #e2e8f0; font-size: 13px; color: #1e293b;">${est.name || ""}</td>
-              <td style="padding: 8px 12px; border: 1px solid #e2e8f0; text-align: center;">
-                <span style="${badgeStyle}">${est.promedioRegular !== null && est.promedioRegular !== undefined ? est.promedioRegular : "N/A"}</span>
-              </td>
-              <td style="padding: 8px 12px; border: 1px solid #e2e8f0; text-align: center; font-size: 12px; font-weight: 600; color: #475569;">
-                ${perfLabel}
-              </td>
-            </tr>
-          `;
-        });
-
-        tableHtml = `
-          <table style="width: 100%; border-collapse: collapse; margin-top: 15px; font-family: Calibri, Arial, sans-serif;">
-            <thead>
-              <tr style="background-color: #6a5ae0; color: #ffffff;">
-                <th style="padding: 10px 12px; border: 1px solid #5a4ac7; text-align: left; font-size: 13px; font-weight: 700;">Apellido</th>
-                <th style="padding: 10px 12px; border: 1px solid #5a4ac7; text-align: left; font-size: 13px; font-weight: 700;">Nombre</th>
-                <th style="padding: 10px 12px; border: 1px solid #5a4ac7; text-align: center; font-size: 13px; font-weight: 700;">Promedio</th>
-                <th style="padding: 10px 12px; border: 1px solid #5a4ac7; text-align: center; font-size: 13px; font-weight: 700;">Desempeño</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rowsHtml}
-            </tbody>
-          </table>
-        `;
-      } else {
-        // Formato Detallado
-        let studentsHtml = "";
-        (estudiantesReporte.value || []).forEach((est) => {
-          const badgePromStyle = getGradeBadgeStyle(est.promedioRegular);
-          const perfLabel = getPerformanceLabel(est.promedioRegular);
-
-          let dimensionsRowsHtml = "";
-          (est.dimensionesRegular || []).forEach((dim) => {
-            const badgeDimStyle = getGradeBadgeStyle(dim.promedio);
-            dimensionsRowsHtml += `
-              <tr style="background-color: #ede9fe;">
-                <td style="padding: 8px 12px; border: 1px solid #c7d2fe; font-size: 13px; font-weight: 700; color: #3730a3;">
-                  ${dim.name || "Dimensión"}
-                </td>
-                <td style="padding: 8px 12px; border: 1px solid #c7d2fe; text-align: center; width: 120px;">
-                  <span style="${badgeDimStyle}">${dim.promedio !== null && dim.promedio !== undefined ? dim.promedio : "N/A"}</span>
-                </td>
-              </tr>
-            `;
-
-            (dim.notas || []).forEach((nota) => {
-              const badgeNotaStyle = getGradeBadgeStyle(nota.grade);
-              const itemTitle = nota.gradableItem?.title || "Actividad";
-              const gradeVal =
-                nota.grade !== null && nota.grade !== undefined
-                  ? nota.grade
-                  : "Pendiente";
-              dimensionsRowsHtml += `
-                <tr style="background-color: #ffffff;">
-                  <td style="padding: 6px 12px 6px 28px; border: 1px solid #f1f5f9; font-size: 12px; color: #334155;">
-                    • ${itemTitle}
-                  </td>
-                  <td style="padding: 6px 12px; border: 1px solid #f1f5f9; text-align: center;">
-                    <span style="${badgeNotaStyle}">${gradeVal}</span>
-                  </td>
-                </tr>
-              `;
-            });
-          });
-
-          studentsHtml += `
-            <div style="margin-bottom: 24px; border: 1.5px solid #c7d2fe; border-radius: 8px; overflow: hidden; page-break-inside: avoid; font-family: Calibri, Arial, sans-serif;">
-              <table style="width: 100%; border-collapse: collapse; background-color: #f1f0fd; border-bottom: 1.5px solid #c7d2fe;">
-                <tr>
-                  <td style="padding: 10px 14px; font-size: 14px; font-weight: 700; color: #1e1b4b;">
-                    ${est.lastName || ""} ${est.name || ""}
-                  </td>
-                  <td style="padding: 10px 14px; text-align: right;">
-                    <span style="font-size: 12px; color: #4338ca; margin-right: 8px; font-weight: 600;">Nota Corte:</span>
-                    <span style="${badgePromStyle}">${est.promedioRegular !== null && est.promedioRegular !== undefined ? est.promedioRegular : "N/A"}</span>
-                    <span style="font-size: 11px; color: #64748b; margin-left: 6px;">(${perfLabel})</span>
-                  </td>
-                </tr>
-              </table>
-              <table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                  <tr style="background-color: #f8fafc; color: #64748b;">
-                    <th style="padding: 7px 12px; border: 1px solid #e2e8f0; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Dimensión / Actividad</th>
-                    <th style="padding: 7px 12px; border: 1px solid #e2e8f0; text-align: center; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; width: 120px;">Calificación</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${dimensionsRowsHtml}
-                </tbody>
-              </table>
-            </div>
-          `;
-        });
-
-        tableHtml = studentsHtml;
-      }
-
-      let warningHtml = "";
-      if (estudiantesNuevos.value && estudiantesNuevos.value.length > 0) {
-        let itemsWarning = "";
-        estudiantesNuevos.value.forEach((est) => {
-          itemsWarning += `<li style="margin: 4px 0;"><strong>${est.lastName}, ${est.name}</strong> <em>(ingresó el ${est.enrolledAt})</em></li>`;
-        });
-        warningHtml = `
-          <div style="margin-top: 25px; padding: 14px 18px; border: 2px solid #f59e0b; background-color: #fffbeb; border-radius: 8px; color: #92400e; font-family: Calibri, Arial, sans-serif;">
-            <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: bold; color: #b45309;">
-              Aviso – Estudiantes de ingreso reciente
-            </p>
-            <p style="margin: 0 0 8px 0; font-size: 12px; line-height: 1.4;">
-              Los siguientes estudiantes fueron asignados al curso hace menos de un mes. Su nota baja puede deberse a que no cuentan con las actividades anteriores a su llegada:
-            </p>
-            <ul style="margin: 0 0 0 20px; padding: 0; font-size: 12px;">
-              ${itemsWarning}
-            </ul>
-          </div>
-        `;
-      }
-
-      return `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8" />
-          <title>Reporte de Notas</title>
-        </head>
-        <body style="font-family: Calibri, Arial, sans-serif; color: #1e293b; margin: 0; padding: 15px;">
-          <!-- Banner Superior Institucional -->
-          <table style="width: 100%; border-collapse: collapse; background-color: #6a5ae0; border-radius: 8px; margin-bottom: 20px;">
-            <tr>
-              <td style="padding: 18px 22px; color: #ffffff;">
-                <p style="margin: 0 0 4px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #c7d2fe; font-weight: 700;">INFORME ACADÉMICO</p>
-                <h1 style="margin: 0 0 10px 0; font-size: 22px; font-weight: 800; color: #ffffff;">Reporte de Calificaciones</h1>
-                <table style="width: 100%; border-collapse: collapse; margin-top: 6px;">
-                  <tr>
-                    <td style="font-size: 12px; color: #ede9fe; padding: 2px 0;"><strong>Grado / Curso:</strong> ${cursoNombre}</td>
-                    <td style="font-size: 12px; color: #ede9fe; padding: 2px 0;"><strong>Área:</strong> ${areaNombre}</td>
-                  </tr>
-                  <tr>
-                    <td style="font-size: 12px; color: #ede9fe; padding: 2px 0;"><strong>Período:</strong> ${periodoNombre}</td>
-                    <td style="font-size: 12px; color: #ede9fe; padding: 2px 0;"><strong>Año Escolar:</strong> ${year}</td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-
-          <!-- Caja de Filtro de Calificación -->
-          <div style="background-color: #f1f0fd; border-left: 5px solid #6a5ae0; border-radius: 4px; padding: 10px 14px; margin-bottom: 20px;">
-            <p style="margin: 0; font-size: 13px; color: #3730a3;">
-              <strong>Filtro aplicado:</strong> Estudiantes con promedio <strong>${reportConditionText.value} ${reportConfig.value.value}</strong> (Formato: ${reportConfig.value.format === "short" ? "Resumido" : "Detallado"}).
-            </p>
-          </div>
-
-          <!-- Contenido de Tablas / Estudiantes -->
-          ${tableHtml}
-
-          <!-- Alerta de Estudiantes Nuevos -->
-          ${warningHtml}
-        </body>
-        </html>
-      `;
-    };
-
     const shareAsWord = async () => {
-      if (!estudiantesReporte.value || estudiantesReporte.value.length === 0) {
-        const alert = await alertController.create({
-          header: "Sin datos",
-          message: "No hay estudiantes para generar el reporte.",
-          buttons: ["OK"],
-        });
-        await alert.present();
-        return;
-      }
+      const reportElement = reportContent.value;
+      if (!reportElement) return;
 
       const loading = await alertController.create({
         header: "Word",
         message: "Por favor espere mientras se genera el documento",
         backdropDismiss: false,
       });
-      await loading.present();
 
       try {
-        const htmlString = buildWordReportHtml();
+        const htmlString = reportElement.outerHTML;
         const fileBuffer = await htmlToDocx(htmlString, null, {
           table: { row: { cantSplit: true } },
           footer: true,
           pageNumber: true,
         });
 
-        await loading.dismiss();
+        loading.dismiss();
 
         const fileName = `reporte-notas-${cursoSelected.value.name}-${
           areaSelected.value.name
@@ -2749,7 +2548,7 @@ export default {
           }
         };
       } catch (error) {
-        await loading.dismiss();
+        loading.dismiss();
         console.error("Error sharing as Word:", error);
         const alert = await alertController.create({
           header: "Error",
@@ -4483,148 +4282,73 @@ export default {
 }
 
 .red-grade {
-  color: #dc2626;
-  font-weight: 700;
+  color: red;
+  font-weight: bold;
 }
 .orange-grade {
-  color: #d97706;
-  font-weight: 700;
+  color: orange;
+  font-weight: bold;
 }
 .light-green-grade {
-  color: #16a34a;
-  font-weight: 700;
+  color: lightgreen;
+  font-weight: bold;
 }
 .dark-green-grade {
-  color: #2563eb;
-  font-weight: 700;
-}
-
-/* ==========================================================================
-   VISUALIZACIÓN DE REPORTE (PANTALLA)
-   ========================================================================== */
-.report-header {
-  background: var(--qz-color-purple-bg, #efeefc);
-  border-radius: 16px;
-  padding: 16px 20px;
-  margin-bottom: 20px;
-  border-left: 5px solid #6a5ae0;
-}
-
-.report-header h3 {
-  margin: 0 0 6px 0;
-  font-size: 20px;
-  font-weight: 800;
-  color: #1a1a2e;
-}
-
-.report-header h6 {
-  margin: 4px 0;
-  font-size: 13px;
-  font-weight: 600;
-  color: #6a5ae0;
-}
-
-.report-header p {
-  margin: 10px 0 0 0;
-  font-size: 13px;
-  color: #4b5563;
+  color: darkgreen;
+  font-weight: bold;
 }
 
 .report-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  margin-top: 12px;
-  border-radius: 14px;
-  overflow: hidden;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e2e8f0;
+  border-collapse: collapse;
+  margin-top: 10px;
 }
 
-.report-table thead tr {
-  background: #6a5ae0;
-  color: #ffffff;
-}
-
-.report-table th {
-  padding: 12px 16px;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
+.report-table th,
+.report-table td {
+  border: 1px solid;
+  padding: 8px;
   text-align: left;
 }
 
-.report-table td {
-  padding: 11px 16px;
-  font-size: 13.5px;
-  border-top: 1px solid #eef2f6;
-  background: #ffffff;
-  color: #1f2937;
-}
-
-.report-table tbody tr:nth-child(even) td {
-  background: #fbfbfe;
-}
-
 .detailed-student {
-  margin-bottom: 22px;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
+  margin-bottom: 20px;
+  border: 1px solid;
+  border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(106, 90, 224, 0.06);
-  background: #ffffff;
 }
 
 .student-info-header {
-  padding: 14px 18px;
+  padding: 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #f4f3fd;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.student-info-header strong {
-  font-size: 15px;
-  color: #1e1b4b;
 }
 
 .report-table.detailed {
   margin-top: 0;
   border: none;
-  box-shadow: none;
-  border-radius: 0;
-}
-
-.dimension-row td {
-  background: #f8fafc !important;
-  color: #3730a3;
-  padding: 10px 16px;
 }
 
 .item-row td {
-  font-size: 13px;
-  padding: 8px 16px 8px 30px;
-  background: #ffffff !important;
-  color: #4b5563;
+  font-size: 0.9em;
+  padding-left: 20px;
 }
 
 .new-students-warning {
-  margin-top: 24px;
-  border: 1.5px solid #f59e0b;
-  border-radius: 16px;
-  background-color: #fffbeb;
-  color: #92400e;
-  padding: 16px 20px;
+  margin-top: 20px;
+  border: 2px solid #f0a500;
+  border-radius: 8px;
+  background-color: #fff8e1;
+  color: #5a3e00;
 }
 
 .new-students-warning p {
   margin: 4px 0;
-  line-height: 1.4;
 }
 
 .new-students-warning ul {
-  margin: 8px 0 4px 20px;
+  margin: 8px 0 4px 16px;
   padding: 0;
 }
 
@@ -6682,390 +6406,6 @@ export default {
 }
 
 /* ==========================================================================
-   QUEEZY MODAL DE CONFIGURACIÓN DE REPORTE (ESTILOS BASE / LIGHT)
-   ========================================================================== */
-.qz-config-modal {
-  --width: 92%;
-  --max-width: 480px;
-  --height: auto;
-  --border-radius: 24px;
-  --background: var(--qz-color-purple-bg, #efeefc);
-  --box-shadow: 0 20px 48px -8px rgba(106, 90, 224, 0.28);
-}
-
-.qz-config-modal::part(content) {
-  border-radius: 24px;
-  overflow: hidden;
-  background: var(--qz-color-purple-bg, #efeefc);
-  box-shadow: 0 20px 48px -8px rgba(106, 90, 224, 0.28);
-}
-
-.qz-config-modal-wrapper {
-  background: var(--qz-color-purple-bg, #efeefc);
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-  font-family: var(--qz-font-family, "Rubik", sans-serif);
-  border-radius: 24px;
-  overflow: hidden;
-}
-
-/* 1. Cabecera Hero Queezy */
-.qz-config-modal-header {
-  background: linear-gradient(180deg, #6a5ae0 0%, #7668e3 100%);
-  padding: 18px 20px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-  box-shadow: 0 4px 16px rgba(106, 90, 224, 0.18);
-}
-
-.qz-config-header-titles {
-  display: flex;
-  flex-direction: column;
-}
-
-.qz-config-tag {
-  font-size: 10.5px;
-  font-weight: 800;
-  letter-spacing: 0.8px;
-  color: rgba(255, 255, 255, 0.85);
-  text-transform: uppercase;
-}
-
-.qz-config-header-title {
-  margin: 3px 0 0 0;
-  font-family: var(--qz-font-family, "Rubik", sans-serif);
-  font-size: 19px;
-  font-weight: 800;
-  color: #ffffff;
-  letter-spacing: -0.3px;
-}
-
-.qz-config-close-btn {
-  background: rgba(255, 255, 255, 0.22);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  color: #ffffff;
-  border-radius: 9999px;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  cursor: pointer;
-  outline: none;
-  transition: transform 0.15s ease, background 0.15s ease;
-}
-
-.qz-config-close-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.32);
-}
-
-.qz-config-close-btn:active {
-  transform: scale(0.92);
-}
-
-/* 2. Cuerpo del Modal */
-.qz-config-modal-body {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-}
-
-.qz-config-card {
-  background: var(--qz-color-card-bg, #ffffff);
-  border-radius: 20px;
-  padding: 18px 18px 20px;
-  box-shadow: 0 6px 20px -4px rgba(106, 90, 224, 0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  border: 1px solid var(--qz-color-border, #eef0f6);
-}
-
-/* Píldoras de contexto */
-.qz-config-meta-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 2px;
-}
-
-.qz-config-meta-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  background: #f1f0fd;
-  border: 1px solid rgba(106, 90, 224, 0.12);
-  font-size: 11.5px;
-  font-weight: 700;
-  color: #6a5ae0;
-}
-
-.qz-config-meta-pill ion-icon {
-  font-size: 13px;
-}
-
-/* Campos de Formulario */
-.qz-config-field-group {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.qz-config-field-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #334155;
-  letter-spacing: -0.1px;
-}
-
-.qz-config-field-label ion-icon {
-  font-size: 15px;
-  color: #6a5ae0;
-}
-
-.qz-config-label-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.qz-config-range-hint {
-  font-size: 11px;
-  font-weight: 600;
-  color: #94a3b8;
-}
-
-/* Selector estilizado */
-.qz-config-select-wrap {
-  position: relative;
-  border-radius: 14px;
-  border: 1.5px solid #e2e8f0;
-  background: #f8fafc;
-  overflow: hidden;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.qz-config-select-wrap:focus-within {
-  border-color: #6a5ae0;
-  box-shadow: 0 0 0 3px rgba(106, 90, 224, 0.12);
-}
-
-.qz-config-select {
-  --padding-start: 14px;
-  --padding-end: 14px;
-  --padding-top: 10px;
-  --padding-bottom: 10px;
-  width: 100%;
-  font-family: var(--qz-font-family, "Rubik", sans-serif);
-  font-size: 13.5px;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-/* Input numérico */
-.qz-config-input-wrap {
-  border-radius: 14px;
-  border: 1.5px solid #e2e8f0;
-  background: #f8fafc;
-  overflow: hidden;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.qz-config-input-wrap:focus-within {
-  border-color: #6a5ae0;
-  box-shadow: 0 0 0 3px rgba(106, 90, 224, 0.12);
-}
-
-.qz-config-num-input {
-  --padding-start: 14px;
-  --padding-end: 14px;
-  --padding-top: 10px;
-  --padding-bottom: 10px;
-  font-family: var(--qz-font-family, "Rubik", sans-serif);
-  font-size: 15px;
-  font-weight: 700;
-  color: #1e293b;
-}
-
-/* Presets rápidos para nota de corte */
-.qz-config-presets-row {
-  display: flex;
-  gap: 8px;
-  margin-top: 2px;
-}
-
-.qz-config-preset-btn {
-  flex: 1;
-  padding: 6px 0;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  color: #64748b;
-  font-family: var(--qz-font-family, "Rubik", sans-serif);
-  font-size: 12.5px;
-  font-weight: 700;
-  cursor: pointer;
-  outline: none;
-  transition: all 0.18s ease;
-}
-
-.qz-config-preset-btn:hover {
-  background: #f1f0fd;
-  color: #6a5ae0;
-  border-color: #d8d4fa;
-}
-
-.qz-config-preset-btn.is-active {
-  background: #6a5ae0;
-  color: #ffffff;
-  border-color: #6a5ae0;
-  box-shadow: 0 3px 10px rgba(106, 90, 224, 0.25);
-}
-
-/* Tarjetas selectoras de formato */
-.qz-config-format-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.qz-format-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  border: 1.5px solid #e2e8f0;
-  background: #f8fafc;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.qz-format-card:hover {
-  border-color: #b8b0f4;
-  background: #fbfbfe;
-  transform: translateY(-1px);
-}
-
-.qz-format-card.is-selected {
-  border-color: #6a5ae0;
-  background: #f1f0fd;
-  box-shadow: 0 4px 14px rgba(106, 90, 224, 0.12);
-}
-
-.qz-format-radio {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: 2px solid #cbd5e1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: all 0.2s ease;
-}
-
-.qz-format-card.is-selected .qz-format-radio {
-  border-color: #6a5ae0;
-}
-
-.qz-radio-circle {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: transparent;
-  transition: background 0.2s ease;
-}
-
-.qz-format-card.is-selected .qz-radio-circle {
-  background: #6a5ae0;
-}
-
-.qz-format-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-}
-
-.qz-format-title {
-  font-size: 13.5px;
-  font-weight: 700;
-  color: #1e293b;
-}
-
-.qz-format-card.is-selected .qz-format-title {
-  color: #4338ca;
-}
-
-.qz-format-desc {
-  font-size: 11.5px;
-  color: #64748b;
-  line-height: 1.3;
-}
-
-.qz-format-icon {
-  font-size: 22px;
-  color: #94a3b8;
-  flex-shrink: 0;
-  transition: color 0.2s ease;
-}
-
-.qz-format-card.is-selected .qz-format-icon {
-  color: #6a5ae0;
-}
-
-/* Botón de Acción Principal */
-.qz-config-actions {
-  margin-top: 6px;
-  width: 100%;
-}
-
-.qz-btn-submit-report {
-  width: 100%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 13px 20px;
-  border-radius: 14px;
-  border: none;
-  background: linear-gradient(135deg, #6a5ae0 0%, #7668e3 100%);
-  color: #ffffff;
-  font-family: var(--qz-font-family, "Rubik", sans-serif);
-  font-size: 14.5px;
-  font-weight: 700;
-  cursor: pointer;
-  outline: none;
-  box-shadow: 0 6px 18px rgba(106, 90, 224, 0.28);
-  transition: all 0.2s ease;
-}
-
-.qz-btn-submit-report ion-icon {
-  font-size: 18px;
-}
-
-.qz-btn-submit-report:hover {
-  background: linear-gradient(135deg, #7668e3 0%, #8275ea 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 22px rgba(106, 90, 224, 0.35);
-}
-
-.qz-btn-submit-report:active {
-  transform: scale(0.98);
-}
-
-
-/* ==========================================================================
    Modo Oscuro para Modal ZIP (Selectores Globales de Clase)
    ========================================================================== */
 :global(body.dark) .qz-zip-modal,
@@ -7256,383 +6596,6 @@ export default {
 }
 
 /* ==========================================================================
-   Modo Oscuro para Modal Configurar Reporte y Visor (Selectores Globales de Clase)
-   ========================================================================== */
-:global(body.dark) .qz-config-modal,
-:global(html.dark) .qz-config-modal,
-:global(.dark) .qz-config-modal,
-:global(:root[data-theme="dark"]) .qz-config-modal {
-  --background: #120f24 !important;
-  --box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.6) !important;
-}
-
-:global(body.dark) .qz-config-modal::part(content),
-:global(html.dark) .qz-config-modal::part(content),
-:global(.dark) .qz-config-modal::part(content),
-:global(:root[data-theme="dark"]) .qz-config-modal::part(content) {
-  background: #120f24 !important;
-  box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.6) !important;
-}
-
-:global(body.dark) .qz-config-modal-wrapper,
-:global(html.dark) .qz-config-modal-wrapper,
-:global(.dark) .qz-config-modal-wrapper,
-:global(:root[data-theme="dark"]) .qz-config-modal-wrapper {
-  background: #120f24 !important;
-}
-
-:global(body.dark) .qz-config-modal-header,
-:global(html.dark) .qz-config-modal-header,
-:global(.dark) .qz-config-modal-header,
-:global(:root[data-theme="dark"]) .qz-config-modal-header {
-  background: linear-gradient(180deg, #1d1838 0%, #251e45 100%) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-}
-
-:global(body.dark) .qz-config-tag,
-:global(html.dark) .qz-config-tag,
-:global(.dark) .qz-config-tag,
-:global(:root[data-theme="dark"]) .qz-config-tag {
-  color: #a39bf0 !important;
-}
-
-:global(body.dark) .qz-config-header-title,
-:global(html.dark) .qz-config-header-title,
-:global(.dark) .qz-config-header-title,
-:global(:root[data-theme="dark"]) .qz-config-header-title {
-  color: #f7f7fd !important;
-}
-
-:global(body.dark) .qz-config-close-btn,
-:global(html.dark) .qz-config-close-btn,
-:global(.dark) .qz-config-close-btn,
-:global(:root[data-theme="dark"]) .qz-config-close-btn {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
-  color: #f7f7fd !important;
-}
-
-:global(body.dark) .qz-config-close-btn:hover:not(:disabled),
-:global(html.dark) .qz-config-close-btn:hover:not(:disabled),
-:global(.dark) .qz-config-close-btn:hover:not(:disabled),
-:global(:root[data-theme="dark"]) .qz-config-close-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.2) !important;
-}
-
-:global(body.dark) .qz-config-card,
-:global(html.dark) .qz-config-card,
-:global(.dark) .qz-config-card,
-:global(:root[data-theme="dark"]) .qz-config-card {
-  background: #1d1838 !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
-}
-
-:global(body.dark) .qz-config-meta-pill,
-:global(html.dark) .qz-config-meta-pill,
-:global(.dark) .qz-config-meta-pill,
-:global(:root[data-theme="dark"]) .qz-config-meta-pill {
-  background: #28214b !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
-  color: #a39bf0 !important;
-}
-
-:global(body.dark) .qz-config-field-label,
-:global(html.dark) .qz-config-field-label,
-:global(.dark) .qz-config-field-label,
-:global(:root[data-theme="dark"]) .qz-config-field-label {
-  color: #e2e8f0 !important;
-}
-
-:global(body.dark) .qz-config-field-label ion-icon,
-:global(html.dark) .qz-config-field-label ion-icon,
-:global(.dark) .qz-config-field-label ion-icon,
-:global(:root[data-theme="dark"]) .qz-config-field-label ion-icon {
-  color: #a39bf0 !important;
-}
-
-:global(body.dark) .qz-config-range-hint,
-:global(html.dark) .qz-config-range-hint,
-:global(.dark) .qz-config-range-hint,
-:global(:root[data-theme="dark"]) .qz-config-range-hint {
-  color: #94a3b8 !important;
-}
-
-:global(body.dark) .qz-config-select-wrap,
-:global(html.dark) .qz-config-select-wrap,
-:global(.dark) .qz-config-select-wrap,
-:global(:root[data-theme="dark"]) .qz-config-select-wrap,
-:global(body.dark) .qz-config-input-wrap,
-:global(html.dark) .qz-config-input-wrap,
-:global(.dark) .qz-config-input-wrap,
-:global(:root[data-theme="dark"]) .qz-config-input-wrap {
-  background: #241e46 !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
-}
-
-:global(body.dark) .qz-config-select,
-:global(html.dark) .qz-config-select,
-:global(.dark) .qz-config-select,
-:global(:root[data-theme="dark"]) .qz-config-select,
-:global(body.dark) .qz-config-num-input,
-:global(html.dark) .qz-config-num-input,
-:global(.dark) .qz-config-num-input,
-:global(:root[data-theme="dark"]) .qz-config-num-input {
-  color: #f7f7fd !important;
-}
-
-:global(body.dark) .qz-config-preset-btn,
-:global(html.dark) .qz-config-preset-btn,
-:global(.dark) .qz-config-preset-btn,
-:global(:root[data-theme="dark"]) .qz-config-preset-btn {
-  background: #241e46 !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
-  color: #a39bf0 !important;
-}
-
-:global(body.dark) .qz-config-preset-btn:hover,
-:global(html.dark) .qz-config-preset-btn:hover,
-:global(.dark) .qz-config-preset-btn:hover,
-:global(:root[data-theme="dark"]) .qz-config-preset-btn:hover {
-  background: #2e265c !important;
-  color: #ffffff !important;
-}
-
-:global(body.dark) .qz-config-preset-btn.is-active,
-:global(html.dark) .qz-config-preset-btn.is-active,
-:global(.dark) .qz-config-preset-btn.is-active,
-:global(:root[data-theme="dark"]) .qz-config-preset-btn.is-active {
-  background: #6a5ae0 !important;
-  color: #ffffff !important;
-  border-color: #6a5ae0 !important;
-}
-
-:global(body.dark) .qz-format-card,
-:global(html.dark) .qz-format-card,
-:global(.dark) .qz-format-card,
-:global(:root[data-theme="dark"]) .qz-format-card {
-  background: #231d42 !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-:global(body.dark) .qz-format-card:hover,
-:global(html.dark) .qz-format-card:hover,
-:global(.dark) .qz-format-card:hover,
-:global(:root[data-theme="dark"]) .qz-format-card:hover {
-  background: #2b2351 !important;
-  border-color: rgba(163, 155, 240, 0.3) !important;
-}
-
-:global(body.dark) .qz-format-card.is-selected,
-:global(html.dark) .qz-format-card.is-selected,
-:global(.dark) .qz-format-card.is-selected,
-:global(:root[data-theme="dark"]) .qz-format-card.is-selected {
-  background: #2e265c !important;
-  border-color: #a39bf0 !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
-}
-
-:global(body.dark) .qz-format-radio,
-:global(html.dark) .qz-format-radio,
-:global(.dark) .qz-format-radio,
-:global(:root[data-theme="dark"]) .qz-format-radio {
-  border-color: #64748b !important;
-}
-
-:global(body.dark) .qz-format-card.is-selected .qz-format-radio,
-:global(html.dark) .qz-format-card.is-selected .qz-format-radio,
-:global(.dark) .qz-format-card.is-selected .qz-format-radio,
-:global(:root[data-theme="dark"]) .qz-format-card.is-selected .qz-format-radio {
-  border-color: #a39bf0 !important;
-}
-
-:global(body.dark) .qz-format-card.is-selected .qz-radio-circle,
-:global(html.dark) .qz-format-card.is-selected .qz-radio-circle,
-:global(.dark) .qz-format-card.is-selected .qz-radio-circle,
-:global(:root[data-theme="dark"]) .qz-format-card.is-selected .qz-radio-circle {
-  background: #a39bf0 !important;
-}
-
-:global(body.dark) .qz-format-title,
-:global(html.dark) .qz-format-title,
-:global(.dark) .qz-format-title,
-:global(:root[data-theme="dark"]) .qz-format-title {
-  color: #f7f7fd !important;
-}
-
-:global(body.dark) .qz-format-card.is-selected .qz-format-title,
-:global(html.dark) .qz-format-card.is-selected .qz-format-title,
-:global(.dark) .qz-format-card.is-selected .qz-format-title,
-:global(:root[data-theme="dark"]) .qz-format-card.is-selected .qz-format-title {
-  color: #c7d2fe !important;
-}
-
-:global(body.dark) .qz-format-desc,
-:global(html.dark) .qz-format-desc,
-:global(.dark) .qz-format-desc,
-:global(:root[data-theme="dark"]) .qz-format-desc {
-  color: #94a3b8 !important;
-}
-
-:global(body.dark) .qz-format-icon,
-:global(html.dark) .qz-format-icon,
-:global(.dark) .qz-format-icon,
-:global(:root[data-theme="dark"]) .qz-format-icon {
-  color: #64748b !important;
-}
-
-:global(body.dark) .qz-format-card.is-selected .qz-format-icon,
-:global(html.dark) .qz-format-card.is-selected .qz-format-icon,
-:global(.dark) .qz-format-card.is-selected .qz-format-icon,
-:global(:root[data-theme="dark"]) .qz-format-card.is-selected .qz-format-icon {
-  color: #a39bf0 !important;
-}
-
-:global(body.dark) .qz-btn-submit-report,
-:global(html.dark) .qz-btn-submit-report,
-:global(.dark) .qz-btn-submit-report,
-:global(:root[data-theme="dark"]) .qz-btn-submit-report {
-  background: linear-gradient(135deg, #7668e3 0%, #6a5ae0 100%) !important;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4) !important;
-}
-
-/* Modo oscuro para visualización de reporte en pantalla */
-:global(body.dark) .report-header,
-:global(html.dark) .report-header,
-:global(.dark) .report-header,
-:global(:root[data-theme="dark"]) .report-header {
-  background: #1d1838 !important;
-  border-left-color: #a39bf0 !important;
-}
-
-:global(body.dark) .report-header h3,
-:global(html.dark) .report-header h3,
-:global(.dark) .report-header h3,
-:global(:root[data-theme="dark"]) .report-header h3 {
-  color: #f7f7fd !important;
-}
-
-:global(body.dark) .report-header h6,
-:global(html.dark) .report-header h6,
-:global(.dark) .report-header h6,
-:global(:root[data-theme="dark"]) .report-header h6 {
-  color: #a39bf0 !important;
-}
-
-:global(body.dark) .report-header p,
-:global(html.dark) .report-header p,
-:global(.dark) .report-header p,
-:global(:root[data-theme="dark"]) .report-header p {
-  color: #cbd5e1 !important;
-}
-
-:global(body.dark) .report-table,
-:global(html.dark) .report-table,
-:global(.dark) .report-table,
-:global(:root[data-theme="dark"]) .report-table {
-  border-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-:global(body.dark) .report-table thead tr,
-:global(html.dark) .report-table thead tr,
-:global(.dark) .report-table thead tr,
-:global(:root[data-theme="dark"]) .report-table thead tr {
-  background: #251e45 !important;
-  color: #f7f7fd !important;
-}
-
-:global(body.dark) .report-table th,
-:global(html.dark) .report-table th,
-:global(.dark) .report-table th,
-:global(:root[data-theme="dark"]) .report-table th {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-
-:global(body.dark) .report-table td,
-:global(html.dark) .report-table td,
-:global(.dark) .report-table td,
-:global(:root[data-theme="dark"]) .report-table td {
-  background: #1d1838 !important;
-  border-top-color: rgba(255, 255, 255, 0.08) !important;
-  color: #cbd5e1 !important;
-}
-
-:global(body.dark) .report-table tbody tr:nth-child(even) td,
-:global(html.dark) .report-table tbody tr:nth-child(even) td,
-:global(.dark) .report-table tbody tr:nth-child(even) td,
-:global(:root[data-theme="dark"]) .report-table tbody tr:nth-child(even) td {
-  background: #231d42 !important;
-}
-
-:global(body.dark) .detailed-student,
-:global(html.dark) .detailed-student,
-:global(.dark) .detailed-student,
-:global(:root[data-theme="dark"]) .detailed-student {
-  background: #1d1838 !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-:global(body.dark) .student-info-header,
-:global(html.dark) .student-info-header,
-:global(.dark) .student-info-header,
-:global(:root[data-theme="dark"]) .student-info-header {
-  background: #251e45 !important;
-  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
-}
-
-:global(body.dark) .student-info-header strong,
-:global(html.dark) .student-info-header strong,
-:global(.dark) .student-info-header strong,
-:global(:root[data-theme="dark"]) .student-info-header strong {
-  color: #f7f7fd !important;
-}
-
-:global(body.dark) .dimension-row td,
-:global(html.dark) .dimension-row td,
-:global(.dark) .dimension-row td,
-:global(:root[data-theme="dark"]) .dimension-row td {
-  background: #2d2656 !important;
-  color: #a39bf0 !important;
-}
-
-:global(body.dark) .item-row td,
-:global(html.dark) .item-row td,
-:global(.dark) .item-row td,
-:global(:root[data-theme="dark"]) .item-row td {
-  background: #1d1838 !important;
-  color: #cbd5e1 !important;
-}
-
-:global(body.dark) .new-students-warning,
-:global(html.dark) .new-students-warning,
-:global(.dark) .new-students-warning,
-:global(:root[data-theme="dark"]) .new-students-warning {
-  background: #2a1f0a !important;
-  border-color: #d97706 !important;
-  color: #fde68a !important;
-}
-
-:global(body.dark) .new-students-warning p,
-:global(html.dark) .new-students-warning p,
-:global(.dark) .new-students-warning p,
-:global(:root[data-theme="dark"]) .new-students-warning p,
-:global(body.dark) .new-students-warning li,
-:global(html.dark) .new-students-warning li,
-:global(.dark) .new-students-warning li,
-:global(:root[data-theme="dark"]) .new-students-warning li {
-  color: #fde68a !important;
-}
-
-:global(body.dark) .new-students-warning strong,
-:global(html.dark) .new-students-warning strong,
-:global(.dark) .new-students-warning strong,
-:global(:root[data-theme="dark"]) .new-students-warning strong {
-  color: #fbbf24 !important;
-}
-
-
-/* ==========================================================================
    Modo Oscuro para Modal ZIP (Preferencia del Sistema @media prefers-color-scheme)
    ========================================================================== */
 @media (prefers-color-scheme: dark) {
@@ -7729,188 +6692,5 @@ export default {
     background: rgba(239, 68, 68, 0.25) !important;
     border-color: rgba(239, 68, 68, 0.6) !important;
   }
-
-
-  /* Modo Oscuro para Modal Configurar Reporte */
-  .qz-config-modal,
-  ion-modal.qz-config-modal {
-    --background: #120f24 !important;
-    --box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.6) !important;
-  }
-  .qz-config-modal::part(content),
-  ion-modal.qz-config-modal::part(content) {
-    background: #120f24 !important;
-    box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.6) !important;
-  }
-  .qz-config-modal-wrapper {
-    background: #120f24 !important;
-  }
-  .qz-config-modal-header {
-    background: linear-gradient(180deg, #1d1838 0%, #251e45 100%) !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-  }
-  .qz-config-tag {
-    color: #a39bf0 !important;
-  }
-  .qz-config-header-title {
-    color: #f7f7fd !important;
-  }
-  .qz-config-close-btn {
-    background: rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.18) !important;
-    color: #f7f7fd !important;
-  }
-  .qz-config-close-btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.2) !important;
-  }
-  .qz-config-card {
-    background: #1d1838 !important;
-    border-color: rgba(255, 255, 255, 0.08) !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
-  }
-  .qz-config-meta-pill {
-    background: #28214b !important;
-    border-color: rgba(255, 255, 255, 0.08) !important;
-    color: #a39bf0 !important;
-  }
-  .qz-config-field-label {
-    color: #e2e8f0 !important;
-  }
-  .qz-config-field-label ion-icon {
-    color: #a39bf0 !important;
-  }
-  .qz-config-range-hint {
-    color: #94a3b8 !important;
-  }
-  .qz-config-select-wrap,
-  .qz-config-input-wrap {
-    background: #241e46 !important;
-    border-color: rgba(255, 255, 255, 0.12) !important;
-  }
-  .qz-config-select,
-  .qz-config-num-input {
-    color: #f7f7fd !important;
-  }
-  .qz-config-preset-btn {
-    background: #241e46 !important;
-    border-color: rgba(255, 255, 255, 0.12) !important;
-    color: #a39bf0 !important;
-  }
-  .qz-config-preset-btn:hover {
-    background: #2e265c !important;
-    color: #ffffff !important;
-  }
-  .qz-config-preset-btn.is-active {
-    background: #6a5ae0 !important;
-    color: #ffffff !important;
-    border-color: #6a5ae0 !important;
-  }
-  .qz-format-card {
-    background: #231d42 !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
-  }
-  .qz-format-card:hover {
-    background: #2b2351 !important;
-    border-color: rgba(163, 155, 240, 0.3) !important;
-  }
-  .qz-format-card.is-selected {
-    background: #2e265c !important;
-    border-color: #a39bf0 !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
-  }
-  .qz-format-radio {
-    border-color: #64748b !important;
-  }
-  .qz-format-card.is-selected .qz-format-radio {
-    border-color: #a39bf0 !important;
-  }
-  .qz-format-card.is-selected .qz-radio-circle {
-    background: #a39bf0 !important;
-  }
-  .qz-format-title {
-    color: #f7f7fd !important;
-  }
-  .qz-format-card.is-selected .qz-format-title {
-    color: #c7d2fe !important;
-  }
-  .qz-format-desc {
-    color: #94a3b8 !important;
-  }
-  .qz-format-icon {
-    color: #64748b !important;
-  }
-  .qz-format-card.is-selected .qz-format-icon {
-    color: #a39bf0 !important;
-  }
-  .qz-btn-submit-report {
-    background: linear-gradient(135deg, #7668e3 0%, #6a5ae0 100%) !important;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4) !important;
-  }
-
-  /* Modo Oscuro para Visualización de Reporte en Pantalla */
-  .report-header {
-    background: #1d1838 !important;
-    border-left-color: #a39bf0 !important;
-  }
-  .report-header h3 {
-    color: #f7f7fd !important;
-  }
-  .report-header h6 {
-    color: #a39bf0 !important;
-  }
-  .report-header p {
-    color: #cbd5e1 !important;
-  }
-  .report-table {
-    border-color: rgba(255, 255, 255, 0.1) !important;
-  }
-  .report-table thead tr {
-    background: #251e45 !important;
-    color: #f7f7fd !important;
-  }
-  .report-table th {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-  }
-  .report-table td {
-    background: #1d1838 !important;
-    border-top-color: rgba(255, 255, 255, 0.08) !important;
-    color: #cbd5e1 !important;
-  }
-  .report-table tbody tr:nth-child(even) td {
-    background: #231d42 !important;
-  }
-  .detailed-student {
-    background: #1d1838 !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
-  }
-  .student-info-header {
-    background: #251e45 !important;
-    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
-  }
-  .student-info-header strong {
-    color: #f7f7fd !important;
-  }
-  .dimension-row td {
-    background: #2d2656 !important;
-    color: #a39bf0 !important;
-  }
-  .item-row td {
-    background: #1d1838 !important;
-    color: #cbd5e1 !important;
-  }
-  .new-students-warning {
-    background: #2a1f0a !important;
-    border-color: #d97706 !important;
-    color: #fde68a !important;
-  }
-  .new-students-warning p,
-  .new-students-warning li {
-    color: #fde68a !important;
-  }
-  .new-students-warning strong {
-    color: #fbbf24 !important;
-  }
-
 }
 </style>

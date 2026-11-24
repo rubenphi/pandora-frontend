@@ -7,7 +7,9 @@
         :disabled="detectedCount === 0"
         @click="submitResults"
       >
-        Enviar respuestas<span v-if="detectedCount > 0"> ({{ detectedCount }})</span>
+        Enviar respuestas<span v-if="detectedCount > 0">
+          ({{ detectedCount }})</span
+        >
       </button>
       <button type="button" class="scanner-close-action" @click="cancelScan">
         <ion-icon :icon="closeCircleOutline"></ion-icon>
@@ -21,36 +23,41 @@
     </div>
 
     <div v-show="!isLoading" class="scanner-wrapper">
-      <video ref="video" playsinline autoplay muted style="display: none"></video>
+      <video
+        ref="video"
+        playsinline
+        autoplay
+        muted
+        style="display: none"
+      ></video>
 
       <!-- Camera pane + scanned students sidebar -->
       <div class="scanner-row">
         <div class="canvas-container">
           <canvas ref="outputCanvas" class="video-feed"></canvas>
 
-         <!-- Live scanning indicator -->
-         <div class="scanning-live-indicator">
-           <span class="live-dot"></span>
+          <!-- Live scanning indicator -->
+          <div class="scanning-live-indicator">
+            <span class="live-dot"></span>
             <span class="live-text">ESCANEANDO MATRICES</span>
-         </div>
+          </div>
 
-         <!-- Camera picker (only when more than one camera is available) -->
-         <div
-           v-if="cameras.length > 1"
-           class="camera-picker"
-         >
-           <span class="camera-picker-icon"><ion-icon :icon="cameraOutline"></ion-icon></span>
-           <select :value="selectedCamera || ''" @change="onCameraChange">
-             <option value="" disabled>Cámara predeterminada</option>
-             <option
-               v-for="(c, i) in cameras"
-               :key="c.deviceId"
-               :value="c.deviceId"
-             >
-               {{ c.label || `Cámara ${i + 1}` }}
-             </option>
-           </select>
-         </div>
+          <!-- Camera picker (only when more than one camera is available) -->
+          <div v-if="cameras.length > 1" class="camera-picker">
+            <span class="camera-picker-icon"
+              ><ion-icon :icon="cameraOutline"></ion-icon
+            ></span>
+            <select :value="selectedCamera || ''" @change="onCameraChange">
+              <option value="" disabled>Cámara predeterminada</option>
+              <option
+                v-for="(c, i) in cameras"
+                :key="c.deviceId"
+                :value="c.deviceId"
+              >
+                {{ c.label || `Cámara ${i + 1}` }}
+              </option>
+            </select>
+          </div>
 
           <!-- QR counter badge (Clickable to view full modal) -->
           <div
@@ -62,24 +69,29 @@
             <span class="qr-count-label">Marcadores (Ver lista)</span>
           </div>
 
-         <!-- Zoom controls (continuous encoder-style slider) -->
-         <div class="zoom-controls">
-           <span class="zoom-title">Zoom:</span>
-           <input
-             type="range"
-             class="zoom-slider"
-             :min="1"
-             :max="zoomMax"
-             :step="0.1"
-             :value="zoomLevel"
-             @input="onZoomInput"
-           />
-           <span class="zoom-value">{{ Math.round(zoomLevel * 10) / 10 }}x</span>
-         </div>
+          <!-- Zoom controls (continuous encoder-style slider) -->
+          <div class="zoom-controls">
+            <span class="zoom-title">Zoom:</span>
+            <input
+              type="range"
+              class="zoom-slider"
+              :min="1"
+              :max="zoomMax"
+              :step="0.1"
+              :value="zoomLevel"
+              @input="onZoomInput"
+            />
+            <span class="zoom-value"
+              >{{ Math.round(zoomLevel * 10) / 10 }}x</span
+            >
+          </div>
         </div>
 
         <!-- Scanned students sidebar (collapsible) -->
-        <div class="scanned-sidebar" :class="{ 'scanned-sidebar--collapsed': isSidebarCollapsed }">
+        <div
+          class="scanned-sidebar"
+          :class="{ 'scanned-sidebar--collapsed': isSidebarCollapsed }"
+        >
           <!-- Header visible only when expanded -->
           <div v-if="!isSidebarCollapsed" class="sidebar-header">
             <span class="sidebar-title">Escaneados ({{ detectedCount }})</span>
@@ -92,68 +104,86 @@
             </button>
           </div>
 
-           <div class="sidebar-content">
-             <!-- Collapsed state: centered count + toggle -->
-             <div v-if="isSidebarCollapsed" class="sidebar-collapsed-badge">
-               <button
-                 class="sidebar-toggle sidebar-toggle--centered"
-                 :title="'Mostrar lista'"
-                 @click="toggleSidebar"
-               >
-                 <ion-icon :icon="chevronForwardOutline"></ion-icon>
-               </button>
-               <span class="sidebar-collapsed-count">{{ detectedCount }}</span>
-             </div>
+          <div class="sidebar-content">
+            <!-- Collapsed state: centered count + toggle -->
+            <div v-if="isSidebarCollapsed" class="sidebar-collapsed-badge">
+              <button
+                class="sidebar-toggle sidebar-toggle--centered"
+                :title="'Mostrar lista'"
+                @click="toggleSidebar"
+              >
+                <ion-icon :icon="chevronForwardOutline"></ion-icon>
+              </button>
+              <span class="sidebar-collapsed-count">{{ detectedCount }}</span>
+            </div>
 
-             <!-- Expanded state: scrollable list (scanned + pending) -->
-             <div v-else class="sidebar-list">
-               <div v-if="scannedListItems.length === 0 && missingStudents.length === 0" class="sidebar-empty">
-                 <p>No hay marcadores escaneados.</p>
-               </div>
+            <!-- Expanded state: scrollable list (scanned + pending) -->
+            <div v-else class="sidebar-list">
+              <div
+                v-if="
+                  scannedListItems.length === 0 && missingStudents.length === 0
+                "
+                class="sidebar-empty"
+              >
+                <p>No hay marcadores escaneados.</p>
+              </div>
 
-               <div v-else>
-                 <!-- Summary -->
-                 <div class="sidebar-summary">
-                   <span class="sidebar-summary-item sidebar-summary-item--scanned">
-                     Scaneados: {{ scannedListItems.length }}
-                   </span>
-                   <span
-                     v-if="missingStudents.length > 0"
-                     class="sidebar-summary-item sidebar-summary-item--missing"
-                   >
-                     Faltan: {{ missingStudents.length }}
-                   </span>
-                 </div>
+              <div v-else>
+                <!-- Summary -->
+                <div class="sidebar-summary">
+                  <span
+                    class="sidebar-summary-item sidebar-summary-item--scanned"
+                  >
+                    Scaneados: {{ scannedListItems.length }}
+                  </span>
+                  <span
+                    v-if="missingStudents.length > 0"
+                    class="sidebar-summary-item sidebar-summary-item--missing"
+                  >
+                    Faltan: {{ missingStudents.length }}
+                  </span>
+                </div>
 
-                 <!-- Scanned students (removable) -->
-                 <div
-                   v-for="item in scannedListItems"
-                   :key="item.rawCode"
-                   class="sidebar-item"
-                 >
-                   <div class="sidebar-item-main">
-                     <span class="sidebar-item-name">{{ item.name }} {{ item.lastName }}</span>
-                     <span class="sidebar-item-option">{{ item.option }}</span>
-                   </div>
-                   <button class="sidebar-item-remove" title="Eliminar" @click="removeItem(item.rawCode)">
-                     ✕
-                   </button>
-                 </div>
+                <!-- Scanned students (removable) -->
+                <div
+                  v-for="item in scannedListItems"
+                  :key="item.rawCode"
+                  class="sidebar-item"
+                >
+                  <div class="sidebar-item-main">
+                    <span class="sidebar-item-name"
+                      >{{ item.name }} {{ item.lastName }}</span
+                    >
+                    <span class="sidebar-item-option">{{ item.option }}</span>
+                  </div>
+                  <button
+                    class="sidebar-item-remove"
+                    title="Eliminar"
+                    @click="removeItem(item.rawCode)"
+                  >
+                    ✕
+                  </button>
+                </div>
 
-                 <!-- Pending (not yet scanned) students from the grade roster -->
-                 <div
-                   v-for="s in missingStudents"
-                   :key="String(s.id ?? s.code)"
-                   class="sidebar-item sidebar-item--missing"
-                 >
-                   <div class="sidebar-item-main">
-                     <span class="sidebar-item-name">{{ s.name }} {{ s.lastName }}</span>
-                     <span class="sidebar-item-option sidebar-item--missing-label">Pendiente</span>
-                   </div>
-                 </div>
-               </div>
-             </div>
-           </div>
+                <!-- Pending (not yet scanned) students from the grade roster -->
+                <div
+                  v-for="s in missingStudents"
+                  :key="String(s.id ?? s.code)"
+                  class="sidebar-item sidebar-item--missing"
+                >
+                  <div class="sidebar-item-main">
+                    <span class="sidebar-item-name"
+                      >{{ s.name }} {{ s.lastName }}</span
+                    >
+                    <span
+                      class="sidebar-item-option sidebar-item--missing-label"
+                      >Pendiente</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -166,21 +196,32 @@
           :disabled="detectedCount === 0"
         >
           <ion-icon slot="start" :icon="checkmarkCircleOutline"></ion-icon>
-          {{ detectedCount > 0 ? `Capturar (${detectedCount})` : 'Capturar' }}
+          {{ detectedCount > 0 ? `Capturar (${detectedCount})` : "Capturar" }}
         </ion-button>
 
-        <ion-button fill="outline" color="warning" @click="clearAccumulated" :disabled="detectedCount === 0">
+        <ion-button
+          fill="outline"
+          color="warning"
+          @click="clearAccumulated"
+          :disabled="detectedCount === 0"
+        >
           <ion-icon slot="icon-only" :icon="refreshOutline"></ion-icon>
         </ion-button>
 
         <ion-button v-if="isFlashSupported" fill="clear" @click="toggleFlash">
-          <ion-icon slot="icon-only" :icon="isFlashOn ? flashlight : flashlightOutline"></ion-icon>
+          <ion-icon
+            slot="icon-only"
+            :icon="isFlashOn ? flashlight : flashlightOutline"
+          ></ion-icon>
         </ion-button>
       </div>
     </div>
 
     <!-- Modal preview list of scanned responses -->
-    <ion-modal :is-open="isPreviewModalOpen" @didDismiss="isPreviewModalOpen = false">
+    <ion-modal
+      :is-open="isPreviewModalOpen"
+      @didDismiss="isPreviewModalOpen = false"
+    >
       <ion-header>
         <ion-toolbar>
           <ion-title>Marcadores escaneados ({{ detectedCount }})</ion-title>
@@ -190,14 +231,21 @@
         </ion-toolbar>
       </ion-header>
       <ion-content class="ion-padding">
-        <div v-if="scannedListItems.length === 0" class="ion-text-center ion-padding">
-          <p style="color: var(--ion-color-medium)">No hay marcadores escaneados.</p>
+        <div
+          v-if="scannedListItems.length === 0"
+          class="ion-text-center ion-padding"
+        >
+          <p style="color: var(--ion-color-medium)">
+            No hay marcadores escaneados.
+          </p>
         </div>
         <ion-list v-else>
           <ion-item v-for="item in scannedListItems" :key="item.rawCode">
             <ion-label class="ion-text-wrap">
               <h3>{{ item.name }} {{ item.lastName }}</h3>
-              <p>Opción seleccionada: <strong>{{ item.option }}</strong></p>
+              <p>
+                Opción seleccionada: <strong>{{ item.option }}</strong>
+              </p>
             </ion-label>
             <ion-button
               slot="end"
@@ -215,7 +263,7 @@
 </template>
 
 <script>
-import { onMounted, onUnmounted, ref, reactive, computed, markRaw } from 'vue';
+import { onMounted, onUnmounted, ref, reactive, computed, markRaw } from "vue";
 import {
   IonSpinner,
   IonButton,
@@ -230,7 +278,7 @@ import {
   IonItem,
   IonLabel,
   IonButtons,
-} from '@ionic/vue';
+} from "@ionic/vue";
 import {
   flashlight,
   flashlightOutline,
@@ -241,12 +289,16 @@ import {
   chevronBackOutline,
   chevronForwardOutline,
   cameraOutline,
-} from 'ionicons/icons';
-import { CapacitorFlash } from '@capgo/capacitor-flash';
-import cv from '@techstark/opencv-js';
-import axios from 'axios';
-import { tokenHeader } from '../globalService';
-import { decodeMarkGrid, idFromPattern, GRID_SIZE } from '../utils/matrixPattern';
+} from "ionicons/icons";
+import { CapacitorFlash } from "@capgo/capacitor-flash";
+import cv from "@techstark/opencv-js";
+import axios from "axios";
+import { tokenHeader } from "../globalService";
+import {
+  decodeMarkGrid,
+  idFromPattern,
+  GRID_SIZE,
+} from "../utils/matrixPattern";
 
 // Low-light boost: when the frame is dark or lit unevenly we run an adaptive threshold pass
 const LOW_LIGHT_OTSU = 180;
@@ -259,7 +311,7 @@ function waitForOpenCv(cvModule) {
     } else if (cvModule) {
       const prevOnInit = cvModule.onRuntimeInitialized;
       cvModule.onRuntimeInitialized = () => {
-        if (typeof prevOnInit === 'function') prevOnInit();
+        if (typeof prevOnInit === "function") prevOnInit();
         resolve();
       };
     } else {
@@ -481,7 +533,7 @@ function decodeMarkerContour(contour, gray, rejectedQuads = null) {
 }
 
 export default {
-  name: 'MultiQrScanner',
+  name: "MultiQrScanner",
   components: {
     IonSpinner,
     IonButton,
@@ -496,44 +548,44 @@ export default {
     IonLabel,
     IonButtons,
   },
-  emits: ['scan-complete', 'scan-submit', 'scan-cancelled'],
+  emits: ["scan-complete", "scan-submit", "scan-cancelled"],
   props: {
     // Full roster of the grade/course: [{ id, code, name, lastName, ... }]
     // When provided, scanned students are shown normally and the remaining
     // (pending) students appear in the sidebar with a distinct style.
     students: { type: Array, default: () => [] },
-    options: { type: Array, default: () => ['A', 'B', 'C', 'D'] },
+    options: { type: Array, default: () => ["A", "B", "C", "D"] },
   },
   setup(props, { emit, expose }) {
-    const video        = ref(null);
+    const video = ref(null);
     const outputCanvas = ref(null);
-    const isLoading    = ref(true);
+    const isLoading = ref(true);
     const isFlashSupported = ref(false);
-    const isFlashOn    = ref(false);
+    const isFlashOn = ref(false);
     const detectedCount = ref(0);
     const isPreviewModalOpen = ref(false);
     const isSidebarCollapsed = ref(false);
-    const currentZoom  = ref(1); // digital crop factor used by the detection loop
-    const zoomLevel    = ref(1); // perceived zoom level (what the UI/slider shows)
-    const zoomMax      = ref(20); // slider upper bound (adapts to each camera's max zoom)
+    const currentZoom = ref(1); // digital crop factor used by the detection loop
+    const zoomLevel = ref(1); // perceived zoom level (what the UI/slider shows)
+    const zoomMax = ref(20); // slider upper bound (adapts to each camera's max zoom)
 
     // Camera selection (enumerateDevices) so the user can pick a non-Ultra-Wide camera
-    const cameras        = ref([]);
+    const cameras = ref([]);
     const selectedCamera = ref(null);
 
-    let stream           = null;
+    let stream = null;
     let animationFrameId = null;
-    let isRunning        = false;
-    let isVideoReady     = false;
-    let frameCounter     = 0;
-    let detectCounter    = 0;
+    let isRunning = false;
+    let isVideoReady = false;
+    let frameCounter = 0;
+    let detectCounter = 0;
 
     // ─── Performance tuning (mobile vs desktop) ──────────────────────
     // OpenCV runs on the main thread, so high resolutions make the mobile feed
     // lag. We adapt the camera stream and decode size to the viewport.
     const isMobileView =
-      (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) ||
-      (window.innerWidth <= 768);
+      (window.matchMedia && window.matchMedia("(max-width: 768px)").matches) ||
+      window.innerWidth <= 768;
 
     // Cap the decode canvas width (display is upscaled/downscaled by CSS).
     // 1280px provides the high optical resolution required to detect and decode
@@ -547,10 +599,15 @@ export default {
     const candidateStreaks = new Map();
     const studentCache = reactive({});
     const optionIdentifiers = computed(() => {
-      const sourceOptions = props.options.length > 0 ? props.options : ['A', 'B', 'C', 'D'];
+      const sourceOptions =
+        props.options.length > 0 ? props.options : ["A", "B", "C", "D"];
       const identifiers = sourceOptions
-        .map((option) => (typeof option === 'string' ? option : option?.identifier))
-        .filter((option) => option !== null && option !== undefined && option !== '')
+        .map((option) =>
+          typeof option === "string" ? option : option?.identifier,
+        )
+        .filter(
+          (option) => option !== null && option !== undefined && option !== "",
+        )
         .map(String);
       return [...new Set(identifiers)].slice(0, 4);
     });
@@ -568,9 +625,9 @@ export default {
     });
 
     let cvReady = false;
-    let srcMat  = null;
+    let srcMat = null;
     let grayMat = null;
-    let bwMat   = null;
+    let bwMat = null;
     let bwAdaptiveMat = null;
 
     // ─── Unified zoom setter ─────────────────────────────────────────
@@ -587,7 +644,7 @@ export default {
       if (stream) {
         try {
           const track = stream.getVideoTracks()[0];
-          if (track && typeof track.getCapabilities === 'function') {
+          if (track && typeof track.getCapabilities === "function") {
             const caps = track.getCapabilities();
             if (caps.zoom && caps.zoom.max) {
               // allow the slider to reach the device's native zoom ceiling,
@@ -622,11 +679,15 @@ export default {
           try {
             const res = await axios.get(`/users/${studentCodeOrId}`);
             student = res.data;
-          } catch (_) { /* ignore */ }
+          } catch (_) {
+            /* ignore */
+          }
         }
 
         if (!student || !student.id) {
-          const searchRes = await axios.get(`/users?code=${encodeURIComponent(studentCodeOrId)}`);
+          const searchRes = await axios.get(
+            `/users?code=${encodeURIComponent(studentCodeOrId)}`,
+          );
           if (searchRes.data && searchRes.data.length > 0) {
             student = searchRes.data[0];
           }
@@ -634,18 +695,18 @@ export default {
 
         if (student) {
           studentCache[studentCodeOrId] = {
-            name: student.name || 'Estudiante',
+            name: student.name || "Estudiante",
             lastName: student.lastName || `${studentCodeOrId}`,
           };
         } else {
           studentCache[studentCodeOrId] = {
-            name: 'Estudiante',
+            name: "Estudiante",
             lastName: `${studentCodeOrId}`,
           };
         }
       } catch (_) {
         studentCache[studentCodeOrId] = {
-          name: 'Estudiante',
+          name: "Estudiante",
           lastName: `${studentCodeOrId}`,
         };
       }
@@ -659,17 +720,34 @@ export default {
       if (_trigger < 0) return [];
 
       return Array.from(accumulatedCodes).map((rawCode) => {
-        const parts = rawCode.split(':');
-        const studentCodeOrId = parts[0] || '';
-        const option = parts[1] || '';
-        const student = studentCache[studentCodeOrId];
+        const parts = rawCode.split(":");
+        const studentCodeOrId = parts[0] || "";
+        const option = parts[1] || "";
+        const cached = studentCache[studentCodeOrId];
+        let name = cached ? cached.name : null;
+        let lastName = cached ? cached.lastName : null;
+
+        if (!name || !lastName) {
+          const match = (props.students || []).find((entry) => {
+            const u = entry?.user || entry;
+            return (
+              String(u?.id) === studentCodeOrId ||
+              (u?.code && String(u.code) === studentCodeOrId)
+            );
+          });
+          if (match) {
+            const u = match?.user || match;
+            name = name || u.name;
+            lastName = lastName || u.lastName;
+          }
+        }
 
         return {
           rawCode,
           studentCodeOrId,
           option,
-          name: student ? student.name : 'Estudiante',
-          lastName: student ? student.lastName : `${studentCodeOrId}`,
+          name: name || "Estudiante",
+          lastName: lastName || `${studentCodeOrId}`,
         };
       });
     });
@@ -680,7 +758,7 @@ export default {
       // Register reactivity on detectedCount so this recomputes when the Set mutates
       void detectedCount.value;
       const keys = new Set();
-      accumulatedCodes.forEach((raw) => keys.add(raw.split(':')[0]));
+      accumulatedCodes.forEach((raw) => keys.add(raw.split(":")[0]));
       return keys;
     });
 
@@ -715,7 +793,7 @@ export default {
         const { value } = await CapacitorFlash.isSwitchedOn();
         isFlashOn.value = value;
       } catch (e) {
-        console.error('Error toggling flash', e);
+        console.error("Error toggling flash", e);
       }
     };
 
@@ -725,27 +803,40 @@ export default {
         // If the user picked a specific camera, use its deviceId; otherwise fall
         // back to a rear-facing camera (avoids the ultra-wide default on some phones)
         const videoConstraints = {
-          width:      { ideal: isMobileView ? 1280 : 1920, min: isMobileView ? 640 : 1280 },
-          height:     { ideal: isMobileView ? 720 : 1080, min: isMobileView ? 480 : 720 },
-          facingMode: 'environment',
-          focusMode:  'continuous',
+          width: {
+            ideal: isMobileView ? 1280 : 1920,
+            min: isMobileView ? 640 : 1280,
+          },
+          height: {
+            ideal: isMobileView ? 720 : 1080,
+            min: isMobileView ? 480 : 720,
+          },
+          facingMode: "environment",
+          focusMode: "continuous",
         };
         if (selectedCamera.value) {
           videoConstraints.deviceId = { exact: selectedCamera.value };
           delete videoConstraints.facingMode;
         }
 
-        stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: false });
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: videoConstraints,
+          audio: false,
+        });
 
         try {
           const track = stream.getVideoTracks()[0];
-          if (track && typeof track.getCapabilities === 'function') {
+          if (track && typeof track.getCapabilities === "function") {
             const caps = track.getCapabilities();
-            if (caps.focusMode && caps.focusMode.includes('continuous')) {
-              await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+            if (caps.focusMode && caps.focusMode.includes("continuous")) {
+              await track.applyConstraints({
+                advanced: [{ focusMode: "continuous" }],
+              });
             }
           }
-        } catch (_) { /* ignore focus constraint warning */ }
+        } catch (_) {
+          /* ignore focus constraint warning */
+        }
 
         if (video.value) {
           video.value.srcObject = stream;
@@ -753,9 +844,9 @@ export default {
         }
       } catch (error) {
         const alert = await alertController.create({
-          header:  'Error de Cámara',
+          header: "Error de Cámara",
           message: `No se pudo acceder a la cámara: ${error.message}`,
-          buttons: ['OK'],
+          buttons: ["OK"],
         });
         await alert.present();
         throw error;
@@ -764,29 +855,85 @@ export default {
 
     // ─── OpenCV resource lifecycle ────────────────────────────────
     const cleanupOpenCvResources = () => {
-      if (srcMat)  { try { srcMat.delete(); } catch (_) { void 0; } finally { srcMat = null; } }
-      if (grayMat) { try { grayMat.delete(); } catch (_) { void 0; } finally { grayMat = null; } }
-      if (bwMat)   { try { bwMat.delete(); } catch (_) { void 0; } finally { bwMat = null; } }
-      if (bwAdaptiveMat) { try { bwAdaptiveMat.delete(); } catch (_) { void 0; } finally { bwAdaptiveMat = null; } }
+      if (srcMat) {
+        try {
+          srcMat.delete();
+        } catch (_) {
+          void 0;
+        } finally {
+          srcMat = null;
+        }
+      }
+      if (grayMat) {
+        try {
+          grayMat.delete();
+        } catch (_) {
+          void 0;
+        } finally {
+          grayMat = null;
+        }
+      }
+      if (bwMat) {
+        try {
+          bwMat.delete();
+        } catch (_) {
+          void 0;
+        } finally {
+          bwMat = null;
+        }
+      }
+      if (bwAdaptiveMat) {
+        try {
+          bwAdaptiveMat.delete();
+        } catch (_) {
+          void 0;
+        } finally {
+          bwAdaptiveMat = null;
+        }
+      }
     };
 
     const ensureOpenCvResources = (width, height) => {
       if (!cvReady || width <= 0 || height <= 0) return false;
 
       if (
-        !srcMat
-        || srcMat.cols !== width
-        || srcMat.rows !== height
-        || !bwAdaptiveMat
+        !srcMat ||
+        srcMat.cols !== width ||
+        srcMat.rows !== height ||
+        !bwAdaptiveMat
       ) {
-        if (srcMat)  { try { srcMat.delete();  } catch (_) { /* ignore */ } }
-        if (grayMat) { try { grayMat.delete(); } catch (_) { /* ignore */ } }
-        if (bwMat)   { try { bwMat.delete();   } catch (_) { /* ignore */ } }
-        if (bwAdaptiveMat) { try { bwAdaptiveMat.delete(); } catch (_) { /* ignore */ } }
+        if (srcMat) {
+          try {
+            srcMat.delete();
+          } catch (_) {
+            /* ignore */
+          }
+        }
+        if (grayMat) {
+          try {
+            grayMat.delete();
+          } catch (_) {
+            /* ignore */
+          }
+        }
+        if (bwMat) {
+          try {
+            bwMat.delete();
+          } catch (_) {
+            /* ignore */
+          }
+        }
+        if (bwAdaptiveMat) {
+          try {
+            bwAdaptiveMat.delete();
+          } catch (_) {
+            /* ignore */
+          }
+        }
 
-        srcMat  = markRaw(new cv.Mat(height, width, cv.CV_8UC4));
+        srcMat = markRaw(new cv.Mat(height, width, cv.CV_8UC4));
         grayMat = markRaw(new cv.Mat(height, width, cv.CV_8UC1));
-        bwMat   = markRaw(new cv.Mat(height, width, cv.CV_8UC1));
+        bwMat = markRaw(new cv.Mat(height, width, cv.CV_8UC1));
         bwAdaptiveMat = markRaw(new cv.Mat(height, width, cv.CV_8UC1));
       }
 
@@ -851,7 +998,11 @@ export default {
         );
 
         for (let index = 0; index < contours.size(); index += 1) {
-          const detection = decodeMarkerContour(contours.get(index), gray, rejectedQuads);
+          const detection = decodeMarkerContour(
+            contours.get(index),
+            gray,
+            rejectedQuads,
+          );
           if (!detection) continue;
 
           const option = options[detection.optionIndex];
@@ -860,7 +1011,12 @@ export default {
           let studentId = String(detection.studentId);
           if (roster.size > 0) {
             const rosterId = roster.get(studentId);
-            if (rosterId !== undefined) studentId = rosterId;
+            if (rosterId === undefined) {
+              // Silently omit codes not registered in the active course roster
+              // (eliminates false positives from fabrics, keyboards, tablecloths, etc.)
+              continue;
+            }
+            studentId = rosterId;
           }
 
           observed.set(`${studentId}:${option}`, detection);
@@ -883,7 +1039,7 @@ export default {
       ctx.lineTo(quad[3].x, quad[3].y);
       ctx.closePath();
       ctx.lineWidth = 1.5;
-      ctx.strokeStyle = 'rgba(255, 235, 59, 0.45)';
+      ctx.strokeStyle = "rgba(255, 235, 59, 0.45)";
       ctx.stroke();
     };
 
@@ -902,31 +1058,38 @@ export default {
 
       const centerX = (quad[0].x + quad[1].x + quad[2].x + quad[3].x) / 4;
       const centerY = (quad[0].y + quad[1].y + quad[2].y + quad[3].y) / 4;
-      ctx.font = 'bold 20px sans-serif';
+      ctx.font = "bold 20px sans-serif";
       const textWidth = ctx.measureText(label).width;
-      ctx.fillStyle = 'rgba(0,0,0,0.82)';
+      ctx.fillStyle = "rgba(0,0,0,0.82)";
       ctx.beginPath();
-      if (typeof ctx.roundRect === 'function') {
-        ctx.roundRect(centerX - textWidth / 2 - 8, centerY - 14, textWidth + 16, 26, 8);
+      if (typeof ctx.roundRect === "function") {
+        ctx.roundRect(
+          centerX - textWidth / 2 - 8,
+          centerY - 14,
+          textWidth + 16,
+          26,
+          8,
+        );
       } else {
         ctx.rect(centerX - textWidth / 2 - 8, centerY - 14, textWidth + 16, 26);
       }
       ctx.fill();
       ctx.fillStyle = color;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
       ctx.fillText(label, centerX, centerY);
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'alphabetic';
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
     };
 
     // ─── Main Processing Loop (Multi-Pass: Fast Global Otsu + Adaptive Threshold) ─────
     const processingLoop = () => {
-      if (!isRunning || !video.value || video.value.paused || video.value.ended) return;
+      if (!isRunning || !video.value || video.value.paused || video.value.ended)
+        return;
 
       const canvas = outputCanvas.value;
       if (!canvas) return;
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
       const vw = video.value.videoWidth;
       const vh = video.value.videoHeight;
@@ -936,7 +1099,7 @@ export default {
       }
 
       // Digital Zoom crop (centered) on the high-res video source
-      const z  = currentZoom.value;
+      const z = currentZoom.value;
       const sw = vw / z;
       const sh = vh / z;
       const sx = (vw - sw) / 2;
@@ -957,7 +1120,7 @@ export default {
 
       // Match canvas internal resolution to the capped detection size
       if (canvas.width !== dw || canvas.height !== dh) {
-        canvas.width  = dw;
+        canvas.width = dw;
         canvas.height = dh;
       }
 
@@ -968,9 +1131,9 @@ export default {
 
       // Run OpenCV detection only every DETECT_EVERY-th frame to ease the CPU
       if (
-        cvReady
-        && frameCounter % DETECT_EVERY === 0
-        && ensureOpenCvResources(dw, dh)
+        cvReady &&
+        frameCounter % DETECT_EVERY === 0 &&
+        ensureOpenCvResources(dw, dh)
       ) {
         try {
           const imageData = ctx.getImageData(0, 0, dw, dh);
@@ -978,11 +1141,21 @@ export default {
           detectCounter++;
           cv.cvtColor(srcMat, grayMat, cv.COLOR_RGBA2GRAY);
           const detectionGray = prepareDetectionImage(grayMat);
-          const frameOtsu = cv.threshold(detectionGray, bwMat, 0, 255, cv.THRESH_BINARY_INV + cv.THRESH_OTSU);
+          const frameOtsu = cv.threshold(
+            detectionGray,
+            bwMat,
+            0,
+            255,
+            cv.THRESH_BINARY_INV + cv.THRESH_OTSU,
+          );
 
           const rejectedQuads = [];
           // Pass 1: Global Otsu (ultra-fast for well-lit cards in front & center)
-          const observed = collectDetections(detectionGray, bwMat, rejectedQuads);
+          const observed = collectDetections(
+            detectionGray,
+            bwMat,
+            rejectedQuads,
+          );
 
           // Pass 2: Plickers-like Adaptive Thresholding.
           // Solves shadows, window glare, and uneven classroom lighting where global Otsu fails.
@@ -990,10 +1163,10 @@ export default {
           // whenever missing students remain in the roster so students in dim/back areas
           // are captured simultaneously.
           const shouldRunAdaptive =
-            observed.size === 0
-            || frameOtsu < LOW_LIGHT_OTSU
-            || hasUnevenLighting(detectionGray)
-            || (missingStudents.value.length > 0 && detectCounter % 2 === 0);
+            observed.size === 0 ||
+            frameOtsu < LOW_LIGHT_OTSU ||
+            hasUnevenLighting(detectionGray) ||
+            (missingStudents.value.length > 0 && detectCounter % 2 === 0);
 
           if (shouldRunAdaptive) {
             cv.adaptiveThreshold(
@@ -1005,7 +1178,11 @@ export default {
               31,
               7,
             );
-            const adaptiveDetections = collectDetections(detectionGray, bwAdaptiveMat, rejectedQuads);
+            const adaptiveDetections = collectDetections(
+              detectionGray,
+              bwAdaptiveMat,
+              rejectedQuads,
+            );
             for (const [code, detection] of adaptiveDetections) {
               if (!observed.has(code)) observed.set(code, detection);
             }
@@ -1021,12 +1198,13 @@ export default {
           }
 
           observed.forEach((detection, code) => {
-            const studentId = code.split(':')[0];
+            const studentId = code.split(":")[0];
             const existingCode = accumulatedStudents.get(studentId);
             if (existingCode !== undefined && existingCode !== code) return;
 
             const previous = candidateStreaks.get(code);
-            const count = previous?.frame === detectCounter - 1 ? previous.count + 1 : 1;
+            const count =
+              previous?.frame === detectCounter - 1 ? previous.count + 1 : 1;
             candidateStreaks.set(code, { frame: detectCounter, count });
 
             const isAccumulated = accumulatedCodes.has(code);
@@ -1041,15 +1219,33 @@ export default {
             }
 
             if (isNew) {
-              drawDetectedMarker(ctx, detection.quad, '#00e5ff', 'rgba(0,229,255,0.22)', code);
+              drawDetectedMarker(
+                ctx,
+                detection.quad,
+                "#00e5ff",
+                "rgba(0,229,255,0.22)",
+                code,
+              );
             } else if (isAccumulated) {
-              drawDetectedMarker(ctx, detection.quad, '#00e676', 'rgba(0,230,118,0.22)', code);
+              drawDetectedMarker(
+                ctx,
+                detection.quad,
+                "#00e676",
+                "rgba(0,230,118,0.22)",
+                code,
+              );
             } else {
-              drawDetectedMarker(ctx, detection.quad, '#ff9800', 'rgba(255,152,0,0.16)', code);
+              drawDetectedMarker(
+                ctx,
+                detection.quad,
+                "#ff9800",
+                "rgba(255,152,0,0.16)",
+                code,
+              );
             }
           });
         } catch (error) {
-          console.warn('Error en detección OpenCV:', error);
+          console.warn("Error en detección OpenCV:", error);
         }
       }
 
@@ -1067,19 +1263,22 @@ export default {
     // ─── Camera enumeration ─────────────────────────────────────────
     const loadCameras = async () => {
       try {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+        if (
+          !navigator.mediaDevices ||
+          !navigator.mediaDevices.enumerateDevices
+        ) {
           cameras.value = [];
           return;
         }
         const devices = await navigator.mediaDevices.enumerateDevices();
-        cameras.value = devices.filter((d) => d.kind === 'videoinput');
+        cameras.value = devices.filter((d) => d.kind === "videoinput");
         // If the previously selected camera is no longer available, fall back to null
         if (cameras.value.length && !selectedCamera.value) {
           selectedCamera.value = null; // keep default (environment) on first load
         }
       } catch (e) {
         cameras.value = [];
-        console.warn('No se pudieron enumerar los dispositivos de cámara:', e);
+        console.warn("No se pudieron enumerar los dispositivos de cámara:", e);
       }
     };
 
@@ -1103,23 +1302,23 @@ export default {
       if (video.value) {
         video.value.pause();
         video.value.srcObject = null;
-        video.value.removeEventListener('loadedmetadata', handleVideoReady);
+        video.value.removeEventListener("loadedmetadata", handleVideoReady);
       }
       stream.getTracks().forEach((t) => t.stop());
       stream = null;
       isVideoReady = false;
 
       try {
-        video.value.addEventListener('loadedmetadata', handleVideoReady);
+        video.value.addEventListener("loadedmetadata", handleVideoReady);
         await startCamera();
         if (video.value && video.value.videoWidth > 0) {
           handleVideoReady();
         }
       } catch (error) {
         const alert = await alertController.create({
-          header:  'Error de Cámara',
+          header: "Error de Cámara",
           message: `No se pudo cambiar de cámara: ${error?.message || error}`,
-          buttons: ['OK'],
+          buttons: ["OK"],
         });
         await alert.present();
       }
@@ -1134,19 +1333,19 @@ export default {
         await checkFlashAvailability();
 
         if (video.value) {
-          video.value.addEventListener('loadedmetadata', handleVideoReady);
+          video.value.addEventListener("loadedmetadata", handleVideoReady);
         }
 
-         await startCamera();
+        await startCamera();
 
-         // permission granted now → enumerate with labels so the user can switch
-         await loadCameras();
+        // permission granted now → enumerate with labels so the user can switch
+        await loadCameras();
 
-         if (video.value && video.value.videoWidth > 0) {
-           handleVideoReady();
-         }
+        if (video.value && video.value.videoWidth > 0) {
+          handleVideoReady();
+        }
       } catch (err) {
-        console.error('Error al inicializar MultiQrScanner:', err);
+        console.error("Error al inicializar MultiQrScanner:", err);
         isLoading.value = false;
       }
     };
@@ -1164,11 +1363,11 @@ export default {
     };
 
     const removeItem = (rawCode) => {
-      const studentId = rawCode.split(':')[0];
+      const studentId = rawCode.split(":")[0];
       accumulatedCodes.delete(rawCode);
       accumulatedStudents.delete(studentId);
       for (const code of candidateStreaks.keys()) {
-        if (code.split(':')[0] === studentId) candidateStreaks.delete(code);
+        if (code.split(":")[0] === studentId) candidateStreaks.delete(code);
       }
       detectedCount.value = accumulatedCodes.size;
       if (detectedCount.value === 0) {
@@ -1182,12 +1381,12 @@ export default {
         cancelAnimationFrame(animationFrameId);
         animationFrameId = null;
       }
-      emit('scan-complete', Array.from(accumulatedCodes));
+      emit("scan-complete", Array.from(accumulatedCodes));
     };
 
     const submitResults = () => {
       if (detectedCount.value === 0) return;
-      emit('scan-submit', Array.from(accumulatedCodes));
+      emit("scan-submit", Array.from(accumulatedCodes));
     };
 
     const clearAccumulated = () => {
@@ -1222,7 +1421,7 @@ export default {
 
     const cancelScan = async () => {
       await stopEverything();
-      emit('scan-cancelled');
+      emit("scan-cancelled");
     };
 
     expose({ clearAccumulated });
@@ -1304,7 +1503,9 @@ export default {
   grid-template-columns: minmax(0, 1fr) auto;
   flex: 0 0 auto;
   gap: 8px;
-  padding: calc(8px + env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) 8px max(10px, env(safe-area-inset-left));
+  padding: calc(8px + env(safe-area-inset-top))
+    max(10px, env(safe-area-inset-right)) 8px
+    max(10px, env(safe-area-inset-left));
   background: #080808;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
@@ -1435,8 +1636,15 @@ export default {
 }
 
 @keyframes pulse-dot {
-  0%, 100% { transform: scale(0.85); opacity: 0.5; }
-  50% { transform: scale(1.25); opacity: 1; }
+  0%,
+  100% {
+    transform: scale(0.85);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
 }
 
 .live-text {

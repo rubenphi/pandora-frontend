@@ -55,7 +55,11 @@
     <ion-footer>
       <ion-toolbar>
         <div class="ion-padding">
-          <ion-button expand="block" @click="openScanner" :disabled="isScanning">
+          <ion-button
+            expand="block"
+            @click="openScanner"
+            :disabled="isScanning"
+          >
             {{ isScanning ? "Procesando..." : "Escanear Marcador" }}
           </ion-button>
           <ion-button
@@ -299,6 +303,10 @@ export default {
         }
 
         const result = await this.processStudentCode(studentCodeOrId, opcion);
+        if (result.ignored) {
+          // Silently omit codes not registered in this course (false positives, etc.)
+          continue;
+        }
         if (result.error) {
           errors.push(result.error);
         } else if (!result.duplicate) {
@@ -377,8 +385,21 @@ export default {
         tokenHeader();
         let student = null;
 
+        // Fast-path: check against preloaded course roster if available
+        if (this.students && this.students.length > 0) {
+          student = this.students.find(
+            (s) =>
+              String(s.id) === String(studentCodeOrId) ||
+              (s.code !== null && s.code !== undefined && String(s.code) === String(studentCodeOrId))
+          );
+          if (!student) {
+            // Silently omit false positives or codes not in this course
+            return { ignored: true };
+          }
+        }
+
         // 1. Try numeric ID first if digits only
-        if (/^\d+$/.test(String(studentCodeOrId))) {
+        if (!student && /^\d+$/.test(String(studentCodeOrId))) {
           try {
             const studentRes = await axios.get(`/users/${studentCodeOrId}`);
             student = studentRes.data;
@@ -394,7 +415,8 @@ export default {
         }
 
         if (!student || !student.id) {
-          return { error: `Estudiante "${studentCodeOrId}" no encontrado` };
+          // Code does not exist on the platform: silently omit without annoying errors
+          return { ignored: true };
         }
 
         // Validate course enrollment
@@ -408,9 +430,8 @@ export default {
                 uc.courseId === this.questionCourseId)
           );
           if (!isEnrolled) {
-            return {
-              error: `${student.name} ${student.lastName} no está inscrito en el curso activo`,
-            };
+            // Student is registered on the platform but does not belong to this course: silently omit
+            return { ignored: true };
           }
         }
 
