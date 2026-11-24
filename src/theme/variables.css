@@ -1760,6 +1760,40 @@ html.dark .qz-btn-submit-report,
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4) !important;
 }
 
+/* ==========================================================================
+   QUEEZY MODAL PLANILLA WIZARD (SISTEMA GLOBAL)
+========================================================================== */
+ion-modal.qz-planilla-wizard-modal {
+  --border-radius: 24px !important;
+  --max-width: 960px !important;
+  --width: 94% !important;
+  --height: 90vh !important;
+  --background: #ffffff !important;
+}
+
+ion-modal.qz-planilla-wizard-modal::part(content) {
+  border-radius: 24px !important;
+  overflow: hidden !important;
+  background: #ffffff !important;
+  box-shadow: 0 20px 48px -8px rgba(106, 90, 224, 0.28) !important;
+}
+
+body.dark ion-modal.qz-planilla-wizard-modal,
+html.dark ion-modal.qz-planilla-wizard-modal,
+.dark ion-modal.qz-planilla-wizard-modal,
+:root[data-theme="dark"] ion-modal.qz-planilla-wizard-modal {
+  --background: #1d1838 !important;
+  --box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.6) !important;
+}
+
+body.dark ion-modal.qz-planilla-wizard-modal::part(content),
+html.dark ion-modal.qz-planilla-wizard-modal::part(content),
+.dark ion-modal.qz-planilla-wizard-modal::part(content),
+:root[data-theme="dark"] ion-modal.qz-planilla-wizard-modal::part(content) {
+  background: #1d1838 !important;
+  box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.6) !important;
+}
+
 @media (prefers-color-scheme: dark) {
   body:not(.light) ion-modal.qz-zip-modal,
   ion-modal.qz-zip-modal {
@@ -2057,6 +2091,19 @@ html.dark .qz-btn-submit-report,
   .qz-btn-submit-report {
     background: linear-gradient(135deg, #7668e3 0%, #6a5ae0 100%) !important;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4) !important;
+  }
+
+  /* Modo Oscuro para Modal Planilla Wizard */
+  body:not(.light) ion-modal.qz-planilla-wizard-modal,
+  ion-modal.qz-planilla-wizard-modal {
+    --background: #1d1838 !important;
+    --box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.6) !important;
+  }
+
+  body:not(.light) ion-modal.qz-planilla-wizard-modal::part(content),
+  ion-modal.qz-planilla-wizard-modal::part(content) {
+    background: #1d1838 !important;
+    box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.6) !important;
   }
 }
 
