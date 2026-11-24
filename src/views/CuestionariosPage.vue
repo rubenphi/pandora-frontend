@@ -199,7 +199,8 @@ export default {
             `/users/${usuario.value.id}/courses?year=${year}&active=true`,
             tokenHeader(),
           );
-          cursos.value = response.data
+          cursos.value = (response.data || [])
+            .filter((c) => c && c.course)
             .map((c) => ({
               id: c.course.id,
               name: c.course.name,

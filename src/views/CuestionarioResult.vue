@@ -766,9 +766,9 @@
             class="qz-modal-empty"
           >
             <ion-icon :icon="informationCircleOutline" class="qz-modal-empty-icon"></ion-icon>
-            <h4>Sin cuestionarios regulares</h4>
+            <h4>Sin cuestionarios de clase</h4>
             <p>
-              No se encontraron otros cuestionarios regulares en este curso, área y periodo para mejorar.
+              No se encontraron otros cuestionarios de clase en este curso, área y periodo para mejorar.
             </p>
           </div>
 

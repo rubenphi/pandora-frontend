@@ -4,8 +4,8 @@
       <ion-router-outlet></ion-router-outlet>
       <ion-tab-bar slot="bottom">
         <ion-tab-button v-if="adminOProfesor" tab="tab1" href="/cursos">
-          <ion-icon :icon="peopleOutline" />
-          <ion-label>Grupos</ion-label>
+          <ion-icon :icon="schoolOutline" />
+          <ion-label>Cursos</ion-label>
         </ion-tab-button>
 
         <ion-tab-button v-else tab="tab1" href="/grupo">
@@ -54,6 +54,7 @@ import {
   homeOutline,
   peopleOutline,
   personOutline,
+  schoolOutline,
 } from "ionicons/icons";
 import { adminOprofesor, selectedYear } from "../globalService";
 export default {
@@ -89,6 +90,7 @@ export default {
       homeOutline,
       peopleOutline,
       personOutline,
+      schoolOutline,
     };
   },
 };

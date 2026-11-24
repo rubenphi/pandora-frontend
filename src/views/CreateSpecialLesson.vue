@@ -261,9 +261,9 @@
                       <div
                         class="qz-grade-badge"
                         :class="getGradeBadgeClass(student.averageRegular)"
-                        title="Calificación Regular (RG)"
+                        title="Calificación Notas de Clase (NC)"
                       >
-                        <span class="qz-grade-lbl">RG</span>
+                        <span class="qz-grade-lbl">NC</span>
                         <span class="qz-grade-val">
                           {{
                             student.averageRegular
@@ -293,7 +293,7 @@
                       <div
                         class="qz-grade-badge"
                         :class="getGradeBadgeClass(student.averageRegular)"
-                        title="Promedio Regular Acumulado"
+                        title="Promedio Notas de Clase Acumulado"
                       >
                         <span class="qz-grade-lbl">Prom</span>
                         <span class="qz-grade-val">

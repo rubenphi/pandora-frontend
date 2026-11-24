@@ -1,277 +1,219 @@
 <template>
-  <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Cursos</ion-title>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content :fullscreen="true">
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">Cursos</ion-title>
-        </ion-toolbar>
-      </ion-header>
-
-      <ion-list>
-        <!-- Selectores de Año y Período -->
-        <ion-item>
-          <ion-label><strong>Año:</strong></ion-label>
-          <ion-select
-            v-model="selectedYear"
-            placeholder="Seleccione el año"
-            @ionChange="getCursoUsuario(selectedYear)"
-          >
-            <ion-select-option v-for="year in years" :key="year" :value="year">
-              {{ year }}
-            </ion-select-option>
-          </ion-select>
-        </ion-item>
-
-        <ion-item>
-          <ion-label><strong>Período:</strong></ion-label>
-          <ion-select
-            v-model="selectedPeriod"
-            placeholder="Seleccione el período"
-            @ionChange="onPeriodChange"
-          >
-            <ion-select-option
-              v-for="periodo in periodos"
-              :key="periodo.id"
-              :value="periodo.id"
-            >
-              {{ periodo.name }}
-            </ion-select-option>
-          </ion-select>
-        </ion-item>
-
-        <!-- Botón para generar reporte de refuerzos sin presentación o sin entrega -->
-        <div class="ion-padding-horizontal ion-margin-top ion-margin-bottom">
-          <ion-button
-            expand="block"
-            color="warning"
-            @click="abrirReporteRefuerzo"
-          >
-            <ion-icon slot="start" :icon="alertCircleOutline"></ion-icon>
-            Revisar Refuerzos Sin Presentación o Entrega
-          </ion-button>
-        </div>
-
-        <!-- Acordeón de Cursos y Áreas -->
-        <ion-accordion-group>
-          <ion-accordion v-for="curso in cursosUsuario" :key="curso.id">
-            <ion-item slot="header">
-              <ion-label>{{ curso.name }}</ion-label>
-            </ion-item>
-            <div class="ion-padding" slot="content">
-              <ion-accordion-group>
-                <ion-accordion v-for="area in curso.areas" :key="area.id">
-                  <ion-item slot="header">
-                    <ion-label>{{ area.name }}</ion-label>
-                  </ion-item>
-                  <div class="ion-padding" slot="content">
-                    <ion-list>
-                      <ion-item
-                        button
-                        @click="
-                          router.push(
-                            `/admin/notas/${curso.id}/${area.id}/${selectedYear}`
-                          )
-                        "
-                      >
-                        <ion-label>Notas</ion-label>
-                      </ion-item>
-                      <ion-item
-                        button
-                        @click="
-                          router.push(
-                            `/admin/grupos/${curso.id}/${selectedYear}`
-                          )
-                        "
-                      >
-                        <ion-label>Grupos</ion-label>
-                      </ion-item>
-                    </ion-list>
-                  </div>
-                </ion-accordion>
-              </ion-accordion-group>
+  <ion-page class="ion-page qz-courses-page">
+    <ion-content
+      :fullscreen="true"
+      class="qz-courses-content"
+      :force-overscroll="false"
+    >
+      <div class="qz-courses-wrapper">
+        <!-- 1. CABECERA HERO QUEEZY -->
+        <header class="qz-hero-header">
+          <div class="qz-hero-inner">
+            <div class="qz-hero-top-row">
+              <button class="qz-back-btn" @click="goBack" title="Regresar">
+                <ion-icon :icon="arrowBackOutline"></ion-icon>
+              </button>
+              <span class="qz-hero-tag">GESTIÓN ACADÉMICA</span>
             </div>
-          </ion-accordion>
-        </ion-accordion-group>
-      </ion-list>
 
-      <!-- Modal de Reporte de Refuerzo: Sin Respuestas en Quiz o Sin Criterios en Actividad -->
-      <ion-modal :is-open="mostrarModalReporte" @didDismiss="cerrarModalReporte">
-        <ion-header>
-          <ion-toolbar color="primary">
-            <ion-title>Refuerzos: Sin Presentación o Entrega</ion-title>
-            <ion-buttons slot="end">
-              <ion-button @click="cerrarModalReporte">
-                <ion-icon slot="icon-only" :icon="closeOutline"></ion-icon>
-              </ion-button>
-            </ion-buttons>
-          </ion-toolbar>
-        </ion-header>
-        <ion-content class="ion-padding report-modal-content">
-          <div ref="reporteRefContent">
-            <!-- Encabezado del reporte -->
-            <div class="report-header-card">
-              <div class="report-header-info">
-                <h2>Informe de Estudiantes Sin Presentación o Entrega en Refuerzos</h2>
-                <p class="report-subtitle">
-                  Estudiantes vinculados a clases de refuerzo que <strong>no se presentaron al quiz</strong> (sin respuestas) o <strong>no entregaron la actividad</strong> (sin criterios evaluados).
+            <div class="qz-hero-title-row">
+              <div>
+                <h1 class="qz-hero-title">Mis Cursos</h1>
+                <p class="qz-hero-subtitle">
+                  Planillas de notas y organización de grupos por área
                 </p>
-                <div class="chips-row">
-                  <ion-chip color="primary">
-                    <ion-label>Año: <strong>{{ selectedYear }}</strong></ion-label>
-                  </ion-chip>
-                  <ion-chip color="secondary">
-                    <ion-label>Período: <strong>{{ getPeriodoNombre(selectedPeriod) }}</strong></ion-label>
-                  </ion-chip>
-                  <ion-chip
-                    v-if="!cargandoReporte"
-                    :color="totalEstudiantesReporte > 0 ? 'danger' : 'success'"
+              </div>
+            </div>
+
+            <!-- Selector de Año Lectivo y Periodo Centralizado en Hero -->
+            <div class="qz-hero-filters-row">
+              <div class="qz-year-pill-container">
+                <span class="qz-year-label">AÑO LECTIVO:</span>
+                <div class="qz-year-select-wrap">
+                  <ion-icon :icon="calendarOutline"></ion-icon>
+                  <select
+                    v-model="selectedYear"
+                    class="qz-year-select"
+                    @change="getCursoUsuario(selectedYear)"
                   >
-                    <ion-label>
-                      {{
-                        totalEstudiantesReporte > 0
-                          ? `${totalEstudiantesReporte} estudiante(s) con pendientes`
-                          : '¡Todos al día!'
-                      }}
-                    </ion-label>
-                  </ion-chip>
-                </div>
-
-                <!-- Filtro de Segmento -->
-                <div v-if="reporteRefuerzo.length > 0" class="filter-segment no-print ion-margin-top">
-                  <ion-segment v-model="filtroTipo" size="small">
-                    <ion-segment-button value="todos">
-                      <ion-label>Todos ({{ contadorTodos }})</ion-label>
-                    </ion-segment-button>
-                    <ion-segment-button value="quiz">
-                      <ion-label>Quiz sin presentar ({{ contadorSinQuiz }})</ion-label>
-                    </ion-segment-button>
-                    <ion-segment-button value="actividad">
-                      <ion-label>Actividad sin entrega ({{ contadorSinActividad }})</ion-label>
-                    </ion-segment-button>
-                  </ion-segment>
+                    <option v-for="year in years" :key="year" :value="year">
+                      {{ year }}
+                    </option>
+                  </select>
                 </div>
               </div>
 
-              <div class="no-print actions-bar">
-                <ion-button
-                  fill="outline"
-                  size="small"
-                  @click="consultarRefuerzos"
-                  :disabled="cargandoReporte"
-                >
-                  <ion-icon slot="start" :icon="refreshOutline"></ion-icon>
-                  Actualizar
-                </ion-button>
-                <ion-button
-                  v-if="reporteFiltrado.length > 0"
-                  fill="solid"
-                  color="dark"
-                  size="small"
-                  @click="imprimirReporte"
-                >
-                  <ion-icon slot="start" :icon="printOutline"></ion-icon>
-                  Imprimir
-                </ion-button>
-              </div>
-            </div>
-
-            <!-- Indicador de Carga -->
-            <div v-if="cargandoReporte" class="loading-container ion-text-center ion-padding">
-              <ion-spinner name="crescent" color="primary"></ion-spinner>
-              <p><strong>Verificando presentaciones de quizzes y entregas de actividades...</strong></p>
-              <small class="text-muted">Revisando respuestas y criterios evaluados de refuerzo...</small>
-            </div>
-
-            <!-- Estado de Error -->
-            <div v-else-if="errorReporte" class="error-container ion-padding ion-text-center">
-              <ion-icon :icon="alertCircleOutline" color="danger" class="state-icon"></ion-icon>
-              <p>{{ errorReporte }}</p>
-              <ion-button size="small" color="primary" @click="consultarRefuerzos">Reintentar</ion-button>
-            </div>
-
-            <!-- Estado Vacío -->
-            <div v-else-if="reporteFiltrado.length === 0" class="empty-state ion-padding ion-text-center">
-              <ion-icon :icon="checkmarkCircleOutline" color="success" class="state-icon"></ion-icon>
-              <h3>¡Excelente!</h3>
-              <p>Todos los estudiantes vinculados a refuerzos se presentaron a sus quizzes y entregaron sus actividades para este período.</p>
-            </div>
-
-            <!-- Resultados Jerárquicos: Grado -> Área -> Estudiante -->
-            <div v-else class="report-results">
               <div
-                v-for="curso in reporteFiltrado"
-                :key="curso.cursoId"
-                class="course-section"
+                class="qz-year-pill-container"
+                v-if="periodos && periodos.length > 0"
               >
-                <div class="course-header">
-                  <h3 class="course-title">Grado: {{ curso.cursoName }}</h3>
-                  <ion-badge color="medium">{{ curso.totalEstudiantes }} estudiante(s)</ion-badge>
+                <span class="qz-year-label">PERÍODO:</span>
+                <div class="qz-year-select-wrap">
+                  <ion-icon :icon="timeOutline"></ion-icon>
+                  <select
+                    v-model="selectedPeriod"
+                    class="qz-year-select"
+                    @change="onPeriodChange"
+                  >
+                    <option
+                      v-for="periodo in periodos"
+                      :key="periodo.id"
+                      :value="periodo.id"
+                    >
+                      {{ periodo.name }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- 2. CUERPO PRINCIPAL -->
+        <main class="qz-courses-body">
+          <!-- Barra de Búsqueda de Cursos y Áreas -->
+          <div class="qz-search-bar-wrap">
+            <ion-icon :icon="searchOutline" class="qz-search-icon"></ion-icon>
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Buscar por curso o nombre de área..."
+              class="qz-search-input"
+            />
+          </div>
+
+          <!-- Loading State -->
+          <div v-if="cargandoCursos" class="qz-loading-box">
+            <ion-spinner name="crescent" color="primary"></ion-spinner>
+            <span>Cargando cursos asignados...</span>
+          </div>
+
+          <!-- Empty State -->
+          <div v-else-if="filteredCursos.length === 0" class="qz-empty-box">
+            <ion-icon :icon="schoolOutline"></ion-icon>
+            <p v-if="cursosUsuario.length === 0">
+              No se encontraron cursos o asignaciones académicas para el año
+              {{ selectedYear }}.
+            </p>
+            <p v-else>
+              No se encontraron cursos o áreas que coincidan con "{{
+                searchQuery
+              }}".
+            </p>
+          </div>
+
+          <!-- Listado de Cursos Activos -->
+          <div v-else class="qz-courses-list">
+            <div
+              v-for="curso in filteredCursos"
+              :key="curso.id"
+              class="qz-course-card"
+              :class="{
+                'qz-course-card--expanded': isExpanded(curso.id),
+              }"
+            >
+              <!-- Encabezado de la Tarjeta del Curso -->
+              <div
+                class="qz-course-card-header"
+                @click="toggleCourse(curso.id)"
+              >
+                <div class="qz-course-header-left">
+                  <div class="qz-course-icon-squircle">
+                    <ion-icon :icon="schoolOutline"></ion-icon>
+                  </div>
+                  <div>
+                    <h3 class="qz-course-name">{{ curso.name }}</h3>
+                    <span class="qz-course-sub">
+                      {{ (curso.areas || []).length }}
+                      {{
+                        (curso.areas || []).length === 1
+                          ? "área asignada"
+                          : "áreas asignadas"
+                      }}
+                    </span>
+                  </div>
                 </div>
 
-                <div
-                  v-for="area in curso.areas"
-                  :key="area.areaId"
-                  class="area-section"
-                >
-                  <div class="area-header">
-                    <h4 class="area-title">Área: {{ area.areaName }}</h4>
-                  </div>
-
-                  <div
-                    v-for="est in area.estudiantes"
-                    :key="est.id"
-                    class="student-card"
+                <div class="qz-course-header-actions">
+                  <button
+                    class="qz-course-toggle-btn"
+                    @click.stop="toggleCourse(curso.id)"
+                    :title="
+                      isExpanded(curso.id) ? 'Colapsar áreas' : 'Ver áreas'
+                    "
                   >
-                    <div class="student-header">
-                      <span class="student-name">
-                        <strong>{{ est.apellido }} {{ est.nombre }}</strong>
-                      </span>
-                      <ion-badge color="danger">
-                        {{ est.pendientes.length }} pendiente(s)
-                      </ion-badge>
+                    <ion-icon
+                      :icon="
+                        isExpanded(curso.id)
+                          ? chevronUpOutline
+                          : chevronDownOutline
+                      "
+                    ></ion-icon>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Contenido Expandido del Curso: Grid de Áreas -->
+              <div v-if="isExpanded(curso.id)" class="qz-course-card-body">
+                <div
+                  v-if="!curso.areas || curso.areas.length === 0"
+                  class="qz-empty-areas"
+                >
+                  <p>Este curso no tiene áreas asignadas.</p>
+                </div>
+
+                <div v-else class="qz-areas-grid">
+                  <div
+                    v-for="area in curso.areas"
+                    :key="area.id"
+                    class="qz-area-card-item"
+                  >
+                    <div class="qz-area-info-row">
+                      <div class="qz-area-icon-wrap">
+                        <ion-icon :icon="bookOutline"></ion-icon>
+                      </div>
+                      <div class="qz-area-text-wrap">
+                        <h4 class="qz-area-name">{{ area.name }}</h4>
+                        <span class="qz-area-sub">Acciones académicas</span>
+                      </div>
                     </div>
 
-                    <div class="table-responsive">
-                      <table class="report-table">
-                        <thead>
-                          <tr>
-                            <th style="width: 15%;">Tipo</th>
-                            <th style="width: 35%;">Elemento</th>
-                            <th style="width: 25%;">Clase de Refuerzo</th>
-                            <th style="width: 25%; text-align: center;">Estado / Diagnóstico</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr v-for="(item, idx) in est.pendientes" :key="idx">
-                            <td>
-                              <span :class="'tag-type tag-' + item.tipo.toLowerCase()">
-                                <ion-icon :icon="item.tipoIcon" class="tag-icon"></ion-icon>
-                                {{ item.tipo }}
-                              </span>
-                            </td>
-                            <td><strong>{{ item.titulo }}</strong></td>
-                            <td>{{ item.leccion }}</td>
-                            <td style="text-align: center;">
-                              <span :class="'badge-' + item.badgeColor">
-                                {{ item.motivo }}
-                              </span>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
+                    <div class="qz-area-actions-row">
+                      <button
+                        type="button"
+                        class="qz-area-btn qz-btn--notes"
+                        @click="
+                          router.push(
+                            `/admin/notas/${curso.id}/${area.id}/${selectedYear}`,
+                          )
+                        "
+                        title="Ver y calificar planilla de notas"
+                      >
+                        <ion-icon :icon="easelOutline"></ion-icon>
+                        <span>Notas</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        class="qz-area-btn qz-btn--groups"
+                        @click="
+                          router.push(
+                            `/admin/grupos/${curso.id}/${selectedYear}`,
+                          )
+                        "
+                        title="Organizar equipos y grupos del curso"
+                      >
+                        <ion-icon :icon="peopleOutline"></ion-icon>
+                        <span>Grupos</span>
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </ion-content>
-      </ion-modal>
+        </main>
+      </div>
     </ion-content>
   </ion-page>
 </template>
@@ -289,180 +231,83 @@ import {
   periodosGet,
 } from "../globalService";
 import {
-  alertCircleOutline,
-  checkmarkCircleOutline,
-  closeOutline,
-  refreshOutline,
-  printOutline,
-  helpCircleOutline,
-  documentTextOutline,
+  schoolOutline,
+  bookOutline,
+  peopleOutline,
+  calendarOutline,
+  timeOutline,
+  easelOutline,
+  arrowBackOutline,
+  searchOutline,
+  chevronUpOutline,
+  chevronDownOutline,
 } from "ionicons/icons";
 import {
   onIonViewWillEnter,
-  IonLabel,
-  IonItem,
-  IonList,
   IonPage,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
   IonContent,
-  IonSelect,
-  IonSelectOption,
-  IonAccordionGroup,
-  IonAccordion,
-  IonButton,
-  IonButtons,
   IonIcon,
-  IonBadge,
-  IonModal,
   IonSpinner,
-  IonChip,
-  IonSegment,
-  IonSegmentButton,
 } from "@ionic/vue";
 
 export default {
   components: {
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonContent,
     IonPage,
-    IonList,
-    IonItem,
-    IonLabel,
-    IonSelect,
-    IonSelectOption,
-    IonAccordionGroup,
-    IonAccordion,
-    IonButton,
-    IonButtons,
+    IonContent,
     IonIcon,
-    IonBadge,
-    IonModal,
     IonSpinner,
-    IonChip,
-    IonSegment,
-    IonSegmentButton,
   },
   setup() {
     const usuario = ref();
     const currentYear = selectedYearService();
     const years = ref(
-      Array.from({ length: 10 }, (_, i) => currentServerYear() - i)
+      Array.from({ length: 10 }, (_, i) => currentServerYear() - i),
     );
     const selectedYear = ref(currentYear);
     const periodos = ref([]);
     const selectedPeriod = ref();
 
     const cursosUsuario = ref([]);
+    const cargandoCursos = ref(false);
+    const searchQuery = ref("");
+    const expandedCourseIds = ref(new Set());
 
-    // Estados del Reporte
-    const mostrarModalReporte = ref(false);
-    const cargandoReporte = ref(false);
-    const errorReporte = ref(null);
-    const reporteRefuerzo = ref([]);
-    const filtroTipo = ref("todos"); // 'todos', 'quiz', 'actividad'
+    const toggleCourse = (courseId) => {
+      if (expandedCourseIds.value.has(courseId)) {
+        expandedCourseIds.value.delete(courseId);
+      } else {
+        expandedCourseIds.value.add(courseId);
+      }
+    };
 
-    const totalEstudiantesReporte = computed(() => {
-      const studentIds = new Set();
-      reporteRefuerzo.value.forEach((curso) => {
-        curso.areas.forEach((area) => {
-          area.estudiantes.forEach((est) => studentIds.add(est.id));
-        });
+    const isExpanded = (courseId) => expandedCourseIds.value.has(courseId);
+
+    const filteredCursos = computed(() => {
+      if (!cursosUsuario.value) return [];
+      const q = searchQuery.value.trim().toLowerCase();
+      if (!q) return cursosUsuario.value;
+      return cursosUsuario.value.filter((curso) => {
+        const matchCourse = curso.name && curso.name.toLowerCase().includes(q);
+        const matchArea = (curso.areas || []).some(
+          (a) => a.name && a.name.toLowerCase().includes(q),
+        );
+        return matchCourse || matchArea;
       });
-      return studentIds.size;
     });
 
-    const contadorTodos = computed(() => totalEstudiantesReporte.value);
-
-    const contadorSinQuiz = computed(() => {
-      const ids = new Set();
-      reporteRefuerzo.value.forEach((c) =>
-        c.areas.forEach((a) =>
-          a.estudiantes.forEach((e) => {
-            if (e.pendientes.some((p) => p.tipo === "Quiz")) {
-              ids.add(e.id);
-            }
-          })
-        )
-      );
-      return ids.size;
-    });
-
-    const contadorSinActividad = computed(() => {
-      const ids = new Set();
-      reporteRefuerzo.value.forEach((c) =>
-        c.areas.forEach((a) =>
-          a.estudiantes.forEach((e) => {
-            if (e.pendientes.some((p) => p.tipo === "Actividad")) {
-              ids.add(e.id);
-            }
-          })
-        )
-      );
-      return ids.size;
-    });
-
-    const reporteFiltrado = computed(() => {
-      if (filtroTipo.value === "todos") return reporteRefuerzo.value;
-
-      return reporteRefuerzo.value
-        .map((curso) => {
-          const areasFiltradas = curso.areas
-            .map((area) => {
-              const estudiantesFiltrados = area.estudiantes
-                .map((est) => {
-                  const pendientesFiltrados = est.pendientes.filter((p) => {
-                    if (filtroTipo.value === "quiz") {
-                      return p.tipo === "Quiz";
-                    }
-                    if (filtroTipo.value === "actividad") {
-                      return p.tipo === "Actividad";
-                    }
-                    return true;
-                  });
-                  if (pendientesFiltrados.length > 0) {
-                    return { ...est, pendientes: pendientesFiltrados };
-                  }
-                  return null;
-                })
-                .filter((e) => e !== null);
-
-              if (estudiantesFiltrados.length > 0) {
-                return { ...area, estudiantes: estudiantesFiltrados };
-              }
-              return null;
-            })
-            .filter((a) => a !== null);
-
-          if (areasFiltradas.length > 0) {
-            const totalEst = new Set();
-            areasFiltradas.forEach((a) =>
-              a.estudiantes.forEach((e) => totalEst.add(e.id))
-            );
-            return {
-              ...curso,
-              totalEstudiantes: totalEst.size,
-              areas: areasFiltradas,
-            };
-          }
-          return null;
-        })
-        .filter((c) => c !== null);
-    });
-
-    const getPeriodoNombre = (id) => {
-      const p = periodos.value.find((item) => item.id === id);
-      return p ? p.name : "N/A";
+    const goBack = () => {
+      if (window.history.length > 1) {
+        router.back();
+      } else {
+        router.push("/admin/panel");
+      }
     };
 
     const onPeriodChange = () => {
       if (selectedPeriod.value) {
         localStorage.setItem(
           "periodoSelected",
-          JSON.stringify(selectedPeriod.value)
+          JSON.stringify(selectedPeriod.value),
         );
       }
     };
@@ -504,283 +349,73 @@ export default {
     });
 
     const getCursoUsuario = async (year) => {
-      const isAdminView = localStorage.getItem("adminView") === "true";
-
-      if (usuario.value.rol === "admin" && isAdminView) {
-        // Mode: Show EVERYTHING
-        const response = await axios.get(
-          `/courses?instituteId=${usuario.value.institute.id}&exist=true`,
-          tokenHeader()
-        );
-
-        cursosUsuario.value = response.data.map((curso) => ({
-          id: curso.id,
-          name: curso.name,
-          areas: (curso.courseAreas || [])
-            .filter((a) => a.active == 1 || a.active === true || a.active)
-            .map((a) => a.area),
-        }));
-      } else {
-        // Mode: Show only assignments
-        const response = await axios.get(
-          `/users/${usuario.value.id}/courses?year=${year}&active=true`,
-          tokenHeader()
-        );
-
-        const areAAssignments = await axios
-          .get(`/courses/teacher-assignments/${usuario.value.id}`)
-          .then((response) => {
-            return response.data.filter(
-              (assignment) => assignment.active == 1 || assignment.active === true || assignment.active
-            );
-          });
-
-        cursosUsuario.value = response.data.map((curso) => ({
-          id: curso.course.id,
-          name: curso.course.name,
-          areas: isAdminView
-            ? (curso.course.courseAreas || [])
-                .filter((a) => a.active == 1 || a.active === true || a.active)
-                .map((a) => a.area)
-            : areAAssignments
-                .filter((assignment) => assignment.course.id == curso.course.id)
-                .map((assignment) => assignment.area),
-        }));
-      }
-
-      cursosUsuario.value = cursosUsuario.value.sort(
-        (a, b) => parseInt(a.name) - parseInt(b.name)
-      );
-    };
-
-    const abrirReporteRefuerzo = async () => {
-      mostrarModalReporte.value = true;
-      await consultarRefuerzos();
-    };
-
-    const cerrarModalReporte = () => {
-      mostrarModalReporte.value = false;
-    };
-
-    const imprimirReporte = () => {
-      window.print();
-    };
-
-    const consultarRefuerzos = async () => {
-      if (!selectedPeriod.value) {
-        errorReporte.value = "Por favor seleccione un período.";
-        return;
-      }
-      cargandoReporte.value = true;
-      errorReporte.value = null;
-      reporteRefuerzo.value = [];
-
+      cargandoCursos.value = true;
       try {
-        const instId = usuario.value?.institute?.id;
-        const yearVal = selectedYear.value;
-        const periodVal = selectedPeriod.value;
+        const isAdminView = localStorage.getItem("adminView") === "true";
 
-        // Procesar cursos concurrentemente
-        const cursosPromises = cursosUsuario.value.map(async (curso) => {
-          const areasConPendientes = [];
+        if (usuario.value.rol === "admin" && isAdminView) {
+          const response = await axios.get(
+            `/courses?instituteId=${usuario.value.institute.id}&exist=true`,
+            tokenHeader(),
+          );
 
-          for (const area of curso.areas) {
-            // 1. Obtener lecciones de refuerzo para este curso, área, período y año
-            let lessonsUrl = `/lessons?courseId=${curso.id}&areaId=${area.id}&periodId=${periodVal}&year=${yearVal}&exist=true&type=reinforcement`;
-            if (instId) {
-              lessonsUrl += `&instituteId=${instId}`;
-            }
+          cursosUsuario.value = response.data.map((curso) => ({
+            id: curso.id,
+            name: curso.name,
+            areas: (curso.courseAreas || [])
+              .filter((a) => a.active == 1 || a.active === true || a.active)
+              .map((a) => a.area),
+          }));
+        } else {
+          const response = await axios.get(
+            `/users/${usuario.value.id}/courses?year=${year}&active=true`,
+            tokenHeader(),
+          );
 
-            const lessonsRes = await axios
-              .get(lessonsUrl, tokenHeader())
-              .catch(() => ({ data: [] }));
-            const reinforcementLessons = lessonsRes.data || [];
+          const areAAssignments = await axios
+            .get(`/courses/teacher-assignments/${usuario.value.id}`)
+            .then((response) => {
+              return response.data.filter(
+                (assignment) =>
+                  assignment.active == 1 ||
+                  assignment.active === true ||
+                  assignment.active,
+              );
+            });
 
-            if (reinforcementLessons.length === 0) {
-              continue;
-            }
+          cursosUsuario.value = (response.data || [])
+            .filter((curso) => curso && curso.course)
+            .map((curso) => ({
+              id: curso.course.id,
+              name: curso.course.name,
+              areas: isAdminView
+                ? (curso.course.courseAreas || [])
+                    .filter(
+                      (a) => a.active == 1 || a.active === true || a.active,
+                    )
+                    .map((a) => a.area)
+                : areAAssignments
+                    .filter(
+                      (assignment) =>
+                        assignment.course &&
+                        assignment.course.id == curso.course.id,
+                    )
+                    .map((assignment) => assignment.area),
+            }));
+        }
 
-            // Mapa para acumular estudiantes con pendientes en esta área
-            const studentsMap = new Map();
+        cursosUsuario.value = cursosUsuario.value.sort(
+          (a, b) => parseInt(a.name) - parseInt(b.name),
+        );
 
-            // 2. Revisar cada lección de refuerzo
-            for (const lesson of reinforcementLessons) {
-              const [studentsRes, actRes, quizRes] = await Promise.all([
-                axios
-                  .get(`/reinforcement/lesson/${lesson.id}`, tokenHeader())
-                  .catch(() => ({ data: [] })),
-                axios
-                  .get(`/activities?lessonId=${lesson.id}`, tokenHeader())
-                  .catch(() => ({ data: [] })),
-                axios
-                  .get(`/quizzes?lessonId=${lesson.id}`, tokenHeader())
-                  .catch(() =>
-                    axios
-                      .get(`/lessons/${lesson.id}/quizzes`, tokenHeader())
-                      .catch(() => ({ data: [] }))
-                  ),
-              ]);
-
-              const assignedStudents = (studentsRes.data || [])
-                .map((r) => r.student)
-                .filter((s) => !!s);
-
-              if (assignedStudents.length === 0) continue;
-
-              const activities = actRes.data || [];
-              const quizzes = quizRes.data || [];
-
-              if (activities.length === 0 && quizzes.length === 0) {
-                continue;
-              }
-
-              // 3. Consultar en paralelo:
-              // - Criterios evaluados de cada actividad (para verificar quiénes entregaron)
-              // - Respuestas de cada quiz (para verificar quiénes se presentaron)
-              const [activityScoresMap, quizAnswersMap] = await Promise.all([
-                (async () => {
-                  const map = new Map();
-                  await Promise.all(
-                    activities.map(async (act) => {
-                      try {
-                        const sRes = await axios.get(
-                          `/student-criterion-scores/getAll?activityId=${act.id}`,
-                          tokenHeader()
-                        );
-                        map.set(act.id, sRes.data || []);
-                      } catch (e) {
-                        map.set(act.id, []);
-                      }
-                    })
-                  );
-                  return map;
-                })(),
-                (async () => {
-                  const map = new Map();
-                  await Promise.all(
-                    quizzes.map(async (quiz) => {
-                      try {
-                        const aRes = await axios.get(
-                          `/quizzes/${quiz.id}/answers`,
-                          tokenHeader()
-                        );
-                        map.set(quiz.id, aRes.data || []);
-                      } catch (e) {
-                        map.set(quiz.id, []);
-                      }
-                    })
-                  );
-                  return map;
-                })(),
-              ]);
-
-              // 4. Evaluar cada estudiante asignado al refuerzo
-              for (const student of assignedStudents) {
-                const pendientes = [];
-
-                // CASO 1: Quiz sin respuestas (El estudiante NO se presentó)
-                for (const quiz of quizzes) {
-                  const answers = quizAnswersMap.get(quiz.id) || [];
-                  const presentoQuiz = answers.some(
-                    (ans) => ans.user?.id === student.id
-                  );
-
-                  if (!presentoQuiz) {
-                    pendientes.push({
-                      tipo: "Quiz",
-                      tipoIcon: helpCircleOutline,
-                      titulo: quiz.title,
-                      leccion: lesson.topic,
-                      motivo: "No se presentó (Sin respuestas)",
-                      badgeColor: "danger",
-                    });
-                  }
-                }
-
-                // CASO 2: Actividad sin criterios evaluados (El estudiante NO entregó)
-                for (const act of activities) {
-                  const scores = activityScoresMap.get(act.id) || [];
-                  const tieneCriterios = scores.some(
-                    (score) => score.student?.id === student.id
-                  );
-
-                  if (!tieneCriterios) {
-                    pendientes.push({
-                      tipo: "Actividad",
-                      tipoIcon: documentTextOutline,
-                      titulo: act.title,
-                      leccion: lesson.topic,
-                      motivo: "No entregó (Sin criterios evaluados)",
-                      badgeColor: "warning",
-                    });
-                  }
-                }
-
-                // Si tiene al menos un quiz sin presentar o una actividad sin entrega
-                if (pendientes.length > 0) {
-                  if (!studentsMap.has(student.id)) {
-                    studentsMap.set(student.id, {
-                      id: student.id,
-                      nombre: student.name,
-                      apellido: student.lastName,
-                      pendientes: [...pendientes],
-                    });
-                  } else {
-                    studentsMap
-                      .get(student.id)
-                      .pendientes.push(...pendientes);
-                  }
-                }
-              }
-            }
-
-            if (studentsMap.size > 0) {
-              const estudiantesOrdenados = Array.from(
-                studentsMap.values()
-              ).sort((a, b) => {
-                const apeA = (a.apellido || "").toLowerCase();
-                const apeB = (b.apellido || "").toLowerCase();
-                if (apeA !== apeB) return apeA.localeCompare(apeB);
-                return (a.nombre || "").localeCompare(b.nombre || "");
-              });
-
-              areasConPendientes.push({
-                areaId: area.id,
-                areaName: area.name,
-                estudiantes: estudiantesOrdenados,
-              });
-            }
-          }
-
-          if (areasConPendientes.length > 0) {
-            areasConPendientes.sort((a, b) =>
-              a.areaName.localeCompare(b.areaName)
-            );
-            const totalEstudiantesCurso = new Set();
-            areasConPendientes.forEach((a) =>
-              a.estudiantes.forEach((s) => totalEstudiantesCurso.add(s.id))
-            );
-
-            return {
-              cursoId: curso.id,
-              cursoName: curso.name,
-              totalEstudiantes: totalEstudiantesCurso.size,
-              areas: areasConPendientes,
-            };
-          }
-          return null;
-        });
-
-        const resultados = await Promise.all(cursosPromises);
-        reporteRefuerzo.value = resultados
-          .filter((c) => c !== null)
-          .sort((a, b) => parseInt(a.cursoName) - parseInt(b.cursoName));
-      } catch (error) {
-        console.error("Error al generar reporte de refuerzo:", error);
-        errorReporte.value =
-          "Ocurrió un error al consultar las clases de refuerzo. Intente nuevamente.";
+        // Auto-expand all loaded courses
+        if (cursosUsuario.value.length > 0) {
+          cursosUsuario.value.forEach((c) => expandedCourseIds.value.add(c.id));
+        }
+      } catch (e) {
+        console.error("Error al cargar cursos:", e);
       } finally {
-        cargandoReporte.value = false;
+        cargandoCursos.value = false;
       }
     };
 
@@ -788,518 +423,921 @@ export default {
       usuario,
       router,
       cursosUsuario,
+      filteredCursos,
+      cargandoCursos,
+      searchQuery,
       years,
       selectedYear,
       periodos,
       selectedPeriod,
+      expandedCourseIds,
+      toggleCourse,
+      isExpanded,
+      goBack,
       onPeriodChange,
       getCursoUsuario,
-      // Reporte
-      mostrarModalReporte,
-      cargandoReporte,
-      errorReporte,
-      reporteRefuerzo,
-      reporteFiltrado,
-      filtroTipo,
-      totalEstudiantesReporte,
-      contadorTodos,
-      contadorSinQuiz,
-      contadorSinActividad,
-      abrirReporteRefuerzo,
-      cerrarModalReporte,
-      consultarRefuerzos,
-      imprimirReporte,
-      getPeriodoNombre,
       // Icons
-      alertCircleOutline,
-      checkmarkCircleOutline,
-      closeOutline,
-      refreshOutline,
-      printOutline,
-      helpCircleOutline,
-      documentTextOutline,
+      schoolOutline,
+      bookOutline,
+      peopleOutline,
+      calendarOutline,
+      timeOutline,
+      easelOutline,
+      arrowBackOutline,
+      searchOutline,
+      chevronUpOutline,
+      chevronDownOutline,
     };
   },
 };
 </script>
 
 <style scoped>
-.report-modal-content {
-  --background: #f8f9fa;
+/* ==========================================================================
+   QUEEZY DESIGN SYSTEM: MIS CURSOS
+   Consistent with gestionUsuarios.vue and GestionAcademica.vue
+   ========================================================================== */
+
+.qz-courses-page {
+  --background: #f9f9ff;
+  background-color: #f9f9ff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
 }
 
-.report-header-card {
-  background: white;
-  border-radius: 12px;
-  padding: 18px 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+.qz-courses-content {
+  --background: transparent;
+  --keyboard-offset: 0px !important;
+}
+
+.qz-courses-wrapper {
+  max-width: 960px;
+  margin: 0 auto;
+  padding-bottom: 70px;
+  box-sizing: border-box;
+}
+
+/* 1. HERO HEADER QUEEZY */
+.qz-hero-header {
+  background: linear-gradient(135deg, #6a5ae0 0%, #8275f0 100%);
+  padding: 36px 24px 28px;
+  border-bottom-left-radius: 32px;
+  border-bottom-right-radius: 32px;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(106, 90, 224, 0.2);
+}
+
+.qz-hero-inner {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.qz-hero-top-row {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.qz-back-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+}
+
+.qz-back-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.qz-hero-tag {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  backdrop-filter: blur(8px);
+}
+
+.qz-hero-title-row {
+  display: flex;
   align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
   flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.qz-hero-title {
+  font-size: 26px;
+  font-weight: 800;
+  margin: 0 0 6px;
+  letter-spacing: -0.5px;
+  color: #ffffff;
+}
+
+.qz-hero-subtitle {
+  font-size: 14px;
+  margin: 0;
+  opacity: 0.9;
+  line-height: 1.4;
+  max-width: 580px;
+  color: #ffffff;
+}
+
+/* Filtros en el Hero (Año Lectivo y Periodo) */
+.qz-hero-filters-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.qz-year-pill-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.18);
+  padding: 6px 14px;
+  border-radius: 14px;
+  width: fit-content;
+  backdrop-filter: blur(6px);
+  white-space: nowrap !important;
+  flex-shrink: 0;
+}
+
+.qz-year-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+}
+
+.qz-year-select-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #ffffff;
+}
+
+.qz-year-select-wrap ion-icon {
+  font-size: 15px;
+}
+
+.qz-year-select {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+}
+
+.qz-year-select option {
+  background: #6a5ae0;
+  color: #ffffff;
+}
+
+/* 2. BODY PRINCIPAL */
+.qz-courses-body {
+  padding: 20px 18px 0;
+}
+
+/* Barra de Búsqueda */
+.qz-search-bar-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.qz-search-icon {
+  position: absolute;
+  left: 16px;
+  font-size: 18px;
+  color: #858494;
+  pointer-events: none;
+}
+
+.qz-search-input {
+  width: 100%;
+  padding: 13px 18px 13px 44px;
+  background: #ffffff;
+  border: 1.5px solid rgba(106, 90, 224, 0.12);
+  border-radius: 16px;
+  font-size: 14px;
+  color: #110d26;
+  outline: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.qz-search-input:focus {
+  border-color: #6a5ae0;
+  box-shadow: 0 0 0 3px rgba(106, 90, 224, 0.15);
+}
+
+/* Loading & Empty States */
+.qz-loading-box,
+.qz-empty-box {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 40px 20px;
+  text-align: center;
+  border: 1.5px solid rgba(106, 90, 224, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #858494;
+  font-size: 14px;
+}
+
+.qz-empty-box ion-icon {
+  font-size: 42px;
+  color: #6a5ae0;
+  opacity: 0.6;
+}
+
+/* 3. LISTADO DE TARJETAS DE CURSO */
+.qz-courses-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.qz-course-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1.5px solid rgba(106, 90, 224, 0.1);
+  box-shadow: 0 3px 12px rgba(106, 90, 224, 0.04);
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.qz-course-card--expanded {
+  border-color: rgba(106, 90, 224, 0.35);
+  box-shadow: 0 8px 24px rgba(106, 90, 224, 0.1);
+}
+
+.qz-course-card-header {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+}
+
+.qz-course-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.qz-course-icon-squircle {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: #efeefc;
+  color: #6a5ae0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.qz-course-name {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #110d26;
+}
+
+.qz-course-sub {
+  font-size: 12px;
+  color: #858494;
+  margin-top: 2px;
+  display: block;
+}
+
+.qz-course-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.qz-course-toggle-btn {
+  background: #f4f3fd;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  color: #6a5ae0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.qz-course-toggle-btn:hover {
+  background: #e9e6fd;
+}
+
+/* Cuerpo de la Tarjeta del Curso */
+.qz-course-card-body {
+  padding: 16px 20px 20px;
+  border-top: 1px solid rgba(106, 90, 224, 0.08);
+  background: #faf9ff;
+}
+
+.qz-empty-areas {
+  padding: 16px;
+  text-align: center;
+  color: #858494;
+  font-size: 13px;
+}
+
+/* 4. GRID DE ÁREAS */
+.qz-areas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 12px;
 }
 
-.report-header-info {
-  flex: 1;
-  min-width: 280px;
-}
-
-.report-header-info h2 {
-  margin: 0 0 6px 0;
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: #1a1a1a;
-}
-
-.report-subtitle {
-  margin: 0 0 12px 0;
-  color: #555;
-  font-size: 0.92rem;
-  line-height: 1.45;
-}
-
-.chips-row {
+.qz-area-card-item {
+  background: #ffffff;
+  border: 1.5px solid rgba(106, 90, 224, 0.1);
+  border-radius: 16px;
+  padding: 14px 16px;
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform 0.15s ease, border-color 0.15s ease;
 }
 
-.filter-segment {
-  max-width: 540px;
-  margin-top: 14px;
+.qz-area-card-item:hover {
+  border-color: #cfccfb;
+  transform: translateY(-2px);
 }
 
-.actions-bar {
+.qz-area-info-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.qz-area-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #efeefc;
+  color: #6a5ae0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.qz-area-text-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.qz-area-name {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #110d26;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qz-area-sub {
+  font-size: 11.5px;
+  color: #858494;
+}
+
+.qz-area-actions-row {
   display: flex;
   gap: 8px;
-  align-items: center;
 }
 
-.loading-container {
-  background: white;
-  border-radius: 12px;
-  padding: 40px 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.loading-container p {
-  margin-top: 15px;
-  font-size: 1.1rem;
-  color: #333;
-}
-
-.text-muted {
-  color: #888;
-}
-
-.state-icon {
-  font-size: 3.5rem;
-  margin-bottom: 10px;
-}
-
-.empty-state,
-.error-container {
-  background: white;
-  border-radius: 12px;
-  padding: 40px 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.empty-state h3 {
-  margin: 10px 0 6px 0;
-  font-weight: 700;
-  color: #2e7d32;
-}
-
-.empty-state p,
-.error-container p {
-  color: #555;
-  max-width: 500px;
-  margin: 0 auto 15px auto;
-  font-size: 1rem;
-}
-
-/* Secciones de Grado */
-.course-section {
-  background: white;
-  border-radius: 12px;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  overflow: hidden;
-  border: 1px solid #e9ecef;
-}
-
-.course-header {
-  background: #2b3a4a;
-  color: white;
-  padding: 14px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.course-title {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 700;
-}
-
-/* Secciones de Área */
-.area-section {
-  padding: 16px 20px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.area-section:last-child {
-  border-bottom: none;
-}
-
-.area-header {
-  margin-bottom: 14px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #e2e8f0;
-}
-
-.area-title {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #2c5282;
-}
-
-/* Tarjeta de Estudiante */
-.student-card {
-  background: #fafbfc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  margin-bottom: 14px;
-  overflow: hidden;
-}
-
-.student-card:last-child {
-  margin-bottom: 0;
-}
-
-.student-header {
-  padding: 10px 16px;
-  background: #edf2f7;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.student-name {
-  font-size: 1rem;
-  color: #2d3748;
-}
-
-/* Tablas */
-.table-responsive {
-  width: 100%;
-  overflow-x: auto;
-}
-
-.report-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.92rem;
-}
-
-.report-table th {
-  background: #f7fafc;
-  color: #4a5568;
-  font-weight: 600;
-  padding: 10px 14px;
-  text-align: left;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.report-table td {
-  padding: 10px 14px;
-  border-bottom: 1px solid #edf2f7;
-  color: #2d3748;
-  vertical-align: middle;
-}
-
-.report-table tr:last-child td {
-  border-bottom: none;
-}
-
-/* Tags de Tipo (Quiz vs Actividad) */
-.tag-type {
+.qz-area-btn {
+  flex: 1;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 0.82rem;
-  font-weight: 600;
-}
-
-.tag-icon {
-  font-size: 0.95rem;
-}
-
-.tag-quiz {
-  background: #f3e8ff;
-  color: #6b21a8;
-  border: 1px solid #e9d5ff;
-}
-
-.tag-activity {
-  background: #e0f2fe;
-  color: #0369a1;
-  border: 1px solid #bae6fd;
-}
-
-/* Badges de Motivo / Diagnóstico */
-.badge-danger {
-  display: inline-block;
-  padding: 4px 10px;
-  background: #fed7d7;
-  color: #9b2c2c;
-  border: 1px solid #feb2b2;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
   border-radius: 12px;
+  font-size: 12.5px;
   font-weight: 700;
-  font-size: 0.8rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.badge-warning {
-  display: inline-block;
-  padding: 4px 10px;
-  background: #fefcbf;
-  color: #975a16;
-  border: 1px solid #faf089;
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: 0.8rem;
+.qz-area-btn:active {
+  transform: scale(0.97);
 }
 
-/* Estilos de Impresión */
-@media print {
-  body * {
-    visibility: hidden;
-  }
+.qz-btn--notes {
+  background: #efeefc;
+  color: #6a5ae0;
+  border: 1px solid rgba(106, 90, 224, 0.2);
+}
 
-  .report-modal-content,
-  .report-modal-content * {
-    visibility: visible;
-  }
+.qz-btn--notes:hover {
+  background: #6a5ae0;
+  color: #ffffff;
+}
 
-  .no-print {
-    display: none !important;
-  }
+.qz-btn--groups {
+  background: #f0f9ff;
+  color: #0284c7;
+  border: 1px solid rgba(2, 132, 199, 0.25);
+}
 
-  .report-modal-content {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 10px;
-    background: white;
-    color: black;
-  }
-
-  .course-section {
-    page-break-inside: avoid;
-    box-shadow: none;
-    border: 1px solid #ccc;
-    margin-bottom: 20px;
-  }
-
-  .student-card {
-    page-break-inside: avoid;
-    border: 1px solid #ccc;
-  }
-
-  .report-table th,
-  .report-table td {
-    border: 1px solid #ddd;
-  }
+.qz-btn--groups:hover {
+  background: #0284c7;
+  color: #ffffff;
 }
 
 /* ==========================================================================
-   MODO OSCURO (DARK MODE)
+   5. MODO OSCURO (DARK MODE) COMPLETO QUEEZY
+   Matching gestionUsuarios.vue & GestionAcademica.vue
    ========================================================================== */
+
 @media (prefers-color-scheme: dark) {
-  .report-modal-content {
-    --background: #120f24;
-    color: #f7f7fd;
+  .qz-courses-page {
+    --background: #110d26;
+    background-color: #110d26;
   }
-  .report-header-card {
+
+  .qz-courses-content {
+    --background: #110d26;
+  }
+
+  .qz-hero-header {
+    background: linear-gradient(135deg, #1d1838 0%, #29204d 100%);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  .qz-hero-tag {
+    background: rgba(255, 255, 255, 0.12);
+    color: #b5a9ff;
+    border: 1px solid rgba(181, 169, 255, 0.3);
+  }
+
+  .qz-back-btn {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .qz-back-btn:hover {
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  .qz-year-pill-container {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .qz-year-select option {
     background: #1d1838;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #ffffff;
   }
-  .report-header-info h2 {
-    color: #f7f7fd;
-  }
-  .report-subtitle {
-    color: #9e9bb8;
-  }
-  .loading-container,
-  .empty-state,
-  .error-container {
-    background: #1d1838;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-  }
-  .loading-container p {
-    color: #f7f7fd;
-  }
-  .course-section {
-    background: #1d1838;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  }
-  .course-header {
-    background: #28214b;
-    color: #f7f7fd;
-  }
-  .area-section {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  }
-  .area-header {
-    border-bottom: 2px solid rgba(255, 255, 255, 0.12);
-  }
-  .area-title {
-    color: #a39bf0;
-  }
-  .student-card {
+
+  .qz-search-input {
     background: #231d42;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
   }
-  .student-header {
-    background: #2a2254;
+
+  .qz-search-icon {
+    color: #a49fc4;
   }
-  .student-name {
-    color: #f7f7fd;
+
+  .qz-loading-box,
+  .qz-empty-box {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #a49fc4;
   }
-  .report-table th {
-    background: #28214b;
-    color: #f7f7fd;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+  .qz-empty-box ion-icon {
+    color: #b5a9ff;
   }
-  .report-table td {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    color: #f7f7fd;
+
+  .qz-course-card {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .qz-course-card--expanded {
+    border-color: rgba(106, 90, 224, 0.6);
+  }
+
+  .qz-course-name {
+    color: #ffffff;
+  }
+
+  .qz-course-sub {
+    color: #a49fc4;
+  }
+
+  .qz-course-icon-squircle {
+    background: #2b2254;
+    color: #b5a9ff;
+  }
+
+  .qz-course-toggle-btn {
+    background: #241d42;
+    color: #b5a9ff;
+  }
+
+  .qz-course-toggle-btn:hover {
+    background: #2c2550;
+    color: #ffffff;
+  }
+
+  .qz-course-card-body {
+    background: #181430;
+    border-top-color: rgba(255, 255, 255, 0.06);
+  }
+
+  .qz-empty-areas {
+    color: #a49fc4;
+  }
+
+  .qz-area-card-item {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.06);
+  }
+
+  .qz-area-card-item:hover {
+    border-color: rgba(106, 90, 224, 0.4);
+  }
+
+  .qz-area-icon-wrap {
+    background: #2b2254;
+    color: #b5a9ff;
+  }
+
+  .qz-area-name {
+    color: #ffffff;
+  }
+
+  .qz-area-sub {
+    color: #a49fc4;
+  }
+
+  .qz-btn--notes {
+    background: #2b2254;
+    color: #b5a9ff;
+    border: 1px solid rgba(106, 90, 224, 0.3);
+  }
+
+  .qz-btn--notes:hover {
+    background: #6a5ae0;
+    color: #ffffff;
+  }
+
+  .qz-btn--groups {
+    background: rgba(2, 132, 199, 0.2);
+    color: #7dd3fc;
+    border: 1px solid rgba(2, 132, 199, 0.35);
+  }
+
+  .qz-btn--groups:hover {
+    background: #0284c7;
+    color: #ffffff;
   }
 }
 
-:global(body.dark) .report-modal-content,
-:global(html.dark) .report-modal-content,
-:global(.dark) .report-modal-content {
-  --background: #120f24;
-  color: #f7f7fd;
+/* Explicit class selectors for dark mode */
+:global(body.dark) .qz-courses-page,
+:global(html.dark) .qz-courses-page,
+:global(.dark) .qz-courses-page {
+  --background: #110d26;
+  background-color: #110d26;
 }
 
-:global(body.dark) .report-header-card,
-:global(html.dark) .report-header-card,
-:global(.dark) .report-header-card {
+:global(body.dark) .qz-courses-content,
+:global(html.dark) .qz-courses-content,
+:global(.dark) .qz-courses-content {
+  --background: #110d26;
+}
+
+:global(body.dark) .qz-hero-header,
+:global(html.dark) .qz-hero-header,
+:global(.dark) .qz-hero-header {
+  background: linear-gradient(135deg, #1d1838 0%, #29204d 100%);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+}
+
+:global(body.dark) .qz-hero-tag,
+:global(html.dark) .qz-hero-tag,
+:global(.dark) .qz-hero-tag {
+  background: rgba(255, 255, 255, 0.12);
+  color: #b5a9ff;
+  border: 1px solid rgba(181, 169, 255, 0.3);
+}
+
+:global(body.dark) .qz-back-btn,
+:global(html.dark) .qz-back-btn,
+:global(.dark) .qz-back-btn {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+:global(body.dark) .qz-back-btn:hover,
+:global(html.dark) .qz-back-btn:hover,
+:global(.dark) .qz-back-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+:global(body.dark) .qz-year-pill-container,
+:global(html.dark) .qz-year-pill-container,
+:global(.dark) .qz-year-pill-container {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+:global(body.dark) .qz-year-select option,
+:global(html.dark) .qz-year-select option,
+:global(.dark) .qz-year-select option {
   background: #1d1838;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #ffffff;
 }
 
-:global(body.dark) .report-header-info h2,
-:global(html.dark) .report-header-info h2,
-:global(.dark) .report-header-info h2 {
-  color: #f7f7fd;
-}
-
-:global(body.dark) .report-subtitle,
-:global(html.dark) .report-subtitle,
-:global(.dark) .report-subtitle {
-  color: #9e9bb8;
-}
-
-:global(body.dark) .loading-container,
-:global(html.dark) .loading-container,
-:global(.dark) .loading-container,
-:global(body.dark) .empty-state,
-:global(html.dark) .empty-state,
-:global(.dark) .empty-state,
-:global(body.dark) .error-container,
-:global(html.dark) .error-container,
-:global(.dark) .error-container {
-  background: #1d1838;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-:global(body.dark) .loading-container p,
-:global(html.dark) .loading-container p,
-:global(.dark) .loading-container p {
-  color: #f7f7fd;
-}
-
-:global(body.dark) .course-section,
-:global(html.dark) .course-section,
-:global(.dark) .course-section {
-  background: #1d1838;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-:global(body.dark) .course-header,
-:global(html.dark) .course-header,
-:global(.dark) .course-header {
-  background: #28214b;
-  color: #f7f7fd;
-}
-
-:global(body.dark) .area-section,
-:global(html.dark) .area-section,
-:global(.dark) .area-section {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-:global(body.dark) .area-header,
-:global(html.dark) .area-header,
-:global(.dark) .area-header {
-  border-bottom: 2px solid rgba(255, 255, 255, 0.12);
-}
-
-:global(body.dark) .area-title,
-:global(html.dark) .area-title,
-:global(.dark) .area-title {
-  color: #a39bf0;
-}
-
-:global(body.dark) .student-card,
-:global(html.dark) .student-card,
-:global(.dark) .student-card {
+:global(body.dark) .qz-search-input,
+:global(html.dark) .qz-search-input,
+:global(.dark) .qz-search-input {
   background: #231d42;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
 }
 
-:global(body.dark) .student-header,
-:global(html.dark) .student-header,
-:global(.dark) .student-header {
-  background: #2a2254;
+:global(body.dark) .qz-search-icon,
+:global(html.dark) .qz-search-icon,
+:global(.dark) .qz-search-icon {
+  color: #a49fc4;
 }
 
-:global(body.dark) .student-name,
-:global(html.dark) .student-name,
-:global(.dark) .student-name {
-  color: #f7f7fd;
+:global(body.dark) .qz-loading-box,
+:global(html.dark) .qz-loading-box,
+:global(.dark) .qz-loading-box,
+:global(body.dark) .qz-empty-box,
+:global(html.dark) .qz-empty-box,
+:global(.dark) .qz-empty-box {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #a49fc4;
 }
 
-:global(body.dark) .report-table th,
-:global(html.dark) .report-table th,
-:global(.dark) .report-table th {
-  background: #28214b;
-  color: #f7f7fd;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+:global(body.dark) .qz-empty-box ion-icon,
+:global(html.dark) .qz-empty-box ion-icon,
+:global(.dark) .qz-empty-box ion-icon {
+  color: #b5a9ff;
 }
 
-:global(body.dark) .report-table td,
-:global(html.dark) .report-table td,
-:global(.dark) .report-table td {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  color: #f7f7fd;
+:global(body.dark) .qz-course-card,
+:global(html.dark) .qz-course-card,
+:global(.dark) .qz-course-card {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-course-card--expanded,
+:global(html.dark) .qz-course-card--expanded,
+:global(.dark) .qz-course-card--expanded {
+  border-color: rgba(106, 90, 224, 0.6);
+}
+
+:global(body.dark) .qz-course-name,
+:global(html.dark) .qz-course-name,
+:global(.dark) .qz-course-name {
+  color: #ffffff;
+}
+
+:global(body.dark) .qz-course-sub,
+:global(html.dark) .qz-course-sub,
+:global(.dark) .qz-course-sub {
+  color: #a49fc4;
+}
+
+:global(body.dark) .qz-course-icon-squircle,
+:global(html.dark) .qz-course-icon-squircle,
+:global(.dark) .qz-course-icon-squircle {
+  background: #2b2254;
+  color: #b5a9ff;
+}
+
+:global(body.dark) .qz-course-toggle-btn,
+:global(html.dark) .qz-course-toggle-btn,
+:global(.dark) .qz-course-toggle-btn {
+  background: #241d42;
+  color: #b5a9ff;
+}
+
+:global(body.dark) .qz-course-toggle-btn:hover,
+:global(html.dark) .qz-course-toggle-btn:hover,
+:global(.dark) .qz-course-toggle-btn:hover {
+  background: #2c2550;
+  color: #ffffff;
+}
+
+:global(body.dark) .qz-course-card-body,
+:global(html.dark) .qz-course-card-body,
+:global(.dark) .qz-course-card-body {
+  background: #181430;
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+:global(body.dark) .qz-empty-areas,
+:global(html.dark) .qz-empty-areas,
+:global(.dark) .qz-empty-areas {
+  color: #a49fc4;
+}
+
+:global(body.dark) .qz-area-card-item,
+:global(html.dark) .qz-area-card-item,
+:global(.dark) .qz-area-card-item {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+:global(body.dark) .qz-area-card-item:hover,
+:global(html.dark) .qz-area-card-item:hover,
+:global(.dark) .qz-area-card-item:hover {
+  border-color: rgba(106, 90, 224, 0.4);
+}
+
+:global(body.dark) .qz-area-icon-wrap,
+:global(html.dark) .qz-area-icon-wrap,
+:global(.dark) .qz-area-icon-wrap {
+  background: #2b2254;
+  color: #b5a9ff;
+}
+
+:global(body.dark) .qz-area-name,
+:global(html.dark) .qz-area-name,
+:global(.dark) .qz-area-name {
+  color: #ffffff;
+}
+
+:global(body.dark) .qz-area-sub,
+:global(html.dark) .qz-area-sub,
+:global(.dark) .qz-area-sub {
+  color: #a49fc4;
+}
+
+:global(body.dark) .qz-btn--notes,
+:global(html.dark) .qz-btn--notes,
+:global(.dark) .qz-btn--notes {
+  background: #2b2254;
+  color: #b5a9ff;
+  border: 1px solid rgba(106, 90, 224, 0.3);
+}
+
+:global(body.dark) .qz-btn--notes:hover,
+:global(html.dark) .qz-btn--notes:hover,
+:global(.dark) .qz-btn--notes:hover {
+  background: #6a5ae0;
+  color: #ffffff;
+}
+
+:global(body.dark) .qz-btn--groups,
+:global(html.dark) .qz-btn--groups,
+:global(.dark) .qz-btn--groups {
+  background: rgba(2, 132, 199, 0.2);
+  color: #7dd3fc;
+  border: 1px solid rgba(2, 132, 199, 0.35);
+}
+
+:global(body.dark) .qz-btn--groups:hover,
+:global(html.dark) .qz-btn--groups:hover,
+:global(.dark) .qz-btn--groups:hover {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .qz-hero-header {
+    padding: 20px 14px 18px;
+    border-bottom-left-radius: 24px;
+    border-bottom-right-radius: 24px;
+  }
+
+  .qz-hero-title {
+    font-size: 20px;
+  }
+
+  .qz-hero-subtitle {
+    font-size: 12px;
+  }
+
+  .qz-hero-filters-row {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .qz-year-pill-container {
+    padding: 5px 10px;
+    font-size: 10.5px;
+    gap: 6px;
+    white-space: nowrap !important;
+    flex-shrink: 0;
+  }
+
+  .qz-year-label {
+    font-size: 10px;
+  }
+
+  .qz-year-select {
+    font-size: 13px;
+  }
+
+  .qz-courses-body {
+    padding: 14px 12px 0;
+  }
+
+  .qz-search-bar-wrap {
+    margin-bottom: 14px;
+  }
+
+  .qz-search-input {
+    padding: 11px 16px 11px 40px;
+    font-size: 13px;
+    border-radius: 14px;
+  }
+
+  .qz-course-card-header {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .qz-course-icon-squircle {
+    width: 38px;
+    height: 38px;
+    font-size: 18px;
+    border-radius: 12px;
+  }
+
+  .qz-course-name {
+    font-size: 15px;
+  }
+
+  .qz-course-sub {
+    font-size: 11px;
+  }
+
+  .qz-course-toggle-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+
+  .qz-course-card-body {
+    padding: 12px 14px 16px;
+  }
+
+  .qz-areas-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .qz-area-card-item {
+    padding: 12px 14px;
+    gap: 10px;
+    border-radius: 14px;
+  }
+
+  .qz-area-btn {
+    height: 36px;
+    font-size: 12px;
+  }
 }
 </style>

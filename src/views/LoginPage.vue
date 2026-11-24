@@ -227,13 +227,15 @@ export default {
         const coursesResponse = await axios.get(
           `/users/${usuarioGet().id}/courses`
         );
-        const cursosUsuario = coursesResponse.data.map((asignacion) => ({
-          name: asignacion.course.name,
-          id: asignacion.course.id,
-          year: asignacion.year,
-          active: asignacion.active,
-          rol: asignacion.rol,
-        }));
+        const cursosUsuario = (coursesResponse.data || [])
+          .filter((asignacion) => asignacion && asignacion.course)
+          .map((asignacion) => ({
+            name: asignacion.course.name,
+            id: asignacion.course.id,
+            year: asignacion.year,
+            active: asignacion.active,
+            rol: asignacion.rol,
+          }));
         localStorage.setItem("cursosUsuario", JSON.stringify(cursosUsuario));
 
         // Obtener año / tiempo del servidor
@@ -247,7 +249,7 @@ export default {
         const periodsResponse = await axios.get(
           `/periods?instituteId=${usuarioGet().institute.id}`
         );
-        const periodos = periodsResponse.data.map((periodo) => ({
+        const periodos = (periodsResponse.data || []).map((periodo) => ({
           name: periodo.name,
           id: periodo.id,
         }));
@@ -255,6 +257,7 @@ export default {
 
         router.push("/inicio");
       } catch (err) {
+        console.error("Error durante el login:", err);
         error.value.estatus = 1;
         if (err.message === "Network Error") {
           const url = basedeURL();

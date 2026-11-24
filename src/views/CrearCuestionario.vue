@@ -237,7 +237,7 @@
                     ></ion-icon>
                   </div>
                 </div>
-                <span class="qz-choice-title">Regular</span>
+                <span class="qz-choice-title">Nota de clase</span>
                 <p class="qz-choice-sub">
                   Evaluación periódica estándar del plan de estudio
                 </p>

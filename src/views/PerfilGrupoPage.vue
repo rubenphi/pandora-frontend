@@ -371,9 +371,9 @@
                           :style="{
                             opacity: area.hasReinforcement ? '0.65' : '1',
                           }"
-                          title="Promedio Regular"
+                          title="Promedio Notas de Clase"
                         >
-                          RG: {{ area.promedio }}
+                          NC: {{ area.promedio }}
                         </span>
 
                         <span
@@ -434,7 +434,7 @@
                               class="qz-dimension-header"
                             >
                               <ion-label color="primary">
-                                <strong>Notas Regulares</strong>
+                                <strong>Notas de Clase</strong>
                               </ion-label>
                               <span
                                 slot="end"
@@ -803,7 +803,11 @@
             </div>
             <div v-else class="qz-modal-empty-groups">
               <ion-icon :icon="informationCircleOutline"></ion-icon>
-              <span>Actualmente no hay otros equipos disponibles en este curso. Cuando el docente configure grupos, podrás seleccionarlos aquí.</span>
+              <span
+                >Actualmente no hay otros equipos disponibles en este curso.
+                Cuando el docente configure grupos, podrás seleccionarlos
+                aquí.</span
+              >
             </div>
 
             <div class="qz-modal-field">
@@ -2549,9 +2553,14 @@ export default {
     background-color: #28214b;
     color: #a39bf0;
   }
+  .qz-icon-pill.qz-pill--individual {
+    background-color: #1e3352;
+    color: #38bdf8;
+  }
   .qz-card-title,
   .qz-group-hero-name,
   .qz-member-chip,
+  .qz-member-chip-name,
   .qz-individual-text strong,
   .qz-info-value,
   .qz-period-select,
@@ -2564,9 +2573,33 @@ export default {
   .qz-modal-input {
     color: #f7f7fd;
   }
+  .qz-card-subtitle,
+  .qz-modal-subtitle,
+  .qz-restricted-text,
+  .qz-empty-grades-state,
+  .qz-area-idle-box,
+  .qz-area-loading-box,
+  .qz-notes-empty,
+  .qz-note-arrow {
+    color: #9e9bb8;
+  }
+  .qz-info-label,
+  .qz-modal-label,
+  .qz-period-label,
+  .qz-members-label,
+  .qz-dimension-name,
+  .qz-group-hero-meta {
+    color: #a39bf0;
+  }
   .qz-badge--group {
     background-color: #28214b;
     color: #a39bf0;
+    border-color: rgba(124, 110, 242, 0.3);
+  }
+  .qz-badge--individual {
+    background-color: #1e3352;
+    color: #38bdf8;
+    border-color: rgba(56, 189, 248, 0.3);
   }
   .qz-group-hero-badge {
     background: linear-gradient(135deg, #231d42 0%, #1d1838 100%);
@@ -2579,31 +2612,183 @@ export default {
   .qz-member-chip.is-self {
     background: #28214b;
     color: #a39bf0;
+    border-color: rgba(124, 110, 242, 0.35);
+  }
+  .qz-member-chip-avatar {
+    background: #28214b;
+    color: #a39bf0;
+  }
+  .qz-self-tag {
+    background: #7c6ef2;
+    color: #ffffff;
   }
   .qz-self-pill {
     background: #28214b;
     color: #a39bf0;
   }
+  .qz-individual-pill {
+    background: #1e3352;
+    color: #38bdf8;
+  }
+
+  /* Banner Individual */
+  .qz-individual-banner {
+    background: #172338;
+    border-color: rgba(56, 189, 248, 0.25);
+  }
+  .qz-individual-icon-wrap {
+    background: #1e3352;
+    color: #38bdf8;
+  }
+  .qz-individual-title {
+    color: #38bdf8;
+  }
+  .qz-individual-text {
+    color: #cbd5e1;
+  }
+
+  /* Datos del Estudiante */
+  .qz-info-item {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  /* Selector de Período */
+  .qz-period-selector-wrap {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  /* Acordeón de Miembros */
+  .qz-member-accordion {
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    background: #1d1838;
+  }
+  .qz-member-header-item {
+    --background: #231d42;
+    --background-hover: #292450;
+    --background-activated: #302a5c;
+    --background-focused: #292450;
+    --color: #f7f7fd;
+  }
+  .qz-member-avatar-chip {
+    background: #28214b;
+    color: #a39bf0;
+  }
   .qz-member-content-wrap {
+    background: #1d1838;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* Acordeón de Áreas */
+  .qz-area-accordion {
+    border-color: rgba(255, 255, 255, 0.08) !important;
     background: #1d1838;
   }
   .qz-area-header-item {
     --background: #1d1838;
+    --background-hover: #231d42;
+    --background-activated: #28214b;
+    --background-focused: #231d42;
+    --color: #f7f7fd;
   }
+  .qz-area-details-body {
+    background: #17132e;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Acordeón de Dimensiones y Cabeceras de Notas (Fix bug headers blancos) */
   .qz-dimension-accordion {
     background: #1d1838;
-    border-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
   }
-  .qz-note-item.is-clickable:active {
+  .qz-dimension-header {
+    --background: #231d42;
+    --background-hover: #292450;
+    --background-activated: #302a5c;
+    --background-focused: #292450;
+    --color: #f7f7fd;
+  }
+  .qz-dimension-content {
+    background: #1d1838;
+  }
+
+  /* Lista de Notas */
+  .qz-note-item {
+    background: #231d42;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #f7f7fd;
+  }
+  .qz-note-item.is-clickable:hover {
     background: #28214b;
   }
+  .qz-note-item.is-clickable:active {
+    background: #2d2554;
+  }
+
+  /* Badges de Calificaciones */
+  .qz-grade--danger {
+    background-color: rgba(255, 86, 86, 0.18);
+    color: #ff8585;
+    border: 1px solid rgba(255, 86, 86, 0.35);
+  }
+  .qz-grade--warning {
+    background-color: rgba(255, 174, 51, 0.18);
+    color: #ffbe5c;
+    border: 1px solid rgba(255, 174, 51, 0.35);
+  }
+  .qz-grade--success {
+    background-color: rgba(83, 223, 131, 0.18);
+    color: #69e794;
+    border: 1px solid rgba(83, 223, 131, 0.35);
+  }
+  .qz-grade--excellent {
+    background-color: rgba(124, 110, 242, 0.22);
+    color: #b5a9ff;
+    border: 1px solid rgba(124, 110, 242, 0.4);
+  }
+  .qz-grade--pending {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #9e9bb8;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  /* Botones Secundarios */
   .qz-btn--secondary {
     background-color: #28214b;
     color: #a39bf0;
-    border-color: rgba(255, 255, 255, 0.1);
+    border: 1.5px solid rgba(124, 110, 242, 0.4);
   }
+  .qz-btn--secondary:hover:not(:disabled) {
+    background-color: #30275a;
+    border-color: #7c6ef2;
+    color: #b5a9ff;
+  }
+
+  /* Modal Sheet */
   .qz-modal-sheet {
     background: #1d1838;
+  }
+  .qz-modal-select,
+  .qz-modal-input {
+    background: #231d42;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f7f7fd;
+  }
+  .qz-modal-empty-groups {
+    background: #2d2212;
+    border-color: rgba(255, 174, 51, 0.25);
+    color: #ffae33;
+  }
+
+  /* Tarjeta de Restricción */
+  .qz-restricted-card {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .qz-restricted-icon-wrap {
+    background: rgba(255, 86, 86, 0.18);
+    color: #ff7b7b;
   }
 }
 
@@ -2634,6 +2819,13 @@ export default {
   color: #a39bf0;
 }
 
+:global(body.dark) .qz-icon-pill.qz-pill--individual,
+:global(html.dark) .qz-icon-pill.qz-pill--individual,
+:global(.dark) .qz-icon-pill.qz-pill--individual {
+  background-color: #1e3352;
+  color: #38bdf8;
+}
+
 :global(body.dark) .qz-card-title,
 :global(html.dark) .qz-card-title,
 :global(.dark) .qz-card-title,
@@ -2643,6 +2835,9 @@ export default {
 :global(body.dark) .qz-member-chip,
 :global(html.dark) .qz-member-chip,
 :global(.dark) .qz-member-chip,
+:global(body.dark) .qz-member-chip-name,
+:global(html.dark) .qz-member-chip-name,
+:global(.dark) .qz-member-chip-name,
 :global(body.dark) .qz-individual-text strong,
 :global(html.dark) .qz-individual-text strong,
 :global(.dark) .qz-individual-text strong,
@@ -2676,11 +2871,68 @@ export default {
   color: #f7f7fd;
 }
 
+:global(body.dark) .qz-card-subtitle,
+:global(html.dark) .qz-card-subtitle,
+:global(.dark) .qz-card-subtitle,
+:global(body.dark) .qz-modal-subtitle,
+:global(html.dark) .qz-modal-subtitle,
+:global(.dark) .qz-modal-subtitle,
+:global(body.dark) .qz-restricted-text,
+:global(html.dark) .qz-restricted-text,
+:global(.dark) .qz-restricted-text,
+:global(body.dark) .qz-empty-grades-state,
+:global(html.dark) .qz-empty-grades-state,
+:global(.dark) .qz-empty-grades-state,
+:global(body.dark) .qz-area-idle-box,
+:global(html.dark) .qz-area-idle-box,
+:global(.dark) .qz-area-idle-box,
+:global(body.dark) .qz-area-loading-box,
+:global(html.dark) .qz-area-loading-box,
+:global(.dark) .qz-area-loading-box,
+:global(body.dark) .qz-notes-empty,
+:global(html.dark) .qz-notes-empty,
+:global(.dark) .qz-notes-empty,
+:global(body.dark) .qz-note-arrow,
+:global(html.dark) .qz-note-arrow,
+:global(.dark) .qz-note-arrow {
+  color: #9e9bb8;
+}
+
+:global(body.dark) .qz-info-label,
+:global(html.dark) .qz-info-label,
+:global(.dark) .qz-info-label,
+:global(body.dark) .qz-modal-label,
+:global(html.dark) .qz-modal-label,
+:global(.dark) .qz-modal-label,
+:global(body.dark) .qz-period-label,
+:global(html.dark) .qz-period-label,
+:global(.dark) .qz-period-label,
+:global(body.dark) .qz-members-label,
+:global(html.dark) .qz-members-label,
+:global(.dark) .qz-members-label,
+:global(body.dark) .qz-dimension-name,
+:global(html.dark) .qz-dimension-name,
+:global(.dark) .qz-dimension-name,
+:global(body.dark) .qz-group-hero-meta,
+:global(html.dark) .qz-group-hero-meta,
+:global(.dark) .qz-group-hero-meta {
+  color: #a39bf0;
+}
+
 :global(body.dark) .qz-badge--group,
 :global(html.dark) .qz-badge--group,
 :global(.dark) .qz-badge--group {
   background-color: #28214b;
   color: #a39bf0;
+  border-color: rgba(124, 110, 242, 0.3);
+}
+
+:global(body.dark) .qz-badge--individual,
+:global(html.dark) .qz-badge--individual,
+:global(.dark) .qz-badge--individual {
+  background-color: #1e3352;
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.3);
 }
 
 :global(body.dark) .qz-group-hero-badge,
@@ -2702,6 +2954,21 @@ export default {
 :global(.dark) .qz-member-chip.is-self {
   background: #28214b;
   color: #a39bf0;
+  border-color: rgba(124, 110, 242, 0.35);
+}
+
+:global(body.dark) .qz-member-chip-avatar,
+:global(html.dark) .qz-member-chip-avatar,
+:global(.dark) .qz-member-chip-avatar {
+  background: #28214b;
+  color: #a39bf0;
+}
+
+:global(body.dark) .qz-self-tag,
+:global(html.dark) .qz-self-tag,
+:global(.dark) .qz-self-tag {
+  background: #7c6ef2;
+  color: #ffffff;
 }
 
 :global(body.dark) .qz-self-pill,
@@ -2711,9 +2978,88 @@ export default {
   color: #a39bf0;
 }
 
+:global(body.dark) .qz-individual-pill,
+:global(html.dark) .qz-individual-pill,
+:global(.dark) .qz-individual-pill {
+  background: #1e3352;
+  color: #38bdf8;
+}
+
+:global(body.dark) .qz-individual-banner,
+:global(html.dark) .qz-individual-banner,
+:global(.dark) .qz-individual-banner {
+  background: #172338;
+  border-color: rgba(56, 189, 248, 0.25);
+}
+
+:global(body.dark) .qz-individual-icon-wrap,
+:global(html.dark) .qz-individual-icon-wrap,
+:global(.dark) .qz-individual-icon-wrap {
+  background: #1e3352;
+  color: #38bdf8;
+}
+
+:global(body.dark) .qz-individual-title,
+:global(html.dark) .qz-individual-title,
+:global(.dark) .qz-individual-title {
+  color: #38bdf8;
+}
+
+:global(body.dark) .qz-individual-text,
+:global(html.dark) .qz-individual-text,
+:global(.dark) .qz-individual-text {
+  color: #cbd5e1;
+}
+
+:global(body.dark) .qz-info-item,
+:global(html.dark) .qz-info-item,
+:global(.dark) .qz-info-item {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-period-selector-wrap,
+:global(html.dark) .qz-period-selector-wrap,
+:global(.dark) .qz-period-selector-wrap {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+:global(body.dark) .qz-member-accordion,
+:global(html.dark) .qz-member-accordion,
+:global(.dark) .qz-member-accordion {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: #1d1838;
+}
+
+:global(body.dark) .qz-member-header-item,
+:global(html.dark) .qz-member-header-item,
+:global(.dark) .qz-member-header-item {
+  --background: #231d42;
+  --background-hover: #292450;
+  --background-activated: #302a5c;
+  --background-focused: #292450;
+  --color: #f7f7fd;
+}
+
+:global(body.dark) .qz-member-avatar-chip,
+:global(html.dark) .qz-member-avatar-chip,
+:global(.dark) .qz-member-avatar-chip {
+  background: #28214b;
+  color: #a39bf0;
+}
+
 :global(body.dark) .qz-member-content-wrap,
 :global(html.dark) .qz-member-content-wrap,
 :global(.dark) .qz-member-content-wrap {
+  background: #1d1838;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+:global(body.dark) .qz-area-accordion,
+:global(html.dark) .qz-area-accordion,
+:global(.dark) .qz-area-accordion {
+  border-color: rgba(255, 255, 255, 0.08) !important;
   background: #1d1838;
 }
 
@@ -2721,19 +3067,100 @@ export default {
 :global(html.dark) .qz-area-header-item,
 :global(.dark) .qz-area-header-item {
   --background: #1d1838;
+  --background-hover: #231d42;
+  --background-activated: #28214b;
+  --background-focused: #231d42;
+  --color: #f7f7fd;
+}
+
+:global(body.dark) .qz-area-details-body,
+:global(html.dark) .qz-area-details-body,
+:global(.dark) .qz-area-details-body {
+  background: #17132e;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 :global(body.dark) .qz-dimension-accordion,
 :global(html.dark) .qz-dimension-accordion,
 :global(.dark) .qz-dimension-accordion {
   background: #1d1838;
-  border-color: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+:global(body.dark) .qz-dimension-header,
+:global(html.dark) .qz-dimension-header,
+:global(.dark) .qz-dimension-header {
+  --background: #231d42;
+  --background-hover: #292450;
+  --background-activated: #302a5c;
+  --background-focused: #292450;
+  --color: #f7f7fd;
+}
+
+:global(body.dark) .qz-dimension-content,
+:global(html.dark) .qz-dimension-content,
+:global(.dark) .qz-dimension-content {
+  background: #1d1838;
+}
+
+:global(body.dark) .qz-note-item,
+:global(html.dark) .qz-note-item,
+:global(.dark) .qz-note-item {
+  background: #231d42;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-note-item.is-clickable:hover,
+:global(html.dark) .qz-note-item.is-clickable:hover,
+:global(.dark) .qz-note-item.is-clickable:hover {
+  background: #28214b;
 }
 
 :global(body.dark) .qz-note-item.is-clickable:active,
 :global(html.dark) .qz-note-item.is-clickable:active,
 :global(.dark) .qz-note-item.is-clickable:active {
-  background: #28214b;
+  background: #2d2554;
+}
+
+:global(body.dark) .qz-grade--danger,
+:global(html.dark) .qz-grade--danger,
+:global(.dark) .qz-grade--danger {
+  background-color: rgba(255, 86, 86, 0.18);
+  color: #ff8585;
+  border: 1px solid rgba(255, 86, 86, 0.35);
+}
+
+:global(body.dark) .qz-grade--warning,
+:global(html.dark) .qz-grade--warning,
+:global(.dark) .qz-grade--warning {
+  background-color: rgba(255, 174, 51, 0.18);
+  color: #ffbe5c;
+  border: 1px solid rgba(255, 174, 51, 0.35);
+}
+
+:global(body.dark) .qz-grade--success,
+:global(html.dark) .qz-grade--success,
+:global(.dark) .qz-grade--success {
+  background-color: rgba(83, 223, 131, 0.18);
+  color: #69e794;
+  border: 1px solid rgba(83, 223, 131, 0.35);
+}
+
+:global(body.dark) .qz-grade--excellent,
+:global(html.dark) .qz-grade--excellent,
+:global(.dark) .qz-grade--excellent {
+  background-color: rgba(124, 110, 242, 0.22);
+  color: #b5a9ff;
+  border: 1px solid rgba(124, 110, 242, 0.4);
+}
+
+:global(body.dark) .qz-grade--pending,
+:global(html.dark) .qz-grade--pending,
+:global(.dark) .qz-grade--pending {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #9e9bb8;
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 :global(body.dark) .qz-btn--secondary,
@@ -2741,12 +3168,53 @@ export default {
 :global(.dark) .qz-btn--secondary {
   background-color: #28214b;
   color: #a39bf0;
-  border-color: rgba(255, 255, 255, 0.1);
+  border: 1.5px solid rgba(124, 110, 242, 0.4);
+}
+
+:global(body.dark) .qz-btn--secondary:hover:not(:disabled),
+:global(html.dark) .qz-btn--secondary:hover:not(:disabled),
+:global(.dark) .qz-btn--secondary:hover:not(:disabled) {
+  background-color: #30275a;
+  border-color: #7c6ef2;
+  color: #b5a9ff;
 }
 
 :global(body.dark) .qz-modal-sheet,
 :global(html.dark) .qz-modal-sheet,
 :global(.dark) .qz-modal-sheet {
   background: #1d1838;
+}
+
+:global(body.dark) .qz-modal-select,
+:global(html.dark) .qz-modal-select,
+:global(.dark) .qz-modal-select,
+:global(body.dark) .qz-modal-input,
+:global(html.dark) .qz-modal-input,
+:global(.dark) .qz-modal-input {
+  background: #231d42;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-modal-empty-groups,
+:global(html.dark) .qz-modal-empty-groups,
+:global(.dark) .qz-modal-empty-groups {
+  background: #2d2212;
+  border-color: rgba(255, 174, 51, 0.25);
+  color: #ffae33;
+}
+
+:global(body.dark) .qz-restricted-card,
+:global(html.dark) .qz-restricted-card,
+:global(.dark) .qz-restricted-card {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-restricted-icon-wrap,
+:global(html.dark) .qz-restricted-icon-wrap,
+:global(.dark) .qz-restricted-icon-wrap {
+  background: rgba(255, 86, 86, 0.18);
+  color: #ff7b7b;
 }
 </style>

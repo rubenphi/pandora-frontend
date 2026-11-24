@@ -11,7 +11,7 @@
       
       <div class="grades-summary">
         <span class="grade-badge" v-if="estudiante.promedioRegular !== null">
-          Promedio Regular: <strong :class="getGradeColorClass(estudiante.promedioRegular)">{{ estudiante.promedioRegular }}</strong>
+          Promedio Notas de Clase: <strong :class="getGradeColorClass(estudiante.promedioRegular)">{{ estudiante.promedioRegular }}</strong>
         </span>
         <span class="grade-badge" v-if="estudiante.hasReinforcement">
           Promedio Refuerzo: <strong :class="getGradeColorClass(estudiante.promedioRefuerzo)">{{ estudiante.promedioRefuerzo }}</strong>

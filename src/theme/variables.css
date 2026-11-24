@@ -472,6 +472,8 @@ body.dark,
   .qz-review-page,
   .qz-profile-page,
   .qz-profile-content,
+  .qz-courses-page,
+  .qz-courses-content,
   .qz-pregunta-result-page,
   .qz-result-content,
   .qz-papeleria-page,
@@ -611,6 +613,17 @@ body.dark,
     background: #231d42 !important;
     border-color: rgba(255, 255, 255, 0.08) !important;
     color: #f7f7fd !important;
+  }
+
+  .qz-member-header-item,
+  .qz-area-header-item,
+  .qz-dimension-header,
+  .qz-course-header-item {
+    --background: #231d42 !important;
+    --background-hover: #292450 !important;
+    --background-activated: #302a5c !important;
+    --background-focused: #292450 !important;
+    --color: #f7f7fd !important;
   }
 
   .qz-module-row,
@@ -1306,6 +1319,747 @@ ion-modal.qz-import-modal::part(content) {
   overflow: hidden !important;
 }
 
+/* ==========================================================================
+   QUEEZY MODAL DE PROGRESO DE EXPORTACIÓN ZIP
+   ========================================================================== */
+ion-modal.qz-zip-modal {
+  --border-radius: 24px !important;
+  --max-width: 440px !important;
+  --width: 92% !important;
+  --height: auto !important;
+  --background: var(--qz-color-purple-bg, #efeefc) !important;
+  --box-shadow: 0 20px 48px -8px rgba(106, 90, 224, 0.28) !important;
+}
+
+ion-modal.qz-zip-modal::part(content) {
+  border-radius: 24px !important;
+  overflow: hidden !important;
+  background: var(--qz-color-purple-bg, #efeefc) !important;
+  box-shadow: 0 20px 48px -8px rgba(106, 90, 224, 0.28) !important;
+}
+
+body.dark ion-modal.qz-zip-modal,
+html.dark ion-modal.qz-zip-modal,
+.dark ion-modal.qz-zip-modal,
+:root[data-theme="dark"] ion-modal.qz-zip-modal {
+  --background: #120f24 !important;
+  --box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.6) !important;
+}
+
+body.dark ion-modal.qz-zip-modal::part(content),
+html.dark ion-modal.qz-zip-modal::part(content),
+.dark ion-modal.qz-zip-modal::part(content),
+:root[data-theme="dark"] ion-modal.qz-zip-modal::part(content) {
+  background: #120f24 !important;
+  box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.6) !important;
+}
+
+body.dark .qz-zip-modal-wrapper,
+html.dark .qz-zip-modal-wrapper,
+.dark .qz-zip-modal-wrapper,
+:root[data-theme="dark"] .qz-zip-modal-wrapper {
+  background: #120f24 !important;
+}
+
+body.dark .qz-zip-modal-header,
+html.dark .qz-zip-modal-header,
+.dark .qz-zip-modal-header,
+:root[data-theme="dark"] .qz-zip-modal-header {
+  background: linear-gradient(180deg, #1d1838 0%, #251e45 100%) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark .qz-zip-tag,
+html.dark .qz-zip-tag,
+.dark .qz-zip-tag,
+:root[data-theme="dark"] .qz-zip-tag {
+  color: #a39bf0 !important;
+}
+
+body.dark .qz-zip-header-title,
+html.dark .qz-zip-header-title,
+.dark .qz-zip-header-title,
+:root[data-theme="dark"] .qz-zip-header-title {
+  color: #f7f7fd !important;
+}
+
+body.dark .qz-zip-close-btn,
+html.dark .qz-zip-close-btn,
+.dark .qz-zip-close-btn,
+:root[data-theme="dark"] .qz-zip-close-btn {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  color: #f7f7fd !important;
+}
+
+body.dark .qz-zip-card,
+html.dark .qz-zip-card,
+.dark .qz-zip-card,
+:root[data-theme="dark"] .qz-zip-card {
+  background: #1d1838 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+}
+
+body.dark .qz-zip-squircle,
+html.dark .qz-zip-squircle,
+.dark .qz-zip-squircle,
+:root[data-theme="dark"] .qz-zip-squircle {
+  background: linear-gradient(135deg, #2a2254 0%, #1f1842 100%) !important;
+  color: #a39bf0 !important;
+  border: 1px solid rgba(163, 155, 240, 0.2) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.dark .qz-zip-title,
+html.dark .qz-zip-title,
+.dark .qz-zip-title,
+:root[data-theme="dark"] .qz-zip-title {
+  color: #f7f7fd !important;
+}
+
+body.dark .qz-zip-meta-pill,
+html.dark .qz-zip-meta-pill,
+.dark .qz-zip-meta-pill,
+:root[data-theme="dark"] .qz-zip-meta-pill {
+  background: #28214b !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #a39bf0 !important;
+}
+
+body.dark .qz-zip-current-status,
+html.dark .qz-zip-current-status,
+.dark .qz-zip-current-status,
+:root[data-theme="dark"] .qz-zip-current-status {
+  background: #16122c !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+body.dark .qz-zip-status-dot,
+html.dark .qz-zip-status-dot,
+.dark .qz-zip-status-dot,
+:root[data-theme="dark"] .qz-zip-status-dot {
+  background: #a39bf0 !important;
+}
+
+body.dark .qz-zip-status-text,
+html.dark .qz-zip-status-text,
+.dark .qz-zip-status-text,
+:root[data-theme="dark"] .qz-zip-status-text {
+  color: #cbd5e1 !important;
+}
+
+body.dark .qz-zip-progress-label,
+html.dark .qz-zip-progress-label,
+.dark .qz-zip-progress-label,
+:root[data-theme="dark"] .qz-zip-progress-label {
+  color: #94a3b8 !important;
+}
+
+body.dark .qz-zip-progress-percent,
+html.dark .qz-zip-progress-percent,
+.dark .qz-zip-progress-percent,
+:root[data-theme="dark"] .qz-zip-progress-percent {
+  color: #a39bf0 !important;
+}
+
+body.dark .qz-zip-track,
+html.dark .qz-zip-track,
+.dark .qz-zip-track,
+:root[data-theme="dark"] .qz-zip-track {
+  background: #2d2656 !important;
+}
+
+body.dark .qz-zip-fill,
+html.dark .qz-zip-fill,
+.dark .qz-zip-fill,
+:root[data-theme="dark"] .qz-zip-fill {
+  background: linear-gradient(90deg, #8b7af4 0%, #a39bf0 100%) !important;
+  box-shadow: 0 2px 8px rgba(139, 122, 244, 0.4) !important;
+}
+
+body.dark .qz-zip-info-box,
+html.dark .qz-zip-info-box,
+.dark .qz-zip-info-box,
+:root[data-theme="dark"] .qz-zip-info-box {
+  background: #231d42 !important;
+  border-color: rgba(163, 155, 240, 0.15) !important;
+}
+
+body.dark .qz-zip-info-icon,
+html.dark .qz-zip-info-icon,
+.dark .qz-zip-info-icon,
+:root[data-theme="dark"] .qz-zip-info-icon {
+  color: #a39bf0 !important;
+}
+
+body.dark .qz-zip-info-box span,
+html.dark .qz-zip-info-box span,
+.dark .qz-zip-info-box span,
+:root[data-theme="dark"] .qz-zip-info-box span {
+  color: #cbd5e1 !important;
+}
+
+body.dark .qz-btn-cancel-zip,
+html.dark .qz-btn-cancel-zip,
+.dark .qz-btn-cancel-zip,
+:root[data-theme="dark"] .qz-btn-cancel-zip {
+  background: rgba(239, 68, 68, 0.16) !important;
+  border-color: rgba(239, 68, 68, 0.45) !important;
+  color: #f87171 !important;
+}
+
+/* ==========================================================================
+   QUEEZY MODAL DE CONFIGURACIÓN DE REPORTE (SISTEMA GLOBAL)
+   ========================================================================== */
+ion-modal.qz-config-modal {
+  --border-radius: 24px !important;
+  --max-width: 480px !important;
+  --width: 92% !important;
+  --height: auto !important;
+  --background: var(--qz-color-purple-bg, #efeefc) !important;
+  --box-shadow: 0 20px 48px -8px rgba(106, 90, 224, 0.28) !important;
+}
+
+ion-modal.qz-config-modal::part(content) {
+  border-radius: 24px !important;
+  overflow: hidden !important;
+  background: var(--qz-color-purple-bg, #efeefc) !important;
+  box-shadow: 0 20px 48px -8px rgba(106, 90, 224, 0.28) !important;
+}
+
+body.dark ion-modal.qz-config-modal,
+html.dark ion-modal.qz-config-modal,
+.dark ion-modal.qz-config-modal,
+:root[data-theme="dark"] ion-modal.qz-config-modal {
+  --background: #120f24 !important;
+  --box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.6) !important;
+}
+
+body.dark ion-modal.qz-config-modal::part(content),
+html.dark ion-modal.qz-config-modal::part(content),
+.dark ion-modal.qz-config-modal::part(content),
+:root[data-theme="dark"] ion-modal.qz-config-modal::part(content) {
+  background: #120f24 !important;
+  box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.6) !important;
+}
+
+body.dark .qz-config-modal-wrapper,
+html.dark .qz-config-modal-wrapper,
+.dark .qz-config-modal-wrapper,
+:root[data-theme="dark"] .qz-config-modal-wrapper {
+  background: #120f24 !important;
+}
+
+body.dark .qz-config-modal-header,
+html.dark .qz-config-modal-header,
+.dark .qz-config-modal-header,
+:root[data-theme="dark"] .qz-config-modal-header {
+  background: linear-gradient(180deg, #1d1838 0%, #251e45 100%) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark .qz-config-tag,
+html.dark .qz-config-tag,
+.dark .qz-config-tag,
+:root[data-theme="dark"] .qz-config-tag {
+  color: #a39bf0 !important;
+}
+
+body.dark .qz-config-header-title,
+html.dark .qz-config-header-title,
+.dark .qz-config-header-title,
+:root[data-theme="dark"] .qz-config-header-title {
+  color: #f7f7fd !important;
+}
+
+body.dark .qz-config-close-btn,
+html.dark .qz-config-close-btn,
+.dark .qz-config-close-btn,
+:root[data-theme="dark"] .qz-config-close-btn {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  color: #f7f7fd !important;
+}
+
+body.dark .qz-config-card,
+html.dark .qz-config-card,
+.dark .qz-config-card,
+:root[data-theme="dark"] .qz-config-card {
+  background: #1d1838 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark .qz-config-meta-pill,
+html.dark .qz-config-meta-pill,
+.dark .qz-config-meta-pill,
+:root[data-theme="dark"] .qz-config-meta-pill {
+  background: #28214b !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #a39bf0 !important;
+}
+
+body.dark .qz-config-field-label,
+html.dark .qz-config-field-label,
+.dark .qz-config-field-label,
+:root[data-theme="dark"] .qz-config-field-label {
+  color: #e2e8f0 !important;
+}
+
+body.dark .qz-config-field-label ion-icon,
+html.dark .qz-config-field-label ion-icon,
+.dark .qz-config-field-label ion-icon,
+:root[data-theme="dark"] .qz-config-field-label ion-icon {
+  color: #a39bf0 !important;
+}
+
+body.dark .qz-config-range-hint,
+html.dark .qz-config-range-hint,
+.dark .qz-config-range-hint,
+:root[data-theme="dark"] .qz-config-range-hint {
+  color: #94a3b8 !important;
+}
+
+body.dark .qz-config-select-wrap,
+html.dark .qz-config-select-wrap,
+.dark .qz-config-select-wrap,
+:root[data-theme="dark"] .qz-config-select-wrap,
+body.dark .qz-config-input-wrap,
+html.dark .qz-config-input-wrap,
+.dark .qz-config-input-wrap,
+:root[data-theme="dark"] .qz-config-input-wrap {
+  background: #241e46 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+body.dark .qz-config-select,
+html.dark .qz-config-select,
+.dark .qz-config-select,
+:root[data-theme="dark"] .qz-config-select,
+body.dark .qz-config-num-input,
+html.dark .qz-config-num-input,
+.dark .qz-config-num-input,
+:root[data-theme="dark"] .qz-config-num-input {
+  color: #f7f7fd !important;
+}
+
+body.dark .qz-config-preset-btn,
+html.dark .qz-config-preset-btn,
+.dark .qz-config-preset-btn,
+:root[data-theme="dark"] .qz-config-preset-btn {
+  background: #241e46 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #a39bf0 !important;
+}
+
+body.dark .qz-config-preset-btn:hover,
+html.dark .qz-config-preset-btn:hover,
+.dark .qz-config-preset-btn:hover,
+:root[data-theme="dark"] .qz-config-preset-btn:hover {
+  background: #2e265c !important;
+  color: #ffffff !important;
+}
+
+body.dark .qz-config-preset-btn.is-active,
+html.dark .qz-config-preset-btn.is-active,
+.dark .qz-config-preset-btn.is-active,
+:root[data-theme="dark"] .qz-config-preset-btn.is-active {
+  background: #6a5ae0 !important;
+  color: #ffffff !important;
+  border-color: #6a5ae0 !important;
+}
+
+body.dark .qz-format-card,
+html.dark .qz-format-card,
+.dark .qz-format-card,
+:root[data-theme="dark"] .qz-format-card {
+  background: #231d42 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark .qz-format-card:hover,
+html.dark .qz-format-card:hover,
+.dark .qz-format-card:hover,
+:root[data-theme="dark"] .qz-format-card:hover {
+  background: #2b2351 !important;
+  border-color: rgba(163, 155, 240, 0.3) !important;
+}
+
+body.dark .qz-format-card.is-selected,
+html.dark .qz-format-card.is-selected,
+.dark .qz-format-card.is-selected,
+:root[data-theme="dark"] .qz-format-card.is-selected {
+  background: #2e265c !important;
+  border-color: #a39bf0 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+}
+
+body.dark .qz-format-radio,
+html.dark .qz-format-radio,
+.dark .qz-format-radio,
+:root[data-theme="dark"] .qz-format-radio {
+  border-color: #64748b !important;
+}
+
+body.dark .qz-format-card.is-selected .qz-format-radio,
+html.dark .qz-format-card.is-selected .qz-format-radio,
+.dark .qz-format-card.is-selected .qz-format-radio,
+:root[data-theme="dark"] .qz-format-card.is-selected .qz-format-radio {
+  border-color: #a39bf0 !important;
+}
+
+body.dark .qz-format-card.is-selected .qz-radio-circle,
+html.dark .qz-format-card.is-selected .qz-radio-circle,
+.dark .qz-format-card.is-selected .qz-radio-circle,
+:root[data-theme="dark"] .qz-format-card.is-selected .qz-radio-circle {
+  background: #a39bf0 !important;
+}
+
+body.dark .qz-format-title,
+html.dark .qz-format-title,
+.dark .qz-format-title,
+:root[data-theme="dark"] .qz-format-title {
+  color: #f7f7fd !important;
+}
+
+body.dark .qz-format-card.is-selected .qz-format-title,
+html.dark .qz-format-card.is-selected .qz-format-title,
+.dark .qz-format-card.is-selected .qz-format-title,
+:root[data-theme="dark"] .qz-format-card.is-selected .qz-format-title {
+  color: #c7d2fe !important;
+}
+
+body.dark .qz-format-desc,
+html.dark .qz-format-desc,
+.dark .qz-format-desc,
+:root[data-theme="dark"] .qz-format-desc {
+  color: #94a3b8 !important;
+}
+
+body.dark .qz-format-icon,
+html.dark .qz-format-icon,
+.dark .qz-format-icon,
+:root[data-theme="dark"] .qz-format-icon {
+  color: #64748b !important;
+}
+
+body.dark .qz-format-card.is-selected .qz-format-icon,
+html.dark .qz-format-card.is-selected .qz-format-icon,
+.dark .qz-format-card.is-selected .qz-format-icon,
+:root[data-theme="dark"] .qz-format-card.is-selected .qz-format-icon {
+  color: #a39bf0 !important;
+}
+
+body.dark .qz-btn-submit-report,
+html.dark .qz-btn-submit-report,
+.dark .qz-btn-submit-report,
+:root[data-theme="dark"] .qz-btn-submit-report {
+  background: linear-gradient(135deg, #7668e3 0%, #6a5ae0 100%) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  body:not(.light) ion-modal.qz-zip-modal,
+  ion-modal.qz-zip-modal {
+    --background: #120f24 !important;
+    --box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.6) !important;
+  }
+
+  body:not(.light) ion-modal.qz-zip-modal::part(content),
+  ion-modal.qz-zip-modal::part(content) {
+    background: #120f24 !important;
+    box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.6) !important;
+  }
+
+  body:not(.light) .qz-zip-modal-wrapper,
+  .qz-zip-modal-wrapper {
+    background: #120f24 !important;
+  }
+
+  body:not(.light) .qz-zip-modal-header,
+  .qz-zip-modal-header {
+    background: linear-gradient(180deg, #1d1838 0%, #251e45 100%) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+
+  body:not(.light) .qz-zip-tag,
+  .qz-zip-tag {
+    color: #a39bf0 !important;
+  }
+
+  body:not(.light) .qz-zip-header-title,
+  .qz-zip-header-title {
+    color: #f7f7fd !important;
+  }
+
+  body:not(.light) .qz-zip-close-btn,
+  .qz-zip-close-btn {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    color: #f7f7fd !important;
+  }
+
+  body:not(.light) .qz-zip-card,
+  .qz-zip-card {
+    background: #1d1838 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+  }
+
+  body:not(.light) .qz-zip-squircle,
+  .qz-zip-squircle {
+    background: linear-gradient(135deg, #2a2254 0%, #1f1842 100%) !important;
+    color: #a39bf0 !important;
+    border: 1px solid rgba(163, 155, 240, 0.2) !important;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  body:not(.light) .qz-zip-title,
+  .qz-zip-title {
+    color: #f7f7fd !important;
+  }
+
+  body:not(.light) .qz-zip-meta-pill,
+  .qz-zip-meta-pill {
+    background: #28214b !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #a39bf0 !important;
+  }
+
+  body:not(.light) .qz-zip-current-status,
+  .qz-zip-current-status {
+    background: #16122c !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+  }
+
+  body:not(.light) .qz-zip-status-dot,
+  .qz-zip-status-dot {
+    background: #a39bf0 !important;
+  }
+
+  body:not(.light) .qz-zip-status-text,
+  .qz-zip-status-text {
+    color: #cbd5e1 !important;
+  }
+
+  body:not(.light) .qz-zip-progress-label,
+  .qz-zip-progress-label {
+    color: #94a3b8 !important;
+  }
+
+  body:not(.light) .qz-zip-progress-percent,
+  .qz-zip-progress-percent {
+    color: #a39bf0 !important;
+  }
+
+  body:not(.light) .qz-zip-track,
+  .qz-zip-track {
+    background: #2d2656 !important;
+  }
+
+  body:not(.light) .qz-zip-fill,
+  .qz-zip-fill {
+    background: linear-gradient(90deg, #8b7af4 0%, #a39bf0 100%) !important;
+    box-shadow: 0 2px 8px rgba(139, 122, 244, 0.4) !important;
+  }
+
+  body:not(.light) .qz-zip-info-box,
+  .qz-zip-info-box {
+    background: #231d42 !important;
+    border-color: rgba(163, 155, 240, 0.15) !important;
+  }
+
+  body:not(.light) .qz-zip-info-icon,
+  .qz-zip-info-icon {
+    color: #a39bf0 !important;
+  }
+
+  body:not(.light) .qz-zip-info-box span,
+  .qz-zip-info-box span {
+    color: #cbd5e1 !important;
+  }
+
+  body:not(.light) .qz-btn-cancel-zip,
+  .qz-btn-cancel-zip {
+    background: rgba(239, 68, 68, 0.16) !important;
+    border-color: rgba(239, 68, 68, 0.45) !important;
+    color: #f87171 !important;
+  }
+
+  /* Modo Oscuro para Modal Configurar Reporte */
+  body:not(.light) ion-modal.qz-config-modal,
+  ion-modal.qz-config-modal {
+    --background: #120f24 !important;
+    --box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.6) !important;
+  }
+
+  body:not(.light) ion-modal.qz-config-modal::part(content),
+  ion-modal.qz-config-modal::part(content) {
+    background: #120f24 !important;
+    box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.6) !important;
+  }
+
+  body:not(.light) .qz-config-modal-wrapper,
+  .qz-config-modal-wrapper {
+    background: #120f24 !important;
+  }
+
+  body:not(.light) .qz-config-modal-header,
+  .qz-config-modal-header {
+    background: linear-gradient(180deg, #1d1838 0%, #251e45 100%) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+
+  body:not(.light) .qz-config-tag,
+  .qz-config-tag {
+    color: #a39bf0 !important;
+  }
+
+  body:not(.light) .qz-config-header-title,
+  .qz-config-header-title {
+    color: #f7f7fd !important;
+  }
+
+  body:not(.light) .qz-config-close-btn,
+  .qz-config-close-btn {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    color: #f7f7fd !important;
+  }
+
+  body:not(.light) .qz-config-card,
+  .qz-config-card {
+    background: #1d1838 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  body:not(.light) .qz-config-meta-pill,
+  .qz-config-meta-pill {
+    background: #28214b !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #a39bf0 !important;
+  }
+
+  body:not(.light) .qz-config-field-label,
+  .qz-config-field-label {
+    color: #e2e8f0 !important;
+  }
+
+  body:not(.light) .qz-config-field-label ion-icon,
+  .qz-config-field-label ion-icon {
+    color: #a39bf0 !important;
+  }
+
+  body:not(.light) .qz-config-range-hint,
+  .qz-config-range-hint {
+    color: #94a3b8 !important;
+  }
+
+  body:not(.light) .qz-config-select-wrap,
+  .qz-config-select-wrap,
+  body:not(.light) .qz-config-input-wrap,
+  .qz-config-input-wrap {
+    background: #241e46 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+  }
+
+  body:not(.light) .qz-config-select,
+  .qz-config-select,
+  body:not(.light) .qz-config-num-input,
+  .qz-config-num-input {
+    color: #f7f7fd !important;
+  }
+
+  body:not(.light) .qz-config-preset-btn,
+  .qz-config-preset-btn {
+    background: #241e46 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #a39bf0 !important;
+  }
+
+  body:not(.light) .qz-config-preset-btn:hover,
+  .qz-config-preset-btn:hover {
+    background: #2e265c !important;
+    color: #ffffff !important;
+  }
+
+  body:not(.light) .qz-config-preset-btn.is-active,
+  .qz-config-preset-btn.is-active {
+    background: #6a5ae0 !important;
+    color: #ffffff !important;
+    border-color: #6a5ae0 !important;
+  }
+
+  body:not(.light) .qz-format-card,
+  .qz-format-card {
+    background: #231d42 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  body:not(.light) .qz-format-card:hover,
+  .qz-format-card:hover {
+    background: #2b2351 !important;
+    border-color: rgba(163, 155, 240, 0.3) !important;
+  }
+
+  body:not(.light) .qz-format-card.is-selected,
+  .qz-format-card.is-selected {
+    background: #2e265c !important;
+    border-color: #a39bf0 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+  }
+
+  body:not(.light) .qz-format-radio,
+  .qz-format-radio {
+    border-color: #64748b !important;
+  }
+
+  body:not(.light) .qz-format-card.is-selected .qz-format-radio,
+  .qz-format-card.is-selected .qz-format-radio {
+    border-color: #a39bf0 !important;
+  }
+
+  body:not(.light) .qz-format-card.is-selected .qz-radio-circle,
+  .qz-format-card.is-selected .qz-radio-circle {
+    background: #a39bf0 !important;
+  }
+
+  body:not(.light) .qz-format-title,
+  .qz-format-title {
+    color: #f7f7fd !important;
+  }
+
+  body:not(.light) .qz-format-card.is-selected .qz-format-title,
+  .qz-format-card.is-selected .qz-format-title {
+    color: #c7d2fe !important;
+  }
+
+  body:not(.light) .qz-format-desc,
+  .qz-format-desc {
+    color: #94a3b8 !important;
+  }
+
+  body:not(.light) .qz-format-icon,
+  .qz-format-icon {
+    color: #64748b !important;
+  }
+
+  body:not(.light) .qz-format-card.is-selected .qz-format-icon,
+  .qz-format-card.is-selected .qz-format-icon {
+    color: #a39bf0 !important;
+  }
+
+  body:not(.light) .qz-btn-submit-report,
+  .qz-btn-submit-report {
+    background: linear-gradient(135deg, #7668e3 0%, #6a5ae0 100%) !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4) !important;
+  }
+}
+
 ion-popover [popover]:not(:popover-open):not(dialog[open]) {
   display: contents;
 }
@@ -1417,9 +2171,9 @@ html.dark ion-popover ion-item.item-radio-checked,
    SCROLL GLOBAL FIX (Eliminar espacio muerto y scroll excesivo)
    ========================================================================== */
 ion-content {
-  --background: var(--qz-color-purple-bg, #EFEEFC);
-  --color: var(--qz-color-text-main, #0C092A);
-  font-family: var(--qz-font-family, 'Rubik', sans-serif);
+  --background: var(--qz-color-purple-bg, #efeefc);
+  --color: var(--qz-color-text-main, #0c092a);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
   --keyboard-offset: 0px !important;
 }
 
@@ -2044,4 +2798,48 @@ body.dark .action-sheet-cancel:active,
 html.dark .action-sheet-cancel:active,
 .dark .action-sheet-cancel:active {
   background: #352b6a !important;
+}
+
+/* Soporte para clases explícitas (.dark, body.dark, html.dark) en cabeceras de acordeones y notas */
+body.dark .qz-member-header-item,
+html.dark .qz-member-header-item,
+.dark .qz-member-header-item,
+body.dark .qz-area-header-item,
+html.dark .qz-area-header-item,
+.dark .qz-area-header-item,
+body.dark .qz-dimension-header,
+html.dark .qz-dimension-header,
+.dark .qz-dimension-header,
+body.dark .qz-course-header-item,
+html.dark .qz-course-header-item,
+.dark .qz-course-header-item {
+  --background: #231d42 !important;
+  --background-hover: #292450 !important;
+  --background-activated: #302a5c !important;
+  --background-focused: #292450 !important;
+  --color: #f7f7fd !important;
+}
+
+body.dark .qz-dimension-accordion,
+html.dark .qz-dimension-accordion,
+.dark .qz-dimension-accordion,
+body.dark .qz-member-accordion,
+html.dark .qz-member-accordion,
+.dark .qz-member-accordion,
+body.dark .qz-area-accordion,
+html.dark .qz-area-accordion,
+.dark .qz-area-accordion,
+body.dark .qz-course-accordion,
+html.dark .qz-course-accordion,
+.dark .qz-course-accordion {
+  background: #1d1838 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark .qz-note-item,
+html.dark .qz-note-item,
+.dark .qz-note-item {
+  background: #231d42 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #f7f7fd !important;
 }

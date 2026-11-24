@@ -202,7 +202,7 @@ export default {
         {
           "Código L1": 96,
           Significado:
-            "El estudiante logró los desempeños básicos con su nota regular, aunque no superó el refuerzo.",
+            "El estudiante logró los desempeños básicos con sus notas de clase, aunque no superó el refuerzo.",
         },
         {
           "Código L1": 97,
@@ -462,7 +462,7 @@ export default {
         {
           "Código L1": 96,
           Significado:
-            "El estudiante logró los desempeños básicos con su nota regular, aunque no superó el refuerzo.",
+            "El estudiante logró los desempeños básicos con sus notas de clase, aunque no superó el refuerzo.",
         },
         {
           "Código L1": 97,
