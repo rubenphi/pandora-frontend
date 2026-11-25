@@ -1,7 +1,7 @@
 <template>
-  <ion-page>
+  <ion-page class="ion-page qz-configuraciones-page">
     <ion-header>
-      <ion-toolbar>
+      <ion-toolbar class="qz-toolbar">
         <ion-buttons slot="start">
           <ion-button href="/admin/panel">
             <ion-icon :icon="arrowBackOutline"></ion-icon>
@@ -10,7 +10,8 @@
         <ion-title>Configuraciones</ion-title>
       </ion-toolbar>
     </ion-header>
-    <ion-content class="ion-padding">
+    <ion-content class="ion-padding qz-page">
+    <div class="qz-card qz-configuraciones-card">
       <ion-list>
         <ion-item>
           <ion-label>
@@ -84,7 +85,8 @@
           </ion-button>
         </ion-item>
       </ion-list>
-    </ion-content>
+    </div>
+  </ion-content>
   </ion-page>
 </template>
 
@@ -311,3 +313,26 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.qz-page {
+  background: #efeefc;
+  color: #0c092a;
+}
+body.dark .qz-page,
+html.dark .qz-page,
+.dark .qz-page,
+:root[data-theme="dark"] .qz-page {
+  background: #120f24;
+  color: #f7f7fd;
+}
+.qz-toolbar::part(background) {
+  background: #ffffff;
+}
+body.dark .qz-toolbar::part(background),
+html.dark .qz-toolbar::part(background),
+.dark .qz-toolbar::part(background),
+:root[data-theme="dark"] .qz-toolbar::part(background) {
+  background: #1d1838;
+}
+</style>

@@ -373,7 +373,10 @@ export function adminOdirectivo() {
 
 export function esAdmin() {
   tokenHeader();
-  if (usuarioGet().rol == "admin") {
+  if (
+    usuarioGet().rol == "admin" ||
+    usuarioGet().rol == "director"
+  ) {
     return true;
   } else {
     return false;

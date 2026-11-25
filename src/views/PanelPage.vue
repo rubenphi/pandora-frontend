@@ -11,7 +11,7 @@
             </div>
 
             <div class="qz-admin-badge" v-if="admin">
-              <span>Admin</span>
+              <span>{{ usuario?.rol === 'director' ? 'Director' : 'Admin' }}</span>
             </div>
             <div
               class="qz-admin-badge qz-badge--teacher"
@@ -122,6 +122,21 @@
                 <p class="qz-card-sub">Formatos y listas</p>
               </div>
             </div>
+
+            <!-- Tarjeta 9: Asistencia General (Admin o Docente) -->
+            <div
+              v-if="admin || esProfesor"
+              class="qz-panel-card"
+              @click="navigateTo('/admin/asistencia')"
+            >
+              <div class="qz-card-icon-squircle qz-icon--green">
+                <ion-icon :icon="checkmarkDoneOutline"></ion-icon>
+              </div>
+              <div class="qz-card-text">
+                <h3 class="qz-card-name">Asistencia</h3>
+                <p class="qz-card-sub">Control de jornada</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -143,6 +158,7 @@ import {
   schoolOutline,
   constructOutline,
   printOutline,
+  checkmarkDoneOutline,
 } from "ionicons/icons";
 
 import { onIonViewWillEnter, IonPage, IonContent, IonIcon } from "@ionic/vue";
@@ -188,6 +204,7 @@ export default {
       schoolOutline,
       constructOutline,
       printOutline,
+      checkmarkDoneOutline,
     };
   },
 };

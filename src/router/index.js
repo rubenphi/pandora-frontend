@@ -16,9 +16,13 @@ const routes = [
     path: "/login",
     component: () => import("@/views/LoginPage.vue"),
   },
-  //create route to register (registro.vue)
+  //create route to register (wizard + classic fallback)
   {
     path: "/register",
+    component: () => import("@/views/RegistroWizardPage.vue"),
+  },
+  {
+    path: "/register/classic",
     component: () => import("@/views/RegistroPage.vue"),
   },
   {
@@ -143,6 +147,14 @@ const routes = [
       {
         path: "admin/panel",
         component: () => import("@/views/PanelPage.vue"),
+        beforeEnter: (to, from, next) => {
+          if (adminOprofesor()) next();
+          else next({ path: "/inicio" });
+        },
+      },
+      {
+        path: "admin/asistencia",
+        component: () => import("@/views/AsistenciaPage.vue"),
         beforeEnter: (to, from, next) => {
           if (adminOprofesor()) next();
           else next({ path: "/inicio" });

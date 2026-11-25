@@ -1,13 +1,13 @@
 <template>
-  <ion-page>
+  <ion-page class="ion-page qz-autorizaciones-page">
     <ion-header>
-      <ion-toolbar>
+      <ion-toolbar class="qz-toolbar">
         <ion-title>Códigos</ion-title>
       </ion-toolbar>
     </ion-header>
-    <ion-content :fullscreen="true">
+    <ion-content class="qz-autorizaciones-content" :fullscreen="true">
       <ion-header collapse="condense">
-        <ion-toolbar>
+        <ion-toolbar class="qz-toolbar">
           <ion-title size="large">Códigos</ion-title>
         </ion-toolbar>
       </ion-header>
@@ -22,7 +22,7 @@
       >
 
       <ion-list>
-        <ion-item v-for="codigo in codigos" :key="codigo.id">
+        <ion-item class="qz-card" v-for="codigo in codigos" :key="codigo.id">
           <ion-label @click="copiarCodigo(codigo.code)">
             <h2>{{ codigo.code }}</h2>
             <p>
@@ -281,5 +281,35 @@ p {
   100% {
     opacity: 0;
   }
+}
+<style scoped>
+.qz-autorizaciones-page {
+  --background: var(--qz-color-purple-bg, #efeefc);
+  background-color: var(--qz-color-purple-bg, #efeefc);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+}
+
+.qz-autorizaciones-content {
+  --background: var(--qz-color-purple-bg, #efeefc);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  body:not(.light) .qz-autorizaciones-page,
+  body:not(.light) .qz-autorizaciones-content {
+    --background: #120f24;
+    background-color: #120f24;
+  }
+}
+
+:global(body.dark) .qz-autorizaciones-page,
+:global(html.dark) .qz-autorizaciones-page,
+:global(.dark) .qz-autorizaciones-page,
+:global(body.dark) .qz-autorizaciones-content,
+:global(html.dark) .qz-autorizaciones-content,
+:global(.dark) .qz-autorizaciones-content {
+  --background: #120f24;
+  background-color: #120f24;
 }
 </style>

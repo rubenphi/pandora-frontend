@@ -482,6 +482,27 @@
                         </button>
                       </div>
                     </div>
+
+                    <!-- MÓDULO 4: Asistencia (Profesores / Admins) -->
+                    <div v-if="adminOProfesor" class="qz-module-block">
+                      <div
+                        class="qz-module-row"
+                        @click="openLessonAttendance(leccion)"
+                      >
+                        <div class="qz-module-icon qz-icon--green">
+                          <ion-icon :icon="checkmarkDoneOutline"></ion-icon>
+                        </div>
+                        <div class="qz-module-info">
+                          <span class="qz-module-title">Asistencia</span>
+                          <span class="qz-module-desc"
+                            >Tomar o editar asistencia de esta clase</span
+                          >
+                        </div>
+                        <div class="qz-module-chevron">
+                          <ion-icon :icon="chevronForwardOutline"></ion-icon>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </transition>
               </div>
@@ -510,6 +531,47 @@
           </div>
         </div>
       </div>
+
+      <!-- Modal de Asistencia de la Clase -->
+      <ion-modal
+        :is-open="isAttendanceModalOpen"
+        :backdrop-dismiss="!isAttendanceDirty"
+        @didDismiss="closeLessonAttendance"
+        class="qz-attendance-modal"
+      >
+        <div class="qz-att-modal-wrap" v-if="selectedAttendanceLesson">
+          <header class="qz-att-modal-header">
+            <div>
+              <span class="qz-att-modal-tag">ASISTENCIA DE CLASE</span>
+              <h3 class="qz-att-modal-title">
+                {{ selectedAttendanceLesson.topic }}
+              </h3>
+            </div>
+            <button
+              type="button"
+              class="qz-att-modal-close"
+              aria-label="Cerrar"
+              @click="closeLessonAttendance"
+            >
+              <ion-icon :icon="closeOutline"></ion-icon>
+            </button>
+          </header>
+
+          <div class="qz-att-modal-body">
+            <AttendanceTaker
+              scope="lesson"
+              :course-id="Number(curso)"
+              :course-name="cursoActual?.name || ''"
+              :year="Number(year)"
+              :lesson-id="selectedAttendanceLesson.id"
+              :lesson-topic="selectedAttendanceLesson.topic"
+              :initial-date="formatLessonDateIso(selectedAttendanceLesson.date)"
+              @dirty-change="isAttendanceDirty = $event"
+              @saved="isAttendanceDirty = false"
+            />
+          </div>
+        </div>
+      </ion-modal>
     </ion-content>
   </ion-page>
 </template>
@@ -542,18 +604,23 @@ import {
   chevronUpOutline,
   alertCircleOutline,
   bookOutline,
+  checkmarkDoneOutline,
+  closeOutline,
 } from "ionicons/icons";
 import MaterialSelectionModal from "../components/MaterialSelectionModal.vue";
 import ImportActivityModal from "../components/ImportActivityModal.vue";
 import DuplicateLessonModal from "../components/DuplicateLessonModal.vue";
+import AttendanceTaker from "../components/AttendanceTaker.vue";
 import {
   actionSheetController,
+  alertController,
   modalController,
   onIonViewWillEnter,
   IonPage,
   IonContent,
   IonIcon,
   IonSpinner,
+  IonModal,
 } from "@ionic/vue";
 
 export default {
@@ -563,6 +630,8 @@ export default {
     IonContent,
     IonIcon,
     IonSpinner,
+    IonModal,
+    AttendanceTaker,
   },
   setup() {
     const mroute = useRoute();
@@ -588,6 +657,54 @@ export default {
     const isLoadingMaterials = ref(false);
     const isLoadingCuestionarios = ref(false);
     const isLoadingActivities = ref(false);
+
+    const isAttendanceModalOpen = ref(false);
+    const selectedAttendanceLesson = ref(null);
+    const isAttendanceDirty = ref(false);
+
+    const openLessonAttendance = (leccion) => {
+      isAttendanceDirty.value = false;
+      selectedAttendanceLesson.value = leccion;
+      isAttendanceModalOpen.value = true;
+    };
+
+    const closeLessonAttendance = async () => {
+      if (isAttendanceModalOpen.value && isAttendanceDirty.value) {
+        const alert = await alertController.create({
+          header: "Cambios sin guardar",
+          message:
+            "Tienes cambios en la asistencia sin guardar. ¿Seguro que deseas cerrar y perderlos?",
+          buttons: [
+            { text: "Seguir editando", role: "cancel" },
+            { text: "Descartar y cerrar", role: "confirm" },
+          ],
+        });
+        await alert.present();
+        const { role } = await alert.onDidDismiss();
+        if (role !== "confirm") return;
+        isAttendanceDirty.value = false;
+      }
+      isAttendanceModalOpen.value = false;
+      selectedAttendanceLesson.value = null;
+    };
+
+    const formatLessonDateIso = (dateInput) => {
+      if (!dateInput) {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+          2,
+          "0",
+        )}-${String(d.getDate()).padStart(2, "0")}`;
+      }
+      const d = new Date(dateInput);
+      if (isNaN(d.getTime())) {
+        return String(dateInput).slice(0, 10);
+      }
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+        2,
+        "0",
+      )}-${String(d.getDate()).padStart(2, "0")}`;
+    };
 
     const contentRef = ref(null);
     const openedLessonId = ref(null);
@@ -1228,6 +1345,14 @@ export default {
       chevronUpOutline,
       alertCircleOutline,
       bookOutline,
+      checkmarkDoneOutline,
+      closeOutline,
+      isAttendanceModalOpen,
+      selectedAttendanceLesson,
+      isAttendanceDirty,
+      openLessonAttendance,
+      closeLessonAttendance,
+      formatLessonDateIso,
       year,
     };
   },
@@ -2237,5 +2362,109 @@ export default {
 :global(.dark) .qz-bullet--cyan {
   background: #16344d;
   color: #38bdf8;
+}
+
+.qz-icon--green {
+  background: #eafbf1;
+  color: #16a34a;
+}
+
+.qz-attendance-modal {
+  --background: var(--qz-color-purple-bg, #efeefc);
+}
+
+.qz-att-modal-wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--qz-color-purple-bg, #efeefc);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+}
+
+.qz-att-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px;
+  background: linear-gradient(135deg, #6a5ae0 0%, #8275f0 100%);
+  color: #ffffff;
+}
+
+.qz-att-modal-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 3px 10px;
+  border-radius: 9999px;
+  margin-bottom: 6px;
+}
+
+.qz-att-modal-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.qz-att-modal-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.qz-att-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+  body:not(.light) .qz-icon--green {
+    background: rgba(83, 223, 131, 0.2);
+    color: #53df83;
+  }
+  body:not(.light) .qz-attendance-modal,
+  body:not(.light) .qz-att-modal-wrap {
+    --background: #120f24;
+    background: #120f24;
+  }
+  body:not(.light) .qz-att-modal-header {
+    background: linear-gradient(135deg, #1d1838 0%, #29204d 100%);
+  }
+}
+
+:global(body.dark) .qz-icon--green,
+:global(html.dark) .qz-icon--green,
+:global(.dark) .qz-icon--green {
+  background: rgba(83, 223, 131, 0.2);
+  color: #53df83;
+}
+
+:global(body.dark) .qz-attendance-modal,
+:global(html.dark) .qz-attendance-modal,
+:global(.dark) .qz-attendance-modal,
+:global(body.dark) .qz-att-modal-wrap,
+:global(html.dark) .qz-att-modal-wrap,
+:global(.dark) .qz-att-modal-wrap {
+  --background: #120f24;
+  background: #120f24;
+}
+
+:global(body.dark) .qz-att-modal-header,
+:global(html.dark) .qz-att-modal-header,
+:global(.dark) .qz-att-modal-header {
+  background: linear-gradient(135deg, #1d1838 0%, #29204d 100%);
 }
 </style>

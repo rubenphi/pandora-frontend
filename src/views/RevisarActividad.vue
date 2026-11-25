@@ -347,9 +347,12 @@
                       <span class="qz-grade-label">Nota:</span>
                       <span class="qz-grade-val">
                         {{
-                          studentGrades[student.id] != null
+                          studentGrades[student.id] !== null &&
+                          studentGrades[student.id] !== undefined
                             ? studentGrades[student.id].toFixed(2)
-                            : "N/A"
+                            : hasEvidence(student.id)
+                            ? "Pendiente"
+                            : "Sin calificar"
                         }}
                       </span>
                     </div>
@@ -2536,26 +2539,23 @@ export default {
       for (const student of students.value) {
         const criterionPromises = criteria.value.map(async (criterion) => {
           const entry = evaluation.value[student.id]?.[criterion.id];
-          if (!entry) return;
-          const score = entry.value === null ? 0 : entry.value;
+          if (!entry || entry.value === null || entry.value === undefined) return;
 
           const payload = {
             studentId: student.id,
             criterionId: criterion.id,
-            score,
+            score: entry.value,
             instituteId: usuario.value.institute.id,
             activityId: parseInt(activityId, 10),
           };
 
           try {
             const savedData = await saveCriterionScore(entry.id, payload);
-            entry.value = score;
             if (!entry.id && savedData?.id) {
               entry.id = savedData.id;
             }
           } catch (error) {
             console.error("Error saving criterion score", error);
-            entry.value = score;
           }
         });
 
@@ -2566,18 +2566,33 @@ export default {
               evaluation.value,
               criteria.value,
             );
-            const validFinalGrade =
-              finalGrade != null && !isNaN(finalGrade) ? finalGrade : 0;
+            const submitted = hasEvidence(student.id);
+            const submissionStatus = submitted ? "SUBMITTED" : "NOT_SUBMITTED";
+            const hasMissing = criteria.value.some(
+              (c) =>
+                evaluation.value[student.id]?.[c.id]?.value === null ||
+                evaluation.value[student.id]?.[c.id]?.value === undefined,
+            );
+
+            // No crear ni registrar Grade con 0 automáticamente si no hay criterios evaluados
+            if (finalGrade === null || isNaN(finalGrade)) {
+              studentGrades.value[student.id] = null;
+              return;
+            }
+
+            const roundedGrade = parseFloat(finalGrade.toFixed(2));
             const payloadFinalGrade = {
               userId: student.id,
               gradableId: parseInt(activityId, 10),
               gradableType: "activity",
               periodId: periodId.value,
               gradeType: "regular",
-              grade: parseFloat(validFinalGrade.toFixed(2)),
+              grade: roundedGrade,
+              submissionStatus,
+              evaluationStatus: hasMissing ? "PARTIAL" : "GRADED",
               instituteId: instituteId.value,
             };
-            studentGrades.value[student.id] = validFinalGrade;
+            studentGrades.value[student.id] = roundedGrade;
             try {
               await axios.post("/grades", payloadFinalGrade, tokenHeader());
             } catch (error) {
@@ -2598,11 +2613,11 @@ export default {
     const presentConfirmAlert = async () => {
       const studentsWithMissing = getStudentsWithMissingCriteria();
       let message =
-        "¿Estás seguro de que deseas registrar las notas para todos los estudiantes? Esta acción registrará las notas en el consolidado del periodo.";
+        "¿Estás seguro de que deseas registrar las notas oficiales para los estudiantes evaluados? Los trabajos sin entrega ni evaluación permanecerán sin nota (no se asignará 0 automáticamente).";
 
       if (studentsWithMissing.length > 0) {
         message +=
-          "<br><br><b>¡Advertencia!</b> Los siguientes estudiantes tienen criterios sin evaluar. Sus notas se registrarán con 0 en esos criterios:<br>";
+          "<br><br><b>Aviso:</b> Los siguientes estudiantes tienen criterios sin evaluar. Si no tienen ningún criterio evaluado, permanecerán como <em>Pendiente / Sin calificar</em>:<br>";
         message += "<ul>";
         studentsWithMissing.forEach((name) => {
           message += `<li>${name}</li>`;

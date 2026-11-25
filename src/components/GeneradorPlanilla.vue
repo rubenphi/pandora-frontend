@@ -468,11 +468,54 @@
             </div>
           </div>
 
-          <!-- 3. Regla de Estudiantes no Encontrados -->
+          <!-- 3. Columnas de Destino para Notas -->
+          <div class="qz-card-section" style="margin-top: 16px;">
+            <div class="qz-section-header">
+              <ion-icon :icon="ribbonOutline"></ion-icon>
+              <h4>3. Columnas de Destino en tu Planilla</h4>
+            </div>
+            <p class="qz-section-sub">
+              Indica en qué columnas de tu archivo original se escribirán las calificaciones calculadas. Si un estudiante no tiene nota o no fue emparejado, su celda original se conservará intacta.
+            </p>
+
+            <div class="qz-grid-fields">
+              <div class="qz-field-box">
+                <label class="qz-field-label">Columna de Nota Final (DEF) <span class="qz-required">*</span></label>
+                <select v-model="fieldMap.defCol" class="qz-select">
+                  <option :value="null" disabled>Seleccionar columna de nota...</option>
+                  <option v-for="col in detectedColumns" :key="col.index" :value="col.index">
+                    {{ col.letter }}: {{ col.label }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="qz-field-box">
+                <label class="qz-field-label">Columna de Nivelación (NIV) (Opcional):</label>
+                <select v-model="fieldMap.nivCol" class="qz-select">
+                  <option :value="null">-- No llenar / Omitir --</option>
+                  <option v-for="col in detectedColumns" :key="col.index" :value="col.index">
+                    {{ col.letter }}: {{ col.label }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="qz-field-box">
+                <label class="qz-field-label">Columna de Código / Logro (L1) (Opcional):</label>
+                <select v-model="fieldMap.l1Col" class="qz-select">
+                  <option :value="null">-- No llenar / Omitir --</option>
+                  <option v-for="col in detectedColumns" :key="col.index" :value="col.index">
+                    {{ col.letter }}: {{ col.label }}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Regla de Estudiantes no Encontrados -->
           <div class="qz-card-section" style="margin-top: 16px;">
             <div class="qz-section-header">
               <ion-icon :icon="optionsOutline"></ion-icon>
-              <h4>3. Regla de Estudiantes para la Planilla Generada</h4>
+              <h4>4. Regla de Estudiantes para la Planilla Generada</h4>
             </div>
 
             <div class="qz-checkbox-card" @click="onlyFileStudents = !onlyFileStudents">
@@ -721,7 +764,7 @@
           <div class="qz-conventions-note">
             <ion-icon :icon="ribbonOutline"></ion-icon>
             <span>
-              El archivo descargado incluirá automáticamente una hoja adicional de <strong>"Convenciones"</strong> con el significado oficial de cada código L1 (91 a 98).
+              Se descargará <strong>tu mismo archivo original</strong> rellenando únicamente las columnas mapeadas para los estudiantes con nota calculada. Las celdas sin nota o sin emparejar permanecerán intactas.
             </span>
           </div>
         </div>
@@ -801,10 +844,10 @@
             v-else-if="currentStep === 5"
             type="button"
             class="qz-btn-primary qz-btn-download-final"
-            @click="descargarPlanillaOrdenada"
+            @click="descargarPlanillaRellenada"
           >
             <ion-icon :icon="downloadOutline"></ion-icon>
-            <span>Descargar Planilla (.xlsx)</span>
+            <span>Descargar Planilla Rellenada</span>
           </button>
         </div>
       </div>
@@ -881,6 +924,9 @@ export default {
     const sheetNames = ref([]);
     const selectedSheet = ref("");
     let parsedWorkbook = null;
+    let isHtmlFile = false;
+    let parsedHtmlText = "";
+    let htmlRowTargets = [];
 
     // Header Row State
     const headerRowNumber = ref(1);
@@ -896,6 +942,9 @@ export default {
       fullNameCol: null,
       codeCol: null,
       orderCol: null,
+      defCol: null,
+      nivCol: null,
+      l1Col: null,
     });
     const onlyFileStudents = ref(true);
 
@@ -973,6 +1022,12 @@ export default {
       detectedColumns.value = [];
       matchedRows.value = [];
       parsedWorkbook = null;
+      isHtmlFile = false;
+      parsedHtmlText = "";
+      htmlRowTargets = [];
+      fieldMap.value.defCol = null;
+      fieldMap.value.nivCol = null;
+      fieldMap.value.l1Col = null;
     };
 
     const parseHtmlSpreadsheet = (uint8Array) => {
@@ -1009,16 +1064,20 @@ export default {
       const doc = parser.parseFromString(text, "text/html");
       const tables = Array.from(doc.querySelectorAll("table"));
       if (tables.length === 0) {
+        isHtmlFile = false;
         const wb = XLSX.read(text, { type: "string" });
+        parsedWorkbook = wb;
         const sheet = wb.Sheets[wb.SheetNames[0]];
-        return XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+        return XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", blankrows: true });
       }
 
+      parsedHtmlText = text;
+      htmlRowTargets = [];
       const allRows = [];
       const visitedTr = new Set();
-      tables.forEach((table) => {
+      tables.forEach((table, tableIdx) => {
         const directRows = Array.from(table.rows || table.querySelectorAll("tr"));
-        directRows.forEach((tr) => {
+        directRows.forEach((tr, trIdx) => {
           if (visitedTr.has(tr)) return;
           visitedTr.add(tr);
 
@@ -1040,6 +1099,7 @@ export default {
 
           if (rowData.some((c) => c !== "")) {
             allRows.push(rowData);
+            htmlRowTargets.push({ tableIdx, trIdx });
           }
         });
       });
@@ -1086,13 +1146,19 @@ export default {
             lowerHead.includes("xmlns:x=");
 
           if (isHtml) {
+            isHtmlFile = true;
+            parsedWorkbook = null;
             jsonData = parseHtmlSpreadsheet(data);
             sheetNames.value = ["Hoja 1"];
             selectedSheet.value = "Hoja 1";
           } else {
+            isHtmlFile = false;
+            parsedHtmlText = "";
+            htmlRowTargets = [];
             parsedWorkbook = XLSX.read(data, {
               type: "array",
               cellDates: true,
+              cellStyles: true,
               raw: false,
             });
             sheetNames.value = parsedWorkbook.SheetNames;
@@ -1101,7 +1167,7 @@ export default {
             jsonData = XLSX.utils.sheet_to_json(firstSheet, {
               header: 1,
               defval: "",
-              blankrows: false,
+              blankrows: true,
             });
           }
 
@@ -1142,7 +1208,7 @@ export default {
       const jsonData = XLSX.utils.sheet_to_json(sh, {
         header: 1,
         defval: "",
-        blankrows: false,
+        blankrows: true,
       });
       rawRows.value = jsonData;
       autoDetectHeaderRow(jsonData);
@@ -1329,6 +1395,9 @@ export default {
       let foundFullName = null;
       let foundCode = null;
       let foundOrder = null;
+      let foundDef = null;
+      let foundNiv = null;
+      let foundL1 = null;
 
       cols.forEach((col) => {
         const lbl = cleanString(col.label);
@@ -1365,6 +1434,37 @@ export default {
         ) {
           foundOrder = col.index;
         }
+
+        if (
+          foundDef === null &&
+          (lbl === "DEF" ||
+            lbl === "DEFINITIVA" ||
+            lbl === "NOTA" ||
+            lbl === "NOTA FINAL" ||
+            lbl.includes("DEFINITIVA") ||
+            lbl.includes("NOTA FINAL") ||
+            lbl === "CALIFICACION" ||
+            lbl === "PROMEDIO")
+        ) {
+          foundDef = col.index;
+        }
+
+        if (
+          foundNiv === null &&
+          (lbl === "NIV" ||
+            lbl === "NIVELACION" ||
+            lbl.includes("NIVELAC") ||
+            lbl.includes("RECUPERAC"))
+        ) {
+          foundNiv = col.index;
+        }
+
+        if (
+          foundL1 === null &&
+          (lbl === "L1" || lbl === "LOGRO" || lbl === "LOGRO 1" || lbl.includes("LOGRO"))
+        ) {
+          foundL1 = col.index;
+        }
       });
 
       if (foundLastName !== null && foundName !== null) {
@@ -1380,13 +1480,17 @@ export default {
 
       fieldMap.value.codeCol = foundCode;
       fieldMap.value.orderCol = foundOrder;
+      fieldMap.value.defCol = foundDef;
+      fieldMap.value.nivCol = foundNiv;
+      fieldMap.value.l1Col = foundL1;
     };
 
     const canProceedFromStep3 = computed(() => {
-      if (nameMode.value === "split") {
-        return fieldMap.value.lastNameCol !== null && fieldMap.value.nameCol !== null;
-      }
-      return fieldMap.value.fullNameCol !== null;
+      const hasName =
+        nameMode.value === "split"
+          ? fieldMap.value.lastNameCol !== null && fieldMap.value.nameCol !== null
+          : fieldMap.value.fullNameCol !== null;
+      return hasName && fieldMap.value.defCol !== null;
     });
 
     // STEP 4: Matching Engine
@@ -1512,6 +1616,7 @@ export default {
 
         results.push({
           rowIdx: rIdx,
+          rawRowIndex: headerRowNumber.value + rIdx,
           orderNum: orderNum,
           excelName: rawExcelName || `Fila ${rIdx + 1}`,
           excelDoc: excelDoc,
@@ -1661,6 +1766,7 @@ export default {
         }
 
         list.push({
+          rawRowIndex: mRow.rawRowIndex,
           NUM: mRow.orderNum || idx + 1,
           NOMBRE: mRow.excelName,
           FALLAS: "",
@@ -1746,6 +1852,149 @@ export default {
 
       buildAndDownloadWorkbook(data, `Planilla_Notas_Alfabetico_${props.year || ""}.xlsx`);
       handleClose();
+    };
+
+    const writeCellToSheet = (ws, rowIdx, colIdx, value) => {
+      if (colIdx === null || colIdx === undefined) return;
+      if (value === "" || value === null || value === undefined) return;
+
+      const addr = XLSX.utils.encode_cell({ r: rowIdx, c: colIdx });
+      const existingCell = ws[addr] ? { ...ws[addr] } : {};
+      const numVal = Number(value);
+      const isNumeric =
+        typeof value === "number" ||
+        (String(value).trim() !== "" && !isNaN(numVal) && isFinite(numVal));
+
+      ws[addr] = {
+        ...existingCell,
+        v: isNumeric ? numVal : String(value),
+        t: isNumeric ? "n" : "s",
+      };
+      delete ws[addr].w;
+
+      if (ws["!ref"]) {
+        const range = XLSX.utils.decode_range(ws["!ref"]);
+        if (rowIdx < range.s.r) range.s.r = rowIdx;
+        if (rowIdx > range.e.r) range.e.r = rowIdx;
+        if (colIdx < range.s.c) range.s.c = colIdx;
+        if (colIdx > range.e.c) range.e.c = colIdx;
+        ws["!ref"] = XLSX.utils.encode_range(range);
+      }
+    };
+
+    const writeValuesToHtmlDoc = (exportRows) => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(parsedHtmlText, "text/html");
+      const tables = Array.from(doc.querySelectorAll("table"));
+
+      exportRows.forEach((item) => {
+        if (item.rawRowIndex === undefined || item.rawRowIndex === null) return;
+        const target = htmlRowTargets[item.rawRowIndex];
+        if (!target) return;
+        const table = tables[target.tableIdx];
+        if (!table) return;
+        const rows = Array.from(table.rows || table.querySelectorAll("tr"));
+        const tr = rows[target.trIdx];
+        if (!tr) return;
+
+        const cells = Array.from(tr.children).filter(
+          (child) => child.tagName === "TD" || child.tagName === "TH"
+        );
+
+        const colToCell = [];
+        cells.forEach((cell) => {
+          const colspan = parseInt(cell.getAttribute("colspan") || "1", 10);
+          colToCell.push(cell);
+          for (let i = 1; i < colspan; i++) {
+            colToCell.push(null);
+          }
+        });
+
+        const setCell = (colIdx, val) => {
+          if (colIdx === null || colIdx === undefined) return;
+          if (val === "" || val === null || val === undefined) return;
+          const cell = colToCell[colIdx];
+          if (cell) {
+            cell.textContent = String(val);
+          }
+        };
+
+        setCell(fieldMap.value.defCol, item.DEF);
+        setCell(fieldMap.value.nivCol, item.NIV);
+        setCell(fieldMap.value.l1Col, item.L1);
+      });
+
+      const metaCharset = doc.querySelector("meta[charset]");
+      if (metaCharset) {
+        metaCharset.setAttribute("charset", "utf-8");
+      }
+      const metaHttpEquiv = doc.querySelector('meta[http-equiv="Content-Type" i]');
+      if (metaHttpEquiv) {
+        metaHttpEquiv.setAttribute("content", "text/html; charset=utf-8");
+      }
+
+      return "\uFEFF<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+    };
+
+    const descargarPlanillaRellenada = () => {
+      const data = finalExportList.value;
+      const origName = selectedFile.value ? selectedFile.value.name : "Planilla.xlsx";
+      const baseName = origName.replace(/\.(xlsx|xls|html|htm|csv)$/i, "");
+
+      if (isHtmlFile && parsedHtmlText) {
+        const updatedHtml = writeValuesToHtmlDoc(data);
+        const blob = new Blob([updatedHtml], { type: "application/vnd.ms-excel;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${baseName}_con_notas.xls`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        handleClose();
+        return;
+      }
+
+      if (parsedWorkbook && selectedSheet.value && parsedWorkbook.Sheets[selectedSheet.value]) {
+        const ws = parsedWorkbook.Sheets[selectedSheet.value];
+        data.forEach((item) => {
+          if (item.rawRowIndex === undefined || item.rawRowIndex === null) return;
+          writeCellToSheet(ws, item.rawRowIndex, fieldMap.value.defCol, item.DEF);
+          writeCellToSheet(ws, item.rawRowIndex, fieldMap.value.nivCol, item.NIV);
+          writeCellToSheet(ws, item.rawRowIndex, fieldMap.value.l1Col, item.L1);
+        });
+
+        // Normalizar estilos leídos por SheetJS (patternType/fgColor planos -> s.fill para xlsx-js-style)
+        // y convertir celdas vacías con estilo (t === 'z') a texto vacío (t === 's', v === '') para que no se pierdan
+        parsedWorkbook.SheetNames.forEach((shName) => {
+          const sheet = parsedWorkbook.Sheets[shName];
+          if (!sheet) return;
+          Object.keys(sheet).forEach((key) => {
+            if (key.startsWith("!")) return;
+            const cell = sheet[key];
+            if (!cell) return;
+            if (cell.s && cell.s.patternType && cell.s.patternType !== "none" && !cell.s.fill) {
+              cell.s.fill = {
+                patternType: cell.s.patternType,
+                fgColor: cell.s.fgColor,
+                ...(cell.s.patternType !== "solid" && cell.s.bgColor ? { bgColor: cell.s.bgColor } : {}),
+              };
+            }
+            if (cell.t === "z" && cell.s) {
+              cell.t = "s";
+              cell.v = "";
+            }
+          });
+        });
+
+        XLSX.writeFile(parsedWorkbook, `${baseName}_con_notas.xlsx`, { cellStyles: true });
+        handleClose();
+        return;
+      }
+
+      // Fallback si por alguna razón no hay libro original
+      descargarPlanillaOrdenada();
     };
 
     const descargarPlanillaOrdenada = () => {
@@ -1861,6 +2110,7 @@ export default {
       getColumnLetter,
       descargarPlanillaAlfabetico,
       descargarPlanillaOrdenada,
+      descargarPlanillaRellenada,
       // Icons
       cloudUploadOutline,
       documentTextOutline,

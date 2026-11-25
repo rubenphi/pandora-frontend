@@ -428,7 +428,7 @@
                                   {{ nota.grade }}
                                 </span>
                                 <span v-else class="qz-grade-pill-pending">
-                                  Pendiente
+                                  {{ getPendingStatusLabel(nota) }}
                                 </span>
                                 <button
                                   type="button"
@@ -551,7 +551,7 @@
                                   {{ nota.grade }}
                                 </span>
                                 <span v-else class="qz-grade-pill-pending">
-                                  Pendiente
+                                  {{ getPendingStatusLabel(nota) }}
                                 </span>
                                 <button
                                   type="button"
@@ -676,7 +676,7 @@
                                   {{ nota.grade }}
                                 </span>
                                 <span v-else class="qz-grade-pill-pending">
-                                  Pendiente
+                                  {{ getPendingStatusLabel(nota) }}
                                 </span>
                                 <button
                                   type="button"
@@ -1527,6 +1527,9 @@
                       <ion-icon :icon="item.tipoIcon"></ion-icon>
                       {{ item.tipo }}
                     </span>
+                    <span class="qz-item-tag qz-item-tag--audit">
+                      {{ item.auditLabel }}
+                    </span>
                   </div>
                   <h4 class="qz-audit-item-title">{{ item.titulo }}</h4>
                   <p class="qz-audit-item-meta">
@@ -1558,6 +1561,11 @@
 <script>
 import axios from "axios";
 import { ref, computed, watch, nextTick } from "vue";
+import {
+  SubmissionStatus,
+  EvaluationStatus,
+  classifyAuditItem,
+} from "../composables/useEvaluation";
 import { alertController, actionSheetController } from "@ionic/vue";
 import {
   periodosGet,
@@ -1708,6 +1716,7 @@ export default {
       remedialStudents,
       reinforcementMap, // studentId -> Set of lessonIds
       remedialMap, // studentId -> Set of lessonIds
+      auditMap = new Map(), // `${studentId}:${gradableType}:${gradableId}` -> audit item
     ) => {
       // 1. Build Master List of ALL Gradable Items (we will filter per type/student later)
       const masterItemsMap = new Map();
@@ -1737,7 +1746,11 @@ export default {
         (i) => i.classification === "behavior",
       );
 
-      const mapToDisplayParamsWithMasterList = (studentGrades, masterList) => {
+      const mapToDisplayParamsWithMasterList = (
+        studentGrades,
+        masterList,
+        studentId,
+      ) => {
         return masterList
           .map((masterItem) => {
             const foundGrade = studentGrades.find(
@@ -1746,23 +1759,51 @@ export default {
                 g.gradableItem.id === masterItem.id &&
                 g.classification === masterItem.classification,
             );
+            const auditEntry = auditMap.get(
+              `${studentId}:${masterItem.type}:${masterItem.id}`,
+            );
             if (foundGrade) {
+              const subStatus =
+                foundGrade.submissionStatus ||
+                auditEntry?.submissionStatus ||
+                SubmissionStatus.UNKNOWN;
+              const evalStatus =
+                foundGrade.evaluationStatus ||
+                auditEntry?.evaluationStatus ||
+                (foundGrade.grade !== null && foundGrade.grade !== undefined
+                  ? EvaluationStatus.GRADED
+                  : EvaluationStatus.NOT_EVALUATED);
+              const isRealNull =
+                foundGrade.grade === null || foundGrade.grade === undefined;
               return {
                 id: foundGrade.id,
                 gradableItem: foundGrade.gradableItem,
                 gradableType: foundGrade.gradableType,
                 classification: foundGrade.classification,
                 grade: foundGrade.grade,
-                isPending: false,
+                submissionStatus: subStatus,
+                evaluationStatus: evalStatus,
+                auditClassification:
+                  foundGrade.auditClassification ||
+                  classifyAuditItem(subStatus, foundGrade.grade),
+                isPending: isRealNull,
               };
             } else {
-              // Create Pending Entry
+              const subStatus =
+                auditEntry?.submissionStatus || SubmissionStatus.NOT_SUBMITTED;
+              const evalStatus =
+                auditEntry?.evaluationStatus || EvaluationStatus.NOT_EVALUATED;
               return {
                 id: `pending-${masterItem.type}-${masterItem.id}`,
                 gradableItem: masterItem.item,
                 gradableType: masterItem.type,
                 classification: masterItem.classification,
-                grade: null, // Visual: Pending
+                grade: null,
+                submissionStatus: subStatus,
+                evaluationStatus: evalStatus,
+                auditClassification:
+                  auditEntry?.auditClassification ||
+                  classifyAuditItem(subStatus, null),
                 isPending: true,
               };
             }
@@ -1775,10 +1816,10 @@ export default {
       };
 
       const calculateAverageFromMasterList = (studentGrades, masterList) => {
-        if (masterList.length === 0) return 0; // Return 0 if no items in the master list
+        if (masterList.length === 0) return 0;
 
         let totalScore = 0;
-        const itemsConsideredCount = masterList.length; // All assigned items count towards the average
+        let gradedCount = 0;
 
         masterList.forEach((masterItem) => {
           const foundGrade = studentGrades.find(
@@ -1786,14 +1827,20 @@ export default {
               g.gradableType === masterItem.type &&
               g.gradableItem.id === masterItem.id,
           );
-          // If grade exists and is not null, use it. Otherwise, treat as 0.
-          totalScore +=
-            foundGrade && foundGrade.grade !== null ? foundGrade.grade : 0;
+          // Calcular con grade numérico cuando exista (incluyendo 0 real); excluir null
+          if (
+            foundGrade &&
+            foundGrade.grade !== null &&
+            foundGrade.grade !== undefined &&
+            !isNaN(Number(foundGrade.grade))
+          ) {
+            totalScore += Number(foundGrade.grade);
+            gradedCount++;
+          }
         });
 
-        const avg =
-          itemsConsideredCount > 0 ? totalScore / itemsConsideredCount : 0;
-        return itemsConsideredCount > 0 ? Math.max(avg, 1.0) : 0;
+        if (gradedCount === 0) return 0;
+        return totalScore / gradedCount;
       };
 
       const formatGrade = (grade) => {
@@ -1935,6 +1982,7 @@ export default {
               masterKnowledge.filter(
                 (i) => i.item.lesson?.type === LessonType.STANDARD,
               ),
+              estudiante.id,
             ),
           },
           {
@@ -1946,6 +1994,7 @@ export default {
               masterExecution.filter(
                 (i) => i.item.lesson?.type === LessonType.STANDARD,
               ),
+              estudiante.id,
             ),
           },
           {
@@ -1957,6 +2006,7 @@ export default {
               masterBehavior.filter(
                 (i) => i.item.lesson?.type === LessonType.STANDARD,
               ),
+              estudiante.id,
             ),
           },
         ];
@@ -2079,11 +2129,26 @@ export default {
       );
 
       try {
-        const allGradesResponse = await axios.get(
-          `/grades?year=${year}&courseId=${cursoId}&areaId=${areaId}&periodId=${periodoSelected.value}&instituteId=${usuario.value.institute.id}`,
-          tokenHeader(),
-        );
+        const [allGradesResponse, auditResponse] = await Promise.all([
+          axios.get(
+            `/grades?year=${year}&courseId=${cursoId}&areaId=${areaId}&periodId=${periodoSelected.value}&instituteId=${usuario.value.institute.id}`,
+            tokenHeader(),
+          ),
+          axios
+            .get(
+              `/grades/audit?courseId=${cursoId}&areaId=${areaId}&periodId=${periodoSelected.value}&year=${year}`,
+              tokenHeader(),
+            )
+            .catch(() => ({ data: [] })),
+        ]);
         const allGrades = allGradesResponse.data;
+        const auditMap = new Map();
+        (auditResponse.data || []).forEach((item) => {
+          auditMap.set(
+            `${item.studentId}:${item.gradableType}:${item.gradableId}`,
+            item,
+          );
+        });
 
         const studentList = (
           await axios.get(
@@ -2133,6 +2198,7 @@ export default {
           remedialStudents,
           reinforcementMap,
           remedialMap,
+          auditMap,
         ).sort((a, b) => {
           const lastNameA = a.lastName || "";
           const lastNameB = b.lastName || "";
@@ -2911,7 +2977,7 @@ export default {
               pdf.setFont("helvetica", "italic");
               pdf.setFontSize(7.5);
               pdf.setTextColor(150, 155, 170);
-              const pendText = "Pendiente";
+              const pendText = getPendingStatusLabel(nota);
               const pw = pdf.getTextWidth(pendText);
               pdf.text(
                 pendText,
@@ -3205,6 +3271,27 @@ export default {
       return name.substring(0, 2).toUpperCase();
     };
 
+    const getPendingStatusLabel = (nota) => {
+      if (nota?.submissionStatus === SubmissionStatus.NOT_SUBMITTED) {
+        return "Sin entrega";
+      }
+      if (nota?.submissionStatus === SubmissionStatus.UNKNOWN) {
+        return "Revisar";
+      }
+      return "Pendiente";
+    };
+
+    const getAuditLabel = (nota) => {
+      const cls =
+        nota?.auditClassification ||
+        classifyAuditItem(nota?.submissionStatus, nota?.grade);
+      if (cls === "NO_SUBMISSION") return "Sin entrega";
+      if (cls === "PENDING_GRADING") return "Entregado · Pendiente";
+      if (cls === "NEEDS_REVIEW") return "Requiere revisión";
+      if (cls === "GRADED_ZERO") return "Calificado con cero";
+      return "Pendiente";
+    };
+
     const listaEstudiantesConPendientes = computed(() => {
       if (
         !usuariosEstudiantes.value ||
@@ -3218,7 +3305,7 @@ export default {
       usuariosEstudiantes.value.forEach((estudiante) => {
         const pendientes = [];
 
-        // 1. Regulares (donde otros estudiantes ya tienen nota registrada, pero este no)
+        // 1. Regulares (solo cuando grade es null/undefined; 0 real nunca es pendiente)
         if (
           estudiante.dimensionesRegular &&
           Array.isArray(estudiante.dimensionesRegular)
@@ -3226,13 +3313,14 @@ export default {
           estudiante.dimensionesRegular.forEach((dim) => {
             if (dim.notas && Array.isArray(dim.notas)) {
               dim.notas.forEach((n) => {
-                if (n.isPending || n.grade === null) {
+                if (n.grade === null || n.grade === undefined || n.isPending) {
                   pendientes.push({
                     key: `reg-${dim.id}-${n.id}`,
                     tipoEvaluacion: "regular",
                     tipoEvaluacionLabel: "Nota de clase",
                     dimensionName: dim.name,
                     nota: n,
+                    auditLabel: getAuditLabel(n),
                     titulo: n.gradableItem?.title || "Sin título",
                     leccion: n.gradableItem?.lesson?.topic || "Sin lección",
                     tipo:
@@ -3257,13 +3345,14 @@ export default {
           estudiante.dimensionesReinforcement.forEach((dim) => {
             if (dim.notas && Array.isArray(dim.notas)) {
               dim.notas.forEach((n) => {
-                if (n.isPending || n.grade === null) {
+                if (n.grade === null || n.grade === undefined || n.isPending) {
                   pendientes.push({
                     key: `reinf-${dim.id}-${n.id}`,
                     tipoEvaluacion: "reinforcement",
                     tipoEvaluacionLabel: "Refuerzo",
                     dimensionName: dim.name,
                     nota: n,
+                    auditLabel: getAuditLabel(n),
                     titulo: n.gradableItem?.title || "Sin título",
                     leccion: n.gradableItem?.lesson?.topic || "Sin lección",
                     tipo:
@@ -3288,13 +3377,14 @@ export default {
           estudiante.dimensionesRemedial.forEach((dim) => {
             if (dim.notas && Array.isArray(dim.notas)) {
               dim.notas.forEach((n) => {
-                if (n.isPending || n.grade === null) {
+                if (n.grade === null || n.grade === undefined || n.isPending) {
                   pendientes.push({
                     key: `remed-${dim.id}-${n.id}`,
                     tipoEvaluacion: "remedial",
                     tipoEvaluacionLabel: "Nivelación",
                     dimensionName: dim.name,
                     nota: n,
+                    auditLabel: getAuditLabel(n),
                     titulo: n.gradableItem?.title || "Sin título",
                     leccion: n.gradableItem?.lesson?.topic || "Sin lección",
                     tipo:
@@ -3442,6 +3532,7 @@ export default {
       abrirModalAuditoriaConFiltro,
       getEmptyStateTitle,
       getEmptyStateMessage,
+      getPendingStatusLabel,
       cerrarModalAuditoria,
       calificarDesdeAuditoria,
       getPeriodoNombre,
@@ -4546,9 +4637,19 @@ export default {
 }
 
 /* 2. Modal de Auditoría */
+:global(ion-modal.qz-audit-modal::part(content)) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .qz-audit-modal-content {
   --background: #f8f9fa;
+  --padding-bottom: 32px;
   font-family: inherit;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto !important;
 }
 
 .qz-audit-modal-header-card {
@@ -4731,6 +4832,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  padding-bottom: 32px;
 }
 
 .qz-audit-student-box {

@@ -203,9 +203,14 @@ export default {
         error.value.estatus = 0;
         tokenHeader();
 
-        // Verificar si es profesor o administrador para cargar asignaciones
+        // Verificar si es profesor, director o administrador para cargar asignaciones
         const userRole = usuarioGet().rol;
-        if (userRole === "teacher" || userRole === "admin") {
+        if (
+          userRole === "teacher" ||
+          userRole === "admin" ||
+          userRole === "director" ||
+          userRole === "coordinator"
+        ) {
           try {
             const teacherAssignmentsResponse = await axios.get(
               `/courses/teacher-assignments/${usuarioGet().id}`

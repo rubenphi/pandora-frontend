@@ -99,7 +99,7 @@ export default {
         props.evaluation,
         props.criteria
       );
-      return grade != null ? grade.toFixed(2) : "N/A";
+      return grade !== null && grade !== undefined ? grade.toFixed(2) : "Sin calificar";
     };
 
     const onBlur = (student, event) => {

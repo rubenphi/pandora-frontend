@@ -7,7 +7,7 @@
         :disabled="detectedCount === 0"
         @click="submitResults"
       >
-        Enviar respuestas<span v-if="detectedCount > 0">
+        {{ submitLabel }}<span v-if="detectedCount > 0">
           ({{ detectedCount }})</span
         >
       </button>
@@ -555,6 +555,7 @@ export default {
     // (pending) students appear in the sidebar with a distinct style.
     students: { type: Array, default: () => [] },
     options: { type: Array, default: () => ["A", "B", "C", "D"] },
+    submitLabel: { type: String, default: "Enviar respuestas" },
   },
   setup(props, { emit, expose }) {
     const video = ref(null);

@@ -2,6 +2,49 @@ import { ref } from "vue";
 import axios from "axios";
 import { tokenHeader } from "../globalService";
 
+export const SubmissionStatus = {
+  NOT_SUBMITTED: "NOT_SUBMITTED",
+  SUBMITTED: "SUBMITTED",
+  UNKNOWN: "UNKNOWN",
+};
+
+export const EvaluationStatus = {
+  NOT_EVALUATED: "NOT_EVALUATED",
+  PARTIAL: "PARTIAL",
+  GRADED: "GRADED",
+};
+
+/**
+ * Classifies an item for academic audit without conflating 0 with null or missing submission.
+ * @param {string} submissionStatus
+ * @param {number|null|undefined} grade
+ * @returns {'NO_SUBMISSION'|'PENDING_GRADING'|'GRADED_ZERO'|'NEEDS_REVIEW'|'GRADED'}
+ */
+export function classifyAuditItem(submissionStatus, grade) {
+  if (grade === 0) return "GRADED_ZERO";
+  if (grade !== null && grade !== undefined) return "GRADED";
+  if (submissionStatus === SubmissionStatus.NOT_SUBMITTED) return "NO_SUBMISSION";
+  if (submissionStatus === SubmissionStatus.SUBMITTED) return "PENDING_GRADING";
+  return "NEEDS_REVIEW";
+}
+
+/**
+ * Calculates numeric average excluding null/undefined grades while keeping real 0s.
+ * @param {Array<{grade: number|null|undefined}>} items
+ * @returns {number}
+ */
+export function calculateNumericAverage(items) {
+  if (!Array.isArray(items) || items.length === 0) return 0;
+  const numericGrades = items
+    .map((item) => item?.grade)
+    .filter((g) => g !== null && g !== undefined && !isNaN(Number(g)))
+    .map((g) => Number(g));
+
+  if (numericGrades.length === 0) return 0;
+  const sum = numericGrades.reduce((acc, g) => acc + g, 0);
+  return sum / numericGrades.length;
+}
+
 /**
  * Composable for shared toast state across evaluation views.
  */

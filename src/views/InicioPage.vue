@@ -151,9 +151,11 @@ export default {
     const userRoleLabel = computed(() => {
       const rol = user.value?.rol;
       if (rol === "admin") return "Administrador";
+      if (rol === "director") return "Director / Docente";
+      if (rol === "coordinator") return "Coordinador";
       if (rol === "teacher") return "Profesor";
       if (rol === "student") return "Estudiante";
-      return "Miembro";
+      return "Docente";
     });
 
     // Saludo según la hora
