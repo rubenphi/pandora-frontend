@@ -383,6 +383,7 @@ export default {
       try {
         sessionStorage.setItem("pandora_printable_studentData", JSON.stringify(plainData));
         sessionStorage.setItem("pandora_printable_year", String(yearVal));
+        sessionStorage.setItem("pandora_printable_courseId", String(selectedCourseId.value));
       } catch (err) {
         console.warn("No se pudo guardar en sessionStorage:", err);
       }
@@ -392,8 +393,8 @@ export default {
       const totalStudents = totalSelectedStudents.value;
       const statePayload =
         totalStudents <= 80
-          ? { studentData: plainData, year: yearVal }
-          : { year: yearVal };
+          ? { studentData: plainData, year: yearVal, courseId: selectedCourseId.value }
+          : { year: yearVal, courseId: selectedCourseId.value };
 
       try {
         await router.push({

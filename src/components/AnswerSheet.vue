@@ -53,6 +53,14 @@ export default {
       type: String,
       default: "",
     },
+    topic: {
+      type: String,
+      default: "",
+    },
+    sheetIndex: {
+      type: Number,
+      default: 1,
+    },
     startNumber: {
       type: Number,
       default: 1,
@@ -87,11 +95,22 @@ export default {
     const nameHeightPercent = (114 / originalImageHeight) * 100;
     const nameFontSizePx = 120; // Aumentado para resolución completa
 
+    const topicTopPercent = (350 / originalImageHeight) * 100;
+    const topicLeftPercent = (600 / originalImageWidth) * 100;
+    const topicWidthPercent = (2100 / originalImageWidth) * 100;
+    const topicHeightPercent = (120 / originalImageHeight) * 100;
+    const topicFontSizePx = 100;
+
     const courseTopPercent = (600 / originalImageHeight) * 100;
     const courseLeftPercent = (600 / originalImageWidth) * 100;
     const courseWidthPercent = (1883 / originalImageWidth) * 100;
     const courseHeightPercent = (161 / originalImageHeight) * 100;
     const courseFontSizePx = 120; // Aumentado para resolución completa
+
+    // Sección en la misma fila que el tema (en el extremo derecho)
+    const sectionTopPercent = (350 / originalImageHeight) * 100;
+    const sectionRightPercent = (180 / originalImageWidth) * 100;
+    const sectionFontSizePx = 110;
 
     const digitsTopPercent = (1200 / originalImageHeight) * 100;
     const digitsLeftPercent = (670 / originalImageWidth) * 100;
@@ -129,6 +148,8 @@ export default {
       [
         () => props.student,
         () => props.courseName,
+        () => props.topic,
+        () => props.sheetIndex,
         () => props.startNumber,
         () => props.questionCount,
       ],
@@ -253,7 +274,7 @@ export default {
         color: black;
         white-space: nowrap;
         overflow: hidden;
-        text-overflow: clip;
+        text-overflow: ellipsis;
         font-family: Arial, sans-serif;
         display: flex;
         align-items: center;
@@ -389,6 +410,17 @@ export default {
         );
       }
 
+      if (props.topic) {
+        putText(
+          props.topic,
+          topicTopPercent,
+          topicLeftPercent,
+          topicWidthPercent,
+          topicHeightPercent,
+          topicFontSizePx
+        );
+      }
+
       if (props.courseName) {
         putText(
           props.courseName,
@@ -398,6 +430,24 @@ export default {
           courseHeightPercent,
           courseFontSizePx
         );
+      }
+
+      // Sección en el extremo derecho
+      if (textLayer) {
+        const secDiv = document.createElement("div");
+        secDiv.style.cssText = `
+          position: absolute;
+          right: ${sectionRightPercent}%;
+          top: ${sectionTopPercent}%;
+          font-size: ${sectionFontSizePx}px;
+          line-height: 1;
+          font-weight: bold;
+          color: black;
+          font-family: Arial, sans-serif;
+          white-space: nowrap;
+        `;
+        secDiv.textContent = `Sec ${props.sheetIndex || 1}`;
+        textLayer.appendChild(secDiv);
       }
 
       if (student.code) {

@@ -1,42 +1,121 @@
 <template>
-  <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-back-button default-href="/admin/papeleria"></ion-back-button>
-        </ion-buttons>
-        <ion-title>Lista de Estudiantes</ion-title>
-        <ion-buttons slot="end">
-          <ion-button @click="showOptions">
-            <ion-icon slot="icon-only" :icon="printOutline"></ion-icon>
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content class="ion-padding">
-      <div id="printable-content">
-        <h1 class="ion-text-center">Lista de Estudiantes - {{ year }}</h1>
-        <div v-for="course in studentData" :key="course.id">
-          <h2>{{ course.name }}</h2>
-          <table class="student-table">
-            <thead>
-              <tr>
-                <th>Código</th>
-                <th>Apellido</th>
-                <th>Nombre</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="student in course.students" :key="student.id">
-                <td>
-                  <span class="underlined-digit">{{ student.code.substring(0, 1) }}</span>{{ student.code.substring(1) }}
-                </td>
-                <td>{{ student.lastName }}</td>
-                <td>{{ student.name }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+  <ion-page class="ion-page qz-print-page">
+    <ion-content :fullscreen="true" class="qz-print-content">
+      <div class="qz-print-wrapper">
+        <!-- 1. CABECERA HERO QUEEZY -->
+        <header class="qz-hero-header">
+          <div class="qz-hero-inner">
+            <div class="qz-hero-top">
+              <button
+                type="button"
+                class="qz-back-btn"
+                title="Volver a papelería"
+                aria-label="Volver"
+                @click="goBack"
+              >
+                <ion-icon :icon="arrowBackOutline"></ion-icon>
+              </button>
+              <span class="qz-hero-tag">PAPELERÍA</span>
+            </div>
+            <div class="qz-hero-title-row">
+              <div>
+                <h1 class="qz-hero-title">Lista de Estudiantes</h1>
+                <p class="qz-hero-subtitle">
+                  Visualiza e imprime las listas oficiales por curso
+                </p>
+              </div>
+              <button
+                type="button"
+                class="qz-hero-action-btn"
+                title="Opciones de impresión"
+                @click="showOptions"
+              >
+                <ion-icon :icon="printOutline"></ion-icon>
+                <span>Imprimir / Exportar</span>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <!-- 2. CUERPO PRINCIPAL -->
+        <main class="qz-print-body">
+          <!-- Banner de información y año -->
+          <div class="qz-card qz-info-card">
+            <div class="qz-info-left">
+              <div class="qz-card-icon-squircle qz-icon--purple">
+                <ion-icon :icon="schoolOutline"></ion-icon>
+              </div>
+              <div>
+                <span class="qz-info-tag">AÑO LECTIVO</span>
+                <h2 class="qz-info-title">{{ year || 'Año actual' }}</h2>
+              </div>
+            </div>
+            <div class="qz-badge-container">
+              <span class="qz-courses-count">
+                {{ studentData.length }} {{ studentData.length === 1 ? 'Curso' : 'Cursos' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Estado vacío si no hay datos -->
+          <div v-if="!studentData || studentData.length === 0" class="qz-card qz-state-card">
+            <div class="qz-empty-icon">
+              <ion-icon :icon="documentTextOutline"></ion-icon>
+            </div>
+            <h3 class="qz-empty-title">Sin datos para mostrar</h3>
+            <p class="qz-state-text">
+              No se recibieron estudiantes para generar la lista. Vuelve a papelería para seleccionar un curso.
+            </p>
+            <button type="button" class="qz-primary-btn" @click="goBack">
+              <ion-icon :icon="arrowBackOutline"></ion-icon>
+              <span>Regresar a Papelería</span>
+            </button>
+          </div>
+
+          <!-- Contenedor imprimible y vista previa -->
+          <div v-else id="printable-content" class="qz-print-preview-container">
+            <div
+              v-for="course in studentData"
+              :key="course.id"
+              class="qz-card qz-course-card"
+            >
+              <div class="qz-course-card-header">
+                <div class="qz-course-title-group">
+                  <div class="qz-card-icon-squircle qz-icon--cyan">
+                    <ion-icon :icon="peopleOutline"></ion-icon>
+                  </div>
+                  <div>
+                    <h2 class="qz-course-name">{{ course.name }}</h2>
+                    <p class="qz-course-count">
+                      {{ (course.students || []).length }} estudiantes registrados
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="qz-table-wrapper">
+                <table class="student-table qz-student-table">
+                  <thead>
+                    <tr>
+                      <th class="qz-th-code">Código</th>
+                      <th>Apellido</th>
+                      <th>Nombre</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="student in course.students" :key="student.id">
+                      <td class="qz-td-code">
+                        <span class="underlined-digit">{{ String(student.code).substring(0, 1) }}</span>{{ String(student.code).substring(1) }}
+                      </td>
+                      <td class="qz-td-name">{{ student.lastName }}</td>
+                      <td class="qz-td-name">{{ student.name }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     </ion-content>
   </ion-page>
@@ -45,19 +124,20 @@
 <script>
 import {
   IonPage,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
   IonContent,
-  IonButtons,
-  IonBackButton,
-  IonButton,
   IonIcon,
   actionSheetController,
   alertController,
 } from '@ionic/vue';
-import { printOutline } from 'ionicons/icons';
+import {
+  arrowBackOutline,
+  printOutline,
+  schoolOutline,
+  documentTextOutline,
+  peopleOutline,
+} from 'ionicons/icons';
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { Capacitor } from '@capacitor/core';
 import { FileSharer } from '@byteowls/capacitor-filesharer';
 
@@ -65,21 +145,24 @@ import { FileSharer } from '@byteowls/capacitor-filesharer';
 const THERMAL_SCALE = 2.6;
 
 export default {
+  name: 'PrintableStudentList',
   components: {
     IonPage,
-    IonHeader,
-    IonToolbar,
-    IonTitle,
     IonContent,
-    IonButtons,
-    IonBackButton,
-    IonButton,
     IonIcon,
   },
   setup() {
+    const router = useRouter();
     const studentData = ref([]);
     const year = ref(null);
 
+    const goBack = () => {
+      if (window.history.length > 1) {
+        router.back();
+      } else {
+        router.push('/admin/papeleria');
+      }
+    };
 
     onMounted(() => {
       let data = window.history.state?.studentData;
@@ -105,7 +188,6 @@ export default {
     // ─── HTML generators ────────────────────────────────────────────────────
 
     const buildTableHTML = (course) => {
-
       const rows = (course.students || [])
         .map(
           (s) => `
@@ -302,8 +384,8 @@ export default {
         const sheet = await actionSheetController.create({
           header: 'Exportar lista como PDF',
           buttons: [
-            { text: '📄 Tamaño Carta / A4', handler: () => generatePDF('letter') },
-            { text: '🖨️ Térmica 80mm',      handler: () => generatePDF('thermal') },
+            { text: 'Tamaño Carta / A4', handler: () => generatePDF('letter') },
+            { text: 'Térmica 80mm',      handler: () => generatePDF('thermal') },
             { text: 'Cancelar', role: 'cancel' },
           ],
         });
@@ -313,10 +395,10 @@ export default {
         const sheet = await actionSheetController.create({
           header: 'Opciones de impresión',
           buttons: [
-            { text: '🖨️ Imprimir Carta / A4',     handler: () => printWeb('letter') },
-            { text: '🖨️ Imprimir Térmica 80mm',    handler: () => printWeb('thermal') },
-            { text: '📥 Descargar PDF Carta / A4', handler: () => generatePDF('letter') },
-            { text: '📥 Descargar PDF 80mm',       handler: () => generatePDF('thermal') },
+            { text: 'Imprimir Carta / A4',     handler: () => printWeb('letter') },
+            { text: 'Imprimir Térmica 80mm',    handler: () => printWeb('thermal') },
+            { text: 'Descargar PDF Carta / A4', handler: () => generatePDF('letter') },
+            { text: 'Descargar PDF 80mm',       handler: () => generatePDF('thermal') },
             { text: 'Cancelar', role: 'cancel' },
           ],
         });
@@ -327,45 +409,597 @@ export default {
     return {
       studentData,
       year,
+      goBack,
       showOptions,
+      arrowBackOutline,
       printOutline,
+      schoolOutline,
+      documentTextOutline,
+      peopleOutline,
     };
   },
 };
 </script>
 
-<style>
-.student-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 20px;
-}
-.student-table th,
-.student-table td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: left;
-}
-.underlined-digit {
-  text-decoration: underline;
+<style scoped>
+/* ==========================================================================
+   QUEEZY DESIGN SYSTEM: LISTA DE ESTUDIANTES IMPRIMIBLE
+   ========================================================================== */
+
+.qz-print-page {
+  --background: var(--qz-color-purple-bg, #efeefc);
+  background-color: var(--qz-color-purple-bg, #efeefc);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
 }
 
-/* Modo Oscuro en pantalla (no altera la impresión en papel) */
-@media screen and (prefers-color-scheme: dark) {
-  .student-table th,
-  .student-table td {
-    border-color: rgba(255, 255, 255, 0.12);
+.qz-print-content {
+  --background: var(--qz-color-purple-bg, #efeefc);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+}
+
+.qz-print-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  box-sizing: border-box;
+  padding-bottom: 70px;
+}
+
+/* 1. CABECERA HERO PÚRPURA QUEEZY */
+.qz-hero-header {
+  background: linear-gradient(135deg, #6a5ae0 0%, #8275f0 100%);
+  padding: max(20px, env(safe-area-inset-top)) 20px 26px;
+  border-bottom-left-radius: 30px;
+  border-bottom-right-radius: 30px;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(106, 90, 224, 0.2);
+}
+
+.qz-hero-inner {
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.qz-hero-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.qz-back-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: all 0.2s ease;
+}
+
+.qz-back-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
+  transform: translateY(-1px);
+}
+
+.qz-hero-tag {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.9px;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  backdrop-filter: blur(6px);
+}
+
+.qz-hero-title-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.qz-hero-title {
+  margin: 0;
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+  font-size: 24px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.3px;
+}
+
+.qz-hero-subtitle {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.qz-hero-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.qz-hero-action-btn:hover {
+  background: rgba(255, 255, 255, 0.32);
+  transform: translateY(-1px);
+}
+
+/* 2. CUERPO PRINCIPAL */
+.qz-print-body {
+  padding: 20px 16px 24px;
+  max-width: 820px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.qz-card {
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 16px 20px;
+  border: 1px solid rgba(106, 90, 224, 0.12);
+  box-shadow: 0 6px 18px rgba(12, 9, 42, 0.05);
+  box-sizing: border-box;
+}
+
+/* TARJETA DE INFORMACIÓN */
+.qz-info-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.qz-info-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.qz-card-icon-squircle {
+  width: 46px;
+  height: 46px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.qz-icon--purple {
+  background-color: #efeefc;
+  color: #6a5ae0;
+}
+
+.qz-icon--cyan {
+  background-color: #e8f9fe;
+  color: #00a8cc;
+}
+
+.qz-info-tag {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #6a5ae0;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.qz-info-title {
+  margin: 2px 0 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #0c092a;
+}
+
+.qz-badge-container {
+  display: flex;
+  align-items: center;
+}
+
+.qz-courses-count {
+  background: #efeefc;
+  color: #6a5ae0;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  border: 1px solid rgba(106, 90, 224, 0.16);
+}
+
+/* ESTADO VACÍO */
+.qz-state-card {
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.qz-empty-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  background: #efeefc;
+  color: #6a5ae0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+.qz-empty-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: #0c092a;
+}
+
+.qz-state-text {
+  margin: 0 0 8px;
+  font-size: 13.5px;
+  color: #858494;
+  max-width: 440px;
+}
+
+.qz-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #6a5ae0 0%, #8275f0 100%);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(106, 90, 224, 0.28);
+  transition: all 0.2s ease;
+}
+
+.qz-primary-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(106, 90, 224, 0.36);
+}
+
+/* CONTENEDOR DE CURSOS */
+.qz-print-preview-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.qz-course-card {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.qz-course-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.qz-course-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.qz-course-name {
+  margin: 0;
+  font-size: 17.5px;
+  font-weight: 800;
+  color: #0c092a;
+}
+
+.qz-course-count {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #858494;
+}
+
+/* TABLA QUEEZY */
+.qz-table-wrapper {
+  overflow-x: auto;
+  border-radius: 14px;
+  border: 1px solid rgba(106, 90, 224, 0.12);
+}
+
+.qz-student-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0;
+}
+
+.qz-student-table th {
+  background: #f4f3fd;
+  color: #6a5ae0;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 12px 14px;
+  border-bottom: 1.5px solid rgba(106, 90, 224, 0.15);
+  text-align: left;
+}
+
+.qz-student-table td {
+  padding: 11px 14px;
+  font-size: 13.5px;
+  color: #0c092a;
+  border-bottom: 1px solid rgba(106, 90, 224, 0.08);
+}
+
+.qz-student-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.qz-student-table tbody tr:hover {
+  background: #faf9fe;
+}
+
+.qz-th-code {
+  width: 120px;
+}
+
+.qz-td-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 700;
+  color: #6a5ae0;
+}
+
+.underlined-digit {
+  text-decoration: underline;
+  font-weight: 800;
+}
+
+.qz-td-name {
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   MODO OSCURO (DARK MODE)
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  body:not(.light) .qz-print-page,
+  body:not(.light) .qz-print-content {
+    --background: #120f24;
+    background-color: #120f24;
+  }
+
+  body:not(.light) .qz-hero-header {
+    background: linear-gradient(135deg, #1d1838 0%, #29204d 100%);
+  }
+
+  body:not(.light) .qz-hero-tag {
+    background: rgba(255, 255, 255, 0.12);
+    color: #b5a9ff;
+    border: 1px solid rgba(181, 169, 255, 0.28);
+  }
+
+  body:not(.light) .qz-card {
+    background: #1d1838;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+
+  body:not(.light) .qz-info-tag {
+    color: #b5a9ff;
+  }
+
+  body:not(.light) .qz-info-title,
+  body:not(.light) .qz-empty-title,
+  body:not(.light) .qz-course-name {
     color: #f7f7fd;
+  }
+
+  body:not(.light) .qz-courses-count,
+  body:not(.light) .qz-empty-icon,
+  body:not(.light) .qz-icon--purple {
+    background: #2b2254;
+    color: #b5a9ff;
+    border-color: rgba(181, 169, 255, 0.2);
+  }
+
+  body:not(.light) .qz-icon--cyan {
+    background: rgba(112, 214, 245, 0.16);
+    color: #70d6f5;
+  }
+
+  body:not(.light) .qz-course-count,
+  body:not(.light) .qz-state-text {
+    color: #9e9bb8;
+  }
+
+  body:not(.light) .qz-table-wrapper {
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  body:not(.light) .qz-student-table th {
+    background: #241d42;
+    color: #b5a9ff;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  body:not(.light) .qz-student-table td {
+    color: #f7f7fd;
+    border-color: rgba(255, 255, 255, 0.06);
+  }
+
+  body:not(.light) .qz-student-table tbody tr:hover {
+    background: #241d42;
+  }
+
+  body:not(.light) .qz-td-code {
+    color: #b5a9ff;
   }
 }
 
-body.dark .student-table th,
-body.dark .student-table td,
-html.dark .student-table th,
-html.dark .student-table td,
-.dark .student-table th,
-.dark .student-table td {
-  border-color: rgba(255, 255, 255, 0.12);
+:global(body.dark) .qz-print-page,
+:global(body.dark) .qz-print-content,
+:global(html.dark) .qz-print-page,
+:global(html.dark) .qz-print-content,
+:global(.dark) .qz-print-page,
+:global(.dark) .qz-print-content,
+:global(:root[data-theme="dark"]) .qz-print-page,
+:global(:root[data-theme="dark"]) .qz-print-content {
+  --background: #120f24;
+  background-color: #120f24;
+}
+
+:global(body.dark) .qz-hero-header,
+:global(html.dark) .qz-hero-header,
+:global(.dark) .qz-hero-header,
+:global(:root[data-theme="dark"]) .qz-hero-header {
+  background: linear-gradient(135deg, #1d1838 0%, #29204d 100%);
+}
+
+:global(body.dark) .qz-hero-tag,
+:global(html.dark) .qz-hero-tag,
+:global(.dark) .qz-hero-tag,
+:global(:root[data-theme="dark"]) .qz-hero-tag {
+  background: rgba(255, 255, 255, 0.12);
+  color: #b5a9ff;
+  border: 1px solid rgba(181, 169, 255, 0.28);
+}
+
+:global(body.dark) .qz-card,
+:global(html.dark) .qz-card,
+:global(.dark) .qz-card,
+:global(:root[data-theme="dark"]) .qz-card {
+  background: #1d1838;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+:global(body.dark) .qz-info-tag,
+:global(html.dark) .qz-info-tag,
+:global(.dark) .qz-info-tag,
+:global(:root[data-theme="dark"]) .qz-info-tag {
+  color: #b5a9ff;
+}
+
+:global(body.dark) .qz-info-title,
+:global(html.dark) .qz-info-title,
+:global(.dark) .qz-info-title,
+:global(:root[data-theme="dark"]) .qz-info-title,
+:global(body.dark) .qz-empty-title,
+:global(html.dark) .qz-empty-title,
+:global(.dark) .qz-empty-title,
+:global(:root[data-theme="dark"]) .qz-empty-title,
+:global(body.dark) .qz-course-name,
+:global(html.dark) .qz-course-name,
+:global(.dark) .qz-course-name,
+:global(:root[data-theme="dark"]) .qz-course-name {
   color: #f7f7fd;
+}
+
+:global(body.dark) .qz-courses-count,
+:global(html.dark) .qz-courses-count,
+:global(.dark) .qz-courses-count,
+:global(:root[data-theme="dark"]) .qz-courses-count,
+:global(body.dark) .qz-empty-icon,
+:global(html.dark) .qz-empty-icon,
+:global(.dark) .qz-empty-icon,
+:global(:root[data-theme="dark"]) .qz-empty-icon,
+:global(body.dark) .qz-icon--purple,
+:global(html.dark) .qz-icon--purple,
+:global(.dark) .qz-icon--purple,
+:global(:root[data-theme="dark"]) .qz-icon--purple {
+  background: #2b2254;
+  color: #b5a9ff;
+  border-color: rgba(181, 169, 255, 0.2);
+}
+
+:global(body.dark) .qz-icon--cyan,
+:global(html.dark) .qz-icon--cyan,
+:global(.dark) .qz-icon--cyan,
+:global(:root[data-theme="dark"]) .qz-icon--cyan {
+  background: rgba(112, 214, 245, 0.16);
+  color: #70d6f5;
+}
+
+:global(body.dark) .qz-course-count,
+:global(html.dark) .qz-course-count,
+:global(.dark) .qz-course-count,
+:global(:root[data-theme="dark"]) .qz-course-count,
+:global(body.dark) .qz-state-text,
+:global(html.dark) .qz-state-text,
+:global(.dark) .qz-state-text,
+:global(:root[data-theme="dark"]) .qz-state-text {
+  color: #9e9bb8;
+}
+
+:global(body.dark) .qz-table-wrapper,
+:global(html.dark) .qz-table-wrapper,
+:global(.dark) .qz-table-wrapper,
+:global(:root[data-theme="dark"]) .qz-table-wrapper {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(body.dark) .qz-student-table th,
+:global(html.dark) .qz-student-table th,
+:global(.dark) .qz-student-table th,
+:global(:root[data-theme="dark"]) .qz-student-table th {
+  background: #241d42;
+  color: #b5a9ff;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:global(body.dark) .qz-student-table td,
+:global(html.dark) .qz-student-table td,
+:global(.dark) .qz-student-table td,
+:global(:root[data-theme="dark"]) .qz-student-table td {
+  color: #f7f7fd;
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+:global(body.dark) .qz-student-table tbody tr:hover,
+:global(html.dark) .qz-student-table tbody tr:hover,
+:global(.dark) .qz-student-table tbody tr:hover,
+:global(:root[data-theme="dark"]) .qz-student-table tbody tr:hover {
+  background: #241d42;
+}
+
+:global(body.dark) .qz-td-code,
+:global(html.dark) .qz-td-code,
+:global(.dark) .qz-td-code,
+:global(:root[data-theme="dark"]) .qz-td-code {
+  color: #b5a9ff;
 }
 </style>
