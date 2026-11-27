@@ -9,6 +9,7 @@
       color="danger"
       @did-dismiss="clearCourseAccessNotice"
     ></ion-toast>
+    <demo-expired-modal />
   </ion-app>
 </template>
 
@@ -16,6 +17,7 @@
 import { IonApp, IonRouterOutlet, IonToast } from "@ionic/vue";
 import { defineComponent } from "vue";
 import { courseAccessNotice, clearCourseAccessNotice } from "./courseAccessService";
+import DemoExpiredModal from "./components/DemoExpiredModal.vue";
 
 export default defineComponent({
   name: "App",
@@ -23,6 +25,7 @@ export default defineComponent({
     IonApp,
     IonRouterOutlet,
     IonToast,
+    DemoExpiredModal,
   },
   setup() {
     return { courseAccessNotice, clearCourseAccessNotice };

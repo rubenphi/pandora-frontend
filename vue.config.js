@@ -1,6 +1,15 @@
+const webpack = require("webpack");
+
 module.exports = {
   publicPath: "/",
   configureWebpack: {
+    plugins: [
+      new webpack.DefinePlugin({
+        "process.env.DEMO_DATE": JSON.stringify(
+          process.env.DEMO_DATE || process.env.VUE_APP_DEMO_DATE || ""
+        ),
+      }),
+    ],
     resolve: {
       fallback: {
         fs: false,

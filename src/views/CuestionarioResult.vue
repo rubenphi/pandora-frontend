@@ -53,7 +53,7 @@
               title="Lector OMR"
               @click="goToOmr"
             >
-              <ion-icon :icon="qrCodeOutline"></ion-icon>
+              <ion-icon :icon="scanOutline"></ion-icon>
             </button>
 
             <button
@@ -1005,6 +1005,7 @@ import {
   documentTextOutline,
   checkmark,
   cameraOutline,
+  scanOutline,
 } from "ionicons/icons";
 
 import {
@@ -1955,6 +1956,7 @@ export default {
       statsChartOutline,
       arrowDownCircle,
       fileTrayFullOutline,
+      scanOutline,
       qrCodeOutline,
       refreshOutline,
       starOutline,

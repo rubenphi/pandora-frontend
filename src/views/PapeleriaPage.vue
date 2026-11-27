@@ -58,9 +58,11 @@
                     v-model="selectedCourseId"
                     interface="popover"
                     class="qz-compact-select"
+                    placeholder="Seleccione un curso"
                     :interface-options="{ cssClass: 'qz-popover-filter' }"
                     @ionChange="onCourseChange($event)"
                   >
+                    <ion-select-option :value="null">Seleccione un curso</ion-select-option>
                     <ion-select-option :value="-1">Todos los Cursos</ion-select-option>
                     <ion-select-option v-for="c in availableCourses" :key="c.id" :value="c.id">
                       Curso {{ c.name }}
@@ -72,16 +74,25 @@
 
             <!-- Resumen Informativo de Estudiantes -->
             <div class="qz-selection-summary" v-if="!loadingStudents">
-              <div class="qz-summary-stat">
-                <ion-icon :icon="peopleOutline"></ion-icon>
-                <span>
-                  <strong>{{ totalSelectedStudents }}</strong> estudiantes listos para generar
-                </span>
+              <div
+                class="qz-summary-stat"
+                v-if="selectedCourseId === null || selectedCourseId === undefined || selectedCourseId === ''"
+              >
+                <ion-icon :icon="schoolOutline"></ion-icon>
+                <span>Selecciona un curso para habilitar los formatos</span>
               </div>
-              <div class="qz-summary-stat" v-if="selectedCourseId === -1">
-                <ion-icon :icon="libraryOutline"></ion-icon>
-                <span><strong>{{ availableCourses.length }}</strong> cursos seleccionados</span>
-              </div>
+              <template v-else>
+                <div class="qz-summary-stat">
+                  <ion-icon :icon="peopleOutline"></ion-icon>
+                  <span>
+                    <strong>{{ totalSelectedStudents }}</strong> estudiantes listos para generar
+                  </span>
+                </div>
+                <div class="qz-summary-stat" v-if="selectedCourseId === -1">
+                  <ion-icon :icon="libraryOutline"></ion-icon>
+                  <span><strong>{{ availableCourses.length }}</strong> cursos seleccionados</span>
+                </div>
+              </template>
             </div>
 
             <div class="qz-loading-indicator" v-else>
@@ -145,25 +156,25 @@
                 </button>
               </div>
 
-              <!-- Formato 3: Marcadores QR -->
+              <!-- Formato 3: Marcadores de Respuestas -->
               <div class="qz-format-card" :class="{ 'qz-card--disabled': totalSelectedStudents === 0 }">
                 <div class="qz-format-top">
                   <div class="qz-format-icon-squircle qz-icon--gold">
-                    <ion-icon :icon="qrCodeOutline"></ion-icon>
+                    <ion-icon :icon="matrixMarkerOutline"></ion-icon>
                   </div>
-                  <span class="qz-format-tag">CARNÉS & QR</span>
+                  <span class="qz-format-tag">TARJETAS & MATRIZ</span>
                 </div>
-                <h4 class="qz-format-name">Marcadores de Respuestas QR</h4>
+                <h4 class="qz-format-name">Marcadores de Respuestas</h4>
                 <p class="qz-format-desc">
-                  Tarjetas imprimibles con código QR individual de estudiante para actividades dinámicas y escaneo rápido en clase.
+                  Tarjetas imprimibles con marcador rotativo individual para que cada estudiante responda girando la tarjeta (A, B, C, D) y escaneo en vivo en el aula.
                 </p>
                 <button
                   class="qz-format-btn qz-btn--gold"
                   :disabled="loadingStudents || totalSelectedStudents === 0"
                   @click="generatePrintableQr"
                 >
-                  <ion-icon :icon="qrCodeOutline"></ion-icon>
-                  <span>Generar Marcadores QR</span>
+                  <ion-icon :icon="matrixMarkerOutline"></ion-icon>
+                  <span>Generar Marcadores</span>
                 </button>
               </div>
 
@@ -217,11 +228,11 @@ import {
   libraryOutline,
   clipboardOutline,
   documentTextOutline,
-  qrCodeOutline,
   downloadOutline,
   printOutline,
   scanOutline,
 } from "ionicons/icons";
+import { matrixMarkerOutline } from "../utils/customIcons";
 import axios from "axios";
 import { tokenHeader, usuarioGet } from "../globalService";
 
@@ -241,7 +252,7 @@ export default {
     const selectedYear = ref(new Date().getFullYear());
     const years = ref([]);
     const availableCourses = ref([]);
-    const selectedCourseId = ref(-1); // -1: Todos los cursos
+    const selectedCourseId = ref(null); // null: Obliga a seleccionar conscientemente un curso
     const loadingStudents = ref(false);
     const preparedCoursesData = ref([]);
 
@@ -273,6 +284,16 @@ export default {
     };
 
     const loadStudentsForSelection = async () => {
+      if (
+        selectedCourseId.value === null ||
+        selectedCourseId.value === undefined ||
+        selectedCourseId.value === ""
+      ) {
+        preparedCoursesData.value = [];
+        loadingStudents.value = false;
+        return;
+      }
+
       loadingStudents.value = true;
       preparedCoursesData.value = [];
 
@@ -482,7 +503,7 @@ export default {
       libraryOutline,
       clipboardOutline,
       documentTextOutline,
-      qrCodeOutline,
+      matrixMarkerOutline,
       downloadOutline,
       printOutline,
       scanOutline,

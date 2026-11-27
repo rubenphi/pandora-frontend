@@ -322,17 +322,6 @@
             <span>Cerrar Pregunta</span>
           </button>
 
-          <!-- Escáner QR OMR -->
-          <button
-            type="button"
-            class="qz-action-pill-btn qz-btn--secondary"
-            title="Lector OMR / QR"
-            @click="goToQr"
-          >
-            <ion-icon :icon="qrCodeOutline"></ion-icon>
-            <span>Escáner QR</span>
-          </button>
-
           <!-- Eliminar Todas las Respuestas -->
           <button
             type="button"
@@ -363,7 +352,6 @@ import {
   swapVerticalOutline,
   lockClosedOutline,
   trashOutline,
-  qrCodeOutline,
   happyOutline,
   sadOutline,
   timeOutline,
@@ -752,11 +740,6 @@ export default {
       goToCuestionario();
     };
 
-    const goToQr = () => {
-      const qId = getQuestionId();
-      router.push("/qr-preguntas/" + qId);
-    };
-
     const bonus = async () => {
       try {
         const qId = getQuestionId();
@@ -797,7 +780,6 @@ export default {
       presentDeleteAllAlert,
       goBack,
       goToCuestionario,
-      goToQr,
       bonus,
       arrowBackOutline,
       refreshOutline,
@@ -805,7 +787,6 @@ export default {
       swapVerticalOutline,
       lockClosedOutline,
       trashOutline,
-      qrCodeOutline,
       happyOutline,
       sadOutline,
       timeOutline,

@@ -5,6 +5,7 @@ import axios from "axios";
 import { adminOprofesor, apiState } from "../globalService"; // <-- MODIFIED
 import { courseAccessGuard } from "../courseAccessService";
 import { Device } from "@capacitor/device";
+import { resetDemoLock } from "../utils/demoLicense";
 
 const routes = [
   // ... (all routes remain the same)
@@ -303,7 +304,7 @@ const routes = [
       },
       {
         path: "cuestionario/importar/preguntas/tipo/:id",
-        component: () => import("@/views/ImportarPreguntaTipo.vue"),
+        redirect: (to) => `/cuestionario/importar/preguntas/variables/${to.params.id}`,
       },
       {
         path: "cuestionario/importar/preguntas/variables/:id",
@@ -504,6 +505,25 @@ const router = createRouter({
   routes,
 });
 
+// Interceptor global: solo cerrar sesión si el backend responde explícitamente 401 (token expirado/inválido)
+// Nunca cerrar sesión por errores de red, pérdida momentánea de conexión o suspensión en segundo plano
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      const publicPages = ["/login", "/register", "/onboarding-qr"];
+      const currentPath = router.currentRoute?.value?.path || "";
+      if (!publicPages.includes(currentPath)) {
+        localStorage.removeItem("usuario");
+        localStorage.removeItem("token");
+        resetDemoLock();
+        router.push("/login");
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // --- vvv MODIFIED GUARD vvv ---
 router.beforeEach(async (to, from, next) => {
   const info = await Device.getInfo();
@@ -511,7 +531,9 @@ router.beforeEach(async (to, from, next) => {
 
   // Use the reactive state to check if the URL is configured
   const isBaseUrlSet = !!apiState.baseUrl;
-  const isLoggedIn = localStorage.getItem("usuario") != undefined;
+  const rawUser = localStorage.getItem("usuario");
+  const rawToken = localStorage.getItem("token");
+  const isLoggedIn = !!rawUser && rawUser !== "undefined" && rawUser !== "null" && !!rawToken;
 
   const publicPages = ["/login", "/register", "/onboarding-qr"];
   const authRequired = !publicPages.includes(to.path);
@@ -523,17 +545,17 @@ router.beforeEach(async (to, from, next) => {
 
   // If auth is required and user is not logged in, redirect to login.
   if (authRequired && !isLoggedIn) {
+    resetDemoLock();
     return next("/login");
   }
 
+  if (to.path === "/login") {
+    resetDemoLock();
+  }
+
   // If user is logged in, set auth header.
-  if (isLoggedIn) {
-    axios.defaults.headers.common["Authorization"] =
-      localStorage.getItem("token");
-    axios.get("/auth/profile").catch((e) => {
-      localStorage.removeItem("usuario");
-      localStorage.setItem("error", e);
-    });
+  if (isLoggedIn && rawToken) {
+    axios.defaults.headers.common["Authorization"] = rawToken;
   }
 
   next();

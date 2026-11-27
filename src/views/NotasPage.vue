@@ -339,9 +339,7 @@
                     value="regular"
                     v-if="
                       estudiante.dimensionesRegular &&
-                      estudiante.dimensionesRegular.some(
-                        (d) => d.notas && d.notas.length > 0,
-                      )
+                      estudiante.dimensionesRegular.length > 0
                     "
                     class="qz-sub-accordion"
                   >
@@ -374,10 +372,7 @@
                         :key="dimension.id"
                         class="qz-dimension-block"
                       >
-                        <div
-                          v-if="dimension.notas && dimension.notas.length > 0"
-                          class="qz-dimension-bar"
-                        >
+                        <div class="qz-dimension-bar">
                           <span class="qz-dimension-name">{{
                             dimension.name
                           }}</span>
@@ -453,6 +448,16 @@
                             </ion-item-options>
                           </ion-item-sliding>
                         </ion-list>
+                        <div
+                          v-else
+                          class="qz-dimension-empty-msg"
+                        >
+                          <ion-icon
+                            :icon="alertCircleOutline"
+                            class="qz-dimension-empty-icon"
+                          ></ion-icon>
+                          <span>Sin actividades calificadas en esta dimensión</span>
+                        </div>
                       </div>
                     </div>
                   </ion-accordion>
@@ -1174,6 +1179,14 @@
                       </td>
                       <td :class="getGradeColorClass(nota.grade)">
                         {{ nota.grade !== null ? nota.grade : "Pendiente" }}
+                      </td>
+                    </tr>
+                    <tr
+                      v-if="!dim.notas || dim.notas.length === 0"
+                      class="item-row"
+                    >
+                      <td colspan="2" style="font-style: italic; color: #8c96a5; font-size: 11px; padding: 6px 12px;">
+                        Sin actividades calificadas en esta dimensión
                       </td>
                     </tr>
                   </template>
@@ -2929,65 +2942,81 @@ export default {
           }
           currentY += dimRowH;
 
-          dim.notas.forEach((nota, nIdx) => {
-            const itemTitle = nota.gradableItem?.title || "Sin título";
-            pdf.setFont("helvetica", "normal");
-            pdf.setFontSize(8);
-            const lines = pdf.splitTextToSize(itemTitle, colItemWidth - 12);
-            const rowH = Math.max(5.5, lines.length * 3.6 + 2.2);
-
-            checkPageBreak(rowH + 1);
-
-            if (nIdx % 2 === 1) {
-              pdf.setFillColor(252, 253, 255);
-              pdf.rect(marginX, currentY, contentWidth, rowH, "F");
-            }
+          if (!dim.notas || dim.notas.length === 0) {
+            checkPageBreak(7);
             pdf.setDrawColor(230, 235, 242);
             pdf.setLineWidth(0.15);
-            pdf.rect(marginX, currentY, contentWidth, rowH, "S");
+            pdf.rect(marginX, currentY, contentWidth, 5.5, "S");
+            pdf.setFont("helvetica", "italic");
+            pdf.setFontSize(7.5);
+            pdf.setTextColor(150, 155, 170);
+            pdf.text(
+              "Sin actividades calificadas en esta dimensión",
+              marginX + 8,
+              currentY + 3.8,
+            );
+            currentY += 5.5;
+          } else {
+            dim.notas.forEach((nota, nIdx) => {
+              const itemTitle = nota.gradableItem?.title || "Sin título";
+              pdf.setFont("helvetica", "normal");
+              pdf.setFontSize(8);
+              const lines = pdf.splitTextToSize(itemTitle, colItemWidth - 12);
+              const rowH = Math.max(5.5, lines.length * 3.6 + 2.2);
 
-            pdf.setTextColor(60, 70, 85);
-            let textY = currentY + 3.8;
-            for (const line of lines) {
-              pdf.text(line, marginX + 8, textY);
-              textY += 3.6;
-            }
+              checkPageBreak(rowH + 1);
 
-            const middleY = currentY + rowH / 2 + 1.1;
-            if (
-              nota.grade !== null &&
-              nota.grade !== undefined &&
-              !nota.isPending
-            ) {
-              const valNum = parseFloat(nota.grade);
-              const valStr = isNaN(valNum)
-                ? String(nota.grade)
-                : valNum.toFixed(1);
-              const gradeRgb = getGradeRgb(valNum);
-              pdf.setFont("helvetica", "bold");
-              pdf.setFontSize(8.5);
-              pdf.setTextColor(gradeRgb[0], gradeRgb[1], gradeRgb[2]);
-              const gw = pdf.getTextWidth(valStr);
-              pdf.text(
-                valStr,
-                marginX + colItemWidth + (colGradeWidth - gw) / 2,
-                middleY,
-              );
-            } else {
-              pdf.setFont("helvetica", "italic");
-              pdf.setFontSize(7.5);
-              pdf.setTextColor(150, 155, 170);
-              const pendText = getPendingStatusLabel(nota);
-              const pw = pdf.getTextWidth(pendText);
-              pdf.text(
-                pendText,
-                marginX + colItemWidth + (colGradeWidth - pw) / 2,
-                middleY,
-              );
-            }
+              if (nIdx % 2 === 1) {
+                pdf.setFillColor(252, 253, 255);
+                pdf.rect(marginX, currentY, contentWidth, rowH, "F");
+              }
+              pdf.setDrawColor(230, 235, 242);
+              pdf.setLineWidth(0.15);
+              pdf.rect(marginX, currentY, contentWidth, rowH, "S");
 
-            currentY += rowH;
-          });
+              pdf.setTextColor(60, 70, 85);
+              let textY = currentY + 3.8;
+              for (const line of lines) {
+                pdf.text(line, marginX + 8, textY);
+                textY += 3.6;
+              }
+
+              const middleY = currentY + rowH / 2 + 1.1;
+              if (
+                nota.grade !== null &&
+                nota.grade !== undefined &&
+                !nota.isPending
+              ) {
+                const valNum = parseFloat(nota.grade);
+                const valStr = isNaN(valNum)
+                  ? String(nota.grade)
+                  : valNum.toFixed(1);
+                const gradeRgb = getGradeRgb(valNum);
+                pdf.setFont("helvetica", "bold");
+                pdf.setFontSize(8.5);
+                pdf.setTextColor(gradeRgb[0], gradeRgb[1], gradeRgb[2]);
+                const gw = pdf.getTextWidth(valStr);
+                pdf.text(
+                  valStr,
+                  marginX + colItemWidth + (colGradeWidth - gw) / 2,
+                  middleY,
+                );
+              } else {
+                pdf.setFont("helvetica", "italic");
+                pdf.setFontSize(7.5);
+                pdf.setTextColor(150, 155, 170);
+                const pendText = getPendingStatusLabel(nota);
+                const pw = pdf.getTextWidth(pendText);
+                pdf.text(
+                  pendText,
+                  marginX + colItemWidth + (colGradeWidth - pw) / 2,
+                  middleY,
+                );
+              }
+
+              currentY += rowH;
+            });
+          }
         });
 
         currentY += 6;
@@ -4041,6 +4070,26 @@ export default {
   background: #f0effc;
   border-radius: 8px;
   margin-bottom: 8px;
+}
+
+.qz-dimension-empty-msg {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  background: rgba(85, 68, 214, 0.04);
+  border: 1px dashed rgba(85, 68, 214, 0.2);
+  color: #726b9a;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.qz-dimension-empty-icon {
+  font-size: 16px;
+  color: #fa8c16;
+  flex-shrink: 0;
 }
 
 .qz-dimension-name {
@@ -5121,6 +5170,11 @@ export default {
   .qz-dimension-name {
     color: #a39bf0;
   }
+  .qz-dimension-empty-msg {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #9e9bb8;
+  }
   .qz-grade-item-sliding {
     border-color: rgba(255, 255, 255, 0.06);
   }
@@ -5736,6 +5790,14 @@ export default {
 :global(html.dark) .qz-dimension-name,
 :global(.dark) .qz-dimension-name {
   color: #a39bf0;
+}
+
+:global(body.dark) .qz-dimension-empty-msg,
+:global(html.dark) .qz-dimension-empty-msg,
+:global(.dark) .qz-dimension-empty-msg {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #9e9bb8;
 }
 
 :global(body.dark) .qz-grade-item-sliding,

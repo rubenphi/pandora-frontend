@@ -21,7 +21,8 @@
               <div>
                 <h1 class="qz-hero-title">Hojas de Respuesta OMR</h1>
                 <p class="qz-hero-subtitle">
-                  Configura e imprime las hojas de respuestas personalizadas por estudiante
+                  Configura e imprime las hojas de respuestas personalizadas por
+                  estudiante
                 </p>
               </div>
               <button
@@ -60,7 +61,10 @@
                   Total de Preguntas
                 </label>
                 <div class="qz-input-wrapper">
-                  <ion-icon :icon="helpCircleOutline" class="qz-field-icon"></ion-icon>
+                  <ion-icon
+                    :icon="helpCircleOutline"
+                    class="qz-field-icon"
+                  ></ion-icon>
                   <input
                     id="totalQuestions"
                     v-model.number="totalQuestions"
@@ -76,7 +80,7 @@
               <div class="qz-field-group qz-field-grow">
                 <div class="qz-field-label-row">
                   <label class="qz-field-label" for="quizTopic">
-                    Tema del Cuestionario (Opcional)
+                    Tema (Opcional)
                   </label>
                   <button
                     type="button"
@@ -88,7 +92,10 @@
                   </button>
                 </div>
                 <div class="qz-input-wrapper">
-                  <ion-icon :icon="documentTextOutline" class="qz-field-icon"></ion-icon>
+                  <ion-icon
+                    :icon="documentTextOutline"
+                    class="qz-field-icon"
+                  ></ion-icon>
                   <input
                     id="quizTopic"
                     v-model="topic"
@@ -106,6 +113,16 @@
                     &times;
                   </button>
                 </div>
+              </div>
+
+              <!-- Fecha del cuestionario (Opcional, selector Queezy) -->
+              <div class="qz-field-group qz-field-date">
+                <QzDatePicker
+                  v-model="quizDate"
+                  label="Fecha (Opcional)"
+                  placeholder="DD/MM/YYYY"
+                  :clearable="true"
+                />
               </div>
             </div>
 
@@ -128,7 +145,9 @@
               <div class="qz-calc-divider"></div>
               <div class="qz-calc-item qz-calc-highlight">
                 <span class="qz-calc-label">Total hojas a imprimir</span>
-                <span class="qz-calc-value">{{ allStudents.length * sheets.length }}</span>
+                <span class="qz-calc-value">{{
+                  allStudents.length * sheets.length
+                }}</span>
               </div>
             </div>
 
@@ -139,7 +158,8 @@
                 :key="sheet.index"
                 class="qz-section-pill"
               >
-                Sec {{ sheet.index }}: preguntas {{ sheet.start }} - {{ sheet.end }}
+                Sec {{ sheet.index }}: preguntas {{ sheet.start }} -
+                {{ sheet.end }}
               </span>
             </div>
           </section>
@@ -157,7 +177,8 @@
             </div>
             <h3 class="qz-empty-title">Sin estudiantes seleccionados</h3>
             <p class="qz-state-text">
-              No se encontraron estudiantes para generar las hojas. Regresa a papelería y selecciona un curso.
+              No se encontraron estudiantes para generar las hojas. Regresa a
+              papelería y selecciona un curso.
             </p>
             <button type="button" class="qz-primary-btn" @click="goBack">
               <ion-icon :icon="arrowBackOutline"></ion-icon>
@@ -260,6 +281,7 @@
                 :student="selectedStudent"
                 :course-name="courseName"
                 :topic="topic"
+                :date="quizDateFormatted"
                 :sheet-index="selectedSheet.index"
                 :start-number="selectedSheet.start"
                 :question-count="selectedSheet.count"
@@ -300,7 +322,10 @@
               <div class="qz-field-group">
                 <label class="qz-field-label">Asignatura</label>
                 <div class="qz-select-wrapper">
-                  <ion-icon :icon="bookOutline" class="qz-field-icon"></ion-icon>
+                  <ion-icon
+                    :icon="bookOutline"
+                    class="qz-field-icon"
+                  ></ion-icon>
                   <ion-select
                     v-model="searchAreaId"
                     interface="popover"
@@ -309,7 +334,11 @@
                     :interface-options="{ cssClass: 'qz-popover-filter' }"
                     @ionChange="fetchLessonsAndQuizzes"
                   >
-                    <ion-select-option v-for="area in availableAreas" :key="area.id" :value="area.id">
+                    <ion-select-option
+                      v-for="area in availableAreas"
+                      :key="area.id"
+                      :value="area.id"
+                    >
                       {{ area.name }}
                     </ion-select-option>
                   </ion-select>
@@ -320,7 +349,10 @@
               <div class="qz-field-group">
                 <label class="qz-field-label">Periodo</label>
                 <div class="qz-select-wrapper">
-                  <ion-icon :icon="calendarOutline" class="qz-field-icon"></ion-icon>
+                  <ion-icon
+                    :icon="calendarOutline"
+                    class="qz-field-icon"
+                  ></ion-icon>
                   <ion-select
                     v-model="searchPeriodId"
                     interface="popover"
@@ -329,7 +361,11 @@
                     :interface-options="{ cssClass: 'qz-popover-filter' }"
                     @ionChange="fetchLessonsAndQuizzes"
                   >
-                    <ion-select-option v-for="period in availablePeriods" :key="period.id" :value="period.id">
+                    <ion-select-option
+                      v-for="period in availablePeriods"
+                      :key="period.id"
+                      :value="period.id"
+                    >
                       {{ period.name }}
                     </ion-select-option>
                   </ion-select>
@@ -338,13 +374,17 @@
             </div>
 
             <!-- Mensaje si faltan filtros -->
-            <div v-if="!searchAreaId || !searchPeriodId" class="qz-state-card qz-sub-empty">
+            <div
+              v-if="!searchAreaId || !searchPeriodId"
+              class="qz-state-card qz-sub-empty"
+            >
               <div class="qz-empty-icon">
                 <ion-icon :icon="optionsOutline"></ion-icon>
               </div>
               <h4 class="qz-empty-title">Selecciona Asignatura y Periodo</h4>
               <p class="qz-state-text">
-                Para consultar los cuestionarios disponibles del curso, selecciona primero la asignatura y el periodo.
+                Para consultar los cuestionarios disponibles del curso,
+                selecciona primero la asignatura y el periodo.
               </p>
             </div>
 
@@ -355,7 +395,10 @@
             </div>
 
             <!-- Sin resultados -->
-            <div v-else-if="groupedLessons.length === 0" class="qz-state-card qz-sub-empty">
+            <div
+              v-else-if="groupedLessons.length === 0"
+              class="qz-state-card qz-sub-empty"
+            >
               <div class="qz-empty-icon">
                 <ion-icon :icon="documentTextOutline"></ion-icon>
               </div>
@@ -379,10 +422,17 @@
                     <div class="qz-acc-icon">
                       <ion-icon :icon="bookOutline"></ion-icon>
                     </div>
-                    <span class="qz-acc-lesson-topic">{{ lessonGroup.topic }}</span>
+                    <span class="qz-acc-lesson-topic">{{
+                      lessonGroup.topic
+                    }}</span>
                   </div>
                   <span class="qz-acc-badge">
-                    {{ lessonGroup.quizzes.length }} {{ lessonGroup.quizzes.length === 1 ? 'cuestionario' : 'cuestionarios' }}
+                    {{ lessonGroup.quizzes.length }}
+                    {{
+                      lessonGroup.quizzes.length === 1
+                        ? "cuestionario"
+                        : "cuestionarios"
+                    }}
                   </span>
                 </div>
 
@@ -397,13 +447,22 @@
                     <div class="qz-quiz-info">
                       <h4 class="qz-quiz-title">{{ quiz.title }}</h4>
                       <div class="qz-quiz-meta">
-                        <span v-if="quiz.questions && quiz.questions.length" class="qz-quiz-badge">
+                        <span
+                          v-if="quiz.questions && quiz.questions.length"
+                          class="qz-quiz-badge"
+                        >
                           {{ quiz.questions.length }} preguntas
                         </span>
-                        <span v-if="quiz.lesson?.area?.name" class="qz-quiz-badge qz-badge--area">
+                        <span
+                          v-if="quiz.lesson?.area?.name"
+                          class="qz-quiz-badge qz-badge--area"
+                        >
                           {{ quiz.lesson.area.name }}
                         </span>
-                        <span v-if="quiz.lesson?.period?.name" class="qz-quiz-badge qz-badge--period">
+                        <span
+                          v-if="quiz.lesson?.period?.name"
+                          class="qz-quiz-badge qz-badge--period"
+                        >
                           {{ quiz.lesson.period.name }}
                         </span>
                       </div>
@@ -491,7 +550,17 @@ export default {
     const totalQuestions = ref(20);
     const selectedSheetIndex = ref(0);
     const topic = ref("");
+    const quizDate = ref("");
     const selectedCourseId = ref(null);
+
+    const quizDateFormatted = computed(() => {
+      if (!quizDate.value) return "";
+      const match = quizDate.value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (match) {
+        return `${match[3]}/${match[2]}/${match[1]}`;
+      }
+      return quizDate.value;
+    });
 
     // Modal de búsqueda de cuestionarios
     const isQuizSearchModalOpen = ref(false);
@@ -512,7 +581,8 @@ export default {
 
     const courseName = computed(() => {
       if (!studentData.value || studentData.value.length === 0) return "";
-      if (studentData.value.length === 1) return studentData.value[0]?.name || "";
+      if (studentData.value.length === 1)
+        return studentData.value[0]?.name || "";
       return "Institución";
     });
 
@@ -533,14 +603,21 @@ export default {
 
       if (!data) {
         try {
-          const stored = sessionStorage.getItem("pandora_printable_studentData");
+          const stored = sessionStorage.getItem(
+            "pandora_printable_studentData",
+          );
           if (stored) data = JSON.parse(stored);
           const storedYear = sessionStorage.getItem("pandora_printable_year");
           if (storedYear) yr = parseInt(storedYear, 10);
-          const storedCourseId = sessionStorage.getItem("pandora_printable_courseId");
+          const storedCourseId = sessionStorage.getItem(
+            "pandora_printable_courseId",
+          );
           if (storedCourseId) cId = parseInt(storedCourseId, 10);
         } catch (e) {
-          console.error("Error al leer sessionStorage en PrintableStudentSheet:", e);
+          console.error(
+            "Error al leer sessionStorage en PrintableStudentSheet:",
+            e,
+          );
         }
       }
 
@@ -585,7 +662,9 @@ export default {
 
         // Cargar áreas del curso o generales
         let areasUrl = "/areas";
-        const effectiveCourseId = selectedCourseId.value || (studentData.value?.length === 1 ? studentData.value[0]?.id : null);
+        const effectiveCourseId =
+          selectedCourseId.value ||
+          (studentData.value?.length === 1 ? studentData.value[0]?.id : null);
         if (effectiveCourseId) {
           areasUrl = `/courses/${effectiveCourseId}/areas`;
         } else if (instId) {
@@ -611,7 +690,9 @@ export default {
 
         if (instId) params.instituteId = instId;
         if (year.value) params.year = year.value;
-        const effectiveCourseId = selectedCourseId.value || (studentData.value?.length === 1 ? studentData.value[0]?.id : null);
+        const effectiveCourseId =
+          selectedCourseId.value ||
+          (studentData.value?.length === 1 ? studentData.value[0]?.id : null);
         if (effectiveCourseId) {
           params.courseId = effectiveCourseId;
         }
@@ -664,17 +745,27 @@ export default {
       try {
         const res = await axios.get(`/quizzes/${quiz.id}`, tokenHeader());
         const fullQuiz = res.data;
-        if (fullQuiz && Array.isArray(fullQuiz.questions) && fullQuiz.questions.length > 0) {
+        if (
+          fullQuiz &&
+          Array.isArray(fullQuiz.questions) &&
+          fullQuiz.questions.length > 0
+        ) {
           totalQuestions.value = fullQuiz.questions.length;
         } else {
           // Intentar alternativa directa endpoint /questions?quizId=
-          const qRes = await axios.get(`/questions?quizId=${quiz.id}`, tokenHeader());
+          const qRes = await axios.get(
+            `/questions?quizId=${quiz.id}`,
+            tokenHeader(),
+          );
           if (Array.isArray(qRes.data) && qRes.data.length > 0) {
             totalQuestions.value = qRes.data.length;
           }
         }
       } catch (err) {
-        console.warn("No se pudieron cargar las preguntas del cuestionario:", err);
+        console.warn(
+          "No se pudieron cargar las preguntas del cuestionario:",
+          err,
+        );
       }
     };
 
@@ -684,18 +775,19 @@ export default {
       const students = allStudents.value;
       const course = courseName.value || "";
       const currentTopic = topic.value || "";
+      const currentDate = quizDateFormatted.value || "";
 
       const newImageWidth = 3313;
       const newImageHeight = 4919;
       const sheetSpacing = 30;
 
-      let scale = 0.0800;
+      let scale = 0.08;
       if (sheetsPerPage.value === 6) {
-        scale = 0.0800;
+        scale = 0.08;
       } else if (sheetsPerPage.value === 4) {
-        scale = 0.1180;
+        scale = 0.118;
       } else if (sheetsPerPage.value === 1) {
-        scale = 0.2350;
+        scale = 0.235;
       }
 
       const scaledWidth = newImageWidth * scale;
@@ -711,7 +803,7 @@ export default {
                    font-size: ${item.fontSize}px; line-height: 1; font-weight: bold;
                    color: black; font-family: Arial, sans-serif;">
                 ${item.value}
-              </div>`
+              </div>`,
           )
           .join("");
       };
@@ -739,7 +831,7 @@ export default {
 
         const courseTopPercent = (400 / originalImageHeight) * 100;
         const courseLeftPercent = (600 / originalImageWidth) * 100;
-        const courseWidthPercent = (1883 / originalImageWidth) * 100;
+        const courseWidthPercent = (1000 / originalImageWidth) * 100;
         const courseHeightPercent = (161 / originalImageHeight) * 100;
         const courseFontSizePx = 180;
 
@@ -747,6 +839,13 @@ export default {
         const sectionTopPercent = (230 / originalImageHeight) * 100;
         const sectionRightPercent = (120 / originalImageWidth) * 100;
         const sectionFontSizePx = 110;
+
+        // Fecha a la misma altura que el curso (al lado de 'FECHA:')
+        const dateTopPercent = (400 / originalImageHeight) * 100;
+        const dateLeftPercent = (2050 / originalImageWidth) * 100;
+        const dateWidthPercent = (1100 / originalImageWidth) * 100;
+        const dateHeightPercent = (161 / originalImageHeight) * 100;
+        const dateFontSizePx = 160;
 
         const digitsTopPercent = (850 / originalImageHeight) * 100;
         const digitsLeftPercent = (640 / originalImageWidth) * 100;
@@ -790,7 +889,7 @@ export default {
       <div class="image-wrapper">
         <img src="${domain}/hoja50.jpg" crossorigin="anonymous" alt="Hoja OMR" style="display: block; width: 100%; height: 100%;" />
         <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;">
-          
+
           <!-- Nombre del Estudiante -->
           <div style="position: absolute; left: ${nameLeftPercent}%; top: ${nameTopPercent}%; width: ${nameWidthPercent}%; height: ${nameHeightPercent}%;
                font-size: ${nameFontSizePx}px; line-height: 1; color: black; font-family: Arial, sans-serif;
@@ -831,6 +930,19 @@ export default {
             Sec ${sheet.index}
           </div>
 
+          <!-- Fecha del Cuestionario en posición ~ (3,3) -->
+          ${
+            currentDate
+              ? `
+            <div style="position: absolute; left: ${dateLeftPercent}%; top: ${dateTopPercent}%; width: ${dateWidthPercent}%; height: ${dateHeightPercent}%;
+                 font-size: ${dateFontSizePx}px; line-height: 1; font-weight: bold; color: black; font-family: Arial, sans-serif;
+                 white-space: nowrap; display: flex; align-items: center;">
+              ${currentDate}
+            </div>
+          `
+              : ""
+          }
+
           <!-- Dígitos del Código -->
           <div style="position: absolute; left: ${digitsLeftPercent}%; top: ${digitsTopPercent}%; width: ${digitsWidthPercent}%; height: ${digitsHeightPercent}%;
                       display: flex; align-items: center; justify-content: space-between;">
@@ -840,11 +952,11 @@ export default {
                      .split("")
                      .map(
                        (digit) => `
-                <div style="flex: 1; height: 100%; 
+                <div style="flex: 1; height: 100%;
                             display: flex; align-items: center; justify-content: center;
                             font-size: 150px; font-weight: bold; color: black; font-family: Arial, sans-serif; line-height: 1;">
                   ${digit}
-                </div>`
+                </div>`,
                      )
                      .join("")
                  : ""
@@ -908,25 +1020,30 @@ export default {
       };
     };
 
-    const generateStyles = (newImageWidth, newImageHeight, scale, sheetSpacing) => {
+    const generateStyles = (
+      newImageWidth,
+      newImageHeight,
+      scale,
+      sheetSpacing,
+    ) => {
       return `
         * {
           margin: 0;
           padding: 0;
           box-sizing: border-box;
         }
-        
+
         body {
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
-        
+
         @page {
           size: legal;
           margin: 0;
           padding-top: 3mm;
         }
-        
+
         .print-page {
           page-break-after: always;
           width: 216mm;
@@ -934,11 +1051,11 @@ export default {
           overflow: hidden;
           position: relative;
         }
-        
+
         .print-page:last-child {
           page-break-after: auto;
         }
-        
+
         .grid-container {
           display: grid;
           row-gap: ${sheetSpacing}px;
@@ -957,7 +1074,7 @@ export default {
           width: 100%;
           height: 100%;
         }
-        
+
         .grid-item {
           position: relative;
           width: 100%;
@@ -966,7 +1083,7 @@ export default {
           justify-content: center;
           align-items: center;
         }
-        
+
         .student-code-digit-text {
           font-size: 180px;
         }
@@ -998,7 +1115,12 @@ export default {
     const generatePrintHTML = () => {
       const { pagesHTML, newImageWidth, newImageHeight, scale, sheetSpacing } =
         generateSheetContentHTML();
-      const css = generateStyles(newImageWidth, newImageHeight, scale, sheetSpacing);
+      const css = generateStyles(
+        newImageWidth,
+        newImageHeight,
+        scale,
+        sheetSpacing,
+      );
 
       return `
     <!DOCTYPE html>
@@ -1031,63 +1153,228 @@ export default {
       const domain = window.location.origin;
       const bgImageBase64 = await getBase64ImageFromUrl(`${domain}/hoja50.jpg`);
 
-      let { pagesHTML, newImageWidth, newImageHeight, scale, sheetSpacing } =
-        generateSheetContentHTML();
-
-      const originalSrcRegex = new RegExp(`${domain}/hoja50\\.jpg`, "g");
-      const relativeSrcRegex = /src="\/hoja50\.jpg"/g;
-      pagesHTML = pagesHTML.replace(originalSrcRegex, bgImageBase64);
-      pagesHTML = pagesHTML.replace(relativeSrcRegex, `src="${bgImageBase64}"`);
-
-      const css = generateStyles(newImageWidth, newImageHeight, scale, sheetSpacing);
-
-      const tempContainer = document.createElement("div");
-      tempContainer.style.cssText = "position:absolute;left:-9999px;top:-9999px;";
-      tempContainer.innerHTML = pagesHTML;
-      document.body.appendChild(tempContainer);
-
-      const pageNodes = Array.from(tempContainer.querySelectorAll(".print-page"));
-
-      const isNative = Capacitor.isNativePlatform();
-      const canvasScale = isNative ? 1 : 2;
-
-      const h2cOptions = {
-        scale: canvasScale,
-        useCORS: true,
-        logging: false,
-        allowTaint: false,
-      };
-
       const { jsPDF } = await import("jspdf");
-      const { default: html2canvas } = await import("html2canvas");
 
-      const pdf = new jsPDF({ unit: "mm", format: "legal", orientation: "portrait" });
+      // Dimensiones de página Legal en mm
       const pageWidthMm = 215.9;
       const pageHeightMm = 355.6;
 
-      for (let i = 0; i < pageNodes.length; i++) {
-        const node = pageNodes[i];
-        const styleEl = document.createElement("style");
-        styleEl.textContent = css;
-        node.prepend(styleEl);
+      const pdf = new jsPDF({
+        unit: "mm",
+        format: "legal",
+        orientation: "portrait",
+      });
 
-        const canvas = await html2canvas(node, h2cOptions);
-        const imgData = canvas.toDataURL("image/jpeg", isNative ? 0.85 : 0.98);
+      const students = allStudents.value;
+      const course = courseName.value || "";
+      const currentTopic = topic.value || "";
+      const currentDate = quizDateFormatted.value || "";
+      const perPage = sheetsPerPage.value;
 
-        if (i > 0) pdf.addPage("legal", "portrait");
-        pdf.addImage(imgData, "JPEG", 0, 0, pageWidthMm, pageHeightMm, undefined, "FAST");
+      // Unidades a imprimir: cada combinación estudiante + hoja
+      const sheetUnits = [];
+      students.forEach((student) => {
+        sheets.value.forEach((sheet) => {
+          sheetUnits.push({ student, sheet });
+        });
+      });
 
-        canvas.width = 0;
-        canvas.height = 0;
-        await new Promise((r) => setTimeout(r, 50));
+      // Configuración de grid según hojas por página
+      let cols = 2;
+      let rows = 3;
+      if (perPage === 1) {
+        cols = 1;
+        rows = 1;
+      } else if (perPage === 4) {
+        cols = 2;
+        rows = 2;
+      } else if (perPage === 6) {
+        cols = 2;
+        rows = 3;
       }
 
-      document.body.removeChild(tempContainer);
+      // Proporción original de la imagen hoja50.jpg: 3313 x 4919
+      const imgAspect = 4919 / 3313;
+
+      // Dimensiones de celda en mm
+      const cellWidthMm = pageWidthMm / cols;
+      const cellHeightMm = pageHeightMm / rows;
+
+      // Tamaño de la hoja OMR dentro de la celda (con margen para corte)
+      const marginFactor = perPage === 1 ? 0.96 : 0.94;
+      let targetW = cellWidthMm * marginFactor;
+      let targetH = targetW * imgAspect;
+      if (targetH > cellHeightMm * marginFactor) {
+        targetH = cellHeightMm * marginFactor;
+        targetW = targetH / imgAspect;
+      }
+
+      const totalPages = Math.ceil(sheetUnits.length / perPage);
+
+      for (let p = 0; p < totalPages; p++) {
+        if (p > 0) pdf.addPage("legal", "portrait");
+
+        const pageUnits = sheetUnits.slice(p * perPage, (p + 1) * perPage);
+
+        pageUnits.forEach(({ student, sheet }, indexOnPage) => {
+          const col = indexOnPage % cols;
+          const row = Math.floor(indexOnPage / cols);
+
+          // Esquina superior izquierda de la celda
+          const cellLeft = col * cellWidthMm;
+          const cellTop = row * cellHeightMm;
+
+          // Centrado de la hoja dentro de la celda
+          const sheetX = cellLeft + (cellWidthMm - targetW) / 2;
+          const sheetY = cellTop + (cellHeightMm - targetH) / 2;
+
+          // 1. Imagen de fondo de la hoja OMR
+          pdf.addImage(
+            bgImageBase64,
+            "JPEG",
+            sheetX,
+            sheetY,
+            targetW,
+            targetH,
+            undefined,
+            "FAST",
+          );
+
+          // 2. Línea de corte punteada debajo de la hoja
+          const cutY = sheetY + targetH + 1.5;
+          if (cutY < cellTop + cellHeightMm - 0.5) {
+            pdf.setDrawColor(120, 120, 120);
+            pdf.setLineDashPattern([2, 2], 0);
+            pdf.line(sheetX, cutY, sheetX + targetW, cutY);
+            pdf.setLineDashPattern([], 0); // restaurar sólido
+          }
+
+          // Funciones auxiliares de escala (porcentual a mm dentro de la hoja)
+          const pxToMmX = (pct) => sheetX + (pct / 100) * targetW;
+          const pxToMmY = (pct) => sheetY + (pct / 100) * targetH;
+
+          // Estilo de texto general
+          pdf.setFont("helvetica", "bold");
+          pdf.setTextColor(0, 0, 0);
+
+          // Escala de fuentes (pt) según el tamaño en mm
+          const fontScale = targetW / 100; // factor relativo
+
+          // --- A. Nombre del Estudiante ---
+          const fullName = `${student.lastName || ""} ${
+            student.name || ""
+          }`.trim();
+          pdf.setFontSize(Math.max(6, 6.5 * fontScale));
+          // Y = 110 / 4919 * 100 + altura de línea aproximada
+          const nameX = pxToMmX((600 / 3313) * 100);
+          const nameY = pxToMmY((200 / 4919) * 100);
+          const maxNameWidth = (2100 / 3313) * targetW;
+          const truncatedName =
+            pdf.splitTextToSize(fullName, maxNameWidth)[0] || fullName;
+          pdf.text(truncatedName, nameX, nameY);
+
+          // --- B. Tema del Cuestionario (en la misma fila que Sec {num}) ---
+          if (currentTopic) {
+            pdf.setFont("helvetica", "normal");
+            pdf.setFontSize(Math.max(8, 9 * fontScale));
+            const topicX = pxToMmX((600 / 3313) * 100);
+            const topicY = pxToMmY((430 / 4919) * 100);
+            const maxTopicWidth = (2100 / 3313) * targetW;
+            const truncatedTopic =
+              pdf.splitTextToSize(currentTopic, maxTopicWidth)[0] ||
+              currentTopic;
+            pdf.text(truncatedTopic, topicX, topicY);
+          }
+
+          // --- C. Número de Sección: Sec {num} en la misma fila del tema (extremo derecho) ---
+          pdf.setFont("helvetica", "bold");
+          pdf.setFontSize(Math.max(8, 9 * fontScale));
+          const secText = `Sec ${sheet.index}`;
+          const secRightX = pxToMmX((3150 / 3313) * 100);
+          const secY = pxToMmY((430 / 4919) * 100);
+          pdf.text(secText, secRightX, secY, { align: "right" });
+
+          // --- D. Nombre del Curso / Grado ---
+          if (course) {
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(Math.max(8, 9 * fontScale));
+            const courseX = pxToMmX((600 / 3313) * 100);
+            const courseY = pxToMmY((710 / 4919) * 100);
+            const maxCourseWidth = (1000 / 3313) * targetW;
+            const truncatedCourse =
+              pdf.splitTextToSize(course, maxCourseWidth)[0] || course;
+            pdf.text(truncatedCourse, courseX, courseY);
+          }
+
+          // --- D2. Fecha del Cuestionario a la misma altura que el curso (al lado de 'FECHA:') ---
+          if (currentDate) {
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(Math.max(8, 9 * fontScale));
+            const dateX = pxToMmX((2050 / 3313) * 100);
+            const dateY = pxToMmY((710 / 4919) * 100);
+            pdf.text(currentDate, dateX, dateY);
+          }
+
+          // --- E. Dígitos del Código (10 casillas de texto) ---
+          const rawCode = String(student.code || "").replace(/\D/g, "");
+          const formattedCode = rawCode.padStart(10, "0").slice(0, 10);
+
+          const digitsStartX = pxToMmX((670 / 3313) * 100);
+          const digitsWidth = (1309 / 3313) * targetW;
+          const digitsY = pxToMmY((1280 / 4919) * 100);
+          const digitColStep = digitsWidth / 10;
+
+          pdf.setFont("helvetica", "bold");
+          pdf.setFontSize(Math.max(6.5, 7.5 * fontScale));
+
+          for (let d = 0; d < 10; d++) {
+            const digitChar = formattedCode[d];
+            const dx = digitsStartX + (d + 0.5) * digitColStep;
+            pdf.text(digitChar, dx, digitsY, { align: "center" });
+          }
+
+          // --- F. Matriz de Burbujas de Código de Estudiante ---
+          const matrixStartX = pxToMmX((658 / 3313) * 100);
+          const matrixWidth = (1332 / 3313) * targetW;
+          const matrixStartY = pxToMmY((1363 / 4919) * 100);
+          const matrixHeight = (1335 / 4919) * targetH;
+
+          const colW = matrixWidth / 10;
+          const rowH = matrixHeight / 10;
+          const circleRadius = Math.min(colW, rowH) * 0.42;
+
+          pdf.setFillColor(0, 0, 0);
+
+          for (let colIdx = 0; colIdx < 10; colIdx++) {
+            const digitVal = parseInt(formattedCode[colIdx], 10);
+            if (!isNaN(digitVal)) {
+              const rowIdx = digitVal === 0 ? 9 : digitVal - 1;
+              const cx = matrixStartX + (colIdx + 0.5) * colW;
+              const cy = matrixStartY + (rowIdx + 0.5) * rowH;
+              pdf.circle(cx, cy, circleRadius, "F");
+            }
+          }
+
+          // --- G. Números de Pregunta ---
+          pdf.setFont("helvetica", "bold");
+          pdf.setFontSize(Math.max(5.5, 6 * fontScale));
+
+          const qNums = questionNumbers(sheet.start, sheet.count);
+          qNums.forEach((q) => {
+            const qCenterX = pxToMmX(q.left + q.width / 2);
+            const qCenterY = pxToMmY(q.top + q.height * 0.8);
+            pdf.text(String(q.value), qCenterX, qCenterY, { align: "center" });
+          });
+        });
+      }
 
       if (action === "save") {
         pdf.save("hojas_respuesta.pdf");
       } else if (action === "base64") {
-        return "data:application/pdf;base64," + pdf.output("datauristring").split(",")[1];
+        return (
+          "data:application/pdf;base64," +
+          pdf.output("datauristring").split(",")[1]
+        );
       }
     };
 
@@ -1222,9 +1509,10 @@ export default {
 
     const allStudents = computed(() => {
       if (!studentData.value || studentData.value.length === 0) return [];
-      if (studentData.value.length === 1) return studentData.value[0]?.students || [];
+      if (studentData.value.length === 1)
+        return studentData.value[0]?.students || [];
       return studentData.value.flatMap((c) =>
-        (c.students || []).map((s) => ({ ...s, courseName: c.name }))
+        (c.students || []).map((s) => ({ ...s, courseName: c.name })),
       );
     });
 
@@ -1250,9 +1538,7 @@ export default {
         return;
       }
 
-      const filename = `hoja_respuesta_${selectedStudent.value.code}_${
-        selectedSheet.value.start
-      }-${selectedSheet.value.end}.png`;
+      const filename = `hoja_respuesta_${selectedStudent.value.code}_${selectedSheet.value.start}-${selectedSheet.value.end}.png`;
 
       if (Capacitor.isNativePlatform()) {
         const nativeLoading = await alertController.create({
@@ -1301,6 +1587,8 @@ export default {
       year,
       courseName,
       topic,
+      quizDate,
+      quizDateFormatted,
       printSheets,
       printOutline,
       optionsOutline,
@@ -1535,6 +1823,7 @@ export default {
 
 .qz-config-form-grid {
   display: flex;
+  align-items: flex-end;
   gap: 14px;
   flex-wrap: wrap;
 }
@@ -1542,19 +1831,28 @@ export default {
 .qz-field-group {
   display: flex;
   flex-direction: column;
+  justify-content: flex-end;
   gap: 6px;
-  min-width: 160px;
+  min-width: 150px;
 }
 
 .qz-field-grow {
   flex: 1;
-  min-width: 260px;
+  min-width: 250px;
+}
+
+.qz-field-date {
+  min-width: 170px;
+  width: 190px;
+  flex-shrink: 0;
 }
 
 .qz-field-label-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+  white-space: nowrap;
 }
 
 .qz-field-label {

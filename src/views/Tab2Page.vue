@@ -120,8 +120,8 @@ import {
   moonOutline,
 } from "ionicons/icons";
 import QRCode from "qrcode";
-import axios from "axios";
 import { Capacitor } from "@capacitor/core";
+import { resetDemoLock } from "../utils/demoLicense";
 
 export default {
   name: "Tab2Page",
@@ -168,18 +168,12 @@ export default {
       return currentHour >= 6 && currentHour < 19 ? sunnyOutline : moonOutline;
     });
 
-    const fetchServerIp = async () => {
-      try {
-        const response = await axios.get("auth/server-ip");
-        serverIp.value =
-          typeof response.data === "object" ? response.data.ip : response.data;
-      } catch (error) {
-        console.error("Error fetching server IP:", error);
-        if (!Capacitor.isNativePlatform()) {
-          serverIp.value = window.location.hostname || "127.0.0.1";
-        } else {
-          serverIp.value = "127.0.0.1";
-        }
+    const fetchServerIp = () => {
+      // Se utiliza la direccion local sin llamada de red inicial innecesaria
+      if (!Capacitor.isNativePlatform()) {
+        serverIp.value = window.location.hostname || "127.0.0.1";
+      } else {
+        serverIp.value = "127.0.0.1";
       }
     };
 
@@ -283,6 +277,7 @@ export default {
         localStorage.getItem("periodoSelected"),
       );
       localStorage.clear();
+      resetDemoLock();
       localStorage.setItem("periodoSelected", JSON.stringify(periodoSelected));
       localStorage.removeItem("miembros");
       localStorage.removeItem("notas");

@@ -130,6 +130,7 @@ import { trashOutline, arrowBackOutline } from "ionicons/icons";
 import MatrixScanner from "@/components/MatrixScanner.vue";
 import axios from "axios";
 import { tokenHeader, selectedYear } from "../globalService";
+import { getEffectiveOptions, QUIZ_MODES } from "../utils/quizModeAdapter";
 
 export default {
   name: "QrScannerMultiple",
@@ -195,7 +196,24 @@ export default {
       try {
         tokenHeader();
         const response = await axios.get(`/questions/${this.questionId}`);
-        this.question = response.data;
+        const rawQuestion = response.data;
+        const quizId =
+          rawQuestion.quiz?.id || rawQuestion.lesson?.quiz?.id || null;
+        const activeQuizMode = quizId
+          ? sessionStorage.getItem("pandora_quiz_mode_" + quizId) ||
+            QUIZ_MODES.CARDS
+          : QUIZ_MODES.CARDS;
+
+        // Adapt options so the 4 canonical options (A, B, C, D) exactly match what was projected
+        const adaptedOptions = getEffectiveOptions(
+          rawQuestion.options || [],
+          activeQuizMode
+        );
+
+        this.question = {
+          ...rawQuestion,
+          options: adaptedOptions,
+        };
         this.lessonQuizType =
           this.question.lesson?.quizType ||
           this.question.quiz?.quizType ||

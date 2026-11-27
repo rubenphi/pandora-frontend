@@ -513,10 +513,11 @@
                                   </div>
                                 </div>
                                 <div v-else class="qz-notes-empty">
-                                  <span
-                                    >Sin notas registradas en esta
-                                    dimensión</span
-                                  >
+                                  <ion-icon
+                                    :icon="alertCircleOutline"
+                                    class="qz-notes-empty-icon"
+                                  ></ion-icon>
+                                  <span>Sin notas registradas en esta dimensión</span>
                                 </div>
                               </div>
                             </div>
@@ -860,6 +861,7 @@ import {
   chevronForwardOutline,
   bookOutline,
   informationCircleOutline,
+  alertCircleOutline,
 } from "ionicons/icons";
 import axios from "axios";
 import { ref, watch } from "vue";
@@ -870,6 +872,7 @@ import {
   tokenHeader,
   usuarioGet,
 } from "../globalService";
+import { resetDemoLock } from "../utils/demoLicense";
 import {
   onIonViewWillEnter,
   IonPage,
@@ -990,6 +993,7 @@ export default {
             handler: () => {
               localStorage.clear();
               sessionStorage.clear();
+              resetDemoLock();
               router.push("/login");
             },
           },
@@ -1605,6 +1609,7 @@ export default {
       chevronForwardOutline,
       bookOutline,
       informationCircleOutline,
+      alertCircleOutline,
     };
   },
 };
@@ -2325,10 +2330,23 @@ export default {
 }
 
 .qz-notes-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 12px;
-  color: var(--qz-color-text-muted, #858494);
-  padding: 4px 8px;
-  font-style: italic;
+  color: #726b9a;
+  background: rgba(85, 68, 214, 0.04);
+  border: 1px dashed rgba(85, 68, 214, 0.2);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 6px;
+  font-style: normal;
+}
+
+.qz-notes-empty-icon {
+  font-size: 16px;
+  color: #fa8c16;
+  flex-shrink: 0;
 }
 
 /* BADGES DE CALIFICACIONES (COLORES QUEEZY) */

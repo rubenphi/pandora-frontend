@@ -30,12 +30,14 @@ import "./theme/queezy-ui.css";
 import QzButton from "./components/common/QzButton.vue";
 import QzSelect from "./components/common/QzSelect.vue";
 import QzFilterPill from "./components/common/QzFilterPill.vue";
+import QzDatePicker from "./components/common/QzDatePicker.vue";
 
 const app = createApp(App).use(IonicVue).use(router);
 
 app.component("QzButton", QzButton);
 app.component("QzSelect", QzSelect);
 app.component("QzFilterPill", QzFilterPill);
+app.component("QzDatePicker", QzDatePicker);
 app.component("QueezyButton", QzButton);
 
 router.isReady().then(() => {

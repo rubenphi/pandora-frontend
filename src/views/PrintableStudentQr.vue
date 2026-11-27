@@ -1,131 +1,222 @@
 <template>
-  <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-back-button
-            default-href="/admin/papeleria"
-          ></ion-back-button>
-        </ion-buttons>
-        <ion-title>Marcadores de Respuestas</ion-title>
-        <ion-buttons slot="end" v-if="configConfirmed">
-          <ion-button @click="() => printAllQrs()" :disabled="isRangeTooBig">
-            <ion-icon :icon="printOutline" slot="start"></ion-icon>
-            Imprimir todos
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-
-    <ion-content class="ion-padding">
-      <!-- si se cancela el modal se regresa a /admin/gestionar/usuarios -->
-      <ion-modal :is-open="!configConfirmed" @didDismiss="cancelConfig">
-        <ion-header>
-          <ion-toolbar>
-            <ion-title>Configurar Opciones</ion-title>
-          </ion-toolbar>
-        </ion-header>
-        <ion-content class="ion-padding">
-          <p>Seleccione el rango de letras para las opciones de respuesta.</p>
-          <ion-item>
-            <ion-label>Primera opción</ion-label>
-            <ion-select v-model="startLetter">
-              <ion-select-option v-for="l in alphabet" :key="l" :value="l">{{
-                l
-              }}</ion-select-option>
-            </ion-select>
-          </ion-item>
-          <ion-item>
-            <ion-label>Última opción</ion-label>
-            <ion-select v-model="endLetter">
-              <ion-select-option
-                v-for="l in filteredEndAlphabet"
-                :key="l"
-                :value="l"
-                >{{ l }}</ion-select-option
+  <ion-page class="ion-page qz-print-page">
+    <ion-content
+      :fullscreen="true"
+      class="qz-print-content"
+      :force-overscroll="false"
+    >
+      <div class="qz-print-wrapper">
+        <!-- 1. CABECERA HERO QUEEZY -->
+        <header class="qz-hero-header">
+          <div class="qz-hero-inner">
+            <div class="qz-hero-top">
+              <button
+                type="button"
+                class="qz-back-btn"
+                title="Volver a papelería"
+                aria-label="Volver"
+                @click="goBack"
               >
-            </ion-select>
-          </ion-item>
-          <ion-button
-            expand="block"
-            class="ion-margin-top"
-            @click="confirmConfig"
-            :disabled="startLetter === endLetter || isRangeTooBig"
-          >
-            Siguiente
-          </ion-button>
-        </ion-content>
-      </ion-modal>
+                <ion-icon :icon="arrowBackOutline"></ion-icon>
+              </button>
+              <span class="qz-hero-tag">PAPELERÍA & MARCADORES</span>
+            </div>
 
-      <div v-if="configConfirmed">
-        <ion-list v-if="allStudents.length > 0">
-          <ion-list-header>
-            <ion-label
-              >Estudiantes (Rango: {{ startLetter }} -
-              {{ endLetter }})</ion-label
+            <div class="qz-hero-title-row">
+              <div>
+                <h1 class="qz-hero-title">Marcadores de Respuestas</h1>
+                <p class="qz-hero-subtitle">
+                  Tarjetas de rotación de 4 opciones (A, B, C, D) para escaneo rápido
+                </p>
+              </div>
+
+              <button
+                type="button"
+                class="qz-hero-action-btn"
+                :disabled="allStudents.length === 0"
+                title="Imprimir todos los marcadores"
+                @click="() => printAllQrs()"
+              >
+                <ion-icon :icon="printOutline"></ion-icon>
+                <span>Imprimir Todos</span>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <!-- 2. CUERPO PRINCIPAL -->
+        <main class="qz-print-body">
+          <!-- Tarjeta de información del formato rotativo -->
+          <section class="qz-card qz-info-card">
+            <div class="qz-card-header-row">
+              <div class="qz-card-icon-squircle qz-icon--gold">
+                <ion-icon :icon="matrixMarkerOutline"></ion-icon>
+              </div>
+              <div class="qz-card-header-info">
+                <h2 class="qz-info-title">Formato Rotativo (4 Opciones)</h2>
+                <p class="qz-info-subtitle">
+                  Cada estudiante responde girando su tarjeta: <strong>A</strong> arriba, <strong>B</strong> derecha, <strong>C</strong> abajo, <strong>D</strong> izquierda.
+                </p>
+              </div>
+            </div>
+
+            <!-- Resumen de rotaciones -->
+            <div class="qz-rotations-summary">
+              <div class="qz-rotation-item">
+                <span class="qz-rot-letter">A</span>
+                <span class="qz-rot-label">Arriba</span>
+              </div>
+              <div class="qz-rot-divider"></div>
+              <div class="qz-rotation-item">
+                <span class="qz-rot-letter">B</span>
+                <span class="qz-rot-label">Derecha</span>
+              </div>
+              <div class="qz-rot-divider"></div>
+              <div class="qz-rotation-item">
+                <span class="qz-rot-letter">C</span>
+                <span class="qz-rot-label">Abajo</span>
+              </div>
+              <div class="qz-rot-divider"></div>
+              <div class="qz-rotation-item">
+                <span class="qz-rot-letter">D</span>
+                <span class="qz-rot-label">Izquierda</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Encabezado del listado -->
+          <div class="qz-list-header">
+            <span class="qz-list-title">Estudiantes disponibles</span>
+            <span class="qz-count-pill">{{ allStudents.length }}</span>
+          </div>
+
+          <!-- Estado vacío si no hay estudiantes -->
+          <div v-if="allStudents.length === 0" class="qz-card qz-state-card">
+            <div class="qz-empty-icon">
+              <ion-icon :icon="peopleOutline"></ion-icon>
+            </div>
+            <h3 class="qz-empty-title">Sin estudiantes seleccionados</h3>
+            <p class="qz-state-text">
+              No se encontraron estudiantes para generar marcadores. Regresa a papelería y selecciona al menos un curso.
+            </p>
+            <button type="button" class="qz-primary-btn" @click="goBack">
+              <ion-icon :icon="arrowBackOutline"></ion-icon>
+              <span>Regresar a Papelería</span>
+            </button>
+          </div>
+
+          <!-- Listado de estudiantes en tarjetas Queezy -->
+          <div v-else class="qz-students-grid">
+            <div
+              v-for="student in allStudents"
+              :key="student.id"
+              class="qz-card qz-student-card"
+              @click="openSingleStudentQr(student)"
             >
-          </ion-list-header>
-          <ion-item
-            v-for="student in allStudents"
-            :key="student.id"
-            button
-            @click="openSingleStudentQr(student)"
-          >
-            <ion-label>{{ student.lastName }} {{ student.name }}</ion-label>
-          </ion-item>
-        </ion-list>
-        <div v-else class="ion-text-center ion-padding">
-          <p>No hay estudiantes disponibles.</p>
-        </div>
+              <div class="qz-student-left">
+                <div class="qz-card-icon-squircle qz-icon--purple">
+                  <ion-icon :icon="personOutline"></ion-icon>
+                </div>
+                <div class="qz-student-info">
+                  <h3 class="qz-student-name">
+                    {{ student.lastName }} {{ student.name }}
+                  </h3>
+                  <div class="qz-student-meta">
+                    <span v-if="student.code" class="qz-student-code">Cód. {{ student.code }}</span>
+                    <span v-if="student.courseName" class="qz-student-course">
+                      {{ student.courseName }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                class="qz-view-sheet-btn"
+                title="Ver marcador individual"
+                aria-label="Ver marcador individual"
+              >
+                <ion-icon :icon="eyeOutline"></ion-icon>
+                <span>Ver tarjeta</span>
+              </button>
+            </div>
+          </div>
+        </main>
       </div>
 
-      <!-- Single Student Marker Modal -->
+      <!-- MODAL DE MARCADOR INDIVIDUAL -->
       <ion-modal
         :is-open="isStudentModalOpen"
-        @didDismiss="isStudentModalOpen = false"
+        @didDismiss="closeStudentModal"
+        class="qz-marker-modal"
       >
-        <ion-header>
-          <ion-toolbar>
-            <ion-buttons slot="start">
-              <ion-button @click="printAllQrsForStudent(selectedStudent)"
-                >Todos</ion-button
-              >
-            </ion-buttons>
-            <ion-title class="ion-text-center"
-              >{{ selectedStudent?.lastName }}
-              {{ selectedStudent?.name }}</ion-title
+        <div class="qz-modal-wrap">
+          <header class="qz-modal-header">
+            <div class="qz-modal-header-info">
+              <span class="qz-modal-tag">TARJETA DE RESPUESTA</span>
+              <h2 class="qz-modal-title">
+                {{ selectedStudent?.lastName }} {{ selectedStudent?.name }}
+              </h2>
+            </div>
+            <button
+              type="button"
+              class="qz-modal-close-btn"
+              title="Cerrar ventana"
+              @click="closeStudentModal"
             >
-            <ion-buttons slot="end">
-              <ion-button @click="isStudentModalOpen = false"
-                >Cerrar</ion-button
+              <ion-icon :icon="closeOutline"></ion-icon>
+            </button>
+          </header>
+
+          <div class="qz-modal-body" v-if="selectedStudent">
+            <!-- Instrucción de rotación -->
+            <div class="qz-modal-instruccion">
+              <p class="qz-instruccion-text">
+                Para responder se rota la hoja según la opción elegida:
+              </p>
+              <div class="qz-modal-pills">
+                <span class="qz-rot-badge"><strong>A</strong> Arriba</span>
+                <span class="qz-rot-badge"><strong>B</strong> Derecha</span>
+                <span class="qz-rot-badge"><strong>C</strong> Abajo</span>
+                <span class="qz-rot-badge"><strong>D</strong> Izquierda</span>
+              </div>
+            </div>
+
+            <!-- Vista previa del marcador -->
+            <div class="qz-marker-preview-box">
+              <img
+                v-if="singleMarkerPreviewUrl"
+                :src="singleMarkerPreviewUrl"
+                class="qz-marker-preview-img"
+                alt="Vista previa del marcador"
+              />
+              <div v-else class="qz-marker-loading">
+                <ion-spinner name="crescent" class="qz-modal-spinner"></ion-spinner>
+                <span>Generando tarjeta...</span>
+              </div>
+            </div>
+
+            <!-- Acciones del modal -->
+            <div class="qz-modal-actions">
+              <button
+                type="button"
+                class="qz-modal-btn qz-btn--secondary"
+                @click="printAllQrsForStudent(selectedStudent)"
               >
-            </ion-buttons>
-          </ion-toolbar>
-        </ion-header>
-        <ion-content class="ion-padding">
-          <div v-if="selectedStudent">
-            <p class="ion-text-center">
-              Imprima el marcador único del estudiante. Para responder se rota
-              la hoja según la opción: {{ optionRange[0] }} arriba,
-              {{ optionRange[1] || "-" }} derecha,
-              {{ optionRange[2] || "-" }} abajo,
-              {{ optionRange[3] || "-" }} izquierda.
-            </p>
-            <ion-item>
-              <ion-label
-                >{{ selectedStudent.lastName }}
-                {{ selectedStudent.name }}</ion-label
-              >
-              <ion-button
-                slot="end"
-                fill="clear"
+                <ion-icon :icon="printOutline"></ion-icon>
+                <span>Imprimir Opciones</span>
+              </button>
+              <button
+                type="button"
+                class="qz-modal-btn qz-btn--primary"
                 @click="printQrItem(selectedStudent)"
               >
-                <ion-icon :icon="printOutline" slot="icon-only"></ion-icon>
-              </ion-button>
-            </ion-item>
+                <ion-icon :icon="downloadOutline"></ion-icon>
+                <span>Descargar Tarjeta</span>
+              </button>
+            </div>
           </div>
-        </ion-content>
+        </div>
       </ion-modal>
     </ion-content>
   </ion-page>
@@ -134,80 +225,52 @@
 <script>
 import {
   IonPage,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
   IonContent,
-  IonButtons,
-  IonBackButton,
-  IonButton,
   IonIcon,
-  IonList,
-  IonItem,
-  IonLabel,
-  IonListHeader,
   IonModal,
-  IonSelect,
-  IonSelectOption,
+  IonSpinner,
   actionSheetController,
   alertController,
 } from "@ionic/vue";
-import { printOutline } from "ionicons/icons";
+import {
+  printOutline,
+  arrowBackOutline,
+  peopleOutline,
+  personOutline,
+  eyeOutline,
+  downloadOutline,
+  closeOutline,
+} from "ionicons/icons";
+import { matrixMarkerOutline } from "../utils/customIcons";
 import { ref, computed, onMounted } from "vue";
 import { FileSharer } from "@byteowls/capacitor-filesharer";
 import { Capacitor } from "@capacitor/core";
-// html2pdf replaced by direct jspdf + html2canvas (dynamic imports in processQrPDF)
 import { markGridForId, GRID_SIZE } from "../utils/matrixPattern";
 import router from "../router";
 
 export default {
+  name: "PrintableStudentQr",
   components: {
     IonPage,
-    IonHeader,
-    IonToolbar,
-    IonTitle,
     IonContent,
-    IonButtons,
-    IonBackButton,
-    IonButton,
     IonIcon,
-    IonList,
-    IonItem,
-    IonLabel,
-    IonListHeader,
     IonModal,
-    IonSelect,
-    IonSelectOption,
+    IonSpinner,
   },
   setup() {
     const studentData = ref([]);
-    const configConfirmed = ref(false);
-    const startLetter = ref("A");
-    const endLetter = ref("D");
     const isStudentModalOpen = ref(false);
     const selectedStudent = ref(null);
+    const singleMarkerPreviewUrl = ref("");
     const qrsPerPage = ref(6);
 
-    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-
-    const filteredEndAlphabet = computed(() => {
-      const idx = alphabet.indexOf(startLetter.value);
-      return alphabet.slice(idx + 1);
-    });
-
-    const optionRange = computed(() => {
-      const startIdx = alphabet.indexOf(startLetter.value);
-      const endIdx = alphabet.indexOf(endLetter.value);
-      return alphabet.slice(startIdx, endIdx + 1);
-    });
-
-    const isRangeTooBig = computed(() => {
-      return optionRange.value.length > 4;
-    });
+    // Rango fijo a 4 opciones canónicas (A, B, C, D)
+    const optionRange = computed(() => ["A", "B", "C", "D"]);
 
     const allStudents = computed(() => {
       if (!studentData.value || studentData.value.length === 0) return [];
-      if (studentData.value.length === 1) return studentData.value[0]?.students || [];
+      if (studentData.value.length === 1)
+        return studentData.value[0]?.students || [];
       return studentData.value.flatMap((c) =>
         (c.students || []).map((s) => ({ ...s, courseName: c.name }))
       );
@@ -228,39 +291,38 @@ export default {
       }
     });
 
-    const confirmConfig = async () => {
-      if (isRangeTooBig.value) {
-        const alert = await alertController.create({
-          header: "Advertencia",
-          message:
-            "El rango escogido es muy grande. La matriz de respuestas soporta hasta 4 opciones (una por orientación: A arriba, B derecha, C abajo, D izquierda). Ajuste el rango a un máximo de 4 letras.",
-          buttons: ["OK"],
-        });
-        await alert.present();
-        return;
-      }
-      configConfirmed.value = true;
+    const goBack = () => {
+      router.push("/admin/papeleria");
     };
 
-    const openSingleStudentQr = (student) => {
+    const openSingleStudentQr = async (student) => {
       selectedStudent.value = student;
+      singleMarkerPreviewUrl.value = "";
       isStudentModalOpen.value = true;
+      try {
+        singleMarkerPreviewUrl.value = await drawMarkerToDataURL(
+          student.id,
+          optionRange.value,
+          `Nombre: ${student.lastName} ${student.name}`,
+          180
+        );
+      } catch (e) {
+        console.error("Error generando vista previa:", e);
+      }
     };
 
-    const cancelConfig = () => {
-      if (!configConfirmed.value) {
-        router.push("/admin/gestionar/usuarios");
-      }
+    const closeStudentModal = () => {
+      isStudentModalOpen.value = false;
+      selectedStudent.value = null;
+      singleMarkerPreviewUrl.value = "";
     };
 
     // Dibuja el marcador 6x6 del alumno en un canvas y devuelve un PNG.
-    // Las letras de opción se colocan alrededor según la orientación canónica:
-    // [0]=A arriba, [1]=B derecha, [2]=C abajo, [3]=D izquierda.
     const drawMarkerToDataURL = (
       studentId,
       letters,
       footerText,
-      cellPx = 64,
+      cellPx = 64
     ) => {
       return new Promise((resolve, reject) => {
         try {
@@ -276,7 +338,6 @@ export default {
           ctx.fillStyle = "white";
           ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-          // células del marcador (solo los bits a 1 piden pintarse de negro)
           for (let r = 0; r < GRID_SIZE; r++) {
             for (let c = 0; c < GRID_SIZE; c++) {
               if (grid[r][c] === 1) {
@@ -285,13 +346,12 @@ export default {
                   pad + c * cellPx,
                   pad + r * cellPx,
                   cellPx,
-                  cellPx,
+                  cellPx
                 );
               }
             }
           }
 
-          // letras de orientación alrededor del marcador
           const cx = canvas.width / 2;
           const my = pad + markerSize / 2;
           ctx.fillStyle = "black";
@@ -299,16 +359,15 @@ export default {
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
           const letterPos = [
-            { text: letters[0] || "", x: cx, y: pad / 2 }, // A arriba
-            { text: letters[1] || "", x: canvas.width - pad / 2, y: my }, // B derecha
-            { text: letters[2] || "", x: cx, y: pad + markerSize + pad / 2 }, // C abajo
-            { text: letters[3] || "", x: pad / 2, y: my }, // D izquierda
+            { text: letters[0] || "", x: cx, y: pad / 2 },
+            { text: letters[1] || "", x: canvas.width - pad / 2, y: my },
+            { text: letters[2] || "", x: cx, y: pad + markerSize + pad / 2 },
+            { text: letters[3] || "", x: pad / 2, y: my },
           ];
           for (const p of letterPos) {
             if (p.text) ctx.fillText(p.text, p.x, p.y);
           }
 
-          // pie con el nombre del estudiante
           ctx.font = "bold 16px sans-serif";
           ctx.fillText(footerText || "", cx, canvas.height - footerHeight / 2);
 
@@ -319,161 +378,88 @@ export default {
       });
     };
 
-    const generatePdfContent = async (studentsList, range) => {
-      const perPage = qrsPerPage.value;
-      const columns = perPage === 6 ? 2 : 1;
-
-      // Tamaño del QR y fuente según hojas por página
-      const qrMaxWidth =
-        perPage === 1 ? "185mm" : perPage === 2 ? "145mm" : "90mm";
-      const qrFontSize =
-        perPage === 1 ? "16pt" : perPage === 2 ? "13pt" : "10pt";
-      const boxWidth = columns === 2 ? "45%" : "90%";
-
-      const styles = `
-        <style>
-          .print-page { page-break-after: always; width: 216mm; ${
-            perPage === 1 ? "height: 345mm;" : ""
-          } padding: 5px; background: white; box-sizing: border-box; display: flex; flex-wrap: wrap; justify-content: space-around; align-content: ${
-        perPage === 1 ? "center" : "flex-start"
-      }; align-items: center; overflow: hidden; }
-          .qr-box { border: 1px solid #eee; padding: 2px; text-align: center; width: ${boxWidth}; margin-bottom: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; }
-          .qr-img { width: 100%; max-width: ${qrMaxWidth}; max-height: ${qrMaxWidth}; height: auto; display: block; object-fit: contain; }
-          .qr-txt { font-size: ${qrFontSize}; font-family: sans-serif; font-weight: light; margin-top: 5mm; text-align: center; color: black; line-height: 1.2; width: 100%; }
-        </style>
-      `;
-
-      let html = styles;
-      let currentIdx = 0;
-      for (let i = 0; i < studentsList.length; i++) {
-        const student = studentsList[i];
-        if (currentIdx % perPage === 0) {
-          if (currentIdx > 0) html += "</div>";
-          html += '<div class="print-page">';
-        }
-
-        // Un único marcador por alumno: la rotación de la hoja elige la opción.
-        // Resolución mayor cuanto más grande se imprime el marcador.
-        const cellPx = perPage === 1 ? 220 : perPage === 2 ? 170 : 110;
-        const dataUrl = await drawMarkerToDataURL(
-          student.id,
-          range,
-          `${student.lastName} ${student.name}`,
-          cellPx,
-        );
-
-        html += `
-           <div class="qr-box">
-             <img src="${dataUrl}" class="qr-img" />
-             <p class="qr-txt">Nombre: ${student.lastName} ${student.name}</p>
-           </div>
-         `;
-        currentIdx++;
-      }
-      if (currentIdx > 0) html += "</div>";
-      return html;
-    };
-
-    const processQrPDF = async (htmlContent, action) => {
-      // Parse the pages into individual DOM nodes to process sequentially.
-      // This avoids loading all canvases into memory simultaneously, which
-      // causes blank PDFs on mobile due to RAM exhaustion.
-      const tempContainer = document.createElement("div");
-      tempContainer.style.cssText =
-        "position:absolute;left:-9999px;top:-9999px;";
-      tempContainer.innerHTML = htmlContent;
-      document.body.appendChild(tempContainer);
-
-      const pageNodes = Array.from(
-        tempContainer.querySelectorAll(".print-page"),
-      );
-
-      // Lower scale on native mobile to save RAM
-      const isNative = Capacitor.isNativePlatform();
-      const canvasScale = isNative ? 1 : 1.5;
-
+    const buildQrPdfDocument = async (studentsList, range, perPage) => {
       const { jsPDF } = await import("jspdf");
-      const { default: html2canvas } = await import("html2canvas");
-
-      // Legal page in mm: 215.9 x 355.6
       const pdf = new jsPDF({
         unit: "mm",
         format: "legal",
         orientation: "portrait",
       });
-      const pageWidthMm = 215.9;
-      const pageHeightMm = 355.6;
 
-      for (let i = 0; i < pageNodes.length; i++) {
-        const node = pageNodes[i];
+      const pageWidth = 215.9;
+      const pageHeight = 355.6;
 
-        const canvas = await html2canvas(node, {
-          scale: canvasScale,
-          useCORS: true,
-          logging: false,
-          allowTaint: false,
-        });
+      // Resolución balanceada para máxima nitidez y rendimiento instantáneo
+      const cellPx = perPage === 1 ? 140 : perPage === 2 ? 100 : 70;
 
-        const imgData = canvas.toDataURL("image/jpeg", isNative ? 0.85 : 0.95);
+      for (let i = 0; i < studentsList.length; i++) {
+        const student = studentsList[i];
+        const slot = i % perPage;
 
-        if (i > 0) pdf.addPage("legal", "portrait");
-        // Use the canvas's real aspect ratio to avoid stretching
-        const canvasAspect = canvas.height / canvas.width;
-        const imgHeightMm = Math.min(pageWidthMm * canvasAspect, pageHeightMm);
-        pdf.addImage(
-          imgData,
-          "JPEG",
-          0,
-          0,
-          pageWidthMm,
-          imgHeightMm,
-          undefined,
-          "FAST",
+        if (i > 0 && slot === 0) {
+          pdf.addPage("legal", "portrait");
+        }
+
+        const dataUrl = await drawMarkerToDataURL(
+          student.id,
+          range,
+          `Nombre: ${student.lastName} ${student.name}`,
+          cellPx
         );
 
-        // Free canvas memory immediately after use
-        canvas.width = 0;
-        canvas.height = 0;
-
-        // Small yield to allow GC to run between pages
-        await new Promise((r) => setTimeout(r, 50));
+        if (perPage === 1) {
+          const cardW = 180;
+          const cardH = cardW * 1.126;
+          const x = (pageWidth - cardW) / 2;
+          const y = (pageHeight - cardH) / 2;
+          pdf.setDrawColor(220, 220, 220);
+          pdf.rect(x - 2, y - 2, cardW + 4, cardH + 4);
+          pdf.addImage(dataUrl, "PNG", x, y, cardW, cardH, undefined, "FAST");
+        } else if (perPage === 2) {
+          const cardW = 145;
+          const cardH = cardW * 1.126;
+          const x = (pageWidth - cardW) / 2;
+          const gapY = (pageHeight - cardH * 2) / 3;
+          const y = gapY + slot * (cardH + gapY);
+          pdf.setDrawColor(220, 220, 220);
+          pdf.rect(x - 2, y - 2, cardW + 4, cardH + 4);
+          pdf.addImage(dataUrl, "PNG", x, y, cardW, cardH, undefined, "FAST");
+        } else {
+          // 6 por página: 2 columnas x 3 filas
+          const col = slot % 2;
+          const row = Math.floor(slot / 2);
+          const cardW = 94;
+          const cardH = cardW * 1.126;
+          const gapX = 10;
+          const marginX = (pageWidth - (cardW * 2 + gapX)) / 2;
+          const x = marginX + col * (cardW + gapX);
+          const gapY = (pageHeight - cardH * 3) / 4;
+          const y = gapY + row * (cardH + gapY);
+          pdf.setDrawColor(220, 220, 220);
+          pdf.rect(x - 1, y - 1, cardW + 2, cardH + 2);
+          pdf.addImage(dataUrl, "PNG", x, y, cardW, cardH, undefined, "FAST");
+        }
       }
 
-      // Cleanup detached container
-      document.body.removeChild(tempContainer);
-
-      if (action === "save") {
-        pdf.save("Marcadores_estudiantes.pdf");
-      } else if (action === "base64") {
-        return (
-          "data:application/pdf;base64," +
-          pdf.output("datauristring").split(",")[1]
-        );
-      }
+      return pdf;
     };
 
     const presentOutputOptions = async (students, range) => {
       const loading = await alertController.create({
-        header: "Preparando Contenido",
-        message: "Generando marcadores, esto puede tardar...",
+        header: "Generando PDF",
+        message: "Creando tarjetas con jsPDF...",
         backdropDismiss: false,
       });
       await loading.present();
 
       try {
-        const htmlContent = await generatePdfContent(students, range);
-        await loading.dismiss(); // Dismiss after content is ready
+        const perPage = qrsPerPage.value;
+        const pdf = await buildQrPdfDocument(students, range, perPage);
+        await loading.dismiss();
 
         if (Capacitor.isNativePlatform()) {
-          const nativeLoading = await alertController.create({
-            header: "Generando PDF",
-            message: "Por favor espere...",
-            backdropDismiss: false,
-          });
-          await nativeLoading.present();
           try {
-            const pdfDataUri = await processQrPDF(htmlContent, "base64");
-            const base64Data = pdfDataUri.split(",")[1];
+            const base64Data = pdf.output("datauristring").split(",")[1];
             await FileSharer.share({
               filename: `Marcadores_${Date.now()}.pdf`,
               contentType: "application/pdf",
@@ -497,46 +483,24 @@ export default {
               });
               await errorAlert.present();
             }
-          } finally {
-            await nativeLoading.dismiss();
           }
         } else {
-          // Web platform action sheet
           const actionSheet = await actionSheetController.create({
             header: "Opciones de Salida",
             buttons: [
               {
-                text: "Vista Previa / Imprimir",
+                text: "Vista Previa / Imprimir PDF",
                 icon: printOutline,
                 handler: () => {
-                  const printWindow = window.open("", "_blank");
-                  if (printWindow) {
-                    printWindow.document.write(`
-                      <html>
-                        <head><title>Imprimir Marcadores</title></head>
-                        <body>${htmlContent}</body>
-                      </html>`);
-                    printWindow.document.close();
-                    printWindow.focus();
-                  }
+                  const blobUrl = pdf.output("bloburl");
+                  window.open(blobUrl, "_blank");
                 },
               },
               {
                 text: "Descargar PDF",
-                handler: async () => {
-                  const downloadLoading = await alertController.create({
-                    header: "Generando PDF",
-                    message: "Descargando...",
-                    backdropDismiss: false,
-                  });
-                  await downloadLoading.present();
-                  try {
-                    await processQrPDF(htmlContent, "save");
-                  } catch (e) {
-                    console.error("Error downloading PDF:", e);
-                  } finally {
-                    await downloadLoading.dismiss();
-                  }
+                icon: downloadOutline,
+                handler: () => {
+                  pdf.save("Marcadores_estudiantes.pdf");
                 },
               },
               { text: "Cancelar", role: "cancel" },
@@ -545,11 +509,11 @@ export default {
           await actionSheet.present();
         }
       } catch (e) {
-        console.error("Error preparing QR content:", e);
+        console.error("Error generating QR PDF:", e);
         await loading.dismiss();
         const errAlert = await alertController.create({
           header: "Error",
-          message: "No se pudo preparar el contenido para imprimir.",
+          message: "No se pudo generar el documento PDF.",
           buttons: ["OK"],
         });
         await errAlert.present();
@@ -600,11 +564,11 @@ export default {
 
       try {
         const labelText = `Nombre: ${student.lastName} ${student.name}`;
-
         const dataUrl = await drawMarkerToDataURL(
           student.id,
           optionRange.value,
           labelText,
+          220
         );
         const base64Content = dataUrl.split(",")[1];
         const filename = `Marcador_${student.lastName}.png`;
@@ -622,7 +586,7 @@ export default {
           link.click();
         }
       } catch (e) {
-        const msg = (e.message || "").toLowerCase();
+        const msg = (e?.message || "").toLowerCase();
         const isCancel =
           msg.includes("cancelled") ||
           msg.includes("user_cancelled") ||
@@ -635,7 +599,7 @@ export default {
           const errorAlert = await alertController.create({
             header: "Error",
             message:
-              "No se pudo generar el marcador individual. " + (e.message || ""),
+              "No se pudo generar el marcador individual. " + (e?.message || ""),
             buttons: ["OK"],
           });
           await errorAlert.present();
@@ -648,20 +612,22 @@ export default {
     const printQrItem = (student) => shareQrImage(student);
 
     return {
-      isRangeTooBig,
-      configConfirmed,
-      startLetter,
-      endLetter,
-      cancelConfig,
-      alphabet,
-      filteredEndAlphabet,
-      confirmConfig,
       allStudents,
       isStudentModalOpen,
       selectedStudent,
+      singleMarkerPreviewUrl,
       openSingleStudentQr,
+      closeStudentModal,
+      goBack,
       optionRange,
       printOutline,
+      arrowBackOutline,
+      peopleOutline,
+      personOutline,
+      eyeOutline,
+      downloadOutline,
+      closeOutline,
+      matrixMarkerOutline,
       printAllQrs,
       printAllQrsForStudent,
       printQrItem,
@@ -671,31 +637,842 @@ export default {
 </script>
 
 <style scoped>
-.qrs-preview-container {
+/* ==========================================================================
+   QUEEZY DESIGN SYSTEM: MARCADORES DE RESPUESTA
+   ========================================================================== */
+
+.qz-print-page {
+  --background: var(--qz-color-purple-bg, #efeefc);
+  background-color: var(--qz-color-purple-bg, #efeefc);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+}
+
+.qz-print-content {
+  --background: var(--qz-color-purple-bg, #efeefc);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+}
+
+.qz-print-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  min-height: 100%;
+  box-sizing: border-box;
+  padding-bottom: 60px;
 }
-.qr-preview-item {
-  border: 1px solid var(--ion-color-light);
-  padding: 15px;
-  border-radius: 8px;
-  text-align: center;
-  background: var(--ion-background-color);
+
+/* 1. CABECERA HERO PÚRPURA */
+.qz-hero-header {
+  background: linear-gradient(135deg, #6a5ae0 0%, #7c6ef2 100%);
+  padding: calc(env(safe-area-inset-top, 0px) + 16px) 20px 28px;
+  border-bottom-left-radius: 32px;
+  border-bottom-right-radius: 32px;
+  box-shadow: 0 10px 24px -4px rgba(106, 90, 224, 0.28);
+  color: #ffffff;
 }
-.qr-container-printable {
+
+.qz-hero-inner {
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.qz-hero-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.qz-back-btn {
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.qz-back-btn:hover {
+  background: rgba(255, 255, 255, 0.32);
+}
+
+.qz-back-btn:active {
+  transform: scale(0.92);
+}
+
+.qz-hero-tag {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.18);
+  padding: 4px 10px;
+  border-radius: 10px;
+}
+
+.qz-hero-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.qz-hero-title {
+  margin: 0;
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+  font-size: 24px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.3px;
+}
+
+.qz-hero-subtitle {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.qz-hero-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.qz-hero-action-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.32);
+  transform: translateY(-1px);
+}
+
+.qz-hero-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 2. CUERPO PRINCIPAL */
+.qz-print-body {
+  padding: 20px 16px 24px;
+  max-width: 820px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.qz-card {
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 18px 20px;
+  border: 1px solid rgba(106, 90, 224, 0.12);
+  box-shadow: 0 6px 18px rgba(12, 9, 42, 0.05);
+  box-sizing: border-box;
+}
+
+/* TARJETA INFORMATIVA */
+.qz-info-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.qz-card-header-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.qz-card-icon-squircle {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.qz-icon--gold {
+  background: #fff8e6;
+  color: #f5a623;
+}
+
+.qz-icon--purple {
+  background: #efeefc;
+  color: #6a5ae0;
+}
+
+.qz-card-header-info {
+  flex: 1;
+}
+
+.qz-info-title {
+  margin: 0;
+  font-size: 16.5px;
+  font-weight: 800;
+  color: #0c092a;
+}
+
+.qz-info-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #858494;
+  line-height: 1.4;
+}
+
+/* RESUMEN DE ROTACIONES */
+.qz-rotations-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: #f4f3fd;
+  border-radius: 16px;
+  padding: 12px 14px;
+  gap: 8px;
+}
+
+.qz-rotation-item {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 2px;
 }
-.qr-image {
+
+.qz-rot-letter {
+  font-size: 16px;
+  font-weight: 800;
+  color: #6a5ae0;
+}
+
+.qz-rot-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #858494;
+  text-transform: uppercase;
+}
+
+.qz-rot-divider {
+  width: 1px;
+  height: 28px;
+  background: rgba(106, 90, 224, 0.16);
+}
+
+/* LIST HEADER */
+.qz-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding: 0 4px;
+}
+
+.qz-list-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #0c092a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.qz-count-pill {
+  background: #efeefc;
+  color: #6a5ae0;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 12px;
+}
+
+/* ESTADO VACÍO */
+.qz-state-card {
+  text-align: center;
+  padding: 36px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.qz-empty-icon {
+  font-size: 48px;
+  color: #6a5ae0;
+  margin-bottom: 4px;
+}
+
+.qz-empty-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: #0c092a;
+}
+
+.qz-state-text {
+  margin: 0 auto 16px;
+  max-width: 440px;
+  font-size: 13.5px;
+  color: #858494;
+}
+
+.qz-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: 14px;
+  border: none;
+  background: #6a5ae0;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.qz-primary-btn:hover {
+  background: #5a4ad0;
+}
+
+/* GRID DE ESTUDIANTES */
+.qz-students-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.qz-student-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: 18px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.qz-student-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(12, 9, 42, 0.08);
+}
+
+.qz-student-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.qz-student-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.qz-student-name {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #0c092a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qz-student-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #858494;
+}
+
+.qz-student-code {
+  font-weight: 600;
+}
+
+.qz-student-course {
+  background: #efeefc;
+  color: #6a5ae0;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.qz-view-sheet-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(106, 90, 224, 0.2);
+  background: #efeefc;
+  color: #6a5ae0;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.qz-view-sheet-btn:hover {
+  background: #6a5ae0;
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   MODAL DE MARCADOR
+   ========================================================================== */
+
+.qz-marker-modal {
+  --border-radius: 24px;
+  --max-width: 520px;
+}
+
+.qz-modal-wrap {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 24px;
+  overflow: hidden;
+  max-height: 90vh;
+}
+
+.qz-modal-header {
+  background: linear-gradient(135deg, #6a5ae0 0%, #7c6ef2 100%);
+  padding: 18px 20px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.qz-modal-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.qz-modal-tag {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.qz-modal-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.qz-modal-close-btn {
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.qz-modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  overflow-y: auto;
+}
+
+.qz-modal-instruccion {
+  width: 100%;
+  background: #f4f3fd;
+  border-radius: 16px;
+  padding: 12px 14px;
+  box-sizing: border-box;
+}
+
+.qz-instruccion-text {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #0c092a;
+}
+
+.qz-modal-pills {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.qz-rot-badge {
+  background: #ffffff;
+  border: 1px solid rgba(106, 90, 224, 0.15);
+  border-radius: 10px;
+  padding: 4px 8px;
+  font-size: 11.5px;
+  color: #6a5ae0;
+}
+
+.qz-rot-badge strong {
+  font-weight: 800;
+}
+
+/* CAJA DE VISTA PREVIA */
+.qz-marker-preview-box {
   width: 250px;
-  height: 250px;
-  max-width: 100%;
+  height: 280px;
+  background: #ffffff;
+  border: 1.5px solid rgba(106, 90, 224, 0.16);
+  border-radius: 18px;
+  box-shadow: 0 6px 20px rgba(12, 9, 42, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 10px;
+  box-sizing: border-box;
 }
-.qr-footer {
-  margin-top: 8px;
-  font-size: 0.9rem;
-  font-weight: bold;
+
+.qz-marker-preview-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.qz-marker-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #858494;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.qz-modal-spinner {
+  --color: #6a5ae0;
+}
+
+/* BOTONES DE ACCIÓN DEL MODAL */
+.qz-modal-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.qz-modal-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.qz-btn--primary {
+  background: #6a5ae0;
+  border: none;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(106, 90, 224, 0.35);
+}
+
+.qz-btn--primary:hover {
+  background: #5a4ad0;
+}
+
+.qz-btn--secondary {
+  background: #efeefc;
+  border: 1.5px solid rgba(106, 90, 224, 0.2);
+  color: #6a5ae0;
+}
+
+.qz-btn--secondary:hover {
+  background: #e4e1fb;
+}
+
+/* ==========================================================================
+   MODO OSCURO (DARK MODE)
+   ========================================================================== */
+
+@media (prefers-color-scheme: dark) {
+  body:not(.light) .qz-print-page,
+  body:not(.light) .qz-print-content,
+  body:not(.light) .qz-marker-modal,
+  body:not(.light) .qz-modal-wrap {
+    --background: #120f24;
+    background-color: #120f24;
+  }
+
+  body:not(.light) .qz-hero-header,
+  body:not(.light) .qz-modal-header {
+    background: linear-gradient(135deg, #1d1838 0%, #29204d 100%);
+  }
+
+  body:not(.light) .qz-hero-tag,
+  body:not(.light) .qz-modal-tag {
+    background: rgba(255, 255, 255, 0.1);
+    color: #b5a9ff;
+  }
+
+  body:not(.light) .qz-card {
+    background: #1d1838;
+    border-color: rgba(181, 169, 255, 0.12);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  }
+
+  body:not(.light) .qz-info-title,
+  body:not(.light) .qz-empty-title,
+  body:not(.light) .qz-student-name,
+  body:not(.light) .qz-list-title,
+  body:not(.light) .qz-instruccion-text {
+    color: #f7f7fd;
+  }
+
+  body:not(.light) .qz-info-subtitle,
+  body:not(.light) .qz-state-text,
+  body:not(.light) .qz-student-meta,
+  body:not(.light) .qz-rot-label {
+    color: #a5a3b9;
+  }
+
+  body:not(.light) .qz-rotations-summary,
+  body:not(.light) .qz-modal-instruccion {
+    background: #241d42;
+  }
+
+  body:not(.light) .qz-rot-letter {
+    color: #b5a9ff;
+  }
+
+  body:not(.light) .qz-rot-divider {
+    background: rgba(181, 169, 255, 0.16);
+  }
+
+  body:not(.light) .qz-count-pill,
+  body:not(.light) .qz-icon--purple,
+  body:not(.light) .qz-student-course,
+  body:not(.light) .qz-rot-badge,
+  body:not(.light) .qz-view-sheet-btn,
+  body:not(.light) .qz-btn--secondary {
+    background: #2b2254;
+    color: #b5a9ff;
+    border-color: rgba(181, 169, 255, 0.2);
+  }
+
+  body:not(.light) .qz-icon--gold {
+    background: #3b2e1e;
+    color: #fbbf24;
+  }
+
+  body:not(.light) .qz-marker-preview-box {
+    background: #ffffff; /* El marcador siempre debe tener fondo blanco para contraste */
+    border-color: rgba(181, 169, 255, 0.2);
+  }
+}
+
+:global(body.dark) .qz-print-page,
+:global(body.dark) .qz-print-content,
+:global(body.dark) .qz-marker-modal,
+:global(body.dark) .qz-modal-wrap,
+:global(html.dark) .qz-print-page,
+:global(html.dark) .qz-print-content,
+:global(html.dark) .qz-marker-modal,
+:global(html.dark) .qz-modal-wrap,
+:global(.dark) .qz-print-page,
+:global(.dark) .qz-print-content,
+:global(.dark) .qz-marker-modal,
+:global(.dark) .qz-modal-wrap,
+:global(:root[data-theme="dark"]) .qz-print-page,
+:global(:root[data-theme="dark"]) .qz-print-content,
+:global(:root[data-theme="dark"]) .qz-marker-modal,
+:global(:root[data-theme="dark"]) .qz-modal-wrap {
+  --background: #120f24;
+  background-color: #120f24;
+}
+
+:global(body.dark) .qz-hero-header,
+:global(body.dark) .qz-modal-header,
+:global(html.dark) .qz-hero-header,
+:global(html.dark) .qz-modal-header,
+:global(.dark) .qz-hero-header,
+:global(.dark) .qz-modal-header,
+:global(:root[data-theme="dark"]) .qz-hero-header,
+:global(:root[data-theme="dark"]) .qz-modal-header {
+  background: linear-gradient(135deg, #1d1838 0%, #29204d 100%);
+}
+
+:global(body.dark) .qz-hero-tag,
+:global(body.dark) .qz-modal-tag,
+:global(html.dark) .qz-hero-tag,
+:global(html.dark) .qz-modal-tag,
+:global(.dark) .qz-hero-tag,
+:global(.dark) .qz-modal-tag,
+:global(:root[data-theme="dark"]) .qz-hero-tag,
+:global(:root[data-theme="dark"]) .qz-modal-tag {
+  background: rgba(255, 255, 255, 0.1);
+  color: #b5a9ff;
+}
+
+:global(body.dark) .qz-card,
+:global(html.dark) .qz-card,
+:global(.dark) .qz-card,
+:global(:root[data-theme="dark"]) .qz-card {
+  background: #1d1838;
+  border-color: rgba(181, 169, 255, 0.12);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+}
+
+:global(body.dark) .qz-info-title,
+:global(body.dark) .qz-empty-title,
+:global(body.dark) .qz-student-name,
+:global(body.dark) .qz-list-title,
+:global(body.dark) .qz-instruccion-text,
+:global(html.dark) .qz-info-title,
+:global(html.dark) .qz-empty-title,
+:global(html.dark) .qz-student-name,
+:global(html.dark) .qz-list-title,
+:global(html.dark) .qz-instruccion-text,
+:global(.dark) .qz-info-title,
+:global(.dark) .qz-empty-title,
+:global(.dark) .qz-student-name,
+:global(.dark) .qz-list-title,
+:global(.dark) .qz-instruccion-text,
+:global(:root[data-theme="dark"]) .qz-info-title,
+:global(:root[data-theme="dark"]) .qz-empty-title,
+:global(:root[data-theme="dark"]) .qz-student-name,
+:global(:root[data-theme="dark"]) .qz-list-title,
+:global(:root[data-theme="dark"]) .qz-instruccion-text {
+  color: #f7f7fd;
+}
+
+:global(body.dark) .qz-info-subtitle,
+:global(body.dark) .qz-state-text,
+:global(body.dark) .qz-student-meta,
+:global(body.dark) .qz-rot-label,
+:global(html.dark) .qz-info-subtitle,
+:global(html.dark) .qz-state-text,
+:global(html.dark) .qz-student-meta,
+:global(html.dark) .qz-rot-label,
+:global(.dark) .qz-info-subtitle,
+:global(.dark) .qz-state-text,
+:global(.dark) .qz-student-meta,
+:global(.dark) .qz-rot-label,
+:global(:root[data-theme="dark"]) .qz-info-subtitle,
+:global(:root[data-theme="dark"]) .qz-state-text,
+:global(:root[data-theme="dark"]) .qz-student-meta,
+:global(:root[data-theme="dark"]) .qz-rot-label {
+  color: #a5a3b9;
+}
+
+:global(body.dark) .qz-rotations-summary,
+:global(body.dark) .qz-modal-instruccion,
+:global(html.dark) .qz-rotations-summary,
+:global(html.dark) .qz-modal-instruccion,
+:global(.dark) .qz-rotations-summary,
+:global(.dark) .qz-modal-instruccion,
+:global(:root[data-theme="dark"]) .qz-rotations-summary,
+:global(:root[data-theme="dark"]) .qz-modal-instruccion {
+  background: #241d42;
+}
+
+:global(body.dark) .qz-rot-letter,
+:global(html.dark) .qz-rot-letter,
+:global(.dark) .qz-rot-letter,
+:global(:root[data-theme="dark"]) .qz-rot-letter {
+  color: #b5a9ff;
+}
+
+:global(body.dark) .qz-rot-divider,
+:global(html.dark) .qz-rot-divider,
+:global(.dark) .qz-rot-divider,
+:global(:root[data-theme="dark"]) .qz-rot-divider {
+  background: rgba(181, 169, 255, 0.16);
+}
+
+:global(body.dark) .qz-count-pill,
+:global(body.dark) .qz-icon--purple,
+:global(body.dark) .qz-student-course,
+:global(body.dark) .qz-rot-badge,
+:global(body.dark) .qz-view-sheet-btn,
+:global(body.dark) .qz-btn--secondary,
+:global(html.dark) .qz-count-pill,
+:global(html.dark) .qz-icon--purple,
+:global(html.dark) .qz-student-course,
+:global(html.dark) .qz-rot-badge,
+:global(html.dark) .qz-view-sheet-btn,
+:global(html.dark) .qz-btn--secondary,
+:global(.dark) .qz-count-pill,
+:global(.dark) .qz-icon--purple,
+:global(.dark) .qz-student-course,
+:global(.dark) .qz-rot-badge,
+:global(.dark) .qz-view-sheet-btn,
+:global(.dark) .qz-btn--secondary,
+:global(:root[data-theme="dark"]) .qz-count-pill,
+:global(:root[data-theme="dark"]) .qz-icon--purple,
+:global(:root[data-theme="dark"]) .qz-student-course,
+:global(:root[data-theme="dark"]) .qz-rot-badge,
+:global(:root[data-theme="dark"]) .qz-view-sheet-btn,
+:global(:root[data-theme="dark"]) .qz-btn--secondary {
+  background: #2b2254;
+  color: #b5a9ff;
+  border-color: rgba(181, 169, 255, 0.2);
+}
+
+:global(body.dark) .qz-icon--gold,
+:global(html.dark) .qz-icon--gold,
+:global(.dark) .qz-icon--gold,
+:global(:root[data-theme="dark"]) .qz-icon--gold {
+  background: #3b2e1e;
+  color: #fbbf24;
+}
+
+:global(body.dark) .qz-marker-preview-box,
+:global(html.dark) .qz-marker-preview-box,
+:global(.dark) .qz-marker-preview-box,
+:global(:root[data-theme="dark"]) .qz-marker-preview-box {
+  background: #ffffff;
+  border-color: rgba(181, 169, 255, 0.2);
 }
 </style>

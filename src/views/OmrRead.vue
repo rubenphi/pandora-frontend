@@ -486,6 +486,7 @@ import {
   closeOutline,
 } from "ionicons/icons";
 import axios from "axios";
+import { getEffectiveOptions, QUIZ_MODES } from "../utils/quizModeAdapter";
 
 export default {
   name: "OmrRead",
@@ -1111,13 +1112,24 @@ export default {
     onIonViewDidEnter(async () => {
       tokenHeader();
       const response = await axios.get(`/quizzes/${quizId}`);
+      const activeQuizMode =
+        sessionStorage.getItem("pandora_quiz_mode_" + quizId) || QUIZ_MODES.OMR;
+
       cuestionario.value = {
         id: response.data.id,
         title: response.data.title,
         quizType: response.data.quizType,
         lessonId: response.data.lesson.id,
         courseId: response.data.lesson.course.id,
-        questions: response.data.questions.sort((a, b) => a.id - b.id),
+        questions: response.data.questions
+          .sort((a, b) => a.id - b.id)
+          .map((question) => ({
+            ...question,
+            options: getEffectiveOptions(
+              question.options || [],
+              activeQuizMode
+            ),
+          })),
         instituteId: response.data.lesson.institute.id,
       };
 

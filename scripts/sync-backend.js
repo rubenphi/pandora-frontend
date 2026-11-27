@@ -57,8 +57,10 @@ targets.forEach((targetDir) => {
   if (withData && fs.existsSync(dbSrc)) {
     fs.mkdirSync(path.join(targetDir, 'data'), { recursive: true });
     fs.copyFileSync(dbSrc, targetDb);
-  } else if (!withData && fs.existsSync(targetDb)) {
-    fs.unlinkSync(targetDb);
+  } else if (!withData && fs.existsSync(targetDb) && targetDb !== dbSrc) {
+    try {
+      fs.unlinkSync(targetDb);
+    } catch (_) {}
   }
 
   // 3. Frontend Web estático en www (para que otros dispositivos puedan entrar por navegador)

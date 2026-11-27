@@ -72,6 +72,54 @@
             <span class="qz-hero-tag">EVALUACIÓN EN LÍNEA</span>
             <h1 class="qz-hero-title">Cuestionario</h1>
           </div>
+
+          <!-- Selector de Modalidad en Cabecera (Admin / Docente) -->
+          <div v-if="admin" class="qz-hero-mode-container">
+            <div class="qz-hero-mode-header">
+              <span class="qz-hero-mode-label">MODO DE RESPUESTA</span>
+              <span class="qz-hero-mode-hint" v-if="activeMode === QUIZ_MODES.DIGITAL">
+                Sin límite de opciones
+              </span>
+              <span class="qz-hero-mode-hint" v-else-if="activeMode === QUIZ_MODES.OMR">
+                Máx. 8 opciones (A - H)
+              </span>
+              <span class="qz-hero-mode-hint" v-else-if="activeMode === QUIZ_MODES.CARDS">
+                4 opciones fijas (A - D)
+              </span>
+            </div>
+            <div class="qz-filter-tabs">
+              <button
+                type="button"
+                class="qz-filter-tab"
+                :class="{ 'is-active': activeMode === QUIZ_MODES.DIGITAL }"
+                title="Modo Dispositivos (opciones ilimitadas)"
+                @click="setQuizMode(QUIZ_MODES.DIGITAL)"
+              >
+                <ion-icon :icon="phonePortraitOutline"></ion-icon>
+                <span>Dispositivos</span>
+              </button>
+              <button
+                type="button"
+                class="qz-filter-tab"
+                :class="{ 'is-active': activeMode === QUIZ_MODES.OMR }"
+                title="Modo Hoja OMR (máx. 8 opciones A-H)"
+                @click="setQuizMode(QUIZ_MODES.OMR)"
+              >
+                <ion-icon :icon="scanOutline"></ion-icon>
+                <span>Hoja OMR</span>
+              </button>
+              <button
+                type="button"
+                class="qz-filter-tab"
+                :class="{ 'is-active': activeMode === QUIZ_MODES.CARDS }"
+                title="Modo Tarjetas / Matriz (4 opciones A-D)"
+                @click="setQuizMode(QUIZ_MODES.CARDS)"
+              >
+                <ion-icon :icon="matrixMarkerOutline"></ion-icon>
+                <span>Tarjetas</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- 2. CUERPO: TARJETA RESUMEN Y LISTA DE PREGUNTAS (Estilo image13_1_2_375x1211.png) -->
@@ -179,15 +227,23 @@
                             : numeroOrdinal(index + 1, question.identifier)
                         }}
                       </p>
-                      <span
-                        class="qz-question-sub"
-                        v-if="question.available === false"
-                      >
-                        Bloqueada · Requiere habilitación del docente
-                      </span>
-                      <span class="qz-question-sub qz-sub--open" v-else>
-                        Disponible para responder
-                      </span>
+                      <div class="qz-question-meta-row">
+                        <span
+                          class="qz-question-sub"
+                          v-if="question.available === false"
+                        >
+                          Bloqueada · Requiere habilitación del docente
+                        </span>
+                        <span class="qz-question-sub qz-sub--open" v-else>
+                          Disponible para responder
+                        </span>
+                        <span
+                          v-if="getHiddenCount(question) > 0"
+                          class="qz-mode-limit-badge"
+                        >
+                          {{ question.options.length - getHiddenCount(question) }} de {{ question.options.length }} ops
+                        </span>
+                      </div>
                     </div>
 
                     <!-- Candado y Flecha Indicadora -->
@@ -357,9 +413,12 @@ import {
   trophyOutline,
   checkmarkOutline,
   copyOutline,
-  codeSlashOutline,
   extensionPuzzleOutline,
+  phonePortraitOutline,
+  scanOutline,
 } from "ionicons/icons";
+import { matrixMarkerOutline } from "../utils/customIcons";
+import { QUIZ_MODES, getHiddenOptionsCount } from "../utils/quizModeAdapter";
 import {
   IonPage,
   IonContent,
@@ -390,6 +449,20 @@ export default {
     const mroute = useRoute();
     const { id } = mroute.params;
 
+    const activeMode = ref(
+      sessionStorage.getItem("pandora_quiz_mode_" + id) || QUIZ_MODES.DIGITAL
+    );
+
+    const setQuizMode = (mode) => {
+      activeMode.value = mode;
+      sessionStorage.setItem("pandora_quiz_mode_" + id, mode);
+    };
+
+    const getHiddenCount = (question) => {
+      if (!question || !question.options) return 0;
+      return getHiddenOptionsCount(question.options, activeMode.value);
+    };
+
     const isModalOpen = ref(false);
     const isGeneratorModalOpen = ref(false);
     const isMarcarDisponibleOpen = ref(false);
@@ -407,17 +480,9 @@ export default {
       },
       {
         id: 2,
-        url: "/cuestionario/importar/preguntas/tipo/",
-        name: "JSON de Tipos (Avanzado)",
-        desc: "Estructura estándar de preguntas por tipo",
-        icon: codeSlashOutline,
-        colorClass: "qz-icon--cyan",
-      },
-      {
-        id: 3,
         url: "/cuestionario/importar/preguntas/variables/",
-        name: "JSON de Opciones Variables",
-        desc: "Preguntas con variables, fórmulas y parámetros",
+        name: "Asistente IA & JSON",
+        desc: "Generador de prompts con IA y pegado de JSON",
         icon: extensionPuzzleOutline,
         colorClass: "qz-icon--coral",
       },
@@ -786,6 +851,13 @@ export default {
       trophyOutline,
       addOutline,
       checkmarkOutline,
+      phonePortraitOutline,
+      scanOutline,
+      matrixMarkerOutline,
+      QUIZ_MODES,
+      activeMode,
+      setQuizMode,
+      getHiddenCount,
     };
   },
 };
@@ -886,6 +958,200 @@ export default {
   margin: 0 auto;
   padding: 0 20px;
   text-align: left;
+}
+
+.qz-hero-mode-container {
+  max-width: 540px;
+  margin: 12px auto 0 auto;
+  padding: 0 20px;
+}
+
+.qz-hero-mode-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  padding: 0 4px;
+}
+
+.qz-hero-mode-label {
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+  color: rgba(255, 255, 255, 0.9);
+  text-transform: uppercase;
+}
+
+.qz-hero-mode-hint {
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.qz-filter-tabs {
+  display: flex;
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: var(--qz-radius-full, 9999px);
+  padding: 3px;
+  gap: 3px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.qz-filter-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 10px;
+  background: transparent;
+  border: none;
+  border-radius: var(--qz-radius-full, 9999px);
+  color: rgba(255, 255, 255, 0.85);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.qz-filter-tab ion-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.qz-filter-tab:hover {
+  color: #ffffff;
+}
+
+.qz-filter-tab.is-active {
+  background: #ffffff;
+  color: #5b4acb;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+@media (max-width: 380px) {
+  .qz-hero-mode-container {
+    padding: 0 14px;
+  }
+  .qz-filter-tab {
+    font-size: 11px;
+    padding: 6px 6px;
+    gap: 4px;
+  }
+  .qz-filter-tab ion-icon {
+    font-size: 13px;
+  }
+}
+
+.qz-question-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.qz-mode-limit-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(106, 90, 224, 0.12);
+  color: #5b4acb;
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: var(--qz-radius-full, 9999px);
+  letter-spacing: 0.2px;
+}
+
+.qz-hero-mode-container {
+  max-width: 540px;
+  margin: 12px auto 0 auto;
+  padding: 0 20px;
+}
+
+.qz-filter-tabs {
+  display: flex;
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: var(--qz-radius-full, 9999px);
+  padding: 3px;
+  gap: 3px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.qz-filter-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 10px;
+  background: transparent;
+  border: none;
+  border-radius: var(--qz-radius-full, 9999px);
+  color: rgba(255, 255, 255, 0.85);
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.qz-filter-tab ion-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.qz-filter-tab:hover {
+  color: #ffffff;
+}
+
+.qz-filter-tab.is-active {
+  background: #ffffff;
+  color: #5b4acb;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+@media (max-width: 380px) {
+  .qz-hero-mode-container {
+    padding: 0 14px;
+  }
+  .qz-filter-tab {
+    font-size: 11px;
+    padding: 6px 6px;
+    gap: 4px;
+  }
+  .qz-filter-tab ion-icon {
+    font-size: 13px;
+  }
+}
+
+.qz-question-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.qz-mode-limit-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(106, 90, 224, 0.12);
+  color: #5b4acb;
+  font-family: var(--qz-font-family, "Rubik", sans-serif);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: var(--qz-radius-full, 9999px);
+  letter-spacing: 0.2px;
 }
 
 .qz-hero-tag {
@@ -1660,5 +1926,25 @@ export default {
 :global(.dark) .qz-btn--cancel {
   background: #28214b;
   color: #9e9bb8;
+}
+
+:global(body.dark) .qz-filter-tabs,
+:global(html.dark) .qz-filter-tabs,
+:global(.dark) .qz-filter-tabs {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+:global(body.dark) .qz-filter-tab.is-active,
+:global(html.dark) .qz-filter-tab.is-active,
+:global(.dark) .qz-filter-tab.is-active {
+  background: #322b60;
+  color: #ffffff;
+}
+
+:global(body.dark) .qz-mode-limit-badge,
+:global(html.dark) .qz-mode-limit-badge,
+:global(.dark) .qz-mode-limit-badge {
+  background: rgba(163, 155, 240, 0.18);
+  color: #b7aefa;
 }
 </style>

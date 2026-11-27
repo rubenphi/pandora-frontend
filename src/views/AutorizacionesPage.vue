@@ -163,7 +163,7 @@ import axios from "axios";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 
-import { tokenHeader, currentServerDate } from "../globalService";
+import { tokenHeader, currentServerDate, usuarioGet } from "../globalService";
 import {
   onIonViewWillEnter,
   IonIcon,
@@ -258,10 +258,12 @@ export default {
 
     const eliminarCodigo = async (codigo) => {
       try {
+        const usuario = usuarioGet();
+        const instituteId = Number(codigo.institute?.id || usuario?.institute?.id || 1);
         await axios.patch(`/invitations/${codigo.id}`, {
           expirationDate: codigo.expirationDate,
           code: codigo.code,
-          instituteId: codigo.institute.id,
+          instituteId: instituteId,
           exist: false,
           valid: codigo.valid,
         });
@@ -273,10 +275,12 @@ export default {
 
     const invalidarCodigo = async (codigo) => {
       try {
+        const usuario = usuarioGet();
+        const instituteId = Number(codigo.institute?.id || usuario?.institute?.id || 1);
         await axios.patch(`/invitations/${codigo.id}`, {
           expirationDate: codigo.expirationDate,
           code: codigo.code,
-          instituteId: codigo.institute.id,
+          instituteId: instituteId,
           exist: codigo.exist,
           valid: codigo.valid ? false : true,
         });
@@ -294,11 +298,14 @@ export default {
       const fechaExpiracion = new Date(hoy);
       fechaExpiracion.setDate(hoy.getDate() + 1); // Establecer la fecha de expiración al día siguiente
 
+      const usuario = usuarioGet();
+      const instituteId = Number(usuario?.institute?.id) || 1;
+
       const nuevosCodigos = [];
       for (let i = 0; i < numeroDeCodigos.value; i++) {
         const nuevoCodigo = {
           expirationDate: fechaExpiracion.toISOString(),
-          instituteId: 1,
+          instituteId: instituteId,
           exist: true,
           valid: true,
         };

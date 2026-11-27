@@ -80,20 +80,12 @@
                   </div>
                 </div>
 
-                <div class="qz-field-group">
-                  <label class="qz-field-label">Fecha</label>
-                  <div class="qz-select-wrapper qz-date-wrapper">
-                    <ion-icon
-                      :icon="todayOutline"
-                      class="qz-field-icon"
-                    ></ion-icon>
-                    <input
-                      v-model="selectedDate"
-                      type="date"
-                      class="qz-date-input"
-                    />
-                  </div>
-                </div>
+                <QzDatePicker
+                  v-model="selectedDate"
+                  label="Fecha"
+                  placeholder="Seleccionar fecha"
+                  :clearable="false"
+                />
 
                 <div class="qz-field-group qz-field-full">
                   <label class="qz-field-label">Curso</label>
@@ -218,33 +210,13 @@
                   </div>
                 </div>
 
-                <div class="qz-field-group">
-                  <label class="qz-field-label">Fecha (opcional)</label>
-                  <div class="qz-select-wrapper qz-date-wrapper">
-                    <ion-icon
-                      :icon="todayOutline"
-                      class="qz-field-icon"
-                    ></ion-icon>
-                    <input
-                      v-model="historyDate"
-                      type="date"
-                      class="qz-date-input"
-                      @change="fetchHistory"
-                    />
-                    <button
-                      v-if="historyDate"
-                      type="button"
-                      class="qz-clear-date-btn"
-                      title="Limpiar fecha"
-                      @click="
-                        historyDate = '';
-                        fetchHistory();
-                      "
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
+                <QzDatePicker
+                  v-model="historyDate"
+                  label="Fecha (opcional)"
+                  placeholder="Todas las fechas"
+                  :clearable="true"
+                  @change="fetchHistory"
+                />
               </div>
             </section>
 

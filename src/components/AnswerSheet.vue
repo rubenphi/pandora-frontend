@@ -57,6 +57,10 @@ export default {
       type: String,
       default: "",
     },
+    date: {
+      type: String,
+      default: "",
+    },
     sheetIndex: {
       type: Number,
       default: 1,
@@ -103,7 +107,7 @@ export default {
 
     const courseTopPercent = (600 / originalImageHeight) * 100;
     const courseLeftPercent = (600 / originalImageWidth) * 100;
-    const courseWidthPercent = (1883 / originalImageWidth) * 100;
+    const courseWidthPercent = (1000 / originalImageWidth) * 100;
     const courseHeightPercent = (161 / originalImageHeight) * 100;
     const courseFontSizePx = 120; // Aumentado para resolución completa
 
@@ -111,6 +115,13 @@ export default {
     const sectionTopPercent = (350 / originalImageHeight) * 100;
     const sectionRightPercent = (180 / originalImageWidth) * 100;
     const sectionFontSizePx = 110;
+
+    // Fecha a la misma altura que el curso (al lado de 'FECHA:')
+    const dateTopPercent = (600 / originalImageHeight) * 100;
+    const dateLeftPercent = (2050 / originalImageWidth) * 100;
+    const dateWidthPercent = (1050 / originalImageWidth) * 100;
+    const dateHeightPercent = (161 / originalImageHeight) * 100;
+    const dateFontSizePx = 120;
 
     const digitsTopPercent = (1200 / originalImageHeight) * 100;
     const digitsLeftPercent = (670 / originalImageWidth) * 100;
@@ -149,6 +160,7 @@ export default {
         () => props.student,
         () => props.courseName,
         () => props.topic,
+        () => props.date,
         () => props.sheetIndex,
         () => props.startNumber,
         () => props.questionCount,
@@ -429,6 +441,17 @@ export default {
           courseWidthPercent,
           courseHeightPercent,
           courseFontSizePx
+        );
+      }
+
+      if (props.date) {
+        putText(
+          props.date,
+          dateTopPercent,
+          dateLeftPercent,
+          dateWidthPercent,
+          dateHeightPercent,
+          dateFontSizePx
         );
       }
 

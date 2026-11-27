@@ -205,6 +205,19 @@
           </template>
         </button>
       </div>
+
+      <!-- 4. BARRA INFERIOR FLOTANTE DOCENTE: ESCANEAR MARCADORES -->
+      <div v-if="admin" class="qz-bottom-bar">
+        <button
+          type="button"
+          class="qz-btn-submit"
+          title="Escanear Marcadores"
+          @click="goToQr"
+        >
+          <ion-icon :icon="matrixMarkerOutline"></ion-icon>
+          <span>Escanear Marcadores</span>
+        </button>
+      </div>
     </ion-content>
   </ion-page>
 </template>
@@ -236,6 +249,8 @@ import {
   alertCircleOutline,
   peopleOutline,
 } from "ionicons/icons";
+import { matrixMarkerOutline } from "../utils/customIcons";
+import { getEffectiveOptions, QUIZ_MODES } from "../utils/quizModeAdapter";
 
 import {
   onIonViewDidEnter,
@@ -364,18 +379,26 @@ export default {
         }
       }
 
-      // 3. Procesar y ordenar opciones
+      // 3. Procesar y ordenar opciones adaptadas al modo activo (dispositivos, omr, tarjetas)
+      const activeQuizMode =
+        sessionStorage.getItem("pandora_quiz_mode_" + question.value.quiz?.id) ||
+        QUIZ_MODES.DIGITAL;
+      const baseOptions = getEffectiveOptions(
+        question.value.options,
+        activeQuizMode
+      );
+
       let processedOptions;
       if (
         admin ||
         (disableRandomization.value &&
           question.value.quiz?.id === question.value.quiz?.id)
       ) {
-        processedOptions = question.value.options.sort((a, b) =>
+        processedOptions = baseOptions.sort((a, b) =>
           a.identifier.localeCompare(b.identifier)
         );
       } else {
-        processedOptions = shuffleArray(question.value.options).map(
+        processedOptions = shuffleArray(baseOptions).map(
           (option, index) => {
             return {
               ...option,
@@ -457,6 +480,10 @@ export default {
       }
     };
 
+    const goToQr = () => {
+      router.push("/qr-preguntas/" + id);
+    };
+
     return {
       async responder() {
         const hasCorrectOption = question.value.options.some(
@@ -522,6 +549,8 @@ export default {
       goBack,
       goToResults,
       goToEdit,
+      goToQr,
+      matrixMarkerOutline,
       arrowBackOutline,
       sparklesOutline,
       podiumOutline,

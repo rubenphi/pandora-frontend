@@ -6,41 +6,148 @@
 
     <base href="/" />
     <script>
-      var console = (function (n) {
-        return {
-          log: function (o) {
-            n.log(o), customLog(o);
+      (function () {
+        var originalConsole = window.console || {};
+        var originalLog = originalConsole.log ? originalConsole.log.bind(originalConsole) : function () {};
+        var originalInfo = originalConsole.info ? originalConsole.info.bind(originalConsole) : originalLog;
+        var originalWarn = originalConsole.warn ? originalConsole.warn.bind(originalConsole) : originalLog;
+        var originalError = originalConsole.error ? originalConsole.error.bind(originalConsole) : originalLog;
+
+        var toastContainer = null;
+        var lastMessage = "";
+        var lastMessageTime = 0;
+        var MAX_TOASTS = 2;
+        var TOAST_DURATION_MS = 2200;
+
+        function getOrCreateContainer() {
+          if (!toastContainer || !document.body.contains(toastContainer)) {
+            toastContainer = document.getElementById("qz-console-toast-container");
+            if (!toastContainer && document.body) {
+              toastContainer = document.createElement("div");
+              toastContainer.id = "qz-console-toast-container";
+              toastContainer.style.cssText =
+                "position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:999999;" +
+                "display:flex;flex-direction:column;align-items:center;gap:6px;" +
+                "pointer-events:none;width:92%;max-width:440px;";
+              document.body.appendChild(toastContainer);
+            }
+          }
+          return toastContainer;
+        }
+
+        function formatLogArg(arg) {
+          if (arg === null) return "null";
+          if (arg === undefined) return "undefined";
+          if (typeof arg === "string") return arg;
+          if (arg instanceof Error) return arg.message || String(arg);
+          try {
+            return JSON.stringify(arg);
+          } catch (e) {
+            return String(arg);
+          }
+        }
+
+        function createConsoleToast(type, args) {
+          try {
+            var msg = "";
+            for (var i = 0; i < args.length; i++) {
+              msg += (i > 0 ? " " : "") + formatLogArg(args[i]);
+            }
+            msg = msg.trim();
+            if (!msg) return;
+
+            // Evitar duplicados consecutivos inmediatos
+            var now = Date.now();
+            if (msg === lastMessage && now - lastMessageTime < 800) {
+              return;
+            }
+            lastMessage = msg;
+            lastMessageTime = now;
+
+            // Limitar longitud para evitar saturacion visual
+            if (msg.length > 150) {
+              msg = msg.substring(0, 147) + "...";
+            }
+
+            var container = getOrCreateContainer();
+            if (!container) return;
+
+            // Mantener maximo MAX_TOASTS en pantalla
+            while (container.childNodes.length >= MAX_TOASTS) {
+              container.removeChild(container.firstChild);
+            }
+
+            var toast = document.createElement("div");
+            var dotColor = "#8c7ef8";
+            if (type === "error") dotColor = "#ff4d4f";
+            if (type === "warn") dotColor = "#faad14";
+
+            toast.style.cssText =
+              "background:rgba(20,16,42,0.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);" +
+              "border:1px solid rgba(255,255,255,0.12);border-radius:10px;" +
+              "box-shadow:0 6px 18px rgba(0,0,0,0.32);padding:7px 12px;" +
+              "display:flex;align-items:center;gap:8px;max-width:100%;" +
+              "box-sizing:border-box;pointer-events:none;opacity:0;transform:translateY(8px);" +
+              "transition:opacity 0.22s ease, transform 0.22s ease;";
+
+            var dot = document.createElement("span");
+            dot.style.cssText =
+              "width:7px;height:7px;border-radius:50%;background:" + dotColor + ";flex-shrink:0;";
+
+            var text = document.createElement("span");
+            text.style.cssText =
+              "color:#f7f7fd;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;" +
+              "font-size:11.5px;font-weight:500;line-height:1.35;word-break:break-word;overflow:hidden;";
+            text.textContent = msg;
+
+            toast.appendChild(dot);
+            toast.appendChild(text);
+            container.appendChild(toast);
+
+            requestAnimationFrame(function () {
+              toast.style.opacity = "1";
+              toast.style.transform = "translateY(0)";
+            });
+
+            setTimeout(function () {
+              toast.style.opacity = "0";
+              toast.style.transform = "translateY(6px)";
+              setTimeout(function () {
+                if (toast.parentNode) {
+                  toast.parentNode.removeChild(toast);
+                }
+              }, 250);
+            }, TOAST_DURATION_MS);
+          } catch (e) {
+            // Silencioso
+          }
+        }
+
+        window.console = {
+          log: function () {
+            originalLog.apply(originalConsole, arguments);
+            createConsoleToast("log", arguments);
           },
-          info: function (o) {
-            n.info(o), customLog(o);
+          info: function () {
+            originalInfo.apply(originalConsole, arguments);
+            createConsoleToast("info", arguments);
           },
-          warn: function (o) {
-            n.warn(o), customLog(o);
+          warn: function () {
+            originalWarn.apply(originalConsole, arguments);
+            createConsoleToast("warn", arguments);
           },
-          error: function (o) {
-            n.error(o), customLog(o);
+          error: function () {
+            originalError.apply(originalConsole, arguments);
+            createConsoleToast("error", arguments);
           },
         };
-      })(window.console);
-      function customLog(n) {
-        null === document.getElementById("log4browserContainer") &&
-          initializeLog(),
-          (document.getElementById("log4browserContainer").innerHTML +=
-            "- " + n + "\n");
-      }
-      function initializeLog() {
-        if (null === document.getElementById("log4browserContainer")) {
-          var n = document.createElement("pre");
-          n.setAttribute("id", "log4browserContainer"),
-            (n.style.cssText =
-              "\n\t\tposition:absolute;\n\t\tbottom:0px;\n\t\tleft:0px;\n\t\tcolor:greenyellow;\n\t\tpadding: 5px;\n\t\twhite-space: pre-wrap;\n\t\t"),
-            document.body.appendChild(n),
-            (window.onerror = function (n, o, t) {
-              return console.log("Error: \n" + n), !1;
-            });
-        }
-      }
-      window.console = console;
+
+        window.onerror = function (message) {
+          originalError.call(originalConsole, "Error:", message);
+          createConsoleToast("error", ["Error: " + message]);
+          return false;
+        };
+      })();
     </script>
     <meta name="color-scheme" content="light dark" />
     <meta

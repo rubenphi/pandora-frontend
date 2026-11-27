@@ -113,6 +113,7 @@ import {
   currentServerDate,
   initializeBaseUrl,
 } from "../globalService";
+import { resetDemoLock } from "../utils/demoLicense";
 import {
   alertController,
   IonPage,
@@ -160,6 +161,7 @@ export default {
     onIonViewWillEnter(async () => {
       // En modo standalone local asegurar que apunte a localhost:3000
       initializeBaseUrl();
+      resetDemoLock();
     });
 
     const mostrar = async () => {
@@ -199,6 +201,8 @@ export default {
           "usuario",
           JSON.stringify(response.data.userLoged)
         );
+
+        resetDemoLock();
 
         error.value.estatus = 0;
         tokenHeader();
