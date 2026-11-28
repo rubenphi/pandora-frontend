@@ -73,6 +73,10 @@ const routes = [
         component: () => import("@/views/OmrTemplateEditor.vue"),
       },
       {
+        path: "omr-editor/:templateId",
+        component: () => import("@/views/OmrTemplateEditor.vue"),
+      },
+      {
         path: "omr-encuesta/estudiantes",
         component: () => import("@/views/OmrStudentSurveyLauncher.vue"),
       },
@@ -87,6 +91,27 @@ const routes = [
       {
         path: "omr-encuesta/padres/:sessionId",
         component: () => import("@/views/OmrParentSurveyReader.vue"),
+      },
+      // Encuestas Personalizadas OMR
+      {
+        path: "omr-encuesta/sesiones/:templateId",
+        component: () => import("@/views/OmrSurveySessionLauncher.vue"),
+      },
+      {
+        path: "omr-encuesta/personalizada/:sessionId",
+        component: () => import("@/views/OmrGenericSurveyReader.vue"),
+      },
+      {
+        path: "omr-encuesta/dinamica/:slug",
+        component: () => import("@/views/OmrGenericSurveyReader.vue"),
+      },
+      {
+        path: "omr-encuesta/dinamica/:slug/:sessionId",
+        component: () => import("@/views/OmrGenericSurveyReader.vue"),
+      },
+      {
+        path: "omr-encuesta/resultados/:sessionId",
+        component: () => import("@/views/OmrSurveyResultsView.vue"),
       },
       {
         path: "lecciones/:curso/:area/:periodo/:year/:lessonType?",
@@ -144,6 +169,10 @@ const routes = [
           if (adminOprofesor()) next();
           else next({ path: "/inicio" });
         },
+      },
+      {
+        path: "surveys/templates",
+        redirect: "/admin/plantillas-encuestas",
       },
       {
         path: "admin/panel",

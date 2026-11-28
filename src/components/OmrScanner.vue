@@ -127,6 +127,10 @@ export default {
       type: String,
       default: null,
     },
+    customTemplate: {
+      type: Object,
+      default: null,
+    },
     answerKeys: {
       type: Array,
       default: () => [],
@@ -371,35 +375,62 @@ export default {
           await checkFlashAvailability();
 
           let templates;
-          if (props.templateName) {
+          if (props.customTemplate) {
+            const rawSections = Array.isArray(props.customTemplate.sections)
+              ? props.customTemplate.sections
+              : (props.customTemplate.circleTemplate || []);
+            // Filtrar solo las secciones que contienen burbujas OMR escaneables
+            const scannableSections = rawSections.filter(
+              (s) => s.type !== "instruction" && s.circles
+            );
+            OMR_STATE.isSurvey = true;
+            OMR_STATE.templateName =
+              props.customTemplate.template_name ||
+              props.customTemplate.name ||
+              "custom";
+            OMR_STATE.circleTemplate = scannableSections;
+            OMR_STATE.matrixTemplate =
+              props.customTemplate.matrixTemplate || {};
+          } else if (props.templateName) {
             templates = await fetchSurveyTemplate(props.templateName);
             OMR_STATE.isSurvey = true;
             OMR_STATE.templateName = props.templateName;
+            OMR_STATE.circleTemplate = templates.circleTemplate;
+            OMR_STATE.matrixTemplate = templates.matrixTemplate;
           } else {
             templates = await fetchTemplates();
             OMR_STATE.isSurvey = false;
             OMR_STATE.templateName = null;
+            OMR_STATE.circleTemplate = templates.circleTemplate;
+            OMR_STATE.matrixTemplate = templates.matrixTemplate;
           }
-          OMR_STATE.circleTemplate = templates.circleTemplate;
-          OMR_STATE.matrixTemplate = templates.matrixTemplate;
 
-          video.value.addEventListener("loadedmetadata", () => {
-            OMR_STATE.width = video.value.videoWidth;
-            OMR_STATE.height = video.value.videoHeight;
+          const handleMetadataLoaded = () => {
+            if (!video.value) return;
+            OMR_STATE.width = video.value.videoWidth || 640;
+            OMR_STATE.height = video.value.videoHeight || 480;
             OMR_STATE.video = video.value;
             OMR_STATE.canvas = outputCanvas.value;
-            OMR_STATE.ctx = OMR_STATE.canvas.getContext("2d", {
+            OMR_STATE.ctx = OMR_STATE.canvas ? OMR_STATE.canvas.getContext("2d", {
               willReadFrequently: true,
-            });
+            }) : null;
 
-            OMR_STATE.canvas.width = OMR_STATE.width;
-            OMR_STATE.canvas.height = OMR_STATE.height;
+            if (OMR_STATE.canvas) {
+              OMR_STATE.canvas.width = OMR_STATE.width;
+              OMR_STATE.canvas.height = OMR_STATE.height;
+            }
 
             reinitializeOMRMats(); // Call the new function here
 
             isLoading.value = false;
             // Do not start loop here, wait for start() call
-          });
+          };
+
+          if (video.value && video.value.readyState >= 1 && video.value.videoWidth > 0) {
+            handleMetadataLoaded();
+          } else if (video.value) {
+            video.value.addEventListener("loadedmetadata", handleMetadataLoaded, { once: true });
+          }
 
           // await startCamera(); // MOVED TO start()
         } catch (error) {
@@ -613,6 +644,11 @@ export default {
       if (!stream) {
         await startCamera();
         await checkFlashAvailability();
+      }
+
+      // Si el video ya tiene dimensiones listas, asegurar apagar el spinner de carga
+      if (video.value && video.value.videoWidth > 0) {
+        isLoading.value = false;
       }
 
       // Restore flash state

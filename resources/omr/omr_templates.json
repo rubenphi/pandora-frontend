@@ -1,10 +1,22 @@
 {
   "sharedRectangle": {
     "rectangle": {
-      "top_left": { "x": 5.597393, "y": 5.0 },
-      "top_right": { "x": 57.17, "y": 5.0 },
-      "bottom_left": { "x": 5.597393, "y": 74.089405 },
-      "bottom_right": { "x": 57.17, "y": 74.089401 },
+      "top_left": {
+        "x": 5.597393,
+        "y": 5.0
+      },
+      "top_right": {
+        "x": 57.17,
+        "y": 5.0
+      },
+      "bottom_left": {
+        "x": 5.597393,
+        "y": 74.089405
+      },
+      "bottom_right": {
+        "x": 57.17,
+        "y": 74.089401
+      },
       "width": 54.37,
       "height": 69.089401
     }
@@ -16,10 +28,22 @@
       "rows": 10,
       "cols": 10,
       "circles": {
-        "CTL": { "percent_x": 16, "percent_y": 8 },
-        "CTR": { "percent_x": 60, "percent_y": 8 },
-        "CBL": { "percent_x": 16, "percent_y": 42.7 },
-        "CBR": { "percent_x": 60, "percent_y": 42.7 }
+        "CTL": {
+          "percent_x": 16,
+          "percent_y": 8
+        },
+        "CTR": {
+          "percent_x": 60,
+          "percent_y": 8
+        },
+        "CBL": {
+          "percent_x": 16,
+          "percent_y": 42.7
+        },
+        "CBR": {
+          "percent_x": 60,
+          "percent_y": 42.7
+        }
       },
       "radius": 12
     },
@@ -29,10 +53,22 @@
       "rows": 10,
       "cols": 8,
       "circles": {
-        "CTL": { "percent_x": 9.1, "percent_y": 53 },
-        "CTR": { "percent_x": 45.6, "percent_y": 53 },
-        "CBL": { "percent_x": 9.1, "percent_y": 90 },
-        "CBR": { "percent_x": 45.6, "percent_y": 90 }
+        "CTL": {
+          "percent_x": 9.1,
+          "percent_y": 53
+        },
+        "CTR": {
+          "percent_x": 45.6,
+          "percent_y": 53
+        },
+        "CBL": {
+          "percent_x": 9.1,
+          "percent_y": 90
+        },
+        "CBR": {
+          "percent_x": 45.6,
+          "percent_y": 90
+        }
       },
       "radius": 12
     },
@@ -42,10 +78,22 @@
       "rows": 10,
       "cols": 8,
       "circles": {
-        "CTL": { "percent_x": 57.3, "percent_y": 52.77 },
-        "CTR": { "percent_x": 94.5, "percent_y": 52.77 },
-        "CBL": { "percent_x": 57.3, "percent_y": 89.87 },
-        "CBR": { "percent_x": 94.5, "percent_y": 89.87 }
+        "CTL": {
+          "percent_x": 57.3,
+          "percent_y": 52.77
+        },
+        "CTR": {
+          "percent_x": 94.5,
+          "percent_y": 52.77
+        },
+        "CBL": {
+          "percent_x": 57.3,
+          "percent_y": 89.87
+        },
+        "CBR": {
+          "percent_x": 94.5,
+          "percent_y": 89.87
+        }
       },
       "radius": 12
     }
@@ -59,13 +107,30 @@
           "rows": 14,
           "cols": 4,
           "circles": {
-            "CTL": { "percent_x": 68.48, "percent_y": 12.69 },
-            "CTR": { "percent_x": 91.49, "percent_y": 12.69 },
-            "CBL": { "percent_x": 68.48, "percent_y": 69.57 },
-            "CBR": { "percent_x": 91.49, "percent_y": 69.57 }
+            "CTL": {
+              "percent_x": 68.48,
+              "percent_y": 12.69
+            },
+            "CTR": {
+              "percent_x": 91.49,
+              "percent_y": 12.69
+            },
+            "CBL": {
+              "percent_x": 68.48,
+              "percent_y": 69.57
+            },
+            "CBR": {
+              "percent_x": 91.49,
+              "percent_y": 69.57
+            }
           },
           "radius": 7,
-          "labels": ["Nunca", "Algunas veces", "Casi siempre", "Siempre"]
+          "labels": [
+            "Nunca",
+            "Algunas veces",
+            "Casi siempre",
+            "Siempre"
+          ]
         },
         {
           "type": "question",
@@ -73,13 +138,30 @@
           "rows": 4,
           "cols": 4,
           "circles": {
-            "CTL": { "percent_x": 68.48, "percent_y": 82.20 },
-            "CTR": { "percent_x": 91.49, "percent_y": 82.20 },
-            "CBL": { "percent_x": 68.48, "percent_y": 95.27 },
-            "CBR": { "percent_x": 91.49, "percent_y": 95.27 }
+            "CTL": {
+              "percent_x": 68.48,
+              "percent_y": 82.2
+            },
+            "CTR": {
+              "percent_x": 91.49,
+              "percent_y": 82.2
+            },
+            "CBL": {
+              "percent_x": 68.48,
+              "percent_y": 95.27
+            },
+            "CBR": {
+              "percent_x": 91.49,
+              "percent_y": 95.27
+            }
           },
           "radius": 7,
-          "labels": ["Nunca", "Algunas veces", "Casi siempre", "Siempre"]
+          "labels": [
+            "Nunca",
+            "Algunas veces",
+            "Casi siempre",
+            "Siempre"
+          ]
         }
       ]
     },
@@ -91,13 +173,28 @@
           "rows": 1,
           "cols": 2,
           "circles": {
-            "CTL": { "percent_x": 65, "percent_y": 5.29 },
-            "CTR": { "percent_x": 76.6, "percent_y": 5.29 },
-            "CBL": { "percent_x": 65, "percent_y": 5.29 },
-            "CBR": { "percent_x": 76.6, "percent_y": 5.29 }
+            "CTL": {
+              "percent_x": 65.03,
+              "percent_y": 5.27
+            },
+            "CTR": {
+              "percent_x": 76.67,
+              "percent_y": 5.27
+            },
+            "CBL": {
+              "percent_x": 65.03,
+              "percent_y": 5.27
+            },
+            "CBR": {
+              "percent_x": 76.67,
+              "percent_y": 5.27
+            }
           },
           "radius": 7,
-          "labels": ["Sí", "No"]
+          "labels": [
+            "Sí",
+            "No"
+          ]
         },
         {
           "type": "question",
@@ -105,13 +202,30 @@
           "rows": 14,
           "cols": 4,
           "circles": {
-            "CTL": { "percent_x": 67.27, "percent_y": 16 },
-            "CTR": { "percent_x": 92, "percent_y": 16 },
-            "CBL": { "percent_x": 67.27, "percent_y": 53 },
-            "CBR": { "percent_x": 92, "percent_y": 53 }
+            "CTL": {
+              "percent_x": 67.39,
+              "percent_y": 15.32
+            },
+            "CTR": {
+              "percent_x": 91.82,
+              "percent_y": 15.32
+            },
+            "CBL": {
+              "percent_x": 67.39,
+              "percent_y": 53.7
+            },
+            "CBR": {
+              "percent_x": 91.82,
+              "percent_y": 53.7
+            }
           },
           "radius": 7,
-          "labels": ["Nunca", "Algunas veces", "Casi siempre", "Siempre"]
+          "labels": [
+            "Nunca",
+            "Algunas veces",
+            "Casi siempre",
+            "Siempre"
+          ]
         },
         {
           "type": "question",
@@ -119,13 +233,30 @@
           "rows": 4,
           "cols": 4,
           "circles": {
-            "CTL": { "percent_x": 67.28, "percent_y": 62.54 },
-            "CTR": { "percent_x": 91.85, "percent_y": 62.54 },
-            "CBL": { "percent_x": 67.28, "percent_y": 71.6 },
-            "CBR": { "percent_x": 91.85, "percent_y": 71.6 }
+            "CTL": {
+              "percent_x": 67.39,
+              "percent_y": 62.49
+            },
+            "CTR": {
+              "percent_x": 91.82,
+              "percent_y": 62.49
+            },
+            "CBL": {
+              "percent_x": 67.39,
+              "percent_y": 71.39
+            },
+            "CBR": {
+              "percent_x": 91.82,
+              "percent_y": 71.39
+            }
           },
           "radius": 7,
-          "labels": ["Nunca", "Algunas veces", "Casi siempre", "Siempre"]
+          "labels": [
+            "Nunca",
+            "Algunas veces",
+            "Casi siempre",
+            "Siempre"
+          ]
         },
         {
           "type": "multiselect",
@@ -133,10 +264,22 @@
           "rows": 4,
           "cols": 3,
           "circles": {
-            "CTL": { "percent_x": 35.25, "percent_y": 82.78 },
-            "CTR": { "percent_x": 96.21, "percent_y": 82.78 },
-            "CBL": { "percent_x": 35.25, "percent_y": 91.84 },
-            "CBR": { "percent_x": 96.21, "percent_y": 91.84 }
+            "CTL": {
+              "percent_x": 35.07,
+              "percent_y": 82.75
+            },
+            "CTR": {
+              "percent_x": 96.2,
+              "percent_y": 82.75
+            },
+            "CBL": {
+              "percent_x": 35.07,
+              "percent_y": 91.93
+            },
+            "CBR": {
+              "percent_x": 96.2,
+              "percent_y": 91.93
+            }
           },
           "radius": 7,
           "labels": [
@@ -145,9 +288,21 @@
               "Películas y videos",
               "Láminas y otros materiales gráficos"
             ],
-            ["Computadores", "Diapositivas o acetatos", "Música"],
-            ["Libros de texto", "Laboratorios", "Otros"],
-            ["Programas educativos computarizados", "Mapas", ""]
+            [
+              "Computadores",
+              "Diapositivas o acetatos",
+              "Música"
+            ],
+            [
+              "Libros de texto",
+              "Laboratorios",
+              "Otros"
+            ],
+            [
+              "Programas educativos computarizados",
+              "Mapas",
+              ""
+            ]
           ]
         }
       ]

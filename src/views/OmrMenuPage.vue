@@ -87,6 +87,28 @@
                     <ion-icon :icon="chevronForwardOutline"></ion-icon>
                   </div>
                 </div>
+
+                <!-- Tarjeta 3: Plantillas y Encuestas Personalizadas -->
+                <div
+                  class="qz-menu-card"
+                  @click="navigateTo('/admin/plantillas-encuestas')"
+                >
+                  <div class="qz-icon-squircle qz-icon--purple">
+                    <ion-icon :icon="layersOutline"></ion-icon>
+                  </div>
+                  <div class="qz-card-details">
+                    <div class="qz-card-header-row">
+                      <h3 class="qz-card-name">Encuestas Personalizadas</h3>
+                      <span class="qz-tag qz-tag--purple">Gestor OMR</span>
+                    </div>
+                    <p class="qz-card-desc">
+                      Cree, diseñe visualmente y administre sesiones de encuestas personalizadas.
+                    </p>
+                  </div>
+                  <div class="qz-card-arrow">
+                    <ion-icon :icon="chevronForwardOutline"></ion-icon>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -164,6 +186,7 @@ import {
   schoolOutline,
   createOutline,
   chevronForwardOutline,
+  layersOutline,
 } from "ionicons/icons";
 
 export default {
@@ -188,6 +211,7 @@ export default {
       schoolOutline,
       createOutline,
       chevronForwardOutline,
+      layersOutline,
     };
   },
 };

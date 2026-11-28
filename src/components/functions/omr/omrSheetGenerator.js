@@ -1,3 +1,5 @@
+import { jsPDF } from "jspdf";
+
 /**
  * omrSheetGenerator.js
  * High-resolution canvas renderer and generator for printable OMR sheets.
@@ -10,14 +12,19 @@ export const CANVAS_PORTRAIT = { width: 1240, height: 1754 };
 const ANCHOR_MARGIN_RATIO_X = 0.06;
 const ANCHOR_MARGIN_RATIO_Y = 0.06;
 const HEADER_HEIGHT = 60;
-const MARKER_SIZE = 40;
+export const MARKER_SIZE = 54;
 
 /**
  * Draws the 4 concentric square anchor markers required by imageProcessor.js findAndLabelMarkers
  */
-export function drawConcentricSquareMarker(ctx, cx, cy, outerSize = MARKER_SIZE) {
+export function drawConcentricSquareMarker(
+  ctx,
+  cx,
+  cy,
+  outerSize = MARKER_SIZE,
+) {
   const midSize = Math.round(outerSize * 0.65);
-  const innerSize = Math.round(outerSize * 0.35);
+  const innerSize = Math.round(outerSize * 0.36);
 
   ctx.save();
   ctx.fillStyle = "#000000";
@@ -40,13 +47,15 @@ export function drawConcentricSquareMarker(ctx, cx, cy, outerSize = MARKER_SIZE)
 export function getAnchorPositions(width, height, margins) {
   const defaultMarginX = width * ANCHOR_MARGIN_RATIO_X;
   const defaultMarginY = height * ANCHOR_MARGIN_RATIO_Y;
-  const left = margins?.left ?? defaultMarginX;
-  const right = margins?.right ?? defaultMarginX;
-  const top = margins?.top ?? defaultMarginY;
-  const bottom = margins?.bottom ?? defaultMarginY;
+  const left = margins?.left !== undefined ? margins.left : defaultMarginX;
+  const right = margins?.right !== undefined ? margins.right : defaultMarginX;
+  const top =
+    margins?.top !== undefined ? margins.top : HEADER_HEIGHT + defaultMarginY;
+  const bottom =
+    margins?.bottom !== undefined ? margins.bottom : defaultMarginY;
   return {
-    TL: { x: left, y: HEADER_HEIGHT + top },
-    TR: { x: width - right, y: HEADER_HEIGHT + top },
+    TL: { x: left, y: top },
+    TR: { x: width - right, y: top },
     BL: { x: left, y: height - bottom },
     BR: { x: width - right, y: height - bottom },
   };
@@ -60,7 +69,12 @@ export function getAnchorPositions(width, height, margins) {
  * @param {object} margins - optional { top, bottom, left, right } in pixels
  * @param {number} markerSize - size of the corner markers in pixels
  */
-export function getScannableBounds(width, height, margins, markerSize = MARKER_SIZE) {
+export function getScannableBounds(
+  width,
+  height,
+  margins,
+  markerSize = MARKER_SIZE,
+) {
   const anchors = getAnchorPositions(width, height, margins);
   const half = markerSize / 2;
   return {
@@ -77,17 +91,42 @@ export function getScannableBounds(width, height, margins, markerSize = MARKER_S
  * @param {number} height
  * @param {object} margins - optional { top, bottom, left, right } in pixels
  */
-export function getReservedZones(width, height, margins, markerSize = MARKER_SIZE) {
+export function getReservedZones(
+  width,
+  height,
+  margins,
+  markerSize = MARKER_SIZE,
+) {
   const anchors = getAnchorPositions(width, height, margins);
   const half = markerSize / 2 + 18;
   return [
     // Header strip
     { x: 0, y: 0, w: width, h: HEADER_HEIGHT + 10 },
     // Corner anchor zones
-    { x: anchors.TL.x - half, y: anchors.TL.y - half, w: half * 2, h: half * 2 },
-    { x: anchors.TR.x - half, y: anchors.TR.y - half, w: half * 2, h: half * 2 },
-    { x: anchors.BL.x - half, y: anchors.BL.y - half, w: half * 2, h: half * 2 },
-    { x: anchors.BR.x - half, y: anchors.BR.y - half, w: half * 2, h: half * 2 },
+    {
+      x: anchors.TL.x - half,
+      y: anchors.TL.y - half,
+      w: half * 2,
+      h: half * 2,
+    },
+    {
+      x: anchors.TR.x - half,
+      y: anchors.TR.y - half,
+      w: half * 2,
+      h: half * 2,
+    },
+    {
+      x: anchors.BL.x - half,
+      y: anchors.BL.y - half,
+      w: half * 2,
+      h: half * 2,
+    },
+    {
+      x: anchors.BR.x - half,
+      y: anchors.BR.y - half,
+      w: half * 2,
+      h: half * 2,
+    },
   ];
 }
 
@@ -113,14 +152,20 @@ export function getSectionBounds(sec, dims) {
   const startX = (sec.percentX / 100) * dims.width;
   const startY = (sec.percentY / 100) * dims.height;
 
+  if (sec.type === "instruction") {
+    const width = sec.widthPx || Math.round(dims.width * 0.85);
+    const height = sec.heightPx || 90;
+    return { x: startX, y: startY, width, height };
+  }
+
   if (sec.type === "code") {
     const cols = sec.digits || 6;
     const cellSize = sec.cellSize || 36;
-    const colSpacing = sec.colSpacing || (cellSize + 20);
+    const colSpacing = sec.colSpacing || cellSize + 20;
     const bubbleRowSpacing = sec.rowSpacing || 38;
     const totalWidth = (cols - 1) * colSpacing + cellSize;
     const matrixStartY = startY + cellSize + 32;
-    const totalHeight = (matrixStartY - startY) + 10 * bubbleRowSpacing + 10;
+    const totalHeight = matrixStartY - startY + 10 * bubbleRowSpacing + 10;
     return { x: startX, y: startY, width: totalWidth, height: totalHeight };
   }
 
@@ -132,41 +177,35 @@ export function getSectionBounds(sec, dims) {
   const radius = sec.radius || 12;
 
   if (sec.type === "multiselect") {
-    const titleH = sec.title ? 24 : 0;
-    const lineHeight = 11;
-    const labelGap = 6;
-    const padX = 6;
+    // Si tiene título, el texto inicia en el margen de preguntas (9.0% del ancho)
+    const titleMarginX = dims.width * 0.09;
+    const titleTopOffset = sec.title ? 28 : 8; // espacio superior para el título
+    const boxX = sec.title ? Math.min(startX, titleMarginX) : startX;
 
-    // Column width = colSpacing
-    let totalW = labelsXOffset;
-    for (let c = 0; c < cols; c++) {
-      const colW = Math.max(radius * 2, colSpacing);
-      totalW += colW;
-    }
+    // Calcular centros y extremos de burbujas
+    const colWidth = Math.max(radius * 2, colSpacing);
+    const lastColCenterX =
+      startX + labelsXOffset + (cols - 1) * colWidth + colWidth / 2;
 
-    // Find tallest row by approximate label height
-    let maxRowLabelLines = 1;
-    for (let r = 0; r < rows; r++) {
-      let rowLines = 1;
-      for (let c = 0; c < cols; c++) {
-        const label = sec.labels && sec.labels[r] && sec.labels[r][c];
-        if (label) {
-          const maxLabelW = String(label).length * 6;
-          const availW = colSpacing - padX;
-          const approxLines = Math.max(1, Math.ceil(maxLabelW / availW));
-          if (approxLines > rowLines) rowLines = approxLines;
-        }
-      }
-      if (rowLines > maxRowLabelLines) maxRowLabelLines = rowLines;
-    }
+    // Límite derecho del área segura (scannable bounds)
+    const rightMargin =
+      dims.margins?.right !== undefined
+        ? dims.margins.right
+        : dims.width * ANCHOR_MARGIN_RATIO_X;
+    const ms = dims.markerSize || MARKER_SIZE;
+    const maxSafeRight = dims.width - rightMargin - ms / 2;
 
-    const tallestLabelH = maxRowLabelLines * lineHeight;
-    const totalHeight = titleH + (rows - 1) * rowSpacing + tallestLabelH + labelGap + radius * 2 + 10;
-    return { x: startX, y: startY, width: totalW, height: totalHeight };
+    const rawBoxRight = lastColCenterX + radius + 2;
+    const boxRight = Math.min(rawBoxRight, maxSafeRight - 4);
+    const totalW = Math.max(boxRight - boxX, 100);
+
+    const boxY = startY - titleTopOffset;
+    const totalHeight = titleTopOffset + (rows - 1) * rowSpacing + radius + 8;
+
+    return { x: boxX, y: boxY, width: totalW, height: totalHeight };
   }
 
   // Question type: column width based on colSpacing, labels wrap within
-  const titleH = sec.title ? 22 : 0;
   const padX = 6;
   const lineHeight = 14;
   const headerPadding = 12;
@@ -175,12 +214,14 @@ export function getSectionBounds(sec, dims) {
 
   // Single group width
   const groupWidth = cols * colSpacing;
-  const totalW = labelsXOffset + columnGroups * groupWidth + (columnGroups - 1) * groupGap;
+  const totalW =
+    labelsXOffset + columnGroups * groupWidth + (columnGroups - 1) * groupGap;
 
   // Approximate max header lines
   let maxHeaderLines = 1;
   for (let c = 0; c < cols; c++) {
-    const label = sec.labels && sec.labels[c] ? String(sec.labels[c]) : String(c + 1);
+    const label =
+      sec.labels && sec.labels[c] ? String(sec.labels[c]) : String(c + 1);
     const colW = Math.max(radius * 2, colSpacing);
     const maxLabelW = label.length * 7;
     const availW = colW - padX;
@@ -188,30 +229,59 @@ export function getSectionBounds(sec, dims) {
     if (approxLines > maxHeaderLines) maxHeaderLines = approxLines;
   }
 
-  const colHeaderH = sec.showLabels ? maxHeaderLines * lineHeight + headerPadding : 12;
+  const colHeaderH = sec.showLabels
+    ? maxHeaderLines * lineHeight + headerPadding
+    : 12;
   const rowsPerGroup = Math.ceil(rows / columnGroups);
 
-  const totalHeight = titleH + colHeaderH + (rowsPerGroup - 1) * rowSpacing + radius * 2 + 10;
+  const titleOffset = sec.title ? 18 : 0;
+  const boxY = startY - titleOffset;
+  const totalHeight =
+    titleOffset +
+    colHeaderH +
+    (rowsPerGroup - 1) * rowSpacing +
+    radius * 2 +
+    10;
 
-  return { x: startX, y: startY, width: totalW, height: totalHeight };
+  return { x: startX, y: boxY, width: totalW, height: totalHeight };
 }
 
 /**
  * Renders the entire OMR sheet onto a canvas
  */
 export function renderSheet(canvas, config, options = {}) {
-  const { isPreview = false, selectedSectionIndex = -1, dims: canvasDims, markerSize: markerSizeOpt } = options;
+  const {
+    isPreview = false,
+    selectedSectionIndex = -1,
+    dims: canvasDims,
+    markerSize: markerSizeOpt,
+    renderMode: optRenderMode,
+  } = options;
   const { sections = [] } = config;
-  const markerSize = markerSizeOpt || MARKER_SIZE;
+  const markerSize = markerSizeOpt || config.markerSize || MARKER_SIZE;
+  const renderMode = optRenderMode || config.renderMode || "full";
+  const isBubblesOnly = renderMode === "bubbles_only";
 
   const canvasWidth = canvasDims?.width || CANVAS_PORTRAIT.width;
   const canvasHeight = canvasDims?.height || CANVAS_PORTRAIT.height;
 
   const margins = {
-    left: canvasWidth * ANCHOR_MARGIN_RATIO_X,
-    right: canvasWidth * ANCHOR_MARGIN_RATIO_X,
-    top: canvasHeight * ANCHOR_MARGIN_RATIO_Y,
-    bottom: canvasHeight * ANCHOR_MARGIN_RATIO_Y,
+    left:
+      config.margins?.left !== undefined
+        ? config.margins.left
+        : canvasWidth * ANCHOR_MARGIN_RATIO_X,
+    right:
+      config.margins?.right !== undefined
+        ? config.margins.right
+        : canvasWidth * ANCHOR_MARGIN_RATIO_X,
+    top:
+      config.margins?.top !== undefined
+        ? config.margins.top
+        : HEADER_HEIGHT + canvasHeight * ANCHOR_MARGIN_RATIO_Y,
+    bottom:
+      config.margins?.bottom !== undefined
+        ? config.margins.bottom
+        : canvasHeight * ANCHOR_MARGIN_RATIO_Y,
   };
 
   canvas.width = canvasWidth;
@@ -224,20 +294,37 @@ export function renderSheet(canvas, config, options = {}) {
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-  // 1. Top Orientation Header
-  ctx.save();
-  ctx.fillStyle = "#111111";
-  ctx.font = "bold 22px sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText("▲  PARTE SUPERIOR / ARRIBA  ▲", canvasWidth / 2, 40);
-  ctx.strokeStyle = "#bbbbbb";
-  ctx.lineWidth = 1;
-  ctx.setLineDash([6, 4]);
-  ctx.beginPath();
-  ctx.moveTo(50, 55);
-  ctx.lineTo(canvasWidth - 50, 55);
-  ctx.stroke();
-  ctx.restore();
+  // Fondo personalizado externo (subido desde Canva, Illustrator, etc.)
+  if (
+    config.backgroundImageElement &&
+    config.backgroundImageElement.complete &&
+    config.backgroundImageElement.naturalWidth !== 0
+  ) {
+    ctx.drawImage(
+      config.backgroundImageElement,
+      0,
+      0,
+      canvasWidth,
+      canvasHeight
+    );
+  }
+
+  // 1. Top Orientation Header (solo si no es modo limpio para edición externa y no hay fondo personalizado)
+  if (!isBubblesOnly && !config.backgroundImage) {
+    ctx.save();
+    ctx.fillStyle = "#111111";
+    ctx.font = "bold 22px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("▲  PARTE SUPERIOR / ARRIBA  ▲", canvasWidth / 2, 40);
+    ctx.strokeStyle = "#bbbbbb";
+    ctx.lineWidth = 1;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(50, 55);
+    ctx.lineTo(canvasWidth - 50, 55);
+    ctx.stroke();
+    ctx.restore();
+  }
 
   // 2. Concentric Anchor Markers
   const anchors = getAnchorPositions(canvasWidth, canvasHeight, margins);
@@ -253,14 +340,21 @@ export function renderSheet(canvas, config, options = {}) {
     ctx.strokeStyle = "rgba(239, 68, 68, 0.28)";
     ctx.lineWidth = 1.2;
     ctx.setLineDash([4, 3]);
-    getReservedZones(canvasWidth, canvasHeight, margins, markerSize).forEach((z) => {
-      ctx.fillRect(z.x, z.y, z.w, z.h);
-      ctx.strokeRect(z.x, z.y, z.w, z.h);
-    });
+    getReservedZones(canvasWidth, canvasHeight, margins, markerSize).forEach(
+      (z) => {
+        ctx.fillRect(z.x, z.y, z.w, z.h);
+        ctx.strokeRect(z.x, z.y, z.w, z.h);
+      },
+    );
     ctx.restore();
 
     // Scannable area border (red dashed rectangle inside the 4 markers)
-    const area = getScannableBounds(canvasWidth, canvasHeight, margins, markerSize);
+    const area = getScannableBounds(
+      canvasWidth,
+      canvasHeight,
+      margins,
+      markerSize,
+    );
     ctx.save();
     ctx.strokeStyle = "#ef4444";
     ctx.lineWidth = 1.5;
@@ -270,10 +364,16 @@ export function renderSheet(canvas, config, options = {}) {
   }
 
   // 4. Render each section
-  const dims = { width: canvasWidth, height: canvasHeight };
+  const dims = {
+    width: canvasWidth,
+    height: canvasHeight,
+    margins,
+    markerSize,
+  };
   sections.forEach((sec, idx) => {
     renderSection(ctx, sec, dims, {
       isSelected: isPreview && selectedSectionIndex === idx,
+      isBubblesOnly,
     });
   });
 }
@@ -282,7 +382,7 @@ export function renderSheet(canvas, config, options = {}) {
  * Renders an individual section
  */
 function renderSection(ctx, sec, dims, options = {}) {
-  const { isSelected = false } = options;
+  const { isSelected = false, isBubblesOnly = false } = options;
   const bounds = getSectionBounds(sec, dims);
 
   ctx.save();
@@ -293,17 +393,49 @@ function renderSection(ctx, sec, dims, options = {}) {
     ctx.strokeStyle = "#2563eb";
     ctx.lineWidth = 2;
     ctx.setLineDash([6, 3]);
-    ctx.fillRect(bounds.x - 6, bounds.y - 6, bounds.width + 12, bounds.height + 12);
-    ctx.strokeRect(bounds.x - 6, bounds.y - 6, bounds.width + 12, bounds.height + 12);
+
+    let hlX = bounds.x - 6;
+    let hlY = bounds.y - 6;
+    let hlW = bounds.width + 12;
+    let hlH = bounds.height + 12;
+
+    const rightMargin =
+      dims.margins?.right !== undefined
+        ? dims.margins.right
+        : dims.width * ANCHOR_MARGIN_RATIO_X;
+    const leftMargin =
+      dims.margins?.left !== undefined
+        ? dims.margins.left
+        : dims.width * ANCHOR_MARGIN_RATIO_X;
+    const ms = dims.markerSize || MARKER_SIZE;
+    const maxSafeRight = dims.width - rightMargin - ms / 2;
+    const minSafeLeft = leftMargin + ms / 2;
+
+    // Asegurar que el recuadro azul no sobrepase el área segura roja
+    if (hlX + hlW > maxSafeRight - 2) {
+      hlW = Math.max(10, maxSafeRight - 2 - hlX);
+    }
+    if (hlX < minSafeLeft + 2) {
+      const diff = minSafeLeft + 2 - hlX;
+      hlX = minSafeLeft + 2;
+      hlW = Math.max(10, hlW - diff);
+    }
+
+    ctx.fillRect(hlX, hlY, hlW, hlH);
+    ctx.strokeRect(hlX, hlY, hlW, hlH);
     ctx.setLineDash([]);
   }
 
   ctx.restore();
 
   if (sec.type === "code") {
-    renderCodeSection(ctx, sec, dims);
+    renderCodeSection(ctx, sec, dims, options);
+  } else if (sec.type === "instruction") {
+    if (!isBubblesOnly) {
+      renderInstructionSection(ctx, sec, dims);
+    }
   } else {
-    renderQuestionSection(ctx, sec, dims);
+    renderQuestionSection(ctx, sec, dims, options);
   }
 }
 
@@ -318,7 +450,7 @@ function renderCodeSection(ctx, sec, dims) {
 
   const digits = sec.digits || 6;
   const cellSize = sec.cellSize || 36;
-  const colSpacing = sec.colSpacing || (cellSize + 20);
+  const colSpacing = sec.colSpacing || cellSize + 20;
   const bubbleRowSpacing = sec.rowSpacing || 38;
   const bubbleRadius = sec.radius || 10;
 
@@ -378,9 +510,48 @@ function renderCodeSection(ctx, sec, dims) {
 }
 
 /**
+ * Renders an instruction / free-text block on the sheet
+ */
+function renderInstructionSection(ctx, sec, dims) {
+  const startX = (sec.percentX / 100) * dims.width;
+  const startY = (sec.percentY / 100) * dims.height;
+  const width = sec.widthPx || Math.round(dims.width * 0.85);
+  const height = sec.heightPx || 90;
+
+  ctx.save();
+  // Card background
+  ctx.fillStyle = "#f8fafc";
+  ctx.strokeStyle = "#94a3b8";
+  ctx.lineWidth = 1;
+  ctx.fillRect(startX, startY, width, height);
+  ctx.strokeRect(startX, startY, width, height);
+
+  // Title
+  let textY = startY + 18;
+  if (sec.title) {
+    ctx.fillStyle = "#1e293b";
+    ctx.font = "bold 13px sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText(sec.title, startX + 12, textY);
+    textY += 16;
+  }
+
+  // Content
+  if (sec.content) {
+    ctx.fillStyle = "#334155";
+    ctx.font = `${sec.fontSize || 11}px sans-serif`;
+    ctx.textAlign = "left";
+    drawWrappedText(ctx, sec.content, startX + 12, textY, width - 24, 15);
+  }
+
+  ctx.restore();
+}
+
+/**
  * Renders a question or multiselect section
  */
-function renderQuestionSection(ctx, sec, dims) {
+function renderQuestionSection(ctx, sec, dims, options = {}) {
+  const { isBubblesOnly = false } = options;
   const startX = (sec.percentX / 100) * dims.width;
   const startY = (sec.percentY / 100) * dims.height;
 
@@ -389,15 +560,17 @@ function renderQuestionSection(ctx, sec, dims) {
   const radius = sec.radius || 11;
   const colSpacing = sec.colSpacing || 42;
   const rowSpacing = sec.rowSpacing || 32;
-  const labelsXOffset = sec.showLabels ? (sec.labelWidth || 60) : 0;
+  const isQuestionnaire = sec.layoutMode === "questionnaire";
+  const defaultLabelWidth = isQuestionnaire ? 280 : 60;
+  const labelsXOffset = sec.showLabels
+    ? sec.labelWidth || defaultLabelWidth
+    : 0;
 
   ctx.save();
 
   if (sec.type === "multiselect") {
     // ---- MULTISELECT: colSpacing as column width, labels wrap ----
     const lineHeight = 11;
-    const labelGap = 6;
-    const titleH = sec.title ? 24 : 0;
     const padX = 6;
 
     ctx.font = "10px sans-serif";
@@ -417,42 +590,37 @@ function renderQuestionSection(ctx, sec, dims) {
     }
 
     // Section title
-    if (sec.title) {
+    if (sec.title && !isBubblesOnly) {
       ctx.fillStyle = "#1e293b";
-      ctx.font = "bold 14px sans-serif";
+      ctx.font = "bold 13.5px sans-serif";
       ctx.textAlign = "left";
-      ctx.fillText(sec.title, startX, startY + 14);
+      const titleStartX = dims.width * 0.09; // Alineado con el margen izquierdo de las preguntas
+      ctx.fillText(sec.title, titleStartX, startY - 18);
     }
 
-    const gridStartY = startY + titleH;
+    const gridStartY = startY;
 
     for (let r = 0; r < rows; r++) {
-      const rowTopY = gridStartY + r * rowSpacing;
-
-      // Calculate max wrapped lines for THIS row only
-      let rowMaxLines = 1;
-      for (let c = 0; c < cols; c++) {
-        const cellLabel = sec.labels && sec.labels[r] && sec.labels[r][c];
-        if (cellLabel) {
-          const maxW = colWidths[c] - padX;
-          const lines = measureWrappedLines(ctx, String(cellLabel), maxW);
-          if (lines > rowMaxLines) rowMaxLines = lines;
-        }
-      }
-      const rowLabelH = rowMaxLines * lineHeight;
-      const cy = rowTopY + rowLabelH + labelGap + radius;
+      const cy = gridStartY + r * rowSpacing;
 
       for (let c = 0; c < cols; c++) {
         const cx = colCentersX[c];
         const cellLabel = sec.labels && sec.labels[r] && sec.labels[r][c];
 
-        // Label wraps within column width
-        if (cellLabel) {
+        // Label rendered to the left of the bubble
+        if (cellLabel && !isBubblesOnly) {
           ctx.fillStyle = "#1e293b";
-          ctx.font = "10px sans-serif";
-          ctx.textAlign = "center";
-          const maxW = colWidths[c] - padX;
-          drawWrappedText(ctx, String(cellLabel), cx, rowTopY, maxW, lineHeight);
+          ctx.font = "10.5px sans-serif";
+          ctx.textAlign = "right";
+          const maxW = colWidths[c] - radius * 2 - padX;
+          drawWrappedText(
+            ctx,
+            String(cellLabel),
+            cx - radius - 6,
+            cy - 2,
+            maxW,
+            lineHeight,
+          );
         }
 
         drawDottedBubble(ctx, cx, cy, radius);
@@ -477,11 +645,11 @@ function renderQuestionSection(ctx, sec, dims) {
     const groupWidth = cols * colSpacing;
 
     // Section title
-    if (sec.title) {
+    if (sec.title && !isBubblesOnly) {
       ctx.fillStyle = "#1e293b";
-      ctx.font = "bold 14px sans-serif";
+      ctx.font = "bold 15px sans-serif";
       ctx.textAlign = "left";
-      ctx.fillText(sec.title, startX, startY - 6);
+      ctx.fillText(sec.title, startX, startY - 8);
     }
 
     // Calculate max header lines across all groups
@@ -498,7 +666,9 @@ function renderQuestionSection(ctx, sec, dims) {
 
     const lineHeight = 14;
     const headerPadding = 12;
-    const headerGap = sec.showLabels ? maxHeaderLines * lineHeight + headerPadding : 12;
+    const headerGap = sec.showLabels
+      ? maxHeaderLines * lineHeight + headerPadding
+      : 12;
     const gridStartY = startY + headerGap;
 
     // Rows per group
@@ -516,15 +686,20 @@ function renderQuestionSection(ctx, sec, dims) {
       }
 
       // Column headers for this group
-      if (sec.showLabels && sec.labels && sec.labels.length > 0) {
-        ctx.fillStyle = "#475569";
-        ctx.font = "12px sans-serif";
+      if (
+        sec.showLabels &&
+        sec.labels &&
+        sec.labels.length > 0 &&
+        !isBubblesOnly
+      ) {
+        ctx.fillStyle = "#334155";
+        ctx.font = "bold 12px sans-serif";
         ctx.textAlign = "center";
         for (let c = 0; c < cols; c++) {
           const label = sec.labels[c] || String(c + 1);
           const cx = colCentersX[c];
           const maxW = colWidths[c] - padX;
-          drawWrappedText(ctx, String(label), cx, startY + 10, maxW, 14);
+          drawWrappedText(ctx, String(label), cx, startY + 6, maxW, 14);
         }
       }
 
@@ -535,15 +710,42 @@ function renderQuestionSection(ctx, sec, dims) {
       for (let r = groupStartRow; r < groupEndRow; r++) {
         const localRow = r - groupStartRow;
         const cy = gridStartY + localRow * rowSpacing;
+        const qNum = (sec.rowStart || 1) + r;
 
-        // Row label
-        if (sec.showLabels) {
+        // Row label or Questionnaire prompt
+        if (sec.showLabels && !isBubblesOnly) {
           ctx.fillStyle = "#1e293b";
-          ctx.font = "bold 12px sans-serif";
-          ctx.textAlign = "right";
-          const rowLabel = sec.rowPrefix ? `${sec.rowPrefix}${r + 1}` : `Q${r + 1}`;
-          const labelOffset = radius + 10;
-          ctx.fillText(rowLabel, groupStartX - labelOffset, cy + 4);
+          if (
+            isQuestionnaire &&
+            sec.questionPrompts &&
+            sec.questionPrompts[r]
+          ) {
+            ctx.font = "11.5px sans-serif";
+            ctx.textAlign = "left";
+            const prompt = `${
+              sec.rowPrefix ? sec.rowPrefix + qNum + ". " : qNum + ". "
+            }${sec.questionPrompts[r]}`;
+            const maxW = (sec.labelWidth || defaultLabelWidth) - 20;
+            drawWrappedText(ctx, prompt, startX, cy - 4, maxW, 14);
+
+            // Línea divisoria horizontal sutil entre preguntas
+            ctx.save();
+            ctx.strokeStyle = "#e2e8f0";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(startX, cy + rowSpacing / 2 - 2);
+            ctx.lineTo(groupStartX + groupWidth + 15, cy + rowSpacing / 2 - 2);
+            ctx.stroke();
+            ctx.restore();
+          } else {
+            ctx.font = "bold 12px sans-serif";
+            ctx.textAlign = "right";
+            const rowLabel = sec.rowPrefix
+              ? `${sec.rowPrefix}${qNum}`
+              : `Q${qNum}`;
+            const labelOffset = radius + 10;
+            ctx.fillText(rowLabel, groupStartX - labelOffset, cy + 4);
+          }
         }
 
         // Bubbles
@@ -610,30 +812,171 @@ export function downloadCanvasAsPNG(canvas, filename = "plantilla_omr.png") {
 }
 
 /**
+ * Triggers browser download of canvas as a standardized A4 PDF document
+ */
+export function downloadCanvasAsPDF(canvas, filename = "plantilla_omr.pdf") {
+  const pdf = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+  });
+  const imgData = canvas.toDataURL("image/png");
+  pdf.addImage(imgData, "PNG", 0, 0, 210, 297);
+  pdf.save(filename);
+}
+
+/**
+ * Renderiza la plantilla base/guía para diseño externo (Canva, Illustrator, Photoshop, Word).
+ * Contiene los marcadores de calibración de esquina y las guías del área segura,
+ * pero SIN ninguna burbuja OMR para que el diseñador monte su diseño limpio.
+ */
+export function renderDesignGuideSheet(canvas, config, options = {}) {
+  const canvasWidth =
+    options.canvasWidth || config.canvasWidth || CANVAS_PORTRAIT.width;
+  const canvasHeight =
+    options.canvasHeight || config.canvasHeight || CANVAS_PORTRAIT.height;
+  const markerSize = config.markerSize || MARKER_SIZE;
+  const margins = {
+    left:
+      config.margins?.left !== undefined
+        ? config.margins.left
+        : canvasWidth * ANCHOR_MARGIN_RATIO_X,
+    right:
+      config.margins?.right !== undefined
+        ? config.margins.right
+        : canvasWidth * ANCHOR_MARGIN_RATIO_X,
+    top:
+      config.margins?.top !== undefined
+        ? config.margins.top
+        : HEADER_HEIGHT + canvasHeight * ANCHOR_MARGIN_RATIO_Y,
+    bottom:
+      config.margins?.bottom !== undefined
+        ? config.margins.bottom
+        : canvasHeight * ANCHOR_MARGIN_RATIO_Y,
+  };
+
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  // Fondo blanco puro
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+  // 1. Marcadores de esquina concéntricos obligatorios
+  const anchors = getAnchorPositions(canvasWidth, canvasHeight, margins);
+  drawConcentricSquareMarker(ctx, anchors.TL.x, anchors.TL.y, markerSize);
+  drawConcentricSquareMarker(ctx, anchors.TR.x, anchors.TR.y, markerSize);
+  drawConcentricSquareMarker(ctx, anchors.BL.x, anchors.BL.y, markerSize);
+  drawConcentricSquareMarker(ctx, anchors.BR.x, anchors.BR.y, markerSize);
+
+  // 2. Guía sutil del área de contenido
+  const area = getScannableBounds(canvasWidth, canvasHeight, margins, markerSize);
+  ctx.save();
+  ctx.strokeStyle = "#94a3b8";
+  ctx.lineWidth = 1;
+  ctx.setLineDash([6, 5]);
+  ctx.strokeRect(area.x, area.y, area.width, area.height);
+  ctx.restore();
+
+  // 3. Indicaciones para el diseñador
+  ctx.save();
+  ctx.fillStyle = "#64748b";
+  ctx.font = "bold 13px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(
+    "▲ ZONA SUPERIOR: Logos, membretes, título institucional y datos generales ▲",
+    canvasWidth / 2,
+    45
+  );
+  ctx.fillStyle = "#94a3b8";
+  ctx.font = "12px sans-serif";
+  ctx.fillText(
+    "ÁREA SEGURA DE PREGUNTAS (Respeta los marcadores de las 4 esquinas sin moverlos)",
+    canvasWidth / 2,
+    area.y + 24
+  );
+  ctx.restore();
+}
+
+/**
+ * Descarga la plantilla guía para diseño en formato PDF
+ */
+export function downloadDesignGuidePDF(config, filename = "plantilla_guia_diseno.pdf") {
+  const canvas = document.createElement("canvas");
+  renderDesignGuideSheet(canvas, config);
+  downloadCanvasAsPDF(canvas, filename);
+}
+
+/**
+ * Descarga la plantilla guía para diseño en formato PNG
+ */
+export function downloadDesignGuidePNG(config, filename = "plantilla_guia_diseno.png") {
+  const canvas = document.createElement("canvas");
+  renderDesignGuideSheet(canvas, config);
+  downloadCanvasAsPNG(canvas, filename);
+}
+
+/**
  * Generates JSON template schema for the OMR scanner
  */
 export function exportTemplateJSON(config, canvasDims) {
-  const { name, sections, markerSize } = config;
+  const { name, sections, markerSize, margins: cfgMargins } = config;
   const dims = canvasDims || CANVAS_PORTRAIT;
   const margins = {
-    left: dims.width * ANCHOR_MARGIN_RATIO_X,
-    right: dims.width * ANCHOR_MARGIN_RATIO_X,
-    top: dims.height * ANCHOR_MARGIN_RATIO_Y,
-    bottom: dims.height * ANCHOR_MARGIN_RATIO_Y,
+    left:
+      cfgMargins?.left !== undefined
+        ? cfgMargins.left
+        : dims.width * ANCHOR_MARGIN_RATIO_X,
+    right:
+      cfgMargins?.right !== undefined
+        ? cfgMargins.right
+        : dims.width * ANCHOR_MARGIN_RATIO_X,
+    top:
+      cfgMargins?.top !== undefined
+        ? cfgMargins.top
+        : HEADER_HEIGHT + dims.height * ANCHOR_MARGIN_RATIO_Y,
+    bottom:
+      cfgMargins?.bottom !== undefined
+        ? cfgMargins.bottom
+        : dims.height * ANCHOR_MARGIN_RATIO_Y,
   };
+
+  const anchors = getAnchorPositions(dims.width, dims.height, margins);
+  const spanX = Math.max(anchors.TR.x - anchors.TL.x, 1);
+  const spanY = Math.max(anchors.BL.y - anchors.TL.y, 1);
+
+  // Funciones de mapeo a coordenadas relativas al marco de los marcadores OMR
+  const toPctX = (px) =>
+    parseFloat((((px - anchors.TL.x) / spanX) * 100).toFixed(2));
+  const toPctY = (py) =>
+    parseFloat((((py - anchors.TL.y) / spanY) * 100).toFixed(2));
 
   const formattedSections = sections.map((sec, i) => {
     const startX = (sec.percentX / 100) * dims.width;
     const startY = (sec.percentY / 100) * dims.height;
 
+    if (sec.type === "instruction") {
+      return {
+        type: "instruction",
+        name: sec.name || `instruccion${i + 1}`,
+        title: sec.title || "",
+        content: sec.content || "",
+        circles: null,
+      };
+    }
+
     if (sec.type === "code") {
       const digits = sec.digits || 6;
       const cellSize = sec.cellSize || 36;
-      const colSpacing = sec.colSpacing || (cellSize + 20);
+      const colSpacing = sec.colSpacing || cellSize + 20;
       const bubbleRowSpacing = sec.rowSpacing || 38;
       const matrixStartY = startY + cellSize + 32;
-      const endX = startX + (digits - 1) * colSpacing + cellSize;
-      const endY = matrixStartY + 9 * bubbleRowSpacing;
+      const firstBx = startX + cellSize / 2;
+      const lastBx = startX + (digits - 1) * colSpacing + cellSize / 2;
+      const firstBy = matrixStartY;
+      const lastBy = matrixStartY + 9 * bubbleRowSpacing;
 
       return {
         type: "code",
@@ -642,122 +985,143 @@ export function exportTemplateJSON(config, canvasDims) {
         cols: digits,
         digits: digits,
         circles: {
-          CTL: { percent_x: parseFloat((startX / dims.width * 100).toFixed(2)), percent_y: parseFloat((matrixStartY / dims.height * 100).toFixed(2)) },
-          CTR: { percent_x: parseFloat((endX / dims.width * 100).toFixed(2)), percent_y: parseFloat((matrixStartY / dims.height * 100).toFixed(2)) },
-          CBL: { percent_x: parseFloat((startX / dims.width * 100).toFixed(2)), percent_y: parseFloat((endY / dims.height * 100).toFixed(2)) },
-          CBR: { percent_x: parseFloat((endX / dims.width * 100).toFixed(2)), percent_y: parseFloat((endY / dims.height * 100).toFixed(2)) },
+          CTL: { percent_x: toPctX(firstBx), percent_y: toPctY(firstBy) },
+          CTR: { percent_x: toPctX(lastBx), percent_y: toPctY(firstBy) },
+          CBL: { percent_x: toPctX(firstBx), percent_y: toPctY(lastBy) },
+          CBR: { percent_x: toPctX(lastBx), percent_y: toPctY(lastBy) },
         },
         radius: sec.radius || 10,
         labels: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
       };
     }
 
-  const labelsXOffset = sec.showLabels ? (sec.labelWidth || 60) : 0;
-  const radius = sec.radius || 11;
-  const colSpacing = sec.colSpacing || 40;
-  const rowSpacing = sec.rowSpacing || 32;
+    const isQuestionnaire = sec.layoutMode === "questionnaire";
+    const defaultLabelWidth = isQuestionnaire ? 280 : 60;
+    const labelsXOffset = sec.showLabels
+      ? sec.labelWidth || defaultLabelWidth
+      : 0;
+    const radius = sec.radius || 11;
+    const colSpacing = sec.colSpacing || 40;
+    const rowSpacing = sec.rowSpacing || 32;
 
-  if (sec.type === "multiselect") {
-    const lineHeight = 11;
-    const labelGap = 6;
-    const padX = 6;
-
-    const titleH = sec.title ? 24 : 0;
-
-    // Column width = colSpacing (same as rendering)
-    const colCentersX = [];
-    let curX = startX + labelsXOffset;
-    for (let c = 0; c < sec.cols; c++) {
-      const colW = Math.max(radius * 2, colSpacing);
-      colCentersX[c] = curX + colW / 2;
-      curX += colW;
-    }
-
-    // Calculate max wrapped lines per row for endY
-    let maxRowLabelLines = 1;
-    for (let r = 0; r < sec.rows; r++) {
-      let rowLines = 1;
+    if (sec.type === "multiselect") {
+      // Column width = colSpacing (same as rendering)
+      const colWidths = [];
       for (let c = 0; c < sec.cols; c++) {
-        const label = sec.labels && sec.labels[r] && sec.labels[r][c];
-        if (label) {
-          const maxLabelW = String(label).length * 6;
-          const availW = colSpacing - padX;
-          const approxLines = Math.max(1, Math.ceil(maxLabelW / availW));
-          if (approxLines > rowLines) rowLines = approxLines;
-        }
+        colWidths[c] = Math.max(radius * 2, colSpacing);
       }
-      if (rowLines > maxRowLabelLines) maxRowLabelLines = rowLines;
+      const colCentersX = [];
+      let curX = startX + labelsXOffset;
+      for (let c = 0; c < sec.cols; c++) {
+        colCentersX[c] = curX + colWidths[c] / 2;
+        curX += colWidths[c];
+      }
+
+      const lastRowIdx = Math.max(0, sec.rows - 1);
+      const gridStartY = startY;
+      const firstRowCy = gridStartY;
+      const lastRowCy = gridStartY + lastRowIdx * rowSpacing;
+      const firstBx = colCentersX[0];
+      const lastBx = colCentersX[sec.cols - 1];
+
+      return {
+        type: sec.type || "question",
+        name: sec.name || `seccion${i + 1}`,
+        rows: sec.rows,
+        cols: sec.cols,
+        circles: {
+          CTL: { percent_x: toPctX(firstBx), percent_y: toPctY(firstRowCy) },
+          CTR: { percent_x: toPctX(lastBx), percent_y: toPctY(firstRowCy) },
+          CBL: { percent_x: toPctX(firstBx), percent_y: toPctY(lastRowCy) },
+          CBR: { percent_x: toPctX(lastBx), percent_y: toPctY(lastRowCy) },
+        },
+        radius: sec.radius,
+        chartType: sec.chartType || "radar",
+        labels: sec.labels || [],
+      };
     }
 
-    const tallestLabelH = maxRowLabelLines * lineHeight;
-    const gridStartY = startY + titleH;
-    const endX = colCentersX[sec.cols - 1];
-    const endY = gridStartY + (sec.rows - 1) * rowSpacing + tallestLabelH + labelGap + radius * 2 + 10;
+    // Question type (default): column width based on colSpacing, labels wrap within
+    const padX = 6;
+    const lineHeight = 14;
+    const headerPadding = 12;
+    const columnGroups = sec.columnGroups || 1;
+    const groupGap = 50;
+
+    // Calculate dynamic header height (labels wrap within colSpacing width)
+    const colWidths = [];
+    let maxHeaderLines = 1;
+    for (let c = 0; c < sec.cols; c++) {
+      const colW = Math.max(radius * 2, sec.colSpacing || 40);
+      colWidths[c] = colW;
+      const label =
+        sec.labels && sec.labels[c] ? String(sec.labels[c]) : String(c + 1);
+      const maxLabelW = label.length * 7;
+      const availW = colW - padX;
+      const approxLines = Math.max(1, Math.ceil(maxLabelW / availW));
+      if (approxLines > maxHeaderLines) maxHeaderLines = approxLines;
+    }
+    const colHeaderH = sec.showLabels
+      ? maxHeaderLines * lineHeight + headerPadding
+      : 12;
+    const rowsPerGroup = Math.ceil(sec.rows / columnGroups);
+    const gridStartY = startY + colHeaderH;
+
+    // First group column centers
+    const firstGroupStartX = startX + labelsXOffset;
+    const firstBubbleCenterX = firstGroupStartX + colWidths[0] / 2;
+    const groupWidth = sec.cols * (sec.colSpacing || 40);
+
+    // Last group last bubble center
+    const lastGroupIdx = columnGroups - 1;
+    const lastGroupStartX =
+      startX + labelsXOffset + lastGroupIdx * (groupWidth + groupGap);
+    let curLastX = lastGroupStartX;
+    for (let c = 0; c < sec.cols - 1; c++) {
+      curLastX += colWidths[c];
+    }
+    const lastBubbleCenterX = curLastX + colWidths[sec.cols - 1] / 2;
+
+    const firstBubbleCenterY = gridStartY;
+    const lastBubbleCenterY = gridStartY + (rowsPerGroup - 1) * sec.rowSpacing;
 
     return {
       type: sec.type || "question",
+      layoutMode: sec.layoutMode || "compact",
       name: sec.name || `seccion${i + 1}`,
       rows: sec.rows,
       cols: sec.cols,
+      columnGroups: columnGroups,
+      rowStart: sec.rowStart || 1,
       circles: {
-        CTL: { percent_x: parseFloat((colCentersX[0] / dims.width * 100).toFixed(2)), percent_y: parseFloat((gridStartY / dims.height * 100).toFixed(2)) },
-        CTR: { percent_x: parseFloat((endX / dims.width * 100).toFixed(2)), percent_y: parseFloat((gridStartY / dims.height * 100).toFixed(2)) },
-        CBL: { percent_x: parseFloat((colCentersX[0] / dims.width * 100).toFixed(2)), percent_y: parseFloat((endY / dims.height * 100).toFixed(2)) },
-        CBR: { percent_x: parseFloat((endX / dims.width * 100).toFixed(2)), percent_y: parseFloat((endY / dims.height * 100).toFixed(2)) },
+        CTL: {
+          percent_x: toPctX(firstBubbleCenterX),
+          percent_y: toPctY(firstBubbleCenterY),
+        },
+        CTR: {
+          percent_x: toPctX(lastBubbleCenterX),
+          percent_y: toPctY(firstBubbleCenterY),
+        },
+        CBL: {
+          percent_x: toPctX(firstBubbleCenterX),
+          percent_y: toPctY(lastBubbleCenterY),
+        },
+        CBR: {
+          percent_x: toPctX(lastBubbleCenterX),
+          percent_y: toPctY(lastBubbleCenterY),
+        },
       },
       radius: sec.radius,
+      chartType: sec.chartType || "stacked_bar",
       labels: sec.labels || [],
+      questionPrompts: sec.questionPrompts || [],
     };
-  }
-
-  // Question type (default): column width based on colSpacing, labels wrap within
-  const padX = 6;
-  const lineHeight = 14;
-  const headerPadding = 12;
-  const columnGroups = sec.columnGroups || 1;
-  const groupGap = 50;
-  const groupWidth = sec.cols * (sec.colSpacing || 40);
-
-  // Calculate dynamic header height (labels wrap within colSpacing width)
-  let maxHeaderLines = 1;
-  for (let c = 0; c < sec.cols; c++) {
-    const label = sec.labels && sec.labels[c] ? String(sec.labels[c]) : String(c + 1);
-    const maxLabelW = label.length * 7;
-    const colW = Math.max(radius * 2, sec.colSpacing || 40);
-    const availW = colW - padX;
-    const approxLines = Math.max(1, Math.ceil(maxLabelW / availW));
-    if (approxLines > maxHeaderLines) maxHeaderLines = approxLines;
-  }
-  const colHeaderH = sec.showLabels ? maxHeaderLines * lineHeight + headerPadding : 12;
-  const rowsPerGroup = Math.ceil(sec.rows / columnGroups);
-  const gridStartY = startY + colHeaderH;
-
-  // Total width spans all column groups
-  const totalWidth = labelsXOffset + columnGroups * groupWidth + (columnGroups - 1) * groupGap;
-  const endX = startX + totalWidth;
-  const endY = gridStartY + (rowsPerGroup - 1) * sec.rowSpacing;
-
-  return {
-    type: sec.type || "question",
-    name: sec.name || `seccion${i + 1}`,
-    rows: sec.rows,
-    cols: sec.cols,
-    columnGroups: columnGroups,
-    circles: {
-      CTL: { percent_x: parseFloat((startX / dims.width * 100).toFixed(2)), percent_y: parseFloat((gridStartY / dims.height * 100).toFixed(2)) },
-      CTR: { percent_x: parseFloat((endX / dims.width * 100).toFixed(2)), percent_y: parseFloat((gridStartY / dims.height * 100).toFixed(2)) },
-      CBL: { percent_x: parseFloat((startX / dims.width * 100).toFixed(2)), percent_y: parseFloat((endY / dims.height * 100).toFixed(2)) },
-      CBR: { percent_x: parseFloat((endX / dims.width * 100).toFixed(2)), percent_y: parseFloat((endY / dims.height * 100).toFixed(2)) },
-    },
-    radius: sec.radius,
-    labels: sec.labels || [],
-  };
   });
 
   return {
     template_name: name || "Plantilla OMR Personalizada",
     marker_size: markerSize || MARKER_SIZE,
-    margins: margins || { top: 75, bottom: 75, left: 75, right: 75 },
+    margins: margins,
     sections: formattedSections,
   };
 }

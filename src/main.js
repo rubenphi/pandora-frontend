@@ -1,8 +1,19 @@
 import { createApp } from "vue";
 import App from "./App.vue";
 import router from "./router";
-import { initializeBaseUrl } from "./globalService";
+import axios from "axios";
+import { initializeBaseUrl, tokenHeader } from "./globalService";
 initializeBaseUrl();
+tokenHeader();
+
+// Asegurar que todas las peticiones axios incluyan siempre el token de autenticación
+axios.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token && !config.headers["Authorization"] && !config.headers["authorization"]) {
+    config.headers["Authorization"] = token;
+  }
+  return config;
+});
 
 import { IonicVue } from "@ionic/vue";
 

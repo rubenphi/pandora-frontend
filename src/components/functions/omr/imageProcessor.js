@@ -191,7 +191,7 @@ export function findAndLabelMarkers(
     }
 
     let approx = new cv.Mat();
-    cv.approxPolyDP(cnt, approx, 0.02 * cv.arcLength(cnt, true), true);
+    cv.approxPolyDP(cnt, approx, 0.035 * cv.arcLength(cnt, true), true);
 
     if (approx.rows === 4 && cv.isContourConvex(approx)) {
       let childIdx = hierArr[i * 4 + 2];
@@ -207,7 +207,7 @@ export function findAndLabelMarkers(
           cv.approxPolyDP(
             childCnt,
             cApprox,
-            0.02 * cv.arcLength(childCnt, true),
+            0.035 * cv.arcLength(childCnt, true),
             true
           );
           if (cApprox.rows === 4 && cv.isContourConvex(cApprox)) {
@@ -710,10 +710,20 @@ export function extractAndDrawResults(
           const i = r * cols + c;
           if (detectedPoints[i]) {
             winnerIndices.add(i);
-            const label = rowLabels && rowLabels[r] && rowLabels[r][c]
-              ? rowLabels[r][c]
-              : `${String.fromCharCode("a".charCodeAt(0) + c)}`;
-            if (label) allSelected.push(label);
+            let label = "";
+            if (rowLabels) {
+              if (Array.isArray(rowLabels[r])) {
+                label = rowLabels[r][c];
+              } else if (Array.isArray(rowLabels)) {
+                label = rowLabels[r * cols + c];
+              }
+            }
+            if (!label) {
+              label = `${String.fromCharCode("a".charCodeAt(0) + c)}`;
+            }
+            if (label && String(label).trim()) {
+              allSelected.push(String(label).trim());
+            }
           }
         }
       }
@@ -746,7 +756,11 @@ export function extractAndDrawResults(
       let optLetter = "";
       if (type === "multiselect") {
         const rowLabels = matrixDef.labels;
-        const cell = rowLabels && rowLabels[r] && rowLabels[r][c];
+        let cell = "";
+        if (rowLabels) {
+          if (Array.isArray(rowLabels[r])) cell = rowLabels[r][c];
+          else if (Array.isArray(rowLabels)) cell = rowLabels[r * cols + c];
+        }
         optLetter = cell ? String(cell) : String.fromCharCode("A".charCodeAt(0) + c);
       } else if (Array.isArray(colLabels) && colLabels[c] !== undefined && colLabels[c] !== null) {
         optLetter = typeof colLabels[c] === "string"
